@@ -1,6 +1,11 @@
 import numpy as np
+import psyneulink as pnl
 
-from psyneulink.core.components.functions.transferfunctions import Linear, Logistic
+from psyneulink.core.components.functions.learningfunctions import BayesGLM
+from psyneulink.core.components.functions.optimizationfunctions import GridSearch
+from psyneulink.core.components.functions.transferfunctions import Exponential, Linear, Logistic
+from psyneulink.core.components.functions.userdefinedfunction import UserDefinedFunction
+from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.core.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.core.components.process import Process
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
@@ -274,3 +279,129 @@ class TestStroop:
         # an output mechanism. So it actually should be None instead of previously [0, 0] which was likely
         # a side effect with of conflation of different execution contexts
         assert objective_hidden.output_states[0].parameters.value.get(s) is None
+
+    def test_bustamante_stroop_xor_lvoc(self):
+        def w_fct(stim, color_control):
+            '''function for word_task, to modulate strength of word reading based on 1-strength of color_naming ControlSignal'''
+            return stim * (1 - color_control)
+        w_fct_UDF = UserDefinedFunction(custom_function=w_fct, color_control=1)
+
+        def objective_function(v):
+            '''function used for ObjectiveMechanism of lvoc
+             v[0] = output of DDM: [probability of color naming, probability of word reading]
+             v[1] = reward:        [color naming rewarded, word reading rewarded]
+             '''
+            return np.sum(v[0] * v[1])
+
+        color_stim = TransferMechanism(name='Color Stimulus', size=8)
+        word_stim = TransferMechanism(name='Word Stimulus', size=8)
+
+        color_task = TransferMechanism(name='Color Task')
+        word_task = ProcessingMechanism(name='Word Task', function=w_fct_UDF)
+
+        reward = TransferMechanism(name='Reward', size=2)
+
+        task_decision = pnl.DDM(
+            name='Task Decision',
+            # function=NavarroAndFuss,
+            output_states=[
+                pnl.DDM_OUTPUT.PROBABILITY_UPPER_THRESHOLD,
+                pnl.DDM_OUTPUT.PROBABILITY_LOWER_THRESHOLD
+            ]
+        )
+
+        lvoc = pnl.LVOCControlMechanism(
+            name='LVOC ControlMechanism',
+            feature_predictors={pnl.SHADOW_EXTERNAL_INPUTS: [color_stim, word_stim]},
+            objective_mechanism=pnl.ObjectiveMechanism(
+                name='LVOC ObjectiveMechanism',
+                monitored_output_states=[task_decision, reward],
+                function=objective_function
+            ),
+            prediction_terms=[pnl.PV.FC, pnl.PV.COST],
+            terminal_objective_mechanism=True,
+
+            # learning_function=BayesGLM(mu_0=0, sigma_0=0.1),
+            learning_function=BayesGLM,
+
+            # function=GradientOptimization(
+            #         convergence_criterion=VALUE,
+            #         convergence_threshold=0.001,
+            #         step_size=1,
+            #         annealing_function= lambda x,y : x / np.sqrt(y),
+            #         # direction=ASCENT
+            # ),
+
+
+            function=GridSearch,
+
+            # function=OptimizationFunction,
+
+            # control_signals={'COLOR CONTROL':[(SLOPE, color_task),
+            #                                    ('color_control', word_task)]}
+            # control_signals={NAME:'COLOR CONTROL',
+            #                  PROJECTIONS:[(SLOPE, color_task),
+            #                                   ('color_control', word_task)],
+            #                  COST_OPTIONS:[ControlSignalCosts.INTENSITY,
+            #                                    ControlSignalCosts.ADJUSTMENT],
+            #                  INTENSITY_COST_FUNCTION:Exponential(rate=0.25, bias=-3),
+            #                  ADJUSTMENT_COST_FUNCTION:Exponential(rate=0.25,bias=-3)}
+            control_signals=pnl.ControlSignal(
+                projections=[(pnl.SLOPE, color_task), ('color_control', word_task)],
+                # function=ReLU,
+                function=Logistic,
+                cost_options=[pnl.ControlSignalCosts.INTENSITY, pnl.ControlSignalCosts.ADJUSTMENT],
+                intensity_cost_function=Exponential(rate=0.25, bias=-3),
+                adjustment_cost_function=Exponential(rate=0.25, bias=-3),
+                allocation_samples=[i / 2 for i in list(range(0, 50, 1))]
+            )
+        )
+        lvoc.reportOutputPref = True
+        c = pnl.Composition(name='Stroop XOR Model')
+        c.add_c_node(color_stim)
+        c.add_c_node(word_stim)
+        c.add_c_node(color_task, required_roles=pnl.CNodeRole.ORIGIN)
+        c.add_c_node(word_task, required_roles=pnl.CNodeRole.ORIGIN)
+        c.add_c_node(reward)
+        c.add_c_node(task_decision)
+        c.add_projection(sender=color_task, receiver=task_decision)
+        c.add_projection(sender=word_task, receiver=task_decision)
+        c.add_c_node(lvoc)
+
+        # c.show_graph()
+
+        input_dict = {color_stim: [[1, 0, 0, 0, 0, 0, 0, 0]],
+                      word_stim: [[1, 0, 0, 0, 0, 0, 0, 0]],
+                      color_task: [[1]],
+                      word_task: [[-1]],
+                      reward: [[1, 0]]}
+
+        def run():
+            c.run(inputs=input_dict, num_trials=1)
+
+        run()
+        run()
+
+        control_signal_variables = [sig.parameters.variable.get(c) for sig in lvoc.control_signals]
+        control_signal_values = [sig.parameters.value.get(c) for sig in lvoc.control_signals]
+        features = lvoc.parameters.feature_values.get(c)
+        lvoc_value = lvoc.compute_EVC([sig.parameters.variable.get(c) for sig in lvoc.control_signals], execution_id=c)
+
+        print('\n')
+        print('--------------------')
+        print('ControlSignal variables: ', control_signal_variables)
+        print('ControlSignal values: ', control_signal_values)
+        print('features: ', features)
+        print('lvoc: ', lvoc_value)
+        print('--------------------')
+
+        np.testing.assert_allclose([np.array([24.5])], control_signal_variables)
+        np.testing.assert_allclose([np.array([1.])], control_signal_values)
+        np.testing.assert_allclose(
+            np.array([
+                [1., 0., 0., 0., 0., 0., 0., 0.],
+                [1., 0., 0., 0., 0., 0., 0., 0.]
+            ]),
+            features
+        )
+        np.testing.assert_allclose(np.array([0.14445302]), lvoc_value)
