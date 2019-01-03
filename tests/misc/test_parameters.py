@@ -189,3 +189,29 @@ def test_dot_notation():
     assert t.parameters.value.get(c) == 5
     assert t.parameters.value.get(d) == 10
     assert t.parameters.value.get('custom execution id') == 20
+
+
+@pytest.mark.parametrize(
+    'obj, kwargs, expected_default_variable',
+    [
+        (pnl.Buffer, {'initializer': [0, 0, 0]}, np.array([0, 0, 0])),
+        (pnl.Buffer, {'rate': [0, 0, 0]}, np.array([0, 0, 0])),
+        (pnl.Buffer, {'initializer': [0, 0, 0], 'rate': [0, 0, 0]}, np.array([0, 0, 0])),
+        (pnl.Buffer, {'default_variable': [0, 0, 0], 'rate': [0, 0, 0]}, np.array([0, 0, 0])),
+    ]
+)
+def test_parameter_setting_default_variable(obj, kwargs, expected_default_variable):
+    obj = obj(**kwargs)
+    assert obj.defaults.variable.shape == expected_default_variable.shape
+
+
+@pytest.mark.parametrize(
+    'obj, kwargs',
+    [
+        (pnl.Buffer, {'initializer': [0, 0, 0], 'rate': [0, 0]}),
+        (pnl.Buffer, {'initializer': [0, 0, 0], 'default_variable': [0, 0]}),
+    ]
+)
+def test_parameter_setting_default_variable_failures(obj, kwargs):
+    with pytest.raises(TypeError):
+        obj = obj(**kwargs)

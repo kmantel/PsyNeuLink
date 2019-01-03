@@ -1296,7 +1296,7 @@ class TransferMechanism(ProcessingMechanism_Base):
             self._instantiate_integrator_function(variable=function_variable,
                                                   noise=noise,
                                                   initializer=initial_value,
-                                                  rate=integration_rate,
+                                                  rate=integration_rate.squeeze(),
                                                   execution_id=execution_id,
                                                   context=context)
             # Update param assignments with ones determined to be relevant (mech vs. fct)

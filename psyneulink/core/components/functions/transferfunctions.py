@@ -45,25 +45,15 @@ import numpy as np
 import typecheck as tc
 
 from psyneulink.core import llvm as pnlvm
-from psyneulink.core.components.component import parameter_keywords
-from psyneulink.core.components.functions.function import \
-    Function_Base, FunctionError, function_keywords, MULTIPLICATIVE_PARAM, ADDITIVE_PARAM
 from psyneulink.core.components.component import function_type
-from psyneulink.core.globals.keywords import \
-    PER_ITEM, TRANSFER_FUNCTION_TYPE, \
-    LINEAR_FUNCTION, SLOPE, INTERCEPT, PARAMETER_STATE_PARAMS, \
-    VARIABLE, EXPONENTIAL_FUNCTION, RATE, BIAS, SCALE, OFFSET, \
-    LOGISTIC_FUNCTION, GAIN, X_0, RELU_FUNCTION, LEAK, NORMAL_FUNCTION, VARIANCE, \
-    SOFTMAX_FUNCTION, ALL, MAX_VAL, MAX_INDICATOR, PROB, OUTPUT_TYPE, PROB_INDICATOR, LINEAR_MATRIX_FUNCTION, MATRIX, \
-    RECEIVER, HAS_INITIALIZERS, MATRIX_KEYWORD_VALUES, IDENTITY_MATRIX, HOLLOW_MATRIX, \
-    MATRIX_KEYWORD_NAMES, AUTO_ASSIGN_MATRIX, FULL_CONNECTIVITY_MATRIX, RANDOM_CONNECTIVITY_MATRIX, kwPreferenceSetName, \
-    GAUSSIAN_FUNCTION, STANDARD_DEVIATION
+from psyneulink.core.components.component import parameter_keywords
+from psyneulink.core.components.functions.function import ADDITIVE_PARAM, FunctionError, Function_Base, MULTIPLICATIVE_PARAM, function_keywords
+from psyneulink.core.globals.keywords import ALL, AUTO_ASSIGN_MATRIX, BIAS, EXPONENTIAL_FUNCTION, FULL_CONNECTIVITY_MATRIX, GAIN, GAUSSIAN_FUNCTION, HAS_INITIALIZERS, HOLLOW_MATRIX, IDENTITY_MATRIX, INTERCEPT, LEAK, LINEAR_FUNCTION, LINEAR_MATRIX_FUNCTION, LOGISTIC_FUNCTION, MATRIX, MATRIX_KEYWORD_NAMES, MATRIX_KEYWORD_VALUES, MAX_INDICATOR, MAX_VAL, NORMAL_FUNCTION, OFFSET, OUTPUT_TYPE, PARAMETER_STATE_PARAMS, PER_ITEM, PROB, PROB_INDICATOR, RANDOM_CONNECTIVITY_MATRIX, RATE, RECEIVER, RELU_FUNCTION, SCALE, SLOPE, SOFTMAX_FUNCTION, STANDARD_DEVIATION, TRANSFER_FUNCTION_TYPE, VARIABLE, VARIANCE, X_0, kwPreferenceSetName
 
-from psyneulink.core.globals.parameters import Parameter
-from psyneulink.core.globals.utilities import parameter_spec
 from psyneulink.core.globals.context import ContextFlags
-from psyneulink.core.globals.preferences.componentpreferenceset import \
-    kpReportOutputPref, PreferenceEntry, PreferenceLevel, is_pref_set
+from psyneulink.core.globals.parameters import Parameter
+from psyneulink.core.globals.preferences.componentpreferenceset import PreferenceEntry, PreferenceLevel, is_pref_set, kpReportOutputPref
+from psyneulink.core.globals.utilities import parameter_spec
 
 __all__ = ['TransferFunction', 'Linear', 'LinearMatrix', 'Exponential', 'Logistic', 'Tanh', 'ReLU',
            'Gaussian', 'SoftMax', 'get_matrix', 'BOUNDS', 'MODE']
@@ -528,7 +518,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
                     :type: float
 
         """
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True, aliases=[MULTIPLICATIVE_PARAM])
         bias = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         scale = Parameter(1.0, modulable=True)
         offset = Parameter(0.0, modulable=True)

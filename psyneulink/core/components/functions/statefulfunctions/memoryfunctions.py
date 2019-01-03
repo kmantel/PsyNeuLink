@@ -22,22 +22,20 @@ Functions that store and can return a record of their input.
 
 '''
 
-from collections.__init__ import deque, OrderedDict
+from collections.__init__ import OrderedDict, deque
 
 import numpy as np
 import typecheck as tc
 
-from psyneulink.core.components.functions.function import \
-    Function_Base, FunctionError, is_function_type, MULTIPLICATIVE_PARAM, ADDITIVE_PARAM
-from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import StatefulFunction
-from psyneulink.core.components.functions.selectionfunctions import OneHot
+from psyneulink.core.components.functions.function import ADDITIVE_PARAM, FunctionError, Function_Base, MULTIPLICATIVE_PARAM, is_function_type
 from psyneulink.core.components.functions.objectivefunctions import Distance
-from psyneulink.core.globals.keywords import \
-    BUFFER_FUNCTION, MEMORY_FUNCTION, COSINE, DND_FUNCTION, MIN_VAL, NOISE, RATE
-from psyneulink.core.globals.utilities import all_within_range, parameter_spec
+from psyneulink.core.components.functions.selectionfunctions import OneHot
+from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import StatefulFunction
 from psyneulink.core.globals.context import ContextFlags
+from psyneulink.core.globals.keywords import BUFFER_FUNCTION, COSINE, DND_FUNCTION, MEMORY_FUNCTION, MIN_VAL, NOISE, RATE
 from psyneulink.core.globals.parameters import Parameter
 from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.core.globals.utilities import all_within_range, parameter_spec
 
 __all__ = ['MemoryFunction', 'Buffer', 'DND']
 
@@ -160,7 +158,7 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
     componentName = BUFFER_FUNCTION
 
     class Parameters(StatefulFunction.Parameters):
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True, aliases=[MULTIPLICATIVE_PARAM])
         noise = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         history = None
 
@@ -181,7 +179,7 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
                  # was failing.
                  # For now, updated default_variable, noise, and Alternatively, we can change validation on
                  # default_variable=None,   # Changed to [] because None conflicts with initializer
-                 rate=1.0,
+                 rate=None,
                  noise=0.0,
                  # rate: parameter_spec=1.0,
                  # noise: parameter_spec=0.0,
@@ -190,13 +188,10 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
                  # rate: tc.optional(tc.any(int, float, list, np.ndarray)) = 1.0,
                  # noise: tc.optional(tc.any(int, float, list, np.ndarray, callable)) = 0.0,
                  history: tc.optional(int) = None,
-                 initializer=[],
+                 initializer=None,
                  params: tc.optional(dict) = None,
                  owner=None,
                  prefs: is_pref_set = None):
-
-        if default_variable is None:
-            default_variable = []
 
         # Assign args to params and functionParams dicts (kwConstants must == arg names)
         params = self._assign_args_to_param_dicts(rate=rate,
@@ -208,6 +203,8 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
         super().__init__(
             default_variable=default_variable,
             initializer=initializer,
+            rate=rate,
+            noise=noise,
             params=params,
             owner=owner,
             prefs=prefs,

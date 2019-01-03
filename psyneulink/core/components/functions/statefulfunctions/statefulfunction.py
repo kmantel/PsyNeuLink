@@ -16,22 +16,22 @@
 
 '''
 
+import itertools
+import numbers
 import numpy as np
 import typecheck as tc
-import itertools
 import warnings
-import numbers
 
 import abc
 
 from psyneulink.core.components.component import DefaultsFlexibility
-from psyneulink.core.components.functions.function import Function_Base, FunctionError
 from psyneulink.core.components.functions.distributionfunctions import DistributionFunction
-from psyneulink.core.globals.keywords import INITIALIZER, STATEFUL_FUNCTION_TYPE, STATEFUL_FUNCTION, NOISE, RATE
-from psyneulink.core.globals.parameters import Parameter
-from psyneulink.core.globals.utilities import parameter_spec, iscompatible
-from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.core.components.functions.function import FunctionError, Function_Base
 from psyneulink.core.globals.context import ContextFlags
+from psyneulink.core.globals.keywords import INITIALIZER, NOISE, RATE, STATEFUL_FUNCTION, STATEFUL_FUNCTION_TYPE
+from psyneulink.core.globals.parameters import Parameter
+from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.core.globals.utilities import iscompatible, parameter_spec, safe_len
 
 __all__ = ['StatefulFunction']
 
@@ -192,9 +192,9 @@ class StatefulFunction(Function_Base): #  --------------------------------------
 
         """
         noise = Parameter(0.0, modulable=True)
-        rate = Parameter(1.0, modulable=True)
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True)
         previous_value = np.array([0])
-        initializer = np.array([0])
+        initializer = Parameter(np.array([0]), matches_variable=True)
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -205,8 +205,8 @@ class StatefulFunction(Function_Base): #  --------------------------------------
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
-                 rate: parameter_spec = 1.0,
-                 noise: parameter_spec = 0.0,
+                 rate=None,
+                 noise=None,
                  initializer=None,
                  params: tc.optional(dict) = None,
                  owner=None,
@@ -227,7 +227,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                 initializer = params[INITIALIZER]
 
             else:
-                initializer = self.class_defaults.variable
+                initializer = self.class_defaults.initializer
 
         previous_value = self._initialize_previous_value(initializer)
 
@@ -261,7 +261,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
             rate = request_set[RATE]
 
             if isinstance(rate, (list, np.ndarray)) and not iscompatible(rate, self.defaults.variable):
-                if len(rate) != 1 and len(rate) != np.array(self.defaults.variable).size:
+                if safe_len(rate) != 1 and safe_len(rate) != np.array(self.defaults.variable).size:
                     # If the variable was not specified, then reformat it to match rate specification
                     #    and assign class_defaults.variable accordingly
                     # Note: this situation can arise when the rate is parametrized (e.g., as an array) in the
@@ -277,7 +277,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                                 "The length ({}) of the array specified for the rate parameter ({}) of {} "
                                 "must match the length ({}) of the default input ({});  "
                                 "the default input has been updated to match".format(
-                                    len(rate),
+                                    safe_len(rate),
                                     rate,
                                     self.name,
                                     np.array(self.defaults.variable).size
@@ -290,7 +290,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                             "must match the length of the default input ({}).".format(
                                 self.name,
                                 # rate,
-                                len(rate),
+                                safe_len(rate),
                                 np.array(self.defaults.variable).size,
                                 # self.defaults.variable,
                             )
@@ -347,7 +347,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                 raise FunctionError(rate_type_msg.format(self.name, rate))
 
             if isinstance(rate, np.ndarray) and not iscompatible(rate, self.defaults.variable):
-                if len(rate) != 1 and len(rate) != np.array(self.defaults.variable).size:
+                if safe_len(rate) != 1 and safe_len(rate) != np.array(self.defaults.variable).size:
                     if self._default_variable_flexibility is DefaultsFlexibility.FLEXIBLE:
                         self.defaults.variable = np.zeros_like(np.array(rate))
                         if self.verbosePref:
@@ -355,7 +355,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                                 "The length ({}) of the array specified for the rate parameter ({}) of {} "
                                 "must match the length ({}) of the default input ({});  "
                                 "the default input has been updated to match".format(
-                                    len(rate),
+                                    safe_len(rate),
                                     rate,
                                     self.name,
                                     np.array(self.defaults.variable).size
@@ -368,7 +368,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                         raise FunctionError(
                             "The length of the array specified for the rate parameter of {} ({})"
                             "must match the length of the default input ({}).".format(
-                                len(rate),
+                                safe_len(rate),
                                 # rate,
                                 self.name,
                                 np.array(self.defaults.variable).size,

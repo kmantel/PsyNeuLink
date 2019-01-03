@@ -951,12 +951,7 @@ from psyneulink.core.components.states.outputstate import OutputState
 from psyneulink.core.components.states.parameterstate import ParameterState
 from psyneulink.core.components.states.state import REMOVE_STATES, _parse_state_spec
 from psyneulink.core.globals.context import ContextFlags
-from psyneulink.core.globals.keywords import \
-    CURRENT_EXECUTION_COUNT, CURRENT_EXECUTION_TIME, EXECUTION_PHASE, FUNCTION, FUNCTION_PARAMS, \
-    INITIALIZING, INIT_EXECUTE_METHOD_ONLY, INIT_FUNCTION_METHOD_ONLY, \
-    INPUT_LABELS_DICT, INPUT_STATES, INPUT_STATE_VARIABLES, MONITOR_FOR_CONTROL, MONITOR_FOR_LEARNING, \
-    OUTPUT_LABELS_DICT, OUTPUT_STATES, OWNER_VALUE, PARAMETER_STATES, PREVIOUS_VALUE, REFERENCE_VALUE, \
-    TARGET_LABELS_DICT, VALUE, VARIABLE, kwMechanismComponentCategory
+from psyneulink.core.globals.keywords import CURRENT_EXECUTION_COUNT, CURRENT_EXECUTION_TIME, EXECUTION_PHASE, FUNCTION, FUNCTION_PARAMS, INITIALIZING, INIT_EXECUTE_METHOD_ONLY, INIT_FUNCTION_METHOD_ONLY, INPUT_LABELS_DICT, INPUT_STATES, INPUT_STATE_VARIABLES, MONITOR_FOR_CONTROL, MONITOR_FOR_LEARNING, OUTPUT_LABELS_DICT, OUTPUT_STATES, OWNER_VALUE, PARAMETER_STATES, PREVIOUS_VALUE, REFERENCE_VALUE, TARGET_LABELS_DICT, VALUE, VARIABLE, kwMechanismComponentCategory
 from psyneulink.core.globals.parameters import Parameter, parse_execution_context
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import register_category, remove_instance_from_registry
@@ -1480,7 +1475,7 @@ class Mechanism_Base(Mechanism):
                           registry=self._stateRegistry,
                           context=context)
 
-        default_variable = self._handle_default_variable(default_variable, size, input_states, params)
+        default_variable = self._preprocess_default_variable(default_variable, size, input_states, params)
 
         super(Mechanism_Base, self).__init__(default_variable=default_variable,
                                              size=size,
@@ -1511,16 +1506,7 @@ class Mechanism_Base(Mechanism):
     # Handlers
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _handle_default_variable(self, default_variable=None, size=None, input_states=None, params=None):
-        '''
-            Finds whether default_variable can be determined using **default_variable** and **size**
-            arguments.
-
-            Returns
-            -------
-                a default variable if possible
-                None otherwise
-        '''
+    def _preprocess_default_variable(self, default_variable=None, size=None, input_states=None, params=None):
         default_variable_from_input_states = None
 
         # handle specifying through params dictionary
@@ -1575,7 +1561,7 @@ class Mechanism_Base(Mechanism):
                     # do not pass input_states variable as default_variable, fall back to default_variable specification
                     pass
 
-        return super()._handle_default_variable(default_variable=default_variable, size=size)
+        return default_variable
 
     def _handle_arg_input_states(self, input_states):
         '''

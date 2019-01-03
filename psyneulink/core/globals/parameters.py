@@ -602,6 +602,9 @@ class Parameter(types.SimpleNamespace):
         history=None,
         history_max_length=1,
         fallback_default=False,
+        matches_variable=False,
+        # KDM 1/3/19: rename this flag, used for parameters like rate
+        temp_flag_float_or_array=False,
         _owner=None,
         _inherited=False,
         _user_specified=False,
@@ -635,6 +638,8 @@ class Parameter(types.SimpleNamespace):
             history=history,
             history_max_length=history_max_length,
             fallback_default=fallback_default,
+            matches_variable=matches_variable,
+            temp_flag_float_or_array=temp_flag_float_or_array,
             _inherited=_inherited,
             _user_specified=_user_specified,
         )

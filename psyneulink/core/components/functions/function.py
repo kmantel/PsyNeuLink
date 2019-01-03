@@ -143,7 +143,7 @@ from enum import Enum, IntEnum
 from random import randint
 
 from psyneulink.core import llvm as pnlvm
-from psyneulink.core.components.component import function_type, method_type
+from psyneulink.core.components.component import DefaultsFlexibility, function_type, method_type
 from psyneulink.core.components.shellclasses import Function, Mechanism
 from psyneulink.core.globals.context import ContextFlags
 from psyneulink.core.globals.keywords import ARGUMENT_THERAPY_FUNCTION, EXAMPLE_FUNCTION_TYPE, FUNCTION, FUNCTION_OUTPUT_TYPE, FUNCTION_OUTPUT_TYPE_CONVERSION, NAME, PARAMETER_STATE_PARAMS, kwComponentCategory, kwPreferenceSetName
@@ -679,6 +679,12 @@ class Function_Base(Function):
             return np.asarray(arg_val)
         else:
             return arg_val
+
+    def _handle_default_variable(self, default_variable=None, size=None, parameter_defaults=None):
+        default_variable = super()._handle_default_variable(default_variable, size, parameter_defaults)
+        self._default_variable_flexibility = DefaultsFlexibility.FLEXIBLE
+
+        return default_variable
 
     def _validate_parameter_spec(self, param, param_name, numeric_only=True):
         """Validates function param

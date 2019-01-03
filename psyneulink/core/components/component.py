@@ -421,7 +421,7 @@ from psyneulink.core.globals.parameters import Defaults, Parameter, ParameterAli
 from psyneulink.core.globals.preferences.componentpreferenceset import ComponentPreferenceSet, kpVerbosePref
 from psyneulink.core.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel, PreferenceSet
 from psyneulink.core.globals.registry import register_category
-from psyneulink.core.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, prune_unused_args, unproxy_weakproxy
+from psyneulink.core.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, object_has_single_value, prune_unused_args, unproxy_weakproxy
 from psyneulink.core.scheduling.condition import Never
 
 __all__ = [
@@ -964,6 +964,10 @@ class Component(object, metaclass=ComponentsMeta):
         except KeyError:
             function_params = None
 
+        # KDM 1/4/19: planned to substitute d with param_defaults, but this causes an error in test
+        # test_recurrent_mech_matrix_none_auto_none because it causes a default matrix to be set instead
+        # of triggering an Exception
+        d = {}
         if param_defaults is not None:
             # Exclude any function_params from the items to set on this Component
             # because these should just be pointers to the parameters of the same
@@ -986,12 +990,19 @@ class Component(object, metaclass=ComponentsMeta):
                     pass
             defaults.update(d)
 
-        v = self._handle_default_variable(default_variable, size)
+        v = self._handle_default_variable(default_variable, size, d)
         if v is None:
             default_variable = defaults[VARIABLE]
         else:
             default_variable = v
             defaults[VARIABLE] = default_variable
+
+        # assign any unspecified Parameters that should match variable shape
+        for param in self.parameters:
+            if not param._user_specified and param.matches_variable and not isinstance(param, ParameterAlias):
+                defaults[param.name] = np.zeros(default_variable.shape)
+                # below is necessary because _instantiate_defaults does more overwriting
+                param_defaults[param.name] = defaults[param.name]
 
         self.defaults = Defaults(owner=self, **defaults)
         self._initialize_parameters()
@@ -1219,7 +1230,7 @@ class Component(object, metaclass=ComponentsMeta):
     # Handlers
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _handle_default_variable(self, default_variable=None, size=None):
+    def _handle_default_variable(self, default_variable=None, size=None, parameter_defaults=None):
         '''
             Finds whether default_variable can be determined using **default_variable** and **size**
             arguments.
@@ -1232,22 +1243,102 @@ class Component(object, metaclass=ComponentsMeta):
         if self._default_variable_handled:
             return default_variable
 
+        # check for default_variable and size specs first (they are considered equivalent)
         default_variable = self._parse_arg_variable(default_variable)
 
         if default_variable is None:
             default_variable = self._handle_size(size, default_variable)
 
-            if default_variable is None or default_variable is NotImplemented:
-                self._default_variable_handled = True
-                return None
+        default_variable = convert_to_np_array(default_variable, dimension=1)
+
+        # check for compatibility with any parameter specs
+        default_variable_from_parameters = {}
+        if parameter_defaults is None:
+            parameter_defaults = {}
+
+        for (param_name, param_default_value) in parameter_defaults.items():
+            try:
+                param = getattr(self.parameters, param_name)
+            except AttributeError:
+                continue
+
+            if not isinstance(param, ParameterAlias) and param.matches_variable:
+                if param.temp_flag_float_or_array and object_has_single_value(param_default_value):
+                    default_variable_from_parameters[param_name] = np.asarray(param_default_value).squeeze()
+                else:
+                    default_variable_from_parameters[param_name] = convert_to_np_array(param_default_value, dimension=1)
+
+        dv_incompatibilities = set()
+        param_incompatibilities = set()
+
+        # check for equal shapes among parameters and default_variable/size
+        def generate_error_msg(default_variable, dv_incompatibilities, param_incompatibilities):
+            """
+                Creates an error message given a set of parameters whose specified values are not compatible with
+                the specified shape of the default_variable/size argument (**dv_incompatibilities**), and a set of parameters
+                that are not compatible with each other (**param_incompatibilities**)
+            """
+            base_msg = '{0}: Conflict among the values for {1}Parameters:\n\t{2}'.format(
+                self,
+                'default_variable/size and ' if default_variable is not None else '',
+                '\n\t'.join(
+                    (['default_variable/size: {0}'.format(default_variable)] if default_variable is not None else [])
+                    + [
+                        '{0}: {1}'.format(param_name, default_variable_from_parameters[param_name])
+                        for param_name in sorted(dv_incompatibilities.union(param_incompatibilities))
+                    ]
+                )
+            )
+            dv_msg = 'The values for the following Parameters must match the shape of default_variable/size but do not: {0}'.format(
+                ', '.join(sorted(dv_incompatibilities))
+            )
+            param_msg = 'The values for the following Parameters must have the same shape but do not: {0}'.format(
+                ', '.join(sorted(param_incompatibilities))
+            )
+            full_msg = None
+
+            if len(dv_incompatibilities) > 0:
+                full_msg = '{0}\n{1}'.format(base_msg, dv_msg)
+            if len(param_incompatibilities) > 0:
+                full_msg = '{0}\n{1}'.format(base_msg, param_msg) if full_msg is None else '{0}\n{1}'.format(full_msg, param_msg)
+
+            return full_msg
+
+        def param_value_is_compatible_with_shape(param_name, param_value, target_shape):
+            if getattr(self.parameters, param_name).temp_flag_float_or_array and param_value.ndim == 0:
+                return True
             else:
-                self._default_variable_flexibility = DefaultsFlexibility.RIGID
-        else:
+                return param_value.shape == target_shape
+
+        if len(default_variable_from_parameters) > 0:
+            if default_variable is not None:
+                for (param_name, param_default_value) in default_variable_from_parameters.items():
+                    if not param_value_is_compatible_with_shape(param_name, param_default_value, target_shape=default_variable.shape):
+                        dv_incompatibilities.add(param_name)
+
+            dv_params_list = list(default_variable_from_parameters.items())
+            shape = dv_params_list[0][1].shape
+            for (param_name, param_default_value) in dv_params_list[1:]:
+                if not param_value_is_compatible_with_shape(param_name, param_default_value, target_shape=shape):
+                    param_incompatibilities.add(param_name)
+                    param_incompatibilities.add(dv_params_list[0][0])
+
+            if len(dv_incompatibilities) > 0 or len(param_incompatibilities) > 0:
+                raise TypeError(generate_error_msg(default_variable, dv_incompatibilities, param_incompatibilities))
+            else:
+                # all the shapes are equivalent (or unspecified), so set to zeros of the shape (otherwise things get
+                # messy with considering which takes priority for the specific values inside the array of the given shape...)
+                if default_variable is None:
+                    if len(shape) > 0:
+                        # not a float (assume this is a special temp_flag_float_or_array)
+                        default_variable = np.zeros(shape)
+
+        if default_variable is not None:
             self._default_variable_flexibility = DefaultsFlexibility.RIGID
 
         self._default_variable_handled = True
 
-        return convert_to_np_array(default_variable, dimension=1)
+        return default_variable
 
     # IMPLEMENTATION NOTE: (7/7/17 CW) Due to System and Process being initialized with size at the moment (which will
     # be removed later), I’m keeping _handle_size in Component.py. I’ll move the bulk of the function to Mechanism

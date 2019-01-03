@@ -35,22 +35,14 @@ import typecheck as tc
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import DefaultsFlexibility
-from psyneulink.core.components.functions.function import \
-    Function_Base, FunctionError, MULTIPLICATIVE_PARAM, ADDITIVE_PARAM
 from psyneulink.core.components.functions.distributionfunctions import DistributionFunction, THRESHOLD
+from psyneulink.core.components.functions.function import ADDITIVE_PARAM, FunctionError, Function_Base, MULTIPLICATIVE_PARAM
 from psyneulink.core.components.functions.statefulfunctions.statefulfunction import StatefulFunction
-from psyneulink.core.globals.keywords import \
-    ACCUMULATOR_INTEGRATOR_FUNCTION, ADAPTIVE_INTEGRATOR_FUNCTION, DECAY, \
-    DRIFT_DIFFUSION_INTEGRATOR_FUNCTION, FITZHUGHNAGUMO_INTEGRATOR_FUNCTION, FUNCTION, INCREMENT, \
-    INITIALIZER, INPUT_STATES, INTERACTIVE_ACTIVATION_INTEGRATOR_FUNCTION, LEAKY_COMPETING_INTEGRATOR_FUNCTION, NOISE, \
-    OFFSET, OPERATION, ORNSTEIN_UHLENBECK_INTEGRATOR_FUNCTION, OUTPUT_STATES, PRODUCT, RATE, REST, \
-    SCALE, SIMPLE_INTEGRATOR_FUNCTION, SUM, \
-    TIME_STEP_SIZE, DUAL_ADAPTIVE_INTEGRATOR_FUNCTION, \
-    INTEGRATOR_FUNCTION, INTEGRATOR_FUNCTION_TYPE
-from psyneulink.core.globals.parameters import Parameter
-from psyneulink.core.globals.utilities import parameter_spec, all_within_range, iscompatible
 from psyneulink.core.globals.context import ContextFlags
+from psyneulink.core.globals.keywords import ACCUMULATOR_INTEGRATOR_FUNCTION, ADAPTIVE_INTEGRATOR_FUNCTION, DECAY, DRIFT_DIFFUSION_INTEGRATOR_FUNCTION, DUAL_ADAPTIVE_INTEGRATOR_FUNCTION, FITZHUGHNAGUMO_INTEGRATOR_FUNCTION, FUNCTION, INCREMENT, INITIALIZER, INPUT_STATES, INTEGRATOR_FUNCTION, INTEGRATOR_FUNCTION_TYPE, INTERACTIVE_ACTIVATION_INTEGRATOR_FUNCTION, LEAKY_COMPETING_INTEGRATOR_FUNCTION, NOISE, OFFSET, OPERATION, ORNSTEIN_UHLENBECK_INTEGRATOR_FUNCTION, OUTPUT_STATES, PRODUCT, RATE, REST, SCALE, SIMPLE_INTEGRATOR_FUNCTION, SUM, TIME_STEP_SIZE
+from psyneulink.core.globals.parameters import Parameter
 from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.core.globals.utilities import all_within_range, iscompatible, parameter_spec, safe_len
 
 
 __all__ = ['SimpleIntegrator', 'AdaptiveIntegrator', 'DriftDiffusionIntegrator',
@@ -207,10 +199,10 @@ class IntegratorFunction(StatefulFunction):  # ---------------------------------
                     :type: float
 
         """
-        rate = Parameter(1.0, modulable=True)
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True)
         noise = Parameter(0.0, modulable=True)
         previous_value = np.array([0])
-        initializer = np.array([0])
+        initializer = Parameter(np.array([0]), matches_variable=True)
 
     paramClassDefaults = StatefulFunction.paramClassDefaults.copy()
 
@@ -734,7 +726,7 @@ class SimpleIntegrator(IntegratorFunction):  # ---------------------------------
                     :type: float
 
         """
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True, aliases=[MULTIPLICATIVE_PARAM])
         offset = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
 
     @tc.typecheck
@@ -859,7 +851,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
         (see `noise <Integrator_Noise>` for details).
 
     offset : float, list or 1d array : default 0.0
-        specifies constant value added to integral in each call to `function <AdaptiveIntegrator.function>`;  
+        specifies constant value added to integral in each call to `function <AdaptiveIntegrator.function>`;
         if it is a list or array, it must be the same length as `variable <AdaptiveIntegrator.variable>`
         (see `offset <AdaptiveIntegrator.offset>` for details).
 
@@ -960,7 +952,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
                     :type: float
 
         """
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True, aliases=[MULTIPLICATIVE_PARAM])
         offset = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
 
     @tc.typecheck
@@ -997,7 +989,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
         if RATE in request_set:
             rate = request_set[RATE]
             if isinstance(rate, (list, np.ndarray)):
-                if len(rate) != 1 and len(rate) != np.array(self.defaults.variable).size:
+                if safe_len(rate) != 1 and safe_len(rate) != np.array(self.defaults.variable).size:
                     # If the variable was not specified, then reformat it to match rate specification
                     #    and assign class_defaults.variable accordingly
                     # Note: this situation can arise when the rate is parametrized (e.g., as an array) in the
@@ -1013,13 +1005,13 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
                                 "The length ({}) of the array specified for the {} parameter ({}) of {} "
                                 "must match the length ({}) of the default input ({});  "
                                 "the default input has been updated to match".
-                                    format(len(rate), repr(RATE), rate, self.name,
+                                    format(safe_len(rate), repr(RATE), rate, self.name,
                                     np.array(self.defaults.variable).size, self.defaults.variable))
                     else:
                         raise FunctionError(
                             "The length ({}) of the array specified for the rate parameter ({}) of {} "
                             "must match the length ({}) of the default input ({})".format(
-                                len(rate),
+                                safe_len(rate),
                                 rate,
                                 self.name,
                                 np.array(self.defaults.variable).size,
@@ -1569,7 +1561,7 @@ class DualAdaptiveIntegrator(IntegratorFunction):  # ---------------------------
         if RATE in request_set:
             rate = request_set[RATE]
             if isinstance(rate, (list, np.ndarray)):
-                if len(rate) != 1 and len(rate) != np.array(self.defaults.variable).size:
+                if safe_len(rate) != 1 and safe_len(rate) != np.array(self.defaults.variable).size:
                     # If the variable was not specified, then reformat it to match rate specification
                     #    and assign class_defaults.variable accordingly
                     # Note: this situation can arise when the rate is parametrized (e.g., as an array) in the
@@ -1585,7 +1577,7 @@ class DualAdaptiveIntegrator(IntegratorFunction):  # ---------------------------
                                 "The length ({}) of the array specified for the rate parameter ({}) of {} "
                                 "must match the length ({}) of the default input ({});  "
                                 "the default input has been updated to match".format(
-                                    len(rate),
+                                    safe_len(rate),
                                     rate,
                                     self.name,
                                     np.array(self.defaults.variable).size
@@ -1596,7 +1588,7 @@ class DualAdaptiveIntegrator(IntegratorFunction):  # ---------------------------
                         raise FunctionError(
                             "The length ({}) of the array specified for the rate parameter ({}) of {} "
                             "must match the length ({}) of the default input ({})".format(
-                                len(rate),
+                                safe_len(rate),
                                 rate,
                                 self.name,
                                 np.array(self.defaults.variable).size,
@@ -1977,7 +1969,7 @@ class InteractiveActivationIntegrator(IntegratorFunction):  # ------------------
                     :type: float
 
         """
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True, aliases=[MULTIPLICATIVE_PARAM])
         decay = Parameter(1.0, modulable=True)
         rest = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         max_val = Parameter(1.0)
@@ -2357,7 +2349,7 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
                     :type: float
 
         """
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True, aliases=[MULTIPLICATIVE_PARAM])
         offset = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         starting_point = 0.0
         threshold = Parameter(100.0, modulable=True)
@@ -2708,7 +2700,7 @@ class OrnsteinUhlenbeckIntegrator(IntegratorFunction):  # ----------------------
                     :type: float
 
         """
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True, aliases=[MULTIPLICATIVE_PARAM])
         decay = Parameter(1.0, modulable=True)
         offset = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         time_step_size = Parameter(1.0, modulable=True)
@@ -2991,7 +2983,7 @@ class LeakyCompetingIntegrator(IntegratorFunction):  # -------------------------
                     :type: float
 
         """
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, matches_variable=True, temp_flag_float_or_array=True, aliases=[MULTIPLICATIVE_PARAM])
         offset = Parameter(None, modulable=True, aliases=[ADDITIVE_PARAM])
         time_step_size = Parameter(0.1, modulable=True)
 

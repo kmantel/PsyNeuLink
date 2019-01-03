@@ -28,16 +28,14 @@ import numpy as np
 import typecheck as tc
 
 
-from psyneulink.core.components.functions.function import Function_Base, FunctionError, is_function_type
-from psyneulink.core.components.functions.transferfunctions import Logistic
 from psyneulink.core.components.component import ComponentError, function_type, method_type
-from psyneulink.core.globals.keywords import \
-    CONTRASTIVE_HEBBIAN_FUNCTION, DEFAULT_VARIABLE, TDLEARNING_FUNCTION, LEARNING_FUNCTION_TYPE, LEARNING_RATE, \
-    KOHONEN_FUNCTION, GAUSSIAN, LINEAR, EXPONENTIAL, HEBBIAN_FUNCTION, RL_FUNCTION, BACKPROPAGATION_FUNCTION, MATRIX
-from psyneulink.core.globals.parameters import Parameter
+from psyneulink.core.components.functions.function import FunctionError, Function_Base, is_function_type
+from psyneulink.core.components.functions.transferfunctions import Logistic
 from psyneulink.core.globals.context import ContextFlags
-from psyneulink.core.globals.utilities import is_numeric, scalar_distance
+from psyneulink.core.globals.keywords import BACKPROPAGATION_FUNCTION, CONTRASTIVE_HEBBIAN_FUNCTION, DEFAULT_VARIABLE, EXPONENTIAL, GAUSSIAN, HEBBIAN_FUNCTION, KOHONEN_FUNCTION, LEARNING_FUNCTION_TYPE, LEARNING_RATE, LINEAR, MATRIX, RL_FUNCTION, TDLEARNING_FUNCTION
+from psyneulink.core.globals.parameters import Parameter
 from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.core.globals.utilities import is_numeric, scalar_distance
 
 __all__ = ['LearningFunction', 'Kohonen', 'Hebbian', 'ContrastiveHebbian',
            'Reinforcement', 'BayesGLM', 'BackPropagation', 'TDLearning',
@@ -445,33 +443,35 @@ class BayesGLM(LearningFunction):
                                                   gamma_size_0=gamma_size_0,
                                                   params=params)
 
+        default_variable = self._preprocess_default_variable(default_variable, mu_0, sigma_0)
+
         super().__init__(default_variable=default_variable,
                          params=params,
                          owner=owner,
                          prefs=prefs,
                          context=ContextFlags.CONSTRUCTOR)
 
-    def _handle_default_variable(self, default_variable=None, size=None):
+    def _preprocess_default_variable(self, default_variable=None, mu_0=None, sigma_0=None):
 
         # If default_variable was not specified by user...
-        if default_variable is None and size in {None, NotImplemented}:
+        if default_variable is None:
             #  but mu_0 and/or sigma_0 was specified as an array...
-            if isinstance(self.mu_0, (list, np.ndarray)) or isinstance(self.sigma_0, (list, np.ndarray)):
+            if isinstance(mu_0, (list, np.ndarray)) or isinstance(sigma_0, (list, np.ndarray)):
                 # if both are specified, make sure they are the same size
-                if (isinstance(self.mu_0, (list, np.ndarray))
-                        and isinstance(self.sigma_0, (list, np.ndarray))
-                        and len(self.mu_0) != len(self.self.sigma_0)):
+                if (isinstance(mu_0, (list, np.ndarray))
+                        and isinstance(sigma_0, (list, np.ndarray))
+                        and len(mu_0) != len(sigma_0)):
                     raise FunctionError("Length of {} ({}) does not match length of {} ({}) for {}".
-                                        format(repr('mu_0'), len(self.mu_0),
-                                                    repr('sigma_0'), len(self.self.sigma_0),
+                                        format(repr('mu_0'), len(mu_0),
+                                                    repr('sigma_0'), len(sigma_0),
                                                          self.__class.__.__name__))
                 # allow their size to determine the size of variable
-                if isinstance(self.mu_0, (list, np.ndarray)):
-                    default_variable = [np.zeros_like(self.mu_0), np.zeros((1,1))]
+                if isinstance(mu_0, (list, np.ndarray)):
+                    default_variable = [np.zeros_like(mu_0), np.zeros((1,1))]
                 else:
-                    default_variable = [np.zeros_like(self.sigma_0), np.zeros((1,1))]
+                    default_variable = [np.zeros_like(sigma_0), np.zeros((1,1))]
 
-        return super()._handle_default_variable(default_variable=default_variable, size=size)
+        return default_variable
 
     def initialize_priors(self):
         '''Set the prior parameters (`mu_prior <BayesGLM.mu_prior>`, `Lamba_prior <BayesGLM.Lambda_prior>`,
