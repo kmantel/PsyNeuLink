@@ -219,17 +219,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
         if not hasattr(self, "stateful_attributes"):
             self.stateful_attributes = ["previous_value"]
 
-        if initializer is None:
-            if params is not None and INITIALIZER in params and params[INITIALIZER] is not None:
-                # This is only needed as long as a new copy of a function is created
-                # whenever assigning the function to a mechanism.
-                # The old values are compiled and passed in through params argument.
-                initializer = params[INITIALIZER]
-
-            else:
-                initializer = self.class_defaults.initializer
-
-        previous_value = self._initialize_previous_value(initializer)
+        previous_value = initializer if initializer is not None else self.class_defaults.initializer
 
         # Assign args to params and functionParams dicts (kwConstants must == arg names)
         params = self._assign_args_to_param_dicts(rate=rate,
@@ -237,9 +227,6 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                                                   previous_value=previous_value,
                                                   noise=noise,
                                                   params=params)
-
-        # does not actually get set in _assign_args_to_param_dicts but we need it as an instance_default
-        params[INITIALIZER] = initializer
 
         super().__init__(default_variable=default_variable,
                          params=params,
