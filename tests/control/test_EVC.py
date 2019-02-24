@@ -6,6 +6,7 @@ from psyneulink.core.components.functions.transferfunctions import Exponential, 
 from psyneulink.core.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.core.components.process import Process
 from psyneulink.core.components.projections.modulatory.controlprojection import ControlProjection
+from psyneulink.core.components.states.modulatorysignals.controlsignal import COST_OPTIONS, ControlSignalCosts
 from psyneulink.core.components.system import System
 from psyneulink.core.globals.keywords import ALLOCATION_SAMPLES, IDENTITY_MATRIX, OUTPUT_MEAN, RESULT, OUTPUT_VARIANCE
 from psyneulink.core.globals.preferences.componentpreferenceset import ComponentPreferenceSet, kpReportOutputPref, kpVerbosePref
@@ -31,7 +32,8 @@ def test_EVC():
                 ControlProjection(
                     function=Linear,
                     control_signal_params={
-                        ALLOCATION_SAMPLES: np.arange(0.1, 1.01, 0.3)
+                        ALLOCATION_SAMPLES: np.arange(0.1, 1.01, 0.3),
+                        COST_OPTIONS: ControlSignalCosts.INTENSITY
                     },
                 ),
             ),
@@ -40,7 +42,8 @@ def test_EVC():
                 ControlProjection(
                     function=Linear,
                     control_signal_params={
-                        ALLOCATION_SAMPLES: np.arange(0.1, 1.01, 0.3)
+                        ALLOCATION_SAMPLES: np.arange(0.1, 1.01, 0.3),
+                        COST_OPTIONS: ControlSignalCosts.INTENSITY
                     },
                 ),
             ),
@@ -221,7 +224,8 @@ def test_EVC_gratton():
                 1.0,
                 ControlProjection(
                     function=Linear,
-                    control_signal_params={ALLOCATION_SAMPLES: signalSearchRange}
+                    control_signal_params={ALLOCATION_SAMPLES: signalSearchRange,
+                                           COST_OPTIONS: ControlSignalCosts.INTENSITY}
                 )
             )
         ),
@@ -234,7 +238,8 @@ def test_EVC_gratton():
                 1.0,
                 ControlProjection(
                     function=Linear,
-                    control_signal_params={ALLOCATION_SAMPLES: signalSearchRange}
+                    control_signal_params={ALLOCATION_SAMPLES: signalSearchRange,
+                                           COST_OPTIONS: ControlSignalCosts.INTENSITY}
                 )
             )
         ),
@@ -531,6 +536,8 @@ def test_laming_validation_specify_control_signals():
         ],
         name='EVC Test System'
     )
+    mySystem.controller.control_signals[0].cost_options=ControlSignalCosts.INTENSITY
+    mySystem.controller.control_signals[1].cost_options=ControlSignalCosts.INTENSITY
     mySystem.recordSimulationPref = True
 
     # Stimulus
@@ -635,7 +642,8 @@ def test_stateful_mechanism_in_simulation():
                 ControlProjection(
                     function=Linear,
                     control_signal_params={
-                        ALLOCATION_SAMPLES: np.arange(0.1, 1.01, 0.3)
+                        ALLOCATION_SAMPLES: np.arange(0.1, 1.01, 0.3),
+                        COST_OPTIONS: ControlSignalCosts.INTENSITY
                     },
                 ),
             ),
@@ -644,7 +652,8 @@ def test_stateful_mechanism_in_simulation():
                 ControlProjection(
                     function=Linear,
                     control_signal_params={
-                        ALLOCATION_SAMPLES: np.arange(0.1, 1.01, 0.3)
+                        ALLOCATION_SAMPLES: np.arange(0.1, 1.01, 0.3),
+                        COST_OPTIONS: ControlSignalCosts.INTENSITY
                     },
                 ),
             ),
