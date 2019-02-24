@@ -387,7 +387,7 @@ class ControlSignalCosts(IntEnum):
         `cost <ControlSignal.cost>`.
 
     DEFAULTS
-        assign default set of `cost functions <ControlSignal_Costs>` as `INTENSITY`).
+        assign default set of `cost functions <ControlSignal_Costs>` as `NONE`).
 
     """
     NONE          = 0
@@ -405,7 +405,6 @@ class ControlSignalError(Exception):
 
     def __str__(self):
         return repr(self.error_value)
-
 
 
 class ControlSignal(ModulatorySignal):
