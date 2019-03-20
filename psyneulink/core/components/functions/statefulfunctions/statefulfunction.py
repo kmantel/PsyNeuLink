@@ -477,6 +477,14 @@ class StatefulFunction(Function_Base): #  --------------------------------------
 
         return val
 
+    def get_previous_value(self, execution_context=None):
+        # temporary method until previous values are integrated for all parameters
+        value = self.parameters.previous_value.get(execution_context)
+        if value is None:
+            value = self.parameters.previous_value.get()
+
+        return value
+
     def reinitialize(self, *args, execution_context=None):
         """
             Resets `value <StatefulFunction.previous_value>`  and `previous_value <StatefulFunction.previous_value>`

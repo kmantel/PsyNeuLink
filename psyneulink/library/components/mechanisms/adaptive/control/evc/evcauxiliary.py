@@ -594,6 +594,11 @@ def compute_EVC(ctlr, allocation_vector, runtime_params, context, execution_id=N
         # "save" the current state of each stateful mechanism by storing the values of each of its stateful
         # attributes in the reinitialization_values dictionary; this gets passed into run and used to call
         # the reinitialize method on each stateful mechanism.
+
+        # KDM 3/26/19: Buffer no longer uses previous_value, so we don't want to reinitialize it
+        if isinstance(mechanism.function, Buffer):
+            continue
+
         reinitialization_value = []
 
         if isinstance(mechanism.function, StatefulFunction):
@@ -924,7 +929,11 @@ class PredictionMechanism(IntegratorMechanism):
 
                 # Maintain the preceding sequence of inputs (of length window_size), and use those for each simulation
                 function = Buffer(default_variable=[[0]],
-                                  initializer=initial_value,
+                                  # KDM 4/3/19: removing this because silently it was ignored by old code
+                                  # "initializer = initializer = []" in _initialize_previous_value
+                                  # now, the code has an effect and it doesn't seem correct to start a Buffer with
+                                  # values inside anyway
+                                  # initializer=initial_value,
                                   rate=rate,
                                   noise=noise,
                                   history=window_size)

@@ -705,14 +705,6 @@ class Function_Base(Function):
             except AttributeError:
                 raise FunctionError("{0} has no parameter '{1}'".format(self, param_name))
 
-    def get_previous_value(self, execution_context=None):
-        # temporary method until previous values are integrated for all parameters
-        value = self.parameters.previous_value.get(execution_context)
-        if value is None:
-            value = self.parameters.previous_value.get()
-
-        return value
-
     def convert_output_type(self, value, output_type=None):
         if output_type is None:
             if not self.enable_output_type_conversion or self.output_type is None:

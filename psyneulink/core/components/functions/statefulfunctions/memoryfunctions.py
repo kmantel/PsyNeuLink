@@ -63,7 +63,7 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
 
     .. _Buffer:
 
-    Append `variable <Buffer.variable>` to the end of `previous_value <Buffer.previous_value>` (i.e., right-append
+    Append `variable <Buffer.variable>` to the end of `value <Buffer.value>` (i.e., right-append
     to deque of previous inputs).
 
     .. note::
@@ -80,7 +80,7 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
        to `function <Buffer.function>`.
 
     If the length of the result exceeds `history <Buffer.history>`, delete the first item.
-    Return `previous_value <Buffer.previous_value>` appended with `variable <Buffer.variable>`.
+    Return `value <Buffer.value>` appended with `variable <Buffer.variable>`.
 
     Arguments
     ---------
@@ -133,18 +133,14 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
 
     history : int
         determines maxlen of the deque and the value returned by the `function <Buffer.function>`. If appending
-        `variable <Buffer.variable>` to `previous_value <Buffer.previous_value>` exceeds history, the first item of
-        `previous_value <Buffer.previous_value>` is deleted, and `variable <Buffer.variable>` is appended to it,
-        so that `value <Buffer.previous_value>` maintains a constant length.  If history is not specified,
+        `variable <Buffer.variable>` to `value <Buffer.value>` exceeds history, the first item of
+        `value <Buffer.value>` is deleted, and `variable <Buffer.variable>` is appended to it,
+        so that `value <Buffer.value>` maintains a constant length.  If history is not specified,
         the value returned continues to be extended indefinitely.
 
     initializer : float, list or ndarray
         value assigned as the first item of the deque when the Function is initialized, or reinitialized
-        if the **new_previous_value** argument is not specified in the call to `reinitialize
-        <StatefulFUnction.reinitialize>`.
-
-    previous_value : 1d array : default class_defaults.variable
-        state of the deque prior to appending `variable <Buffer.variable>` in the current call.
+        if an argument is not specified in the call to `reinitialize <Buffer.reinitialize>`.
 
     owner : Component
         `component <Component>` to which the Function has been assigned.
@@ -185,9 +181,11 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
                     :type: float
 
         """
+        value = Parameter(deque([]), read_only=True)
         rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
         noise = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         history = None
+        initializer = []
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -240,13 +238,14 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
 
         self.has_initializers = True
 
-    def _initialize_previous_value(self, initializer, execution_context=None):
-        initializer = initializer or []
-        previous_value = deque(initializer, maxlen=self.history)
+    def _validate_initializers(self, default_variable):
+        # buffer only uses initializer, which
+        pass
 
-        self.parameters.previous_value.set(previous_value, execution_context, override=True)
-
-        return previous_value
+    def _initialize_deque(self, initializer=None):
+        if initializer is None:
+            initializer = []
+        return deque(initializer, maxlen=self.history)
 
     def _instantiate_attributes_before_function(self, function=None, context=None):
 
@@ -255,13 +254,11 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
     def reinitialize(self, *args, execution_context=None):
         """
 
-        Clears the `previous_value <Buffer.previous_value>` deque.
+        Clears the `value <Buffer.value>` deque.
 
         If an argument is passed into reinitialize or if the `initializer <Buffer.initializer>` attribute contains a
-        value besides [], then that value is used to start the new `previous_value <Buffer.previous_value>` deque.
-        Otherwise, the new `previous_value <Buffer.previous_value>` deque starts out empty.
-
-        `value <Buffer.value>` takes on the same value as  `previous_value <Buffer.previous_value>`.
+        value besides [], then that value is used to start the new `value <Buffer.value>` deque.
+        Otherwise, the new `value <Buffer.value>` deque starts out empty.
 
         """
 
@@ -275,17 +272,16 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
         # arguments were passed in, but there was a mistake in their specification -- raise error!
         else:
             raise FunctionError("Invalid arguments ({}) specified for {}. Either one value must be passed to "
-                                "reinitialize its stateful attribute (previous_value), or reinitialize must be called "
+                                "reinitialize its stateful attribute (its Buffer deque), or reinitialize must be called "
                                 "without any arguments, in which case the current initializer value, will be used to "
-                                "reinitialize previous_value".format(args,
+                                "reinitialize the deque".format(args,
                                                                      self.name))
 
         if reinitialization_value is None or reinitialization_value == []:
-            self.get_previous_value(execution_context).clear()
             value = deque([], maxlen=self.history)
 
         else:
-            value = self._initialize_previous_value(reinitialization_value, execution_context=execution_context)
+            value = self._initialize_deque(reinitialization_value)
 
         self.parameters.value.set(value, execution_context, override=True)
         return value
@@ -320,28 +316,35 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
         rate = np.array(self.get_current_function_param(RATE, execution_id)).astype(float)
 
         # execute noise if it is a function
-        noise = self._try_execute_param(self.get_current_function_param(NOISE, execution_id), variable)
+        noise = np.array(self._try_execute_param(self.get_current_function_param(NOISE, execution_id), variable))
+
+        # KDM 3/25/19: current tests depend on a float inside the deque not being converted into a 1d ndarray, so
+        # if rate or noise is just one value, convert to float
+        try:
+            rate = float(rate)
+        except TypeError:
+            pass
+
+        try:
+            noise = float(noise)
+        except TypeError:
+            pass
 
         # If this is an initialization run, leave deque empty (don't want to count it as an execution step);
         # Just return current input (for validation).
         if self.parameters.context.get(execution_id).initialization_status == ContextFlags.INITIALIZING:
+            # KDM 3/25/19: current tests depend on the deque being turned into an ndarray, though
+            # I think correct behavior is to leave it as a deque
+            # return np.array(self._initialize_deque(self.defaults.initializer))
             return variable
 
-        previous_value = np.array(self.get_previous_value(execution_id))
-
         # Apply rate and/or noise, if they are specified, to all stored items
-        if len(previous_value):
-            if any(np.atleast_1d(rate) != 1.0):
-                previous_value = previous_value * rate
-            if any(np.atleast_1d(noise) != 0.0):
-                previous_value = previous_value + noise
+        new_deque = deque([(rate * np.array(x)) + noise for x in self.parameters.value.get(execution_id)], self.history)
+        new_deque.append(variable)
 
-        previous_value = deque(previous_value, maxlen=self.history)
-
-        previous_value.append(variable)
-
-        self.parameters.previous_value.set(previous_value, execution_id)
-        return self.convert_output_type(previous_value)
+        # KDM 3/25/19: current tests depend on the deque being turned into an ndarray, though
+        # I think correct behavior is to leave it as a deque
+        return self.convert_output_type(new_deque)
 
 
 RETRIEVAL_PROB = 'retrieval_prob'
