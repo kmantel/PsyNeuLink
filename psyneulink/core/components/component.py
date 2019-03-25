@@ -1152,6 +1152,11 @@ class Component(object, metaclass=ComponentsMeta):
 
         self._validate()
 
+        try:
+            self.function.reinitialize()
+        except:
+            pass
+
         self.context.initialization_status = ContextFlags.INITIALIZED
         # MODIFIED 12/4/18 NEW [JDC]:
         from psyneulink.core.components.functions.function import Function_Base
