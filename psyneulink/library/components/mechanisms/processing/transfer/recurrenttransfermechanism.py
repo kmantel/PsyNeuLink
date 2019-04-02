@@ -1345,7 +1345,7 @@ class RecurrentTransferMechanism(TransferMechanism):
             setattr(self, "_auto", val)
 
         if hasattr(self, "recurrent_projection") and 'hetero' in self._parameter_states:
-            self.recurrent_projection.parameter_states["matrix"].function.previous_value = self.matrix
+            self.recurrent_projection.parameter_states["matrix"].function.value = self.matrix
 
         # Update user_params dict with new value
         self.user_params.__additem__("auto", val)
@@ -1363,7 +1363,7 @@ class RecurrentTransferMechanism(TransferMechanism):
             setattr(self, "_hetero", val)
 
         if hasattr(self, "recurrent_projection") and 'auto' in self._parameter_states:
-            self.recurrent_projection.parameter_states["matrix"].function.previous_value = self.matrix
+            self.recurrent_projection.parameter_states["matrix"].function.value = self.matrix
 
         # Update user_params dict with new value
         self.user_params.__additem__("hetero", val)

@@ -308,7 +308,7 @@ class AccumulatorIntegrator(IntegratorFunction):  # ----------------------------
     <AccumulatorIntegrator.variable>` and returns:
 
     .. math::
-        previous\\_value \\cdot rate + increment  + noise
+        (previous\\ value) \\cdot rate + increment  + noise
 
     so that, with each call to `function <AccumulatorIntegrator.function>`, the accumulated value increases by:
 
@@ -336,12 +336,12 @@ class AccumulatorIntegrator(IntegratorFunction):  # ----------------------------
         <AccumulatorIntegrator.variable>` (see `rate <AccumulatorIntegrator.rate>` for additional details.
 
     increment : float, list or 1d array : default 0.0
-        specifies an amount to be added to `previous_value <AccumulatorIntegrator.previous_value>` in each call to
+        specifies an amount to be added to the previous `value <AccumulatorIntegrator.value>` in each call to
         `function <AccumulatorIntegrator.function>`; if it is a list or array, it must be the same length as
         `variable <AccumulatorIntegrator.variable>` (see `increment <AccumulatorIntegrator.increment>` for details).
 
     noise : float, Function, list or 1d array : default 0.0
-        specifies random value added to `prevous_value <AccumulatorIntegrator.previous_value>` in each call to
+        specifies random value added to the previous `value <AccumulatorIntegrator.value>` in each call to
         `function <AccumulatorIntegrator.function>`; if it is a list or array, it must be the same length as
         `variable <AccumulatorIntegrator.variable>` (see `noise <Integrator_Noise>` for additonal details).
 
@@ -372,20 +372,20 @@ class AccumulatorIntegrator(IntegratorFunction):  # ----------------------------
         integrator functions that depend on both a prior value and a new value (variable).
 
     rate : float or 1d array
-        determines the rate of exponential decay of `previous_value <AccumulatorIntegrator.previous_value>` in each
+        determines the rate of exponential decay of the previous `value <AccumulatorIntegrator.value>` in each
         call to `function <AccumulatorIntegrator.function>`. If it is a float or has a single element, its value is
-        applied to all the elements of `previous_value <AccumulatorIntegrator.previous_value>`; if it is an array, each
-        element is applied to the corresponding element of `previous_value <AccumulatorIntegrator.previous_value>`.
+        applied to all the elements of the previous `value <AccumulatorIntegrator.value>`; if it is an array, each
+        element is applied to the corresponding element of the previous `value <AccumulatorIntegrator.value>`.
         Serves as *MULTIPLICATIVE_PARAM* for `modulation <ModulatorySignal_Modulation>` of `function
         <AccumulatorIntegrator.function>`.
 
     increment : float, function, or 1d array
-        determines the amount added to `previous_value <AccumulatorIntegrator.previous_value>` in each call to
+        determines the amount added to the previous `value <AccumulatorIntegrator.value>` in each call to
         `function <AccumulatorIntegrator.function>`.  If it is a list or array, it must be the same length as
         `variable <AccumulatorIntegrator.variable>` and each element is added to the corresponding element of
-        `previous_value <AccumulatorIntegrator.previous_value>` (i.e., it is used for Hadamard addition).  If it is a
-        scalar or has a single element, its value is added to all the elements of `previous_value
-        <AccumulatorIntegrator.previous_value>`.  Serves as *ADDITIVE_PARAM* for
+        the previous `value <AccumulatorIntegrator.value>` (i.e., it is used for Hadamard addition).  If it is a
+        scalar or has a single element, its value is added to all the elements of the previous `value
+        <AccumulatorIntegrator.value>`.  Serves as *ADDITIVE_PARAM* for
         `modulation <ModulatorySignal_Modulation>` of `function <AccumulatorIntegrator.function>`.
 
     noise : float, Function or 1d array
@@ -393,12 +393,7 @@ class AccumulatorIntegrator(IntegratorFunction):  # ----------------------------
         (see `noise <Integrator_Noise>` for details).
 
     initializer : float or 1d array
-        determines the starting value(s) for integration (i.e., the value(s) to which `previous_value
-        <AccumulatorIntegrator.previous_value>` is set (see `initializer <Integrator_Initializer>` for details).
-
-    previous_value : 1d array : default class_defaults.variable
-        stores previous value to which `rate <AccumulatorIntegrator.rate>` and `noise <AccumulatorIntegrator.noise>`
-        will be added.
+        determines the starting value(s) for integration (see `initializer <Integrator_Initializer>` for details).
 
     owner : Component
         `component <Component>` to which the Function has been assigned.
@@ -580,7 +575,7 @@ class AccumulatorIntegrator(IntegratorFunction):  # ----------------------------
         if increment is None:
             increment = 0.0
 
-        previous_value = np.atleast_2d(self.get_previous_value(execution_id))
+        previous_value = np.atleast_2d(self.parameters.value.get(execution_id))
 
         value = previous_value * rate + noise + increment
 

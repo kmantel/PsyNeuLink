@@ -295,7 +295,7 @@ def _mapping_projection_matrix_setter(value, owning_component=None, execution_id
     owning_component.function.parameters.matrix.set(value, execution_id)
     # KDM 11/13/18: not sure that below is correct to do here, probably is better to do this in a "reinitialize" type method
     # but this is needed for Kalanthroff model to work correctly (though untested, it is in Scripts/Models)
-    owning_component.parameter_states["matrix"].function.parameters.previous_value.set(value, execution_id)
+    owning_component.parameter_states["matrix"].function.parameters.value.set(value, execution_context=execution_id, skip_history=True)
 
     return value
 
@@ -699,7 +699,7 @@ class MappingProjection(PathwayProjection_Base):
         self.function.matrix = matrix
 
         if hasattr(self, "_parameter_states"):
-            self.parameter_states["matrix"].function.previous_value = matrix
+            self.parameter_states["matrix"].function.value = matrix
 
     @property
     def _matrix_spec(self):
