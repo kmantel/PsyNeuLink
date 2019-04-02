@@ -248,6 +248,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                          context=context)
 
         self.has_initializers = True
+        self.reinitialize()
 
     def _validate(self):
         self._validate_rate(self.defaults.rate)
