@@ -3018,10 +3018,6 @@ class Component(object, metaclass=ComponentsMeta):
         #                     (e.g., error_matrix for LearningMechanism and controller for EVCControlMechanism)
         function_variable = self._parse_function_variable(variable, execution_id=execution_id, context=context)
         value = self.function(variable=function_variable, execution_id=execution_id, params=runtime_params, context=context, **kwargs)
-        try:
-            self.function.parameters.value.set(value, execution_id, override=True)
-        except AttributeError:
-            pass
 
         # reset the Function to IDLE
         if function is not None and isinstance(self.function, Function):

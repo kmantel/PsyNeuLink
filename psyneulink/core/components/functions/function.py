@@ -671,8 +671,12 @@ class Function_Base(Function):
                          name=name,
                          prefs=prefs)
 
-    def __call__(self, *args, **kwargs):
-        return self.function(*args, **kwargs)
+    def __call__(self, *args, execution_id=None, **kwargs):
+        # ideally this should set variable - should assume first arg if it exists is variable?
+        value = self.function(*args, execution_id=execution_id, **kwargs)
+        self.parameters.value.set(value, execution_id, override=True)
+
+        return value
 
     def _parse_arg_generic(self, arg_val):
         if isinstance(arg_val, list):
