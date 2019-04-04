@@ -1672,11 +1672,11 @@ class DualAdaptiveIntegrator(IntegratorFunction):  # ---------------------------
 
         # Integrate Short Term Utility:
         short_term_avg = self._EWMA_filter(short_term_rate,
-                                           self.previous_short_term_avg,
+                                           self.parameters.previous_short_term_avg.get(execution_id),
                                            variable)
         # Integrate Long Term Utility:
         long_term_avg = self._EWMA_filter(long_term_rate,
-                                          self.previous_long_term_avg,
+                                          self.parameters.previous_long_term_avg.get(execution_id),
                                           variable)
 
         value = self._combine_terms(short_term_avg, long_term_avg, execution_id=execution_id)
