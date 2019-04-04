@@ -612,7 +612,7 @@ class SimpleIntegrator(IntegratorFunction):  # ---------------------------------
 
     .. math::
 
-        previous_value + rate * variable + noise + offset
+        (previous\\ value) + rate * variable + noise + offset
 
     *Modulatory Parameters:*
 
@@ -685,11 +685,7 @@ class SimpleIntegrator(IntegratorFunction):  # ---------------------------------
         <ModulatorySignal_Modulation>` of `function <SimpleIntegrator.function>`.
 
     initializer : float or 1d array
-        determines the starting value(s) for integration (i.e., the value to which `previous_value
-        <SimpleIntegrator.previous_value>` is set (see `initializer <Integrator_Initializer>` for details).
-
-    previous_value : 1d array : default class_defaults.variable
-        stores previous value with which `variable <SimpleIntegrator.variable>` is integrated.
+        determines the starting value(s) for integration (see `initializer <Integrator_Initializer>` for details).
 
     owner : Component
         `component <Component>` to which the Function has been assigned.
@@ -798,7 +794,7 @@ class SimpleIntegrator(IntegratorFunction):  # ---------------------------------
 
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE, execution_id), variable)
-        previous_value = self.get_previous_value(execution_id)
+        previous_value = self.parameters.value.get(execution_id)
         new_value = variable
 
         value = previous_value + (new_value * rate) + noise
