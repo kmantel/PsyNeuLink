@@ -2143,7 +2143,7 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
     time step of integration:
 
     ..  math::
-        previous\\_value + rate \\cdot variable \\cdot time\\_step\\_size + \\mathcal{N}(\\sigma^2)
+        (previous\\ value) + rate \\cdot variable \\cdot time\\_step\\_size + \\mathcal{N}(\\sigma^2)
 
     where
 
@@ -2279,15 +2279,11 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         <DriftDiffusionIntegrator.noise>` parameter according to the standard DDM probability distribution.
 
     initializer : float or 1d array
-        determines the starting value(s) for integration (i.e., the value(s) to which `previous_value
-        <DriftDiffusionIntegrator.previous_value>` is set (see `initializer <Integrator_Initializer>` for details).
+        determines the starting value(s) for integration. (see `initializer <Integrator_Initializer>` for details).
 
     previous_time : float
         stores previous time at which the function was executed and accumulates with each execution according to
         `time_step_size <DriftDiffusionIntegrator.default_time_step_size>`.
-
-    previous_value : 1d array : default class_defaults.variable
-        stores previous value with which `variable <DriftDiffusionIntegrator.variable>` is integrated.
 
     owner : Component
         `component <Component>` to which the Function has been assigned.
@@ -2452,7 +2448,8 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         threshold = self.get_current_function_param(THRESHOLD, execution_id)
         time_step_size = self.get_current_function_param(TIME_STEP_SIZE, execution_id)
 
-        previous_value = np.atleast_2d(self.get_previous_value(execution_id))
+        # index 0 for the "value" component of value
+        previous_value = np.atleast_2d(self.parameters.value.get(execution_id)[0])
 
         value = previous_value + rate * variable * time_step_size \
                 + np.sqrt(time_step_size * noise) * np.random.normal()
