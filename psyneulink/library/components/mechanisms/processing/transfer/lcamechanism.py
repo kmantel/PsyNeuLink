@@ -654,7 +654,7 @@ class LCAMechanism(RecurrentTransferMechanism):
                 rate=leak,
                 owner=self)
 
-        current_input = self.integrator_function._execute(
+        current_input = self.integrator_function.execute(
             function_variable,
             execution_id=execution_id,
             # Should we handle runtime params?
@@ -666,5 +666,8 @@ class LCAMechanism(RecurrentTransferMechanism):
             },
             context=context
         )
+
+        if self.parameters.context.get(execution_id).initialization_status == ContextFlags.INITIALIZING:
+            self.integrator_function.parameters.value.set(initial_value)
 
         return current_input

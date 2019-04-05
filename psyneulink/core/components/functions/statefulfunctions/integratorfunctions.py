@@ -2848,7 +2848,7 @@ class LeakyCompetingIntegrator(IntegratorFunction):  # -------------------------
 
     .. math::
 
-        rate \\cdot previous\\_value + variable + noise \\sqrt{time\\_step\\_size}
+        rate \\cdot (previous\\ value) + variable + noise \\sqrt{time\\_step\\_size}
 
     *Modulatory Parameters:*
 
@@ -2864,7 +2864,7 @@ class LeakyCompetingIntegrator(IntegratorFunction):  # -------------------------
         integrated.
 
     rate : float, list or 1d array : default 1.0
-        specifies the value used to scale the contribution of `previous_value <LeakyCompetingIntegrator.previous_value>`
+        specifies the value used to scale the contribution of the previous `value <LeakyCompetingIntegrator.value>`
         to the integral on each time step.  If it is a list or array, it must be the same length as `variable
         <LeakyCompetingIntegrator.variable>` (see `rate <LeakyCompetingIntegrator.rate>` for details).
 
@@ -2909,11 +2909,11 @@ class LeakyCompetingIntegrator(IntegratorFunction):  # -------------------------
         added to the prior value;  if it is an array, each element is independently integrated.
 
     rate : float or 1d array
-        scales the contribution of `previous_value <LeakyCompetingIntegrator.previous_value>` to the accumulation of
+        scales the contribution of the previous `value <LeakyCompetingIntegrator.value>` to the accumulation of
         the `value <LeakyCompetingIntegrator.value>` on each time step. If it is a float or has a single element,
-        its value is applied to all the elements of `previous_value <LeakyCompetingIntegrator.previous_value>`; if it
-        is an array, each element is applied to the corresponding element of `previous_value
-        <LeakyCompetingIntegrator.previous_value>`.  Serves as *MULTIPLICATIVE_PARAM*  for `modulation
+        its value is applied to all the elements of the previous `value <LeakyCompetingIntegrator.value>`; if it
+        is an array, each element is applied to the corresponding element of the previous `value
+        <LeakyCompetingIntegrator.value>`.  Serves as *MULTIPLICATIVE_PARAM*  for `modulation
         <ModulatorySignal_Modulation>` of `function <LeakyCompetingIntegrator.function>`.
 
     noise : float, Function, or 1d array
@@ -2932,11 +2932,7 @@ class LeakyCompetingIntegrator(IntegratorFunction):  # -------------------------
         <LeakyCompetingIntegrator.noise>` parameter appropriately.
 
     initializer : float or 1d array
-        determines the starting value(s) for integration (i.e., the value(s) to which `previous_value
-        <LeakyCompetingIntegrator.previous_value>` is set (see `initializer <Integrator_Initializer>` for details).
-
-    previous_value : 1d array : default class_defaults.variable
-        stores previous value with which `variable <LeakyCompetingIntegrator.variable>` is integrated.
+        determines the starting value(s) for integration. (see `initializer <Integrator_Initializer>` for details).
 
     owner : Component
         `component <Component>` to which the Function has been assigned.
@@ -3058,7 +3054,7 @@ class LeakyCompetingIntegrator(IntegratorFunction):  # -------------------------
 
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE, execution_id), variable)
-        previous_value = self.get_previous_value(execution_id)
+        previous_value = self.parameters.value.get(execution_id)
         new_value = variable
 
         # Gilzenrat: previous_value + (-previous_value + variable)*self.time_step_size + noise --> rate = -1
