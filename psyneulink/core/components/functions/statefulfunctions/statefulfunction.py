@@ -560,6 +560,9 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                                                                       override=True)
             value.append(getattr(self, self.stateful_attributes[i]))
 
+        if len(value) == 1:
+            value = value[0]
+
         self.parameters.value.set(value, execution_context, override=True)
         return value
 

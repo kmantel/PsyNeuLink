@@ -2135,7 +2135,7 @@ class Mechanism_Base(Mechanism):
         # (3) update value, (4) update output states
         elif hasattr(self, "integrator_function"):
             if isinstance(self.integrator_function, IntegratorFunction):
-                new_input = self.integrator_function.reinitialize(*args, execution_context=execution_context)[0]
+                new_input = self.integrator_function.reinitialize(*args, execution_context=execution_context)
                 self.parameters.value.set(
                     self.function.execute(variable=new_input, execution_id=execution_context, context="REINITIALIZING"),
                     execution_context=execution_context,
