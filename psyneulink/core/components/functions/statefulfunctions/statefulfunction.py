@@ -472,8 +472,10 @@ class StatefulFunction(Function_Base): #  --------------------------------------
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore')
                 self.previous_value = val
+                self.value = val
         else:
             self.parameters.previous_value.set(val, execution_context)
+            self.parameters.value.set(val, execution_context, override=True)
 
         return val
 

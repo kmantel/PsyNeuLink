@@ -983,6 +983,9 @@ class TransferMechanism(ProcessingMechanism_Base):
             context=ContextFlags.CONSTRUCTOR,
         )
 
+        if initial_value is not None:
+            self.integrator_function.parameters.value.set(initial_value, skip_log=True, skip_history=True, override=True)
+
     def _parse_arg_initial_value(self, initial_value):
         return self._parse_arg_variable(initial_value)
 
@@ -1292,7 +1295,7 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         integration_rate = self.get_current_mechanism_param(INTEGRATION_RATE, execution_id)
 
-        if self.context.initialization_status == ContextFlags.INITIALIZING:
+        if self.parameters.context.get(execution_id).initialization_status == ContextFlags.INITIALIZING:
             self._instantiate_integrator_function(variable=function_variable,
                                                   noise=noise,
                                                   initializer=initial_value,
@@ -1316,6 +1319,9 @@ class TransferMechanism(ProcessingMechanism_Base):
             },
             context=context
         )
+
+        if self.parameters.context.get(execution_id).initialization_status == ContextFlags.INITIALIZING:
+            self.integrator_function.parameters.value.set(initial_value, override=True)
 
         return current_input
 

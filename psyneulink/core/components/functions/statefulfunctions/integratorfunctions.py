@@ -829,7 +829,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
     <https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average>`_ of input:
 
     .. math::
-        ((1-rate) * previous_value) + (rate * variable)  + noise + offset
+        ((1-rate) * (previous\\ value) + (rate * variable)  + noise + offset
 
     *Modulatory Parameters:*
 
@@ -888,10 +888,10 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
     rate : float or 1d array
         determines the smoothing factor of the `EWMA <AdaptiveIntegrator>`. All rate elements must be between 0 and 1
         (rate = 0 --> no change, `variable <AdaptiveAdaptiveIntegrator.variable>` is ignored; rate = 1 -->
-        `previous_value <AdaptiveIntegrator.previous_value>` is ignored).  If rate is a float or has a single element,
-        its value is applied to all elements of `variable <AdaptiveAdaptiveIntegrator.variable>` and `previous_value
-        <AdaptiveIntegrator.previous_value>`; if it is an array, each element is applied to the corresponding element
-        of `variable <AdaptiveIntegrator.variable>` and `previous_value <AdaptiveIntegrator.previous_value>`).
+        the previous `value <AdaptiveIntegrator.value>` is ignored).  If rate is a float or has a single element,
+        its value is applied to all elements of `variable <AdaptiveAdaptiveIntegrator.variable>` and the previous `value
+        <AdaptiveIntegrator.value>`; if it is an array, each element is applied to the corresponding element
+        of `variable <AdaptiveIntegrator.variable>` and the previous `value <AdaptiveIntegrator.value>`).
         Serves as *MULTIPLICATIVE_PARAM*  for `modulation <ModulatorySignal_Modulation>` of `function
         <AdaptiveIntegrator.function>`.
 
@@ -907,11 +907,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
         `modulation <ModulatorySignal_Modulation>` of `function <AdaptiveIntegrator.function>`.
 
     initializer : float or 1d array
-        determines the starting value(s) for integration (i.e., the value(s) to which `previous_value
-        <AdaptiveIntegrator.previous_value>` is set (see `initializer <Integrator_Initializer>` for details).
-
-    previous_value : 1d array : default class_defaults.variable
-        stores previous value with which `variable <AdaptiveIntegrator.variable>` is integrated.
+        determines the starting value(s) for integration (see `initializer <Integrator_Initializer>` for details).
 
     owner : Component
         `component <Component>` to which the Function has been assigned.
@@ -1153,7 +1149,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE, execution_id), variable)
 
-        previous_value = np.atleast_2d(self.get_previous_value(execution_id))
+        previous_value = np.atleast_2d(self.parameters.value.get(execution_id))
 
         value = self._EWMA_filter(previous_value, rate, variable) + noise
 
