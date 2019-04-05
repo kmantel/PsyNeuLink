@@ -2502,7 +2502,7 @@ class OrnsteinUhlenbeckIntegrator(IntegratorFunction):  # ----------------------
     `Ornstein Uhlenbeck process <https://en.wikipedia.org/wiki/Ornstein%E2%80%93Uhlenbeck_process>`_:
 
     .. math::
-       previous\\_value + (decay \\cdot  previous\\_value) - (rate \\cdot variable) + \\mathcal{N}(\\sigma^2)
+       (previous\\ value) + (decay \\cdot  (previous\\ value)) - (rate \\cdot variable) + \\mathcal{N}(\\sigma^2)
     where
     ..  math::
         \\sigma^2 =\\sqrt{time\\_step\\_size \\cdot noise}
@@ -2526,7 +2526,7 @@ class OrnsteinUhlenbeckIntegrator(IntegratorFunction):  # ----------------------
         <OrnsteinUhlenbeckIntegrator.rate>` for details).
 
     decay : float, list or 1d array : default 1.0
-        specifies value applied multiplicatively to `previous_value <OrnsteinUhlenbeckIntegrator.previous_value>`;
+        specifies value applied multiplicatively to the previous `value <OrnsteinUhlenbeckIntegrator.value>`;
         If it is a list or array, it must be the same length as `variable <OrnsteinUhlenbeckIntegrator.variable>` (
         see `decay <OrnsteinUhlenbeckIntegrator.rate>` for details).
 
@@ -2591,10 +2591,10 @@ class OrnsteinUhlenbeckIntegrator(IntegratorFunction):  # ----------------------
         <ModulatorySignal_Modulation>` of `function <OrnsteinUhlenbeckIntegrator.function>`.
 
     decay : float or 1d array
-        applied multiplicatively to `previous_value <OrnsteinUhlenbeckIntegrator.previous_value>`; If it is a float or
-        has a single element, its value is applied to all the elements of `previous_value
-        <OrnsteinUhlenbeckIntegrator.previous_value>`; if it is an array, each element is applied to the corresponding
-        element of `previous_value <OrnsteinUhlenbeckIntegrator.previous_value>`.
+        applied multiplicatively to the previous `value <OrnsteinUhlenbeckIntegrator.value>`; If it is a float or
+        has a single element, its value is applied to all the elements of the previous `value
+        <OrnsteinUhlenbeckIntegrator.value>`; if it is an array, each element is applied to the corresponding
+        element of the previous `value <OrnsteinUhlenbeckIntegrator.value>`.
 
     noise : float
         scales the normally distributed random value added to integral in each call to `function
@@ -2627,11 +2627,8 @@ class OrnsteinUhlenbeckIntegrator(IntegratorFunction):  # ----------------------
         <OrnsteinUhlenbeckIntegrator.noise>` parameter appropriately.
 
     initializer : float or 1d array
-        determines the starting value(s) for integration (i.e., the value(s) to which `previous_value
-        <OrnsteinUhlenbeckIntegrator.previous_value>` is set (see `initializer <Integrator_Initializer>` for details).
-
-    previous_value : 1d array : default class_defaults.variable
-        stores previous value with which `variable <OrnsteinUhlenbeckIntegrator.variable>` is integrated.
+        determines the starting value(s) for integration (i.e., the value(s) to which the previous `value
+        <OrnsteinUhlenbeckIntegrator.value>` is set (see `initializer <Integrator_Initializer>` for details).
 
     previous_time : float
         stores previous time at which the function was executed and accumulates with each execution according to
@@ -2804,7 +2801,7 @@ class OrnsteinUhlenbeckIntegrator(IntegratorFunction):  # ----------------------
         offset = self.get_current_function_param(OFFSET, execution_id)
         time_step_size = self.get_current_function_param(TIME_STEP_SIZE, execution_id)
 
-        previous_value = np.atleast_2d(self.get_previous_value(execution_id))
+        previous_value = np.atleast_2d(self.parameters.value.get(execution_id)[0])
 
         # dx = (lambda*x + A)dt + c*dW
         value = previous_value + (decay * previous_value - rate * variable) * time_step_size + np.sqrt(
