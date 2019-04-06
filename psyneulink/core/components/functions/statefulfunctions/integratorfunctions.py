@@ -1900,12 +1900,8 @@ class InteractiveActivationIntegrator(IntegratorFunction):  # ------------------
         <InteractiveActivationIntegrator.function>` (see `noise <Integrator_Noise>` for details).
 
     initializer : float or 1d array
-        determines the starting value(s) for integration (i.e., the value(s) to which `previous_value
-        <InteractiveActivationIntegrator.previous_value>` is set (see `initializer <Integrator_Initializer>`
+        determines the starting value(s) for integration. (see `initializer <Integrator_Initializer>`
         for details).
-
-    previous_value : 1d array : default class_defaults.variable
-        stores previous value with which `variable <InteractiveActivationIntegrator.variable>` is integrated.
 
     owner : Component
         `component <Component>` to which the Function has been assigned.
@@ -2007,7 +2003,7 @@ class InteractiveActivationIntegrator(IntegratorFunction):  # ------------------
         if default_variable is None:
             default_variable = initializer
 
-        # Assign args to params and functionParams dicts 
+        # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(rate=rate,
                                                   decay=decay,
                                                   rest=rest,
@@ -2084,18 +2080,19 @@ class InteractiveActivationIntegrator(IntegratorFunction):  # ------------------
         current_input = variable
 
         # FIX: ?CLEAN THIS UP BY SETTING initializer IN __init__ OR OTHER RELEVANT PLACE?
-        if self.context.initialization_status == ContextFlags.INITIALIZING:
+        if self.parameters.context.get(execution_id).initialization_status == ContextFlags.INITIALIZING:
             if rest.ndim == 0 or len(rest)==1:
                 # self.parameters.previous_value.set(np.full_like(current_input, rest), execution_id)
-                self._initialize_previous_value(np.full_like(current_input, rest), execution_id)
+                previous_value = np.full_like(current_input, rest)
             elif np.atleast_2d(rest).shape == current_input.shape:
                 # self.parameters.previous_value.set(rest, execution_id)
-                self._initialize_previous_value(rest, execution_id)
+                previous_value = rest
             else:
                 raise FunctionError("The {} argument of {} ({}) must be an int or float, "
                                     "or a list or array of the same length as its variable ({})".
                                     format(repr(REST), self.__class__.__name__, rest, len(variable)))
-        previous_value = self.get_previous_value(execution_id)
+        else:
+            previous_value = self.parameters.value.get(execution_id)
 
         current_input = np.atleast_2d(variable)
         prev_val = np.atleast_2d(previous_value)
