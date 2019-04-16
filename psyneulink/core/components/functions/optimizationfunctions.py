@@ -33,12 +33,10 @@ from typing import Iterator
 from psyneulink.core.components.functions.function import Function_Base, is_function_type
 from psyneulink.core.globals.context import ContextFlags
 from psyneulink.core.globals.defaults import MPI_IMPLEMENTATION
-from psyneulink.core.globals.keywords import \
-    DEFAULT_VARIABLE, GRADIENT_OPTIMIZATION_FUNCTION, GRID_SEARCH_FUNCTION, GAUSSIAN_PROCESS_FUNCTION, \
-    OPTIMIZATION_FUNCTION_TYPE, OWNER, VALUE, VARIABLE
+from psyneulink.core.globals.keywords import DEFAULT_VARIABLE, GAUSSIAN_PROCESS_FUNCTION, GRADIENT_OPTIMIZATION_FUNCTION, GRID_SEARCH_FUNCTION, OPTIMIZATION_FUNCTION_TYPE, OWNER, VALUE, VARIABLE
 from psyneulink.core.globals.parameters import Parameter
-from psyneulink.core.globals.utilities import call_with_pruned_args
 from psyneulink.core.globals.sampleiterator import SampleIterator
+from psyneulink.core.globals.utilities import call_with_pruned_args
 
 __all__ = ['OptimizationFunction', 'GradientOptimization', 'GridSearch', 'GaussianProcess',
            'OBJECTIVE_FUNCTION', 'SEARCH_FUNCTION', 'SEARCH_SPACE', 'SEARCH_TERMINATION_FUNCTION',
@@ -372,7 +370,7 @@ class OptimizationFunction(Function_Base):
         else:
             self.search_space = search_space
 
-        # Assign args to params and functionParams dicts 
+        # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(save_samples=save_samples,
                                                   save_values=save_values,
                                                   max_iterations=max_iterations,
@@ -838,7 +836,7 @@ class GradientOptimization(OptimizationFunction):
             self.direction = -1
         self.annealing_function = annealing_function
 
-        # Assign args to params and functionParams dicts 
+        # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(step=step,
                                                   convergence_criterion=convergence_criterion,
                                                   convergence_threshold=convergence_threshold,
@@ -1127,7 +1125,7 @@ class GridSearch(OptimizationFunction):
         # self.tolerance = tolerance
         self.select_randomly_from_optimal_values = select_randomly_from_optimal_values
 
-        # Assign args to params and functionParams dicts 
+        # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(params=params)
 
         super().__init__(default_variable=default_variable,
@@ -1544,7 +1542,7 @@ class GaussianProcess(OptimizationFunction):
         self._return_samples = save_values
         self.direction = direction
 
-        # Assign args to params and functionParams dicts 
+        # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(params=params)
 
         super().__init__(default_variable=default_variable,
