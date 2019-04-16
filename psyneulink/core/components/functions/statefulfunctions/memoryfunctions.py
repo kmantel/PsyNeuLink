@@ -484,7 +484,7 @@ class DND(MemoryFunction):  # --------------------------------------------------
         function used during retrieval to evaluate the distances returned by `distance_function
         <DND.distance_function>` and select the item to return.
 
-    previous_value : 1d array
+    memory_dict : 1d array
         state of the `dict <DND.dict>` prior to storing `variable <DND.variable>` in the current call.
 
     max_entries : int
@@ -577,6 +577,7 @@ class DND(MemoryFunction):  # --------------------------------------------------
         noise = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         max_entries = Parameter(1000)
         random_state = Parameter(None, modulable=False, stateful=True)
+        memory_dict = {}
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -639,7 +640,10 @@ class DND(MemoryFunction):  # --------------------------------------------------
             self.parameters.key_size.set(len(list(initializer.keys())[0]))
 
         self.has_initializers = True
-        self.stateful_attributes = ["previous_value", "random_state"]
+        # KDM 4/15/19: remove previous_value when able to remove it entirely from codebase
+        # in place to prevent LLVM from attempting to compile previous_value, causing error
+        # with its default dict value
+        self.stateful_attributes = ["previous_value", "memory_dict", "random_state"]
 
     def _get_context_struct_type(self, ctx):
         distance_state = ctx.get_context_struct_type(self.distance_function)
@@ -679,7 +683,7 @@ class DND(MemoryFunction):  # --------------------------------------------------
         distance_init = self.distance_function._get_context_initializer(execution_id)
         selection_init = self.selection_function._get_context_initializer(execution_id)
         random_state = self.get_current_function_param("random_state", execution_id).get_state()[1:]
-        memory = self.get_previous_value(execution_id)
+        memory = self.parameters.memory_dict.get(execution_id)
         my_init = pnlvm._tupleize([random_state, [memory[0], memory[1], 0, 0]])
         return tuple([distance_init, selection_init, my_init])
 
@@ -811,7 +815,7 @@ class DND(MemoryFunction):  # --------------------------------------------------
                     var_key_element = b2.gep(var_key_ptr, [ctx.int32_ty(0), idx2])
                     cmp_key_element = b2.gep(cmp_key_ptr, [ctx.int32_ty(0), idx2])
                     element_differs = b.fcmp_unordered('!=',
-                                                       b.load(var_key_element), 
+                                                       b.load(var_key_element),
                                                        b.load(cmp_key_element))
                     key_differs = b2.load(key_differs_ptr)
                     key_differs = b2.or_(key_differs, element_differs)
@@ -902,13 +906,13 @@ class DND(MemoryFunction):  # --------------------------------------------------
                                 "must return an array of the same length it receives with one nonzero value".
                                 format(repr(SELECTION_FUNCTION), self.__class__, result))
 
-    def _initialize_previous_value(self, initializer, execution_context=None):
+    def _initialize_memory_dict(self, initializer, execution_context=None):
         vals = [[k for k in initializer.keys()], [v for v in initializer.values()]]
-        previous_value = np.asfarray(vals) if len(initializer) != 0 else np.ndarray(shape=(2, 0, len(self.defaults.variable[0])))
+        memory_dict = np.asfarray(vals) if len(initializer) != 0 else np.ndarray(shape=(2, 0, len(self.defaults.variable[0])))
 
-        self.parameters.previous_value.set(previous_value, execution_context, override=True)
+        self.parameters.memory_dict.set(memory_dict, execution_context)
 
-        return previous_value
+        return memory_dict
 
     def _instantiate_attributes_before_function(self, function=None, context=None):
 
@@ -924,13 +928,13 @@ class DND(MemoryFunction):  # --------------------------------------------------
         """
         reinitialize(<new_dictionary> default={})
 
-        Clears the dict in `previous_value <DND.previous_value>`.
+        Clears the dict in `memory_dict <DND.memory_dict>`.
 
         If an argument is passed into reinitialize or if the `initializer <DND.initializer>` attribute contains a
-        value besides [], then that value is used to start the new dict in `previous_value <DND.previous_value>`.
-        Otherwise, the new `previous_value <DND.previous_value>` dict starts out empty.
+        value besides [], then that value is used to start the new dict in `memory_dict <DND.memory_dict>`.
+        Otherwise, the new `memory_dict <DND.memory_dict>` dict starts out empty.
 
-        `value <DND.value>` takes on the same value as  `previous_value <DND.previous_value>`.
+        `value <DND.value>` takes on the same value as  `memory_dict <DND.memory_dict>`.
         """
 
         # no arguments were passed in -- use current values of initializer attributes
@@ -943,16 +947,16 @@ class DND(MemoryFunction):  # --------------------------------------------------
         # arguments were passed in, but there was a mistake in their specification -- raise error!
         else:
             raise FunctionError("Invalid arguments ({}) specified for {}. Either one value must be passed to "
-                                "reinitialize its stateful attribute (previous_value), or reinitialize must be called "
+                                "reinitialize its stateful attribute (memory_dict), or reinitialize must be called "
                                 "without any arguments, in which case the current initializer value will be used to "
-                                "reinitialize previous_value".format(args, self.name))
+                                "reinitialize memory_dict".format(args, self.name))
 
         if reinitialization_value == []:
-            self.get_previous_value(execution_context).clear()
+            self.parameters.memory_dict.get(execution_context).clear()
             value = np.ndarray(shape=(2, 0, len(self.defaults.variable[0])))
 
         else:
-            value = self._initialize_previous_value(reinitialization_value, execution_context=execution_context)
+            value = self._initialize_memory_dict(reinitialization_value, execution_context=execution_context)
 
         self.parameters.value.set(value, execution_context, override=True)
         return value
@@ -1005,7 +1009,7 @@ class DND(MemoryFunction):  # --------------------------------------------------
             return variable
 
         # Set key_size if this is the first entry
-        if len(self.get_previous_value(execution_id)[0]) == 0:
+        if len(self.parameters.memory_dict.get(execution_id)[0]) == 0:
             self.parameters.key_size.set(len(key), execution_id)
 
         # Retrieve value from current dict with key that best matches key
@@ -1071,7 +1075,7 @@ class DND(MemoryFunction):  # --------------------------------------------------
         # if no memory, return the zero vector
         # if len(self.dict) == 0 or self.retrieval_prob == 0.0:
         # compute similarity(query_key, memory m ) for all m
-        memory_dict = self.get_previous_value(execution_id)
+        memory_dict = self.parameters.memory_dict.get(execution_id)
         if len(memory_dict[0]) == 0:
             return np.zeros_like(self.defaults.variable)
         distances = [self.distance_function([query_key, list(m)]) for m in memory_dict[0]]
@@ -1099,7 +1103,7 @@ class DND(MemoryFunction):  # --------------------------------------------------
         key = memory[0]
         val = memory[1]
 
-        d = self.get_previous_value(execution_id)
+        d = self.parameters.memory_dict.get(execution_id)
 
         if len(d[0]) >= self.max_entries:
             d = np.delete(d, [0], axis=1)
@@ -1109,7 +1113,7 @@ class DND(MemoryFunction):  # --------------------------------------------------
             b = np.append(d[1], val).reshape(1, len(val))
             d = np.asfarray([a, b])
 
-        self.parameters.previous_value.set(d,execution_id)
+        self.parameters.memory_dict.set(d,execution_id)
 
     @tc.typecheck
     def insert_memories(self, memories:tc.any(list, np.ndarray), execution_id=None):
@@ -1133,4 +1137,4 @@ class DND(MemoryFunction):  # --------------------------------------------------
 
     @property
     def dict(self):
-        return self.previous_value
+        return self.memory_dict
