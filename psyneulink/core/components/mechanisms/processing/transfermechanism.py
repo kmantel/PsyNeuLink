@@ -1528,16 +1528,14 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         super()._report_mechanism_execution(input_val=print_input, params=print_params)
 
-    def delta(self, value=NotImplemented, execution_id=None):
-        if value is NotImplemented:
-            value = self.parameters.value.get(execution_id)
-        return self.convergence_function([value[0], self.parameters.previous_value.get(execution_id)[0]])
+    def delta(self, value, execution_id=None):
+        return self.convergence_function([value[0], self.parameters.value.get(execution_id)[0]])
 
     def is_converged(self, value=NotImplemented, execution_id=None):
         # Check for convergence
         if (
             self.convergence_criterion is not None
-            and self.parameters.previous_value.get(execution_id) is not None
+            and self.parameters.value.get(execution_id) is not None
             and self.parameters.context.get(execution_id).initialization_status != ContextFlags.INITIALIZING
         ):
             if self.delta(value, execution_id) <= self.convergence_criterion:

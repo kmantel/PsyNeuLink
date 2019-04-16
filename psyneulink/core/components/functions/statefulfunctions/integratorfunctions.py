@@ -88,7 +88,7 @@ class IntegratorFunction(StatefulFunction):  # ---------------------------------
     .. note::
         If `variable <IntegratorFunction.variable>` is an array, for any parameter that is specified as a float its
         value is applied uniformly to all elements of the relevant term of the integral (e.g., `variable
-        <IntegratorFunction.variable>` or `previous_value <IntegratorFunction.previous_value>`, depending on the
+        <IntegratorFunction.variable>` or the previous `value <IntegratorFunction.value>`, depending on the
         subclass);  for any paramter specified as an array, it must be the same length as `variable
         <IntegratorFunction.variable>`, and it is applied elementwise (Hadarmard) to the relevant term of the integral.
 
@@ -141,9 +141,9 @@ class IntegratorFunction(StatefulFunction):  # ---------------------------------
 
     rate : float or 1d array
         determines the rate of integration. If it is a float or has a single value, it is applied to all elements
-        of `variable <IntegratorFunction.variable>` and/or `previous_value <IntegrationFunction.previous_value>`
+        of `variable <IntegratorFunction.variable>` and/or the previous `value <IntegrationFunction.value>`
         (depending on the subclass);  if it has more than one element, each element is applied to the corresponding
-        element of `variable <IntegratorFunction.variable>` and/or `previous_value <IntegratorFunction.previous_value>`.
+        element of `variable <IntegratorFunction.variable>` and/or the previous `value <IntegratorFunction.value>`.
 
     .. _Integrator_Noise:
 
@@ -164,14 +164,10 @@ class IntegratorFunction(StatefulFunction):  # ---------------------------------
     .. _Integrator_Initializer:
 
     initializer : float or 1d array
-        determines the starting value(s) for integration (i.e., the value(s) to which `previous_value
-        <IntegratorFunction.previous_value>` is set.  If `variable <Integrator.variable>` is a list or array, and
-        initializer is a float or has a single element, it is applied to each element of `previous_value
-        <Integrator.previous_value>`. If initializer is a list or array, each element is applied to the corresponding
-        element of `previous_value <Integrator.previous_value>`.
-
-    previous_value : 1d array
-        stores previous value with which `variable <IntegratorFunction.variable>` is integrated.
+        determines the starting value(s) for integration. If `variable <Integrator.variable>` is a list or array, and
+        initializer is a float or has a single element, it is applied to each element of the previous `value
+        <Integrator.value>`. If initializer is a list or array, each element is applied to the corresponding
+        element of the previous `value <Integrator.value>`.
 
     owner : Component
         `component <Component>` to which the Function has been assigned.

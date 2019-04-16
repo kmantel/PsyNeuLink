@@ -1322,9 +1322,6 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
         self.parameters.is_finished_.set(False, execution_id, override=True)
 
-        # Need to store this, as it will be updated in call to super
-        previous_value = self.parameters.previous_value.get(execution_id)
-
         # Note _parse_function_variable selects actual input to function based on execution_phase
         current_activity = super()._execute(variable,
                                             execution_id=execution_id,
@@ -1339,7 +1336,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
         # This is the first trial, so can't test for convergence
         #    (since that requires comparison with value from previous trial)
-        if previous_value is None:
+        if self.parameters.value.get_previous(execution_id) is None:
             return current_activity
 
         current_termination_condition = self.parameters.current_termination_condition.get(execution_id)
