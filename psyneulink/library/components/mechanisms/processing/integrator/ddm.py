@@ -352,11 +352,9 @@ import numpy as np
 import typecheck as tc
 
 from psyneulink.core.components.component import method_type
-from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import \
-    DriftDiffusionIntegrator, IntegratorFunction
-from psyneulink.core.components.functions.distributionfunctions import THRESHOLD, STARTING_POINT, \
-    DriftDiffusionAnalytical
 from psyneulink.core.components.functions.combinationfunctions import Reduce
+from psyneulink.core.components.functions.distributionfunctions import DriftDiffusionAnalytical, STARTING_POINT, THRESHOLD
+from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import DriftDiffusionIntegrator, IntegratorFunction, StatefulFunction
 from psyneulink.core.components.mechanisms.adaptive.control.controlmechanism import _is_control_spec
 from psyneulink.core.components.mechanisms.mechanism import Mechanism_Base
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism_Base
@@ -896,7 +894,7 @@ class DDM(ProcessingMechanism_Base):
         if isinstance(output_states, (str, tuple)):
             output_states = list(output_states)
 
-        # Assign args to params and functionParams dicts 
+        # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(function=function,
                                                   # input_format=input_format,
                                                   input_states=input_states,
@@ -1178,12 +1176,12 @@ class DDM(ProcessingMechanism_Base):
                                        context="REINITIALIZING")
 
     def is_finished(self, execution_context=None):
-        # find the single numeric entry in previous_value
-        try:
-            single_value = self.function.get_previous_value(execution_context)
-        except AttributeError:
+        if not isinstance(self.function, StatefulFunction):
             # Analytical function so fall back to more standard behavior
             return super().is_finished(execution_context)
+
+        # find the single numeric entry in previous_value
+        single_value = self.function.parameters.value.get(execution_context)
 
         # indexing into a matrix doesn't reduce dimensionality
         if not isinstance(single_value, (np.matrix, str)):
