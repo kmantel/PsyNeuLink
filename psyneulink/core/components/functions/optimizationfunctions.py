@@ -771,15 +771,15 @@ class GradientOptimization(OptimizationFunction):
                     :default value: 1000
                     :type: int
 
-                previous_value
-                    see `previous_value <GradientOptimization.previous_value>`
+                objective_value
+                    see `objective_value <GradientOptimization.objective_value>`
 
                     :default value: [[0], [0]]
                     :type: list
                     :read only: True
 
-                previous_variable
-                    see `previous_variable <GradientOptimization.previous_variable>`
+                search_sample
+                    see `search_sample <GradientOptimization.search_sample>`
 
                     :default value: [[0], [0]]
                     :type: list
@@ -795,8 +795,8 @@ class GradientOptimization(OptimizationFunction):
         variable = Parameter([[0], [0]], read_only=True)
 
         # these should be removed and use switched to .get_previous()
-        previous_variable = Parameter([[0], [0]], read_only=True)
-        previous_value = Parameter([[0], [0]], read_only=True)
+        search_sample = Parameter([[0], [0]], read_only=True)
+        objective_value = Parameter([[0], [0]], read_only=True)
 
         annealing_function = Parameter(None, stateful=False, loggable=False)
 
@@ -922,25 +922,24 @@ class GradientOptimization(OptimizationFunction):
         # Update variable based on new gradients
         return variable + self.parameters.direction.get(execution_id) * step * np.array(_gradients)
 
-    def _convergence_condition(self, variable, value, iteration, execution_id=None):
-        previous_variable = self.parameters.previous_variable.get(execution_id)
-        previous_value = self.parameters.previous_value.get(execution_id)
+    def _convergence_condition(self, search_sample, objective_value, iteration, execution_id=None):
+        previous_search_sample = self.parameters.search_sample.get(execution_id)
+        previous_objective_value = self.parameters.objective_value.get(execution_id)
 
         if iteration is 0:
             # self._convergence_metric = self.convergence_threshold + EPSILON
-            self.parameters.previous_variable.set(variable, execution_id, override=True)
-            self.parameters.previous_value.set(value, execution_id, override=True)
+            self.parameters.search_sample.set(search_sample, execution_id, override=True)
+            self.parameters.objective_value.set(objective_value, execution_id, override=True)
             return False
 
         # Evaluate for convergence
         if self.convergence_criterion == VALUE:
-            convergence_metric = np.abs(value - previous_value)
+            convergence_metric = np.abs(objective_value - previous_objective_value)
         else:
-            convergence_metric = np.max(np.abs(np.array(variable) -
-                                               np.array(previous_variable)))
+            convergence_metric = np.max(np.abs(np.array(search_sample) - np.array(previous_search_sample)))
 
-        self.parameters.previous_variable.set(variable, execution_id, override=True)
-        self.parameters.previous_value.set(value, execution_id, override=True)
+        self.parameters.search_sample.set(search_sample, execution_id, override=True)
+        self.parameters.objective_value.set(objective_value, execution_id, override=True)
 
         return convergence_metric <= self.parameters.convergence_threshold.get(execution_id)
 
