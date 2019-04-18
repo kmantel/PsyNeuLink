@@ -232,8 +232,8 @@ A ContrastiveHebbianMechanism always executes in two sequential phases, that tog
 .. _ContrastiveHebbian_Plus_Phase:
 
 * *plus phase:*  if `continuous <ContrastiveHebbianMechanism.continuous>` is `False`, then `current_activity
-  <ContrastiveHebbianMechanism.current_activity>` and the Mechanism's `previous_value
-  <ContrastiveHebbianMechanism.previous_value>` attribute are reinitialized to `initial_value
+  <ContrastiveHebbianMechanism.current_activity>` and the Mechanism's `value
+  <ContrastiveHebbianMechanism.value>` attribute are reinitialized to `initial_value
   <ContrastiveHebbianMechanism.initial_value>`;  otherwise, these retain their value from the last execution in the
   *minus phase*.  In either case, the *RECURRENT* InputState's `value <InputState.value>` is combined with the *INPUT*
   InputState's `value <InputState.value>` (as during the `minus_phase
@@ -574,8 +574,8 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
     convergence_function : function : default Distance(metric=MAX_ABS_DIFF)
         specifies the function that determines when a `phase of execution <ContrastiveHebbian_Execution>` complete
         if the termination condition for that phase is specified as *CONVERGENCE*, by comparing `current_activity
-        <ContrastiveHebbianMechanism.current_activity>` with the `previous_value
-        <ContrastiveHebbianMechanism.previous_value>` of the Mechanism;  can be any function that takes two 1d arrays
+        <ContrastiveHebbianMechanism.current_activity>` with the `value
+        <ContrastiveHebbianMechanism.value>` of the Mechanism;  can be any function that takes two 1d arrays
         of the same length as `variable <ContrastiveHebbianMechanism.variable>` and returns a scalar value. The default
         is the `Distance` Function, using the `MAX_ABS_DIFF` metric  which computes the elementwise difference between
         two arrays and returns the difference with the maximum absolute value.
@@ -679,7 +679,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
     continuous : bool : default True
         determines whether or not `current_activity <ContrastiveHebbianMechanism.current_activity>` is reinitialized
         at the beginning of the `minus phase <ContrastiveHebbian_Minus_Phase>` of execution. If `False`, it (and
-        the Mechanism's `previous_value <ContrastiveHebbianMechanism.previous_value>` attribute) are set to
+        the Mechanism's `value <ContrastiveHebbianMechanism.value>` attribute) are set to
         `initial_value <ContrastiveHebbianMechanism.initial_value>`.
 
     integrator_function :  IntegratorFunction
@@ -760,10 +760,6 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         the value of the `current_activity <ContrastiveHebbianMechanism.current_activity>` at the end of the
         `plus phase of execution <ContrastiveHebbian_Plus_Phase>`.
 
-    previous_value : 1d array of floats
-        the value of `current_activity <ContrastiveHebbianMechanism.current_activity>` on the `previous
-        execution in the current phase <ContrastiveHebbian_Execution>`.
-
     delta : scalar
         value returned by `convergence_function <RecurrentTransferMechanism.convergence_function>`;  used to determined
         when `is_converged <RecurrentTransferMechanism.is_converged>` is `True`.
@@ -776,8 +772,8 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         <ContrastiveHebbian_Minus_Phase>`).
 
     convergence_function : function
-        compares the value of `current_activity <ContrastiveHebbianMechanism.current_activity>` with `previous_value
-        <ContrastiveHebbianMechanism.previous_value>`; result is assigned as the value of `delta
+        compares the value of `current_activity <ContrastiveHebbianMechanism.current_activity>` with `value
+        <ContrastiveHebbianMechanism.value>`; result is assigned as the value of `delta
         <ContrastiveHebbianMechanism.delta>.  Used to determine when a `phase of execution
         <ContrastiveHebbian_Execution>` is complete if the termination condition for that phase is specified as
         *CONVERGENCE*.
@@ -1378,7 +1374,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
                 # Store activity from last execution in plus phase
                 self.parameters.minus_phase_activity.set(self.parameters.current_activity.get(), execution_id)
                 # Use initial_value attribute to initialize, for the minus phase,
-                #    both the integrator_function's previous_value
+                #    both the integrator_function's previous value
                 #    and the Mechanism's current activity (which is returned as its input)
                 if not self.continuous:
                     self.reinitialize(self.initial_value, execution_context=execution_id)
