@@ -610,12 +610,12 @@ class RecurrentTransferMechanism(TransferMechanism):
         the variable of the mechanism is first passed into the following equation:
 
         .. math::
-            value = previous\_value(1-integration\_rate) + variable \cdot integration\_rate + noise
+            value = (previous\\ value) \\cdot (1-integration\_rate) + variable \cdot integration\_rate + noise
 
         The result of the integrator function above is then passed into the mechanism's `function
         <RecurrentTransferMechanism.function>`. Note that on the first execution, *initial_value* determines the
-        `integrator_function's <RecurrentTransferMechanism.integrator_function>` `previous_value
-        <AdaptiveIntegrator.previous_value>`.
+        `integrator_function's <RecurrentTransferMechanism.integrator_function>` previous `value
+        <AdaptiveIntegrator.value>`.
 
         **When integrator_mode is set to False:**
 
@@ -695,15 +695,6 @@ class RecurrentTransferMechanism(TransferMechanism):
         maximum allowable value; any element of the result that exceeds the specified minimum or maximum value is set
         to the value of `clip <RecurrentTransferMechanism.clip>` that it exceeds.
 
-    previous_value : 2d np.array [array(float64)] : default None
-        `value <RecurrentTransferMechanism.value>` after the previous execution of the Mechanism; it is assigned `None`
-        until the 2nd execution, and when the Mechanism's `reinitialize <Mechanism.reinitialize>` method is called.
-
-        .. note::
-           The RecurrentTransferMechanism's `previous_value` attribute is distinct from the `previous_value
-           <AdaptiveIntegrator.previous_value>` attribute of its `integrator_function
-           <RecurrentTransferMechanism.integrator_function>`.
-
     delta : scalar
         value returned by `convergence_function <RecurrentTransferMechanism.convergence_function>`;  used to determined
         when `is_converged <RecurrentTransferMechanism.is_converged>` is `True`.
@@ -713,8 +704,8 @@ class RecurrentTransferMechanism(TransferMechanism):
         <RecurrentTransferMechanism.convergence_criterion>`.
 
     convergence_function : function
-        compares `value <RecurrentTransferMechanism.value>` with `previous_value
-        <RecurrentTransferMechanism.previous_value>`; result is used to determine when `is_converged
+        compares `value <RecurrentTransferMechanism.value>` with the previous `value
+        <RecurrentTransferMechanism.value>`; result is used to determine when `is_converged
         <RecurrentTransferMechanism.is_converged>` is `True`.
 
     convergence_criterion : float
