@@ -298,10 +298,10 @@ class KohonenMechanism(TransferMechanism):
         the variable of the mechanism is first passed into the following equation:
 
         .. math::
-            value = previous\\_value(1-smoothing\\_factor) + variable \\cdot smoothing\\_factor + noise
+            value = (previous\\ value) \\cdot (1-smoothing\\_factor) + variable \\cdot smoothing\\_factor + noise
 
         The result of the integrator function above is then passed into the `mechanism's function <KohonenMechanism.function>`. Note that
-        on the first execution, *initial_value* sets previous_value.
+        on the first execution, *initial_value* sets the previous value.
 
         **When integrator_mode is set to False:**
 
