@@ -2080,7 +2080,7 @@ class Mechanism_Base(Mechanism):
             If the mechanism's `function <Mechanism.function>` is an `IntegratorFunction`, or if the mechanism has and
             `integrator_function <TransferMechanism.integrator_function>` (see `TransferMechanism`), this method
             effectively begins the function's accumulation over again at the specified value, and updates related
-            attributes on the mechanism.  It also reassigns `previous_value <Mechanism.previous_value>` to None.
+            attributes on the mechanism.
 
             If the mechanism's `function <Mechanism_Base.function>` is an `IntegratorFunction`, its `reinitialize
             <Mechanism_Base.reinitialize>` method:
@@ -2110,9 +2110,9 @@ class Mechanism_Base(Mechanism):
                     <Mechanism_Base.value>`
 
         .. note::
-                The reinitialize method of an IntegratorFunction Function typically resets the function's `previous_value
-                <IntegratorFunction.previous_value>` (and any other `stateful_attributes <IntegratorFunction.stateful_attributes>`) and
-                `value <IntegratorFunction.value>` to the quantity (or quantities) specified. If `reinitialize
+                The reinitialize method of an IntegratorFunction Function typically resets the function's `value
+                <IntegratorFunction.value>` (and any other `stateful_attributes <IntegratorFunction.stateful_attributes>`)
+                to the quantity (or quantities) specified. If `reinitialize
                 <Mechanism_Base.reinitialize>` is called without arguments, the `initializer <IntegratorFunction.initializer>`
                 value (or the values of each of the attributes in `initializers <IntegratorFunction.initializers>`) is used
                 instead. The `reinitialize <IntegratorFunction.reinitialize>` method may vary across different Integrators.
@@ -2161,9 +2161,6 @@ class Mechanism_Base(Mechanism):
         else:
             raise MechanismError("Reinitializing {} is not allowed because this Mechanism is not stateful. "
                                  "(It does not have an accumulator to reinitialize).".format(self.name))
-
-        # if hasattr(self, PREVIOUS_VALUE):
-        #     self.parameters.previous_value.set(None, override=True)
 
     def get_current_mechanism_param(self, param_name, execution_id=None):
         if param_name == "variable":
