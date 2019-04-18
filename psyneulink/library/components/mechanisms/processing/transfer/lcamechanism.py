@@ -64,10 +64,10 @@ as the `LCAMechanism.integrator_function <LCAMechanism.integrator_function>` of 
 the variable of the mechanism is first passed into the following equation:
 
 .. math::
-    leak \\cdot previous\\_value + variable + noise \\sqrt{time\\_step\\_size}
+    leak \\cdot (previous\\ value) + variable + noise \\sqrt{time\\_step\\_size}
 
 The result of the integrator function above is then passed into the `mechanism's function <LCAMechanism.function>`. Note that on the
-first execution, *initial_value* sets previous_value.
+first execution, *initial_value* sets the previous value.
 
 **When integrator_mode is set to False:**
 
@@ -298,7 +298,7 @@ class LCAMechanism(RecurrentTransferMechanism):
 
     leak : value : default 0.5
         sets the `rate <LeakyCompetingIntegrator.rate>` on the `LeakyCompetingIntegrator function <LeakyCompetingIntegrator>`, which scales the
-        contribution of the `LeakyCompetingIntegrator's <LeakyCompetingIntegrator>` `previous_value <LeakyCompetingIntegrator.previous_value>` to the
+        contribution of the `LeakyCompetingIntegrator's <LeakyCompetingIntegrator>` `value <LeakyCompetingIntegrator.value>` to the
         accumulation of the `LeakyCompetingIntegrator's value <LeakyCompetingIntegrator.value>` (:math:`x_{i}`) on each time step. See
         `LeakyCompetingIntegrator <LeakyCompetingIntegrator>` for more details on what the `LeakyCompetingIntegrator function  <LeakyCompetingIntegrator>` computes.
 
@@ -364,7 +364,7 @@ class LCAMechanism(RecurrentTransferMechanism):
 
     leak : value : default 0.5
         sets the `rate <LeakyCompetingIntegrator.rate>` on the `LeakyCompetingIntegrator function <LeakyCompetingIntegrator>`, which scales the
-        contribution of the `LeakyCompetingIntegrator's <LeakyCompetingIntegrator>` `previous_value <LeakyCompetingIntegrator.previous_value>` to the
+        contribution of the `LeakyCompetingIntegrator's <LeakyCompetingIntegrator>` `value <LeakyCompetingIntegrator.value>` to the
         accumulation of the `LeakyCompetingIntegrator's value <LeakyCompetingIntegrator.value>` (:math:`x_{i}`) on each time step. See
         `LeakyCompetingIntegrator <LeakyCompetingIntegrator>` for more details on what the `LeakyCompetingIntegrator function  <LeakyCompetingIntegrator>` computes.
 
@@ -403,10 +403,10 @@ class LCAMechanism(RecurrentTransferMechanism):
         the variable of the mechanism is first passed into the following equation:
 
         .. math::
-            leak \\cdot previous\\_value + variable + noise \\sqrt{time\\_step\\_size}
+            leak \\cdot (previous\\ value) + variable + noise \\sqrt{time\\_step\\_size}
 
         The result of the integrator function above is then passed into the `mechanism's function <LCAMechanism.function>`. Note that
-        on the first execution, *initial_value* sets previous_value.
+        on the first execution, *initial_value* sets the previous value.
 
         **When integrator_mode is set to False:**
 
