@@ -253,14 +253,12 @@ mechanism's
 The `reinitialize <AdaptiveIntegrator.reinitialize>` method of the `integrator_function
 <TransferMechanism.integrator_function>` sets:
 
-    - the integrator_function's `previous_value <AdaptiveIntegrator.previous_value>` attribute
     - the integrator_function's `value <AdaptiveIntegrator.value>` attribute
 
     to the specified value.
 
 The `reinitialize <TransferMechanism.reinitialize>` method of the `TransferMechanism` first sets:
 
-    - the integrator_function's `previous_value <AdaptiveIntegrator.previous_value>` attribute
     - the integrator_function's `value <AdaptiveIntegrator.value>` attribute
 
     to the specified value. Then:
@@ -755,15 +753,6 @@ class TransferMechanism(ProcessingMechanism_Base):
     value : 2d np.array [array(float64)]
         result of executing `function <TransferMechanism.function>`.
 
-    previous_value : 2d np.array [array(float64)] : default None
-        `value <TransferMechanism.value>` after the previous execution of the Mechanism.  It is assigned `None` on
-        the first execution, and when the Mechanism's `reinitialize <Mechanism.reinitialize>` method is called.
-
-        .. note::
-           The TransferMechanism's `previous_value` attribute is distinct from the `previous_value
-           <AdaptiveIntegrator.previous_value>` attribute of its `integrator_function
-           <TransferMechanism.integrator_function>`.
-
     delta : scalar
         value returned by `convergence_function <TransferMechanism.convergence_function>`;  used to determined
         when `is_converged <TransferMechanism.is_converged>` is `True`.
@@ -773,7 +762,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         <TransferMechanism.convergence_criterion>`.
 
     convergence_function : function
-        compares `value <TransferMechanism.value>` with `previous_value <TransferMechanism.previous_value>`;
+        compares `value <TransferMechanism.value>` with the previous `value <TransferMechanism.value>`;
         result is used to determine when `is_converged <TransferMechanism.is_converged>` is `True`.
 
     convergence_criterion : float
@@ -1152,10 +1141,6 @@ class TransferMechanism(ProcessingMechanism_Base):
         super()._instantiate_parameter_states(function=function, context=context)
 
     def _instantiate_attributes_before_function(self, function=None, context=None):
-
-        # if self.integrator_mode:
-        # self.parameters.previous_value.set(None, override=True)
-
         super()._instantiate_attributes_before_function(function=function, context=context)
 
         if self.initial_value is None:
@@ -1472,10 +1457,6 @@ class TransferMechanism(ProcessingMechanism_Base):
                                                 context=context
                                                 )
         value = self._clip_result(clip, value)
-
-        # Used by update_previous_value, convergence_function and delta
-        # self.parameters.value.set(np.atleast_2d(value), execution_id, override=True, skip_history=True, skip_log=True)
-
         return value
 
     def reinitialize(self, *args, execution_context=None):
