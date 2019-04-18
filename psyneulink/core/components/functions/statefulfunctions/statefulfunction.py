@@ -50,8 +50,8 @@ class StatefulFunction(Function_Base): #  --------------------------------------
 
     .. _StatefulFunction:
 
-    Abstract base class for Functions the result of which depend on their `previous_value
-    <StatefulFunction.previous_value>` attribute.
+    Abstract base class for Functions the result of which depend on a previous parameter value,
+    typicaly `value <StatefulFunction.value>`.
 
     COMMENT:
     NARRATIVE HERE THAT EXPLAINS:
@@ -68,7 +68,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
         specifies a template for `variable <StatefulFunction.variable>`.
 
     initializer : float, list or 1d array : default 0.0
-        specifies initial value for `previous_value <StatefulFunction.previous_value>`.  If it is a list or array,
+        specifies initial value for the previous `value <StatefulFunction.value>`.  If it is a list or array,
         it must be the same length as `variable <StatefulFunction.variable>` (see `initializer
         <StatefulFunction.initializer>` for details).
 
@@ -102,13 +102,10 @@ class StatefulFunction(Function_Base): #  --------------------------------------
         current input value.
 
     initializer : float or 1d array
-        determines initial value assigned to `previous_value <StatefulFunction.previous_value>`. If `variable
+        determines initial value assigned to the previous `value <StatefulFunction.value>`. If `variable
         <StatefulFunction.variable>` is a list or array, and initializer is a float or has a single element, it is
-        applied to each element of `previous_value <StatefulFunction.previous_value>`. If initializer is a list or
-        array,each element is applied to the corresponding element of `previous_value <Integrator.previous_value>`.
-
-    previous_value : 1d array
-        last value returned (i.e., for which state is being maintained).
+        applied to each element of the previous `value <StatefulFunction.value>`. If initializer is a list or
+        array,each element is applied to the corresponding element of the previous `value <Integrator.value>`.
 
     initializers : list
         stores the names of the initialization attributes for each of the stateful attributes of the function. The
@@ -125,7 +122,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
 
     rate : float or 1d array
         on each call to `function <StatefulFunction.function>`, applied to `variable <StatefulFunction.variable>`,
-        `previous_value <StatefulFunction.previous_value>`, neither, or both, depending on implementation by
+        the previous `value <StatefulFunction.value>`, neither, or both, depending on implementation by
         subclass.  If it is a float or has a single value, it is applied to all elements of its target(s);  if it has
         more than one element, each element is applied to the corresponding element of its target(s).
 
@@ -489,8 +486,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
 
     def reinitialize(self, *args, execution_context=None):
         """
-            Resets `value <StatefulFunction.previous_value>`  and `previous_value <StatefulFunction.previous_value>`
-            to the specified value(s).
+            Resets `value <StatefulFunction.value>` to the specified value(s).
 
             If arguments are passed into the reinitialize method, then reinitialize sets each of the attributes in
             `stateful_attributes <StatefulFunction.stateful_attributes>` to the value of the corresponding argument.
@@ -501,10 +497,10 @@ class StatefulFunction(Function_Base): #  --------------------------------------
             <StatefulFunction.initializers>`. Next, it sets the `value <StatefulFunction.value>` to a list containing
             the values of each of the attributes in `initializers <StatefulFunction.initializers>`.
 
-            Often, the only attribute in `stateful_attributes <StatefulFunction.stateful_attributes>` is
-            `previous_value <StatefulFunction.previous_value>` and the only attribute in `initializers
+            Often, the only `stateful_attribute <StatefulFunction.stateful_attributes>` is
+            `value <StatefulFunction.value>` and the only attribute in `initializers
             <StatefulFunction.initializers>` is `initializer <StatefulFunction.initializer>`, in which case
-            the reinitialize method sets `previous_value <StatefulFunction.previous_value>` and `value
+            the reinitialize method sets `value
             <StatefulFunction.value>` to either the value of the argument (if an argument was passed into
             reinitialize) or the current value of `initializer <StatefulFunction.initializer>`.
 
