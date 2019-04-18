@@ -1180,7 +1180,7 @@ class DDM(ProcessingMechanism_Base):
             # Analytical function so fall back to more standard behavior
             return super().is_finished(execution_context)
 
-        # find the single numeric entry in previous_value
+        # find the single numeric entry in previous value
         single_value = self.function.parameters.value.get(execution_context)
 
         # indexing into a matrix doesn't reduce dimensionality
