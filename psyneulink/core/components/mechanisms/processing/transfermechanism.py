@@ -354,12 +354,12 @@ import typecheck as tc
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import function_type, method_type
 from psyneulink.core.components.functions.distributionfunctions import DistributionFunction
-from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import AdaptiveIntegrator
-from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import IntegratorFunction
-from psyneulink.core.components.functions.transferfunctions import TransferFunction, Linear, Logistic
 from psyneulink.core.components.functions.function import Function, is_function_type
 from psyneulink.core.components.functions.objectivefunctions import Distance
 from psyneulink.core.components.functions.selectionfunctions import SelectionFunction
+from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import AdaptiveIntegrator
+from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import IntegratorFunction
+from psyneulink.core.components.functions.transferfunctions import Linear, Logistic, TransferFunction
 from psyneulink.core.components.functions.transferfunctions import Linear, Logistic, TransferFunction
 from psyneulink.core.components.functions.userdefinedfunction import UserDefinedFunction
 from psyneulink.core.components.mechanisms.adaptive.control.controlmechanism import _is_control_spec
@@ -368,8 +368,7 @@ from psyneulink.core.components.mechanisms.processing.processingmechanism import
 from psyneulink.core.components.states.inputstate import InputState
 from psyneulink.core.components.states.outputstate import OutputState, PRIMARY, StandardOutputStates, standard_output_states
 from psyneulink.core.globals.context import ContextFlags
-from psyneulink.core.globals.keywords import DIFFERENCE, FUNCTION, INITIALIZER, INSTANTANEOUS_MODE_VALUE, \
-    MAX_ABS_INDICATOR, MAX_ABS_VAL, MAX_INDICATOR, MAX_VAL, NAME, NOISE, OUTPUT_MEAN, OUTPUT_MEDIAN, OUTPUT_STD_DEV, OUTPUT_VARIANCE, OWNER_VALUE, PREVIOUS_VALUE, PROB, RATE, REINITIALIZE, RESULT, RESULTS, SELECTION_FUNCTION_TYPE, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE
+from psyneulink.core.globals.keywords import DIFFERENCE, FUNCTION, INITIALIZER, INSTANTANEOUS_MODE_VALUE, MAX_ABS_INDICATOR, MAX_ABS_VAL, MAX_INDICATOR, MAX_VAL, NAME, NOISE, OUTPUT_MEAN, OUTPUT_MEDIAN, OUTPUT_STD_DEV, OUTPUT_VARIANCE, OWNER_VALUE, PREVIOUS_VALUE, PROB, RATE, REINITIALIZE, RESULT, RESULTS, SELECTION_FUNCTION_TYPE, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE
 from psyneulink.core.globals.parameters import Parameter
 from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
@@ -1215,7 +1214,6 @@ class TransferMechanism(ProcessingMechanism_Base):
                     # If function's initializer was not specified, assign Mechanism's initial_value to it
                     if not fct_specified:
                         self.integrator_function.parameters.initializer.set(initializer, execution_id)
-                        self.integrator_function._initialize_previous_value(initializer, execution_id)
                     # Otherwise, give precedence to function's value
                     else:
                         if mech_specified:
@@ -1461,14 +1459,6 @@ class TransferMechanism(ProcessingMechanism_Base):
 
     def reinitialize(self, *args, execution_context=None):
         super().reinitialize(*args, execution_context=execution_context)
-        self.parameters.previous_value.set(None, execution_context, override=True)
-
-    def _update_previous_value(self, execution_id=None):
-        if self.parameters.integrator_mode.get(execution_id):
-            value = self.parameters.value.get(execution_id)
-            if value is None:
-                value = self.defaults.value
-            self.parameters.previous_value.set(value, execution_id, override=True)
 
     def _parse_function_variable(self, variable, execution_id=None, context=None):
         if context is ContextFlags.INSTANTIATE:

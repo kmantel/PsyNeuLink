@@ -183,12 +183,12 @@ from types import MethodType
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import function_type, method_type
 from psyneulink.core.components.functions.combinationfunctions import LinearCombination
+from psyneulink.core.components.functions.combinationfunctions import LinearCombination
 from psyneulink.core.components.functions.function import Function, is_function_type
 from psyneulink.core.components.functions.learningfunctions import Hebbian
 from psyneulink.core.components.functions.objectivefunctions import Distance, Stability
-from psyneulink.core.components.functions.transferfunctions import Linear, get_matrix
 from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import AdaptiveIntegrator
-from psyneulink.core.components.functions.combinationfunctions import LinearCombination
+from psyneulink.core.components.functions.transferfunctions import Linear, get_matrix
 from psyneulink.core.components.functions.userdefinedfunction import UserDefinedFunction
 from psyneulink.core.components.mechanisms.adaptive.learning.learningmechanism import ACTIVATION_INPUT, LEARNING_SIGNAL, LearningMechanism
 from psyneulink.core.components.mechanisms.mechanism import Mechanism_Base
@@ -950,7 +950,7 @@ class RecurrentTransferMechanism(TransferMechanism):
 
         self._learning_enabled = enable_learning
 
-        # Assign args to params and functionParams dicts 
+        # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(matrix=matrix,
                                                   integrator_mode=integrator_mode,
                                                   learning_rate=learning_rate,
@@ -1112,8 +1112,6 @@ class RecurrentTransferMechanism(TransferMechanism):
         hetero were None in the initialization call.
         :param function:
         """
-        self.parameters.previous_value.set(None, override=True)
-
         super()._instantiate_attributes_before_function(function=function, context=context)
 
         param_keys = self._parameter_states.key_values
@@ -1265,12 +1263,6 @@ class RecurrentTransferMechanism(TransferMechanism):
             # projection's _update_parameter_states, and accordingly are not updated here
             if state.name != AUTO and state.name != HETERO:
                 state.update(execution_id=execution_id, params=runtime_params, context=context)
-
-    def _update_previous_value(self, execution_id=None):
-        value = self.parameters.value.get(execution_id)
-        if value is None:
-            value = self.defaults.value
-        self.parameters.previous_value.set(value, execution_id, override=True)
 
     # 8/2/17 CW: this property is not optimal for performance: if we want to optimize performance we should create a
     # single flag to check whether to get matrix from auto and hetero?
@@ -1533,7 +1525,6 @@ class RecurrentTransferMechanism(TransferMechanism):
     def reinitialize(self, *args, execution_context=None):
         if self.parameters.integrator_mode.get(execution_context):
             super().reinitialize(*args, execution_context=execution_context)
-        self.parameters.previous_value.set(None, execution_context, override=True)
 
     @property
     def _learning_signal_source(self):

@@ -2443,9 +2443,6 @@ class Mechanism_Base(Mechanism):
 
         return np.array(self.get_input_values(execution_id))
 
-    def _update_previous_value(self, execution_id=None):
-        self.parameters.previous_value.set(self.parameters.value.get(execution_id), execution_id, override=True)
-
     def _update_input_states(self, execution_id=None, runtime_params=None, context=None):
         """ Update value for each InputState in self.input_states:
 
