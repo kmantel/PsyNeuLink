@@ -46,7 +46,7 @@ from psyneulink.core.globals.keywords import \
     OFFSET, OPERATION, ORNSTEIN_UHLENBECK_INTEGRATOR_FUNCTION, OUTPUT_STATES, PRODUCT, RATE, REST, \
     SCALE, SIMPLE_INTEGRATOR_FUNCTION, SUM, \
     TIME_STEP_SIZE, DUAL_ADAPTIVE_INTEGRATOR_FUNCTION, \
-    INTEGRATOR_FUNCTION, INTEGRATOR_FUNCTION_TYPE
+    INTEGRATOR_FUNCTION, INTEGRATOR_FUNCTION_TYPE, VALUE
 from psyneulink.core.globals.parameters import Parameter
 from psyneulink.core.globals.utilities import parameter_spec, all_within_range, iscompatible
 from psyneulink.core.globals.context import ContextFlags
@@ -1059,6 +1059,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
         rate_p, builder = ctx.get_param_ptr(self, builder, params, RATE)
         offset_p, builder = ctx.get_param_ptr(self, builder, params, OFFSET)
         noise_p, builder = ctx.get_param_ptr(self, builder, params, NOISE)
+        value_p, builder = ctx.get_param_ptr(self, builder, params, VALUE)
 
         offset = pnlvm.helpers.load_extract_scalar_array_one(builder, offset_p)
 
@@ -1070,8 +1071,10 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
             noise_p = builder.gep(noise_p, [ctx.int32_ty(0), index])
         noise = pnlvm.helpers.load_extract_scalar_array_one(builder, noise_p)
 
-        # Get the only context member -- previous value
-        prev_ptr = builder.gep(state, [ctx.int32_ty(0), ctx.int32_ty(0)])
+        # KDM 4/18/19: previous_value is now accessed through value, as they
+        # would always be identical at the beginning or end of execution
+        prev_ptr = builder.gep(value_p, [ctx.int32_ty(0), ctx.int32_ty(0)])
+
         # Get rid of 2d array. When part of a Mechanism the input,
         # (and output, and context) are 2d arrays.
         prev_ptr = ctx.unwrap_2d_array(builder, prev_ptr)

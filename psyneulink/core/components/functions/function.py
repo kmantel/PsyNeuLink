@@ -821,7 +821,8 @@ class Function_Base(Function):
 
     def _get_compilation_params(self, execution_id=None):
         # Filter out known unused/invalid params
-        black_list = {'function', 'variable', 'value', 'context', 'initializer'}
+        # KDM 4/18/19: remove value from blacklist, because it is used instead of previous_value now
+        black_list = {'function', 'variable', 'context', 'initializer'}
         try:
             # Don't list stateful params, the are included in context
             black_list.update(self.stateful_attributes)
@@ -853,7 +854,7 @@ class Function_Base(Function):
             if not np.isscalar(param) and param is not None:
                 if p.name == 'matrix': # Flatten matrix
                     param = np.asfarray(param).flatten().tolist()
-                elif len(param) == 1 and hasattr(param[0], '__len__'): # Remove 2d. FIXME: Remove this
+                elif p.name != 'value' and len(param) == 1 and hasattr(param[0], '__len__'): # Remove 2d. FIXME: Remove this
                     param = np.asfarray(param[0]).tolist()
             param_init.append(param)
 
