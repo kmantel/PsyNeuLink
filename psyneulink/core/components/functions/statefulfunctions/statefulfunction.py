@@ -16,22 +16,22 @@
 
 '''
 
+import itertools
+import numbers
 import numpy as np
 import typecheck as tc
-import itertools
 import warnings
-import numbers
 
 import abc
 
 from psyneulink.core.components.component import DefaultsFlexibility
-from psyneulink.core.components.functions.function import Function_Base, FunctionError
 from psyneulink.core.components.functions.distributionfunctions import DistributionFunction
-from psyneulink.core.globals.keywords import INITIALIZER, STATEFUL_FUNCTION_TYPE, STATEFUL_FUNCTION, NOISE, RATE
-from psyneulink.core.globals.parameters import Parameter
-from psyneulink.core.globals.utilities import parameter_spec, iscompatible
-from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.core.components.functions.function import FunctionError, Function_Base
 from psyneulink.core.globals.context import ContextFlags
+from psyneulink.core.globals.keywords import INITIALIZER, NOISE, RATE, STATEFUL_FUNCTION, STATEFUL_FUNCTION_TYPE
+from psyneulink.core.globals.parameters import Parameter
+from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.core.globals.utilities import iscompatible, parameter_spec
 
 __all__ = ['StatefulFunction']
 
@@ -226,12 +226,9 @@ class StatefulFunction(Function_Base): #  --------------------------------------
             else:
                 initializer = self.class_defaults.variable
 
-        previous_value = self._initialize_previous_value(initializer)
-
-        # Assign args to params and functionParams dicts 
+        # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(rate=rate,
                                                   initializer=initializer,
-                                                  previous_value=previous_value,
                                                   noise=noise,
                                                   params=params)
 

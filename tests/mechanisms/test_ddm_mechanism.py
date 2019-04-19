@@ -30,7 +30,6 @@ class TestReinitialize:
         # reinitialize function
         D.function.reinitialize(2.0, 0.1)
         assert np.allclose(D.function.value[0], 2.0)
-        assert np.allclose(D.function.previous_value, 2.0)
         assert np.allclose(D.function.previous_time, 0.1)
         assert np.allclose(D.value,  [[1.0], [1.0]])
         assert np.allclose(D.output_states[0].value, 1.0)
@@ -39,7 +38,6 @@ class TestReinitialize:
         # reinitialize function without value spec
         D.function.reinitialize()
         assert np.allclose(D.function.value[0], 0.0)
-        assert np.allclose(D.function.previous_value, 0.0)
         assert np.allclose(D.function.previous_time, 0.0)
         assert np.allclose(D.value, [[1.0], [1.0]])
         assert np.allclose(D.output_states[0].value, 1.0)
@@ -48,7 +46,6 @@ class TestReinitialize:
         # reinitialize mechanism
         D.reinitialize(2.0, 0.1)
         assert np.allclose(D.function.value[0], 2.0)
-        assert np.allclose(D.function.previous_value, 2.0)
         assert np.allclose(D.function.previous_time, 0.1)
         assert np.allclose(D.value, [[2.0], [0.1]])
         assert np.allclose(D.output_states[0].value, 2.0)
@@ -63,7 +60,6 @@ class TestReinitialize:
         # reinitialize mechanism without value spec
         D.reinitialize()
         assert np.allclose(D.function.value[0], 0.0)
-        assert np.allclose(D.function.previous_value, 0.0)
         assert np.allclose(D.function.previous_time, 0.0)
         assert np.allclose(D.output_states[0].value[0], 0.0)
         assert np.allclose(D.output_states[1].value[0], 0.0)
@@ -73,7 +69,6 @@ class TestReinitialize:
         D.function.starting_point = 0.0
         D.reinitialize()
         assert np.allclose(D.function.value[0], 1.0)
-        assert np.allclose(D.function.previous_value, 1.0)
         assert np.allclose(D.function.previous_time, 0.0)
         assert np.allclose(D.output_states[0].value[0], 1.0)
         assert np.allclose(D.output_states[1].value[0], 0.0)
