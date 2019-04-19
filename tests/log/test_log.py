@@ -42,7 +42,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'OFF',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -72,7 +71,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'OFF',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -121,7 +119,6 @@ class TestLog:
             'mod_noise': 'EXECUTION',
             'mod_slope': 'OFF',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -151,7 +148,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'OFF',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -265,7 +261,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'OFF',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -295,7 +290,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'OFF',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -348,7 +342,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'EXECUTION',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'EXECUTION',
             'variable': 'OFF'
         }
@@ -378,7 +371,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'EXECUTION',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'EXECUTION',
             'variable': 'OFF'
         }
@@ -483,7 +475,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'OFF',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -513,7 +504,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'OFF',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -548,7 +538,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'EXECUTION',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'EXECUTION',
             'variable': 'OFF'
         }
@@ -583,7 +572,6 @@ class TestLog:
             'mod_noise': 'OFF',
             'mod_slope': 'EXECUTION',
             'noise': 'OFF',
-            'previous_value': 'OFF',
             'value': 'EXECUTION',
             'variable': 'OFF'
         }
