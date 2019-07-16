@@ -190,6 +190,17 @@ def test_botvinick_model(benchmark, mode, reps):
     ntrials = 10 * reps
     comp._analyze_graph()
 
+    for p in comp.output_CIM.afferents:
+        print('p:', p, 'sender', p.sender)
+        print("OUTPUT_CIM AFFERENT2: ", p.name)
+        print("DEF VAR: ", p.defaults.variable)
+        print("VAR: ", p.variable)
+        print("sender def var:", p.sender.defaults.variable)
+        print("sender var:", p.sender.variable)
+        print("sender def val:", p.sender.defaults.value)
+        print("sender val:", p.sender.value)
+
+
     def run(bin_execute):
         results = []
         for i, stim in enumerate(Stimulus):

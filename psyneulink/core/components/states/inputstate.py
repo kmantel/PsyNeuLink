@@ -1305,7 +1305,10 @@ class InputState(State_Base):
 
     @property
     def socket_width(self):
-        return self.defaults.variable.shape[-1]
+        try:
+            return self.defaults.variable.shape[-1]
+        except IndexError:
+            return 1
 
     @property
     def socket_template(self):

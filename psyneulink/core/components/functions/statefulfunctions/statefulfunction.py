@@ -29,7 +29,7 @@ from psyneulink.core.components.functions.function import Function_Base, Functio
 from psyneulink.core.components.functions.distributionfunctions import DistributionFunction
 from psyneulink.core.globals.keywords import INITIALIZER, STATEFUL_FUNCTION_TYPE, STATEFUL_FUNCTION, NOISE, RATE
 from psyneulink.core.globals.parameters import Parameter
-from psyneulink.core.globals.utilities import parameter_spec, iscompatible
+from psyneulink.core.globals.utilities import parameter_spec, iscompatible, safe_len
 from psyneulink.core.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.core.globals.context import ContextFlags
 
@@ -318,7 +318,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
             initial_value = self.get_current_function_param(initial_value_name)
 
             if isinstance(initial_value, (list, np.ndarray)):
-                if len(initial_value) != 1:
+                if safe_len(initial_value) > 1:
                     # np.atleast_2d may not be necessary here?
                     if np.shape(np.atleast_2d(initial_value)) != np.shape(np.atleast_2d(default_variable)):
                         raise FunctionError("{}'s {} ({}) is incompatible with its default_variable ({}) ."

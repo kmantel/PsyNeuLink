@@ -1241,7 +1241,7 @@ class Component(object, metaclass=ComponentsMeta):
 
         self._default_variable_handled = True
 
-        return convert_to_np_array(default_variable, dimension=1)
+        return default_variable
 
     # IMPLEMENTATION NOTE: (7/7/17 CW) Due to System and Process being initialized with size at the moment (which will
     # be removed later), I’m keeping _handle_size in Component.py. I’ll move the bulk of the function to Mechanism
@@ -2361,9 +2361,6 @@ class Component(object, metaclass=ComponentsMeta):
         """
         if variable is None:
             return variable
-
-        if not isinstance(variable, (list, np.ndarray)):
-            variable = np.atleast_1d(variable)
 
         return convert_all_elements_to_np_array(variable)
 
