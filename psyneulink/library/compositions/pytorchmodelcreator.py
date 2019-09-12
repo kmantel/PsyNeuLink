@@ -70,7 +70,7 @@ class PytorchModelCreator(torch.nn.Module):
                 afferents = {}  # dict for keeping track of afferent nodes and their connecting weights
                 if param_init_from_pnl:
                     if component.parameters.value._get(context) is None:
-                        value = torch.tensor(component.parameters.value._get(None)[0], device=self.device)
+                        value = torch.tensor(component.parameters.value.get(None)[0], device=self.device)
                     else:
                         value = torch.tensor(component.parameters.value._get(context)[0], device=self.device)
                 else:
@@ -100,7 +100,7 @@ class PytorchModelCreator(torch.nn.Module):
                         proj_matrix = mapping_proj.parameters.matrix._get(
                             context)
                         if proj_matrix is None:
-                            proj_matrix = mapping_proj.parameters.matrix._get(
+                            proj_matrix = mapping_proj.parameters.matrix.get(
                                 None)
                         # set up pytorch weights that correspond to projection. If copying params from psyneulink,
                         # copy weight values from projection. Otherwise, use random values.
@@ -948,7 +948,7 @@ class PytorchModelCreator(torch.nn.Module):
                 param_name, context)
             if val is None:
                 val = node.function.get_current_function_param(
-                    param_name, None)
+                    param_name, Context(execution_id=None))
             return float(val)
 
         if isinstance(node.function, Linear):

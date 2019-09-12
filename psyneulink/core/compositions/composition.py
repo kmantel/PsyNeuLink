@@ -7385,7 +7385,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
     @property
     def simulation_results(self):
-        return self.parameters.simulation_results._get(self.default_execution_id)
+        return self.parameters.simulation_results.get(self.default_execution_id)
 
     #  For now, external_input_states == input_states and external_input_values == input_values
     #  They could be different in the future depending on new features (ex. if we introduce recurrent compositions)

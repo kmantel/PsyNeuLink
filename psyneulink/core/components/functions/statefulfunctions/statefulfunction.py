@@ -249,10 +249,10 @@ class StatefulFunction(Function_Base): #  --------------------------------------
 
         self.has_initializers = True
 
-    def _validate(self):
+    def _validate(self, context=None):
         self._validate_rate(self.defaults.rate)
-        self._validate_initializers(self.defaults.variable)
-        super()._validate()
+        self._validate_initializers(self.defaults.variable, context=context)
+        super()._validate(context=context)
 
     def _validate_params(self, request_set, target_set=None, context=None):
 
@@ -312,10 +312,10 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                 target_set[NOISE] = noise.execute
             self._validate_noise(target_set[NOISE])
 
-    def _validate_initializers(self, default_variable):
+    def _validate_initializers(self, default_variable, context=None):
         for initial_value_name in self.initializers:
 
-            initial_value = self.get_current_function_param(initial_value_name)
+            initial_value = self.get_current_function_param(initial_value_name, context=context)
 
             if isinstance(initial_value, (list, np.ndarray)):
                 if len(initial_value) != 1:

@@ -967,7 +967,7 @@ class ContentAddressableMemory(MemoryFunction):  # -----------------------------
                 raise FunctionError("{} arg of {} ({}) must be a float in the interval [0,1]".
                                     format(repr(STORAGE_PROB), self.__class___.__name__, storage_prob))
 
-    def _validate(self):
+    def _validate(self, context=None):
         """Validate distance_function, selection_function and memory store"""
         distance_function = self.distance_function
         test_var = [self.defaults.variable[KEYS], self.defaults.variable[VALS]]
