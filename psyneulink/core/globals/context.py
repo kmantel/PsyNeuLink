@@ -618,6 +618,7 @@ _handle_external_context_arg_cache = defaultdict(dict)
 def handle_external_context(
     source=ContextFlags.COMMAND_LINE,
     execution_phase=ContextFlags.IDLE,
+    execution_id=None,
     **context_kwargs
 ):
     """
@@ -668,17 +669,13 @@ def handle_external_context(
 
         @functools.wraps(func)
         def wrapper(*args, context=None, **kwargs):
-            try:
-                execution_id = context_kwargs['execution_id']
-                del context_kwargs['execution_id']
-            except KeyError:
-                execution_id = None
+            eid = execution_id
 
             if context is not None and not isinstance(context, Context):
                 try:
-                    execution_id = context.default_execution_id
+                    eid = context.default_execution_id
                 except AttributeError:
-                    execution_id = context
+                    eid = context
                 context = None
             else:
                 try:
@@ -687,16 +684,16 @@ def handle_external_context(
                             context = args[context_arg_index]
                         else:
                             try:
-                                execution_id = args[context_arg_index].default_execution_id
+                                eid = args[context_arg_index].default_execution_id
                             except AttributeError:
-                                execution_id = args[context_arg_index]
+                                eid = args[context_arg_index]
                             context = None
                 except (TypeError, IndexError):
                     pass
 
             if context is None:
                 context = Context(
-                    execution_id=execution_id,
+                    execution_id=eid,
                     source=source,
                     execution_phase=execution_phase,
                     **context_kwargs
