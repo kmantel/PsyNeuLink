@@ -1355,7 +1355,10 @@ class ControlMechanism(ModulatoryMechanism_Base):
 
         # GET OutputPorts to Monitor (to specify as or add to ObjectiveMechanism's monitored_output_ports attribute
 
-        monitored_output_ports = []
+        if self.input_ports_spec is None:
+            monitored_output_ports = []
+        else:
+            monitored_output_ports = convert_to_list(self.input_ports_spec)
 
         # If the ControlMechanism has already been assigned to a System
         #    get OutputPorts in System specified as monitor_for_control or already being monitored:
@@ -1372,6 +1375,7 @@ class ControlMechanism(ModulatoryMechanism_Base):
         #    move them to monitor_for_control
         if isinstance(self.objective_mechanism, list):
             self.monitor_for_control.extend(self.objective_mechanism)
+            monitored_output_ports.extend(self.objective_mechanism)
 
         # Add items in monitor_for_control to monitored_output_ports
         for i, item in enumerate(self.monitor_for_control):
