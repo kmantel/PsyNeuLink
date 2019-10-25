@@ -31,8 +31,8 @@ It defines a common set of attributes possessed, and methods used by all Composi
 
 Composition "Nodes" are `Mechanisms <Mechanism>` and/or nested `Compositions <Composition>`. `Projections
 <Projection>` connect two Nodes. The Composition's `graph <Composition.graph>` stores the structural relationships
-among the Nodes of a Composition and the Projections that connect them.  The Composition's `scheduler 
-<Composition.scheduler>` generates an execution queue based on these structural dependencies, allowing 
+among the Nodes of a Composition and the Projections that connect them.  The Composition's `scheduler
+<Composition.scheduler>` generates an execution queue based on these structural dependencies, allowing
 for other user-specified scheduling and termination conditions to be specified.
 
 .. _Composition_Creation:
@@ -661,10 +661,10 @@ or Mechanism.input_ports, as these are added in the proper classes' _dependent_c
 When `run <Composition.run>` is called by a Composition, it calls that Composition's `execute <Composition.execute>`
 method once for each `input <Composition_Run_Inputs>`  (or set of inputs) specified in the call to `run
 <Composition.run>`, which constitutes a `TRIAL` of execution.  For each `TRIAL`, the Component makes repeated calls
-to its `scheduler <Composition.scheduler>`, executing the Components it specifies in each 
-`TIME_STEP`, until every Component has been executed at least once or another `termination condition 
-<Scheduler_Termination_Conditions>` is met.  The `scheduler <Composition.scheduler>` can be 
-used in combination with `Condition` specifications for individual Components to execute different Components at 
+to its `scheduler <Composition.scheduler>`, executing the Components it specifies in each
+`TIME_STEP`, until every Component has been executed at least once or another `termination condition
+<Scheduler_Termination_Conditions>` is met.  The `scheduler <Composition.scheduler>` can be
+used in combination with `Condition` specifications for individual Components to execute different Components at
 different time scales.
 
 Runtime Params
@@ -3120,7 +3120,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         """Check for Projection with same sender and receiver
         If **in_composition** is True, return only Projections found in the current Composition
         If **in_composition** is False, return only Projections that are found outside the current Composition
-        
+
         Return Projection or list of Projections that satisfies the conditions, else False
         """
         assert projection or (sender and receiver), \
@@ -3316,14 +3316,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # FIX 8/27/19 [JDC]:  GENERALIZE TO ControlMechanism
         # MODIFIED 8/12/19 NEW: [JDC] - AVOID DUPLCIATE CONTROL_RELATED PROJECTIONS
-        # Then, delete any ControlMechanism that has its monitor_for_control attribute assigned
+        # Then, delete any ControlMechanism that has its monitored_output_ports attribute assigned
         #    and any ObjectiveMechanism that projects to a ControlMechanism,
         #    as well as any projections to them specified in the pathway;
         #    this is to avoid instantiating projections to them that might conflict with those
         #    instantiated by their constructors or, for a controller, _add_controller()
         items_to_delete = []
         for i, item in enumerate(pathway):
-            if ((isinstance(item, ControlMechanism) and item.monitor_for_control)
+            if ((isinstance(item, ControlMechanism) and item.monitored_output_ports)
                     or (isinstance(item, ObjectiveMechanism) and item._role == CONTROL)):
                 items_to_delete.append(item)
                 # Delete any projections to the ControlMechanism or ObjectiveMechanism specified in pathway
@@ -3383,7 +3383,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         assert len(duplicate)==1, \
                             f"PROGRAM ERROR: Could not identify duplicate on DuplicateProjectionError " \
                                 f"for {Projection.__name__} between {sender.name} and {receiver.name} " \
-                                f"in call to {repr('add_linear_processing_pathway')} for {self.name}."                            
+                                f"in call to {repr('add_linear_processing_pathway')} for {self.name}."
                         duplicate = duplicate[0]
                         warning_msg = f"Projection specified between {sender.name} and {receiver.name} " \
                                       f"in call to 'add_linear_projection' for {self.name} is a duplicate of one"

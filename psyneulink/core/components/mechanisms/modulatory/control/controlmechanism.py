@@ -188,7 +188,7 @@ specified (also see `ControlMechanism_Examples`):
       OutputPorts monitored (see `below <ControlMechanism_ObjectiveMechanism_Function>` for additional details).
 
 The OutputPorts monitored by a ControlMechanism or its `objective_mechanism <ControlMechanism.objective_mechanism>`
-are listed in the ControlMechanism's `monitor_for_control <ControlMechanism.monitor_for_control>` attribute
+are listed in the ControlMechanism's `monitored_output_ports <ControlMechanism.monitored_output_ports>` attribute
 (and are the same as those listed in the `monitor <ObjectiveMechanism.monitor>` attribute of the
 `objective_mechanism <ControlMechanism.objective_mechanism>`, if specified).
 
@@ -231,8 +231,8 @@ the ObjectiveMechanism's constructor.  Specifically, for each OutputPort specifi
 corresponding `input_ports <ObjectiveMechanism.input_ports>`) can be added to the `objective_mechanism
 <ControlMechanism.objective_mechanism>` later, by using its `add_to_monitor <ObjectiveMechanism.add_to_monitor>` method.
 The set of OutputPorts monitored by the `objective_mechanism <ControlMechanism.objective_mechanism>` are listed in
-its `monitor <ObjectiveMechanism>` attribute, as well as in the ControlMechanism's `monitor_for_control
-<ControlMechanism.monitor_for_control>` attribute.
+its `monitor <ObjectiveMechanism>` attribute, as well as in the ControlMechanism's `monitored_output_ports
+<ControlMechanism.monitored_output_ports>` attribute.
 
 When the ControlMechanism is added to a `Composition`, the `objective_mechanism <ControlMechanism.objective_mechanism>`
 is also automatically added, and MappingProjectons are created from each of the OutputPorts that it monitors to
@@ -841,14 +841,14 @@ class ControlMechanism(ModulatoryMechanism_Base):
         **objective_mechanism** argument, and transmits the result to the ControlMechanism's *OUTCOME*
         `input_port <Mechanism_Base.input_port>`.
 
-    monitor_for_control : List[OutputPort]
+    monitored_output_ports : List[OutputPort]
         each item is an `OutputPort` monitored by the ControlMechanism or its `objective_mechanism
         <ControlMechanism.objective_mechanism>` if that is specified (see `ControlMechanism_Monitor_for_Control`);
         in the latter case, the list returned is ObjectiveMechanism's `monitor <ObjectiveMechanism.monitor>` attribute.
 
     monitored_output_ports_weights_and_exponents : List[Tuple(float, float)]
         each tuple in the list contains the weight and exponent associated with a corresponding OutputPort specified
-        in `monitor_for_control <ControlMechanism.monitor_for_control>`; if `objective_mechanism
+        in `monitored_output_ports <ControlMechanism.monitored_output_ports>`; if `objective_mechanism
         <ControlMechanism.objective_mechanism>` is specified, these are the same as those in the ObjectiveMechanism's
         `monitored_output_ports_weights_and_exponents
         <ObjectiveMechanism.monitored_output_ports_weights_and_exponents>` attribute, and are used by the
@@ -859,7 +859,7 @@ class ControlMechanism(ModulatoryMechanism_Base):
         the ControlMechanism's `primary InputPort <InputPort_Primary>`, named *OUTCOME*;  this receives a
         `MappingProjection` from the *OUTCOME* `OutputPort <ObjectiveMechanism_Output>` of `objective_mechanism
         <ControlMechanism.objective_mechanism>` if that is specified; otherwise, it receives MappingProjections
-        from each of the OutputPorts specifed in `monitor_for_control <ControlMechanism.monitor_for_control>`
+        from each of the OutputPorts specifed in `monitored_output_ports <ControlMechanism.monitored_output_ports>`
         (see `_ControlMechanism_Input` for additional details).
 
     outcome : 1d array
@@ -1375,11 +1375,11 @@ class ControlMechanism(ModulatoryMechanism_Base):
             monitored_output_ports.extend(self.system._get_monitored_output_ports_for_system(self,context=context))
 
         # If objective_mechanism is used to specify OutputPorts to be monitored (legacy feature)
-        #    move them to monitor_for_control
+        #    move them to monitored_output_ports
         if isinstance(self.objective_mechanism, list):
             monitored_output_ports.extend(self.objective_mechanism)
 
-        # Add items in monitor_for_control to monitored_output_ports
+        # Add items in input_ports_spec to monitored_output_ports
         if self.input_ports_spec is not None:
             for i, item in enumerate(self.input_ports_spec):
                 # If it is already in the list received from System, ignore
@@ -1445,17 +1445,18 @@ class ControlMechanism(ModulatoryMechanism_Base):
         self.input_port.name = OUTCOME
 
         # If objective_mechanism is specified, instantiate it,
-        #     including Projections to it from monitor_for_control
+        #     including Projections to it from input_ports_spec
         if self.objective_mechanism:
             self._instantiate_objective_mechanism(context=context)
 
-        # Otherwise, instantiate Projections from monitor_for_control to ControlMechanism
+        # Otherwise, instantiate Projections from input_ports_spec to ControlMechanism
         elif self.input_ports_spec:
             from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
             for sender in convert_to_list(self.input_ports_spec):
                 try:
                     proj = MappingProjection(sender=sender, receiver=self.input_ports[OUTCOME])
                 except DuplicateProjectionError:
+                    assert False
                     proj = [p for p in self.input_ports[OUTCOME].path_afferents if p.sender.owner is sender][0]
                 self.aux_components.append(proj)
 
