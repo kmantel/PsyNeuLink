@@ -1453,12 +1453,7 @@ class ControlMechanism(ModulatoryMechanism_Base):
         elif self.input_ports_spec:
             from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
             for sender in convert_to_list(self.input_ports_spec):
-                try:
-                    proj = MappingProjection(sender=sender, receiver=self.input_ports[OUTCOME])
-                except DuplicateProjectionError:
-                    assert False
-                    proj = [p for p in self.input_ports[OUTCOME].path_afferents if p.sender.owner is sender][0]
-                self.aux_components.append(proj)
+                self.aux_components.append(MappingProjection(sender=sender, receiver=self.input_ports[OUTCOME]))
 
     def _instantiate_output_ports(self, context=None):
 
