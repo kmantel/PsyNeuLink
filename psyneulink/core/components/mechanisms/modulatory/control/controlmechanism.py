@@ -1169,6 +1169,12 @@ class ControlMechanism(ModulatoryMechanism_Base):
                 if args:
                     control.extend(convert_to_list(args))
 
+        # used to prevent duplicates during Composition pathway adding
+        if len(monitor_for_control) == 0:
+            self.add_during_composition_pathway = False
+        else:
+            self.add_during_composition_pathway = True
+
         # do not override default behavior if no specifications
         if len(monitor_for_control) == 0:
             monitor_for_control = None
@@ -1188,6 +1194,8 @@ class ControlMechanism(ModulatoryMechanism_Base):
             )
         except TypeError:
             control_spec = control
+
+
 
         # Assign args to params and functionParams dicts
         params = self._assign_args_to_param_dicts(system=system,
@@ -1436,6 +1444,7 @@ class ControlMechanism(ModulatoryMechanism_Base):
         # ASSIGN ATTRIBUTES
 
         self._objective_projection = projection_from_objective
+        self.add_during_composition_pathway = False
 
     def _instantiate_input_ports(self, context=None):
         from psyneulink.core.components.projections.projection import DuplicateProjectionError

@@ -3322,8 +3322,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         #    this is to avoid instantiating projections to them that might conflict with those
         #    instantiated by their constructors or, for a controller, _add_controller()
         items_to_delete = []
+
         for i, item in enumerate(pathway):
-            if ((isinstance(item, ControlMechanism) and item.monitored_output_ports)
+            if ((isinstance(item, ControlMechanism) and not item.add_during_composition_pathway)
                     or (isinstance(item, ObjectiveMechanism) and item._role == CONTROL)):
                 items_to_delete.append(item)
                 # Delete any projections to the ControlMechanism or ObjectiveMechanism specified in pathway
