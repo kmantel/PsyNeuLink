@@ -1374,24 +1374,20 @@ class ControlMechanism(ModulatoryMechanism_Base):
         if self.system:
             monitored_output_ports.extend(self.system._get_monitored_output_ports_for_system(self,context=context))
 
-        self.monitor_for_control = self.monitor_for_control or []
-        if not isinstance(self.monitor_for_control, list):
-            self.monitor_for_control = [self.monitor_for_control]
-
         # If objective_mechanism is used to specify OutputPorts to be monitored (legacy feature)
         #    move them to monitor_for_control
         if isinstance(self.objective_mechanism, list):
-            self.monitor_for_control.extend(self.objective_mechanism)
             monitored_output_ports.extend(self.objective_mechanism)
 
         # Add items in monitor_for_control to monitored_output_ports
-        for i, item in enumerate(self.monitor_for_control):
-            # If it is already in the list received from System, ignore
-            if item in monitored_output_ports:
-                # NOTE: this can happen if ControlMechanisms is being constructed by System
-                #       which passed its monitor_for_control specification
-                continue
-            monitored_output_ports.extend([item])
+        if self.input_ports_spec is not None:
+            for i, item in enumerate(self.input_ports_spec):
+                # If it is already in the list received from System, ignore
+                if item in monitored_output_ports:
+                    # NOTE: this can happen if ControlMechanisms is being constructed by System
+                    #       which passed its monitor_for_control specification
+                    continue
+                monitored_output_ports.extend([item])
 
         # INSTANTIATE ObjectiveMechanism
 
@@ -1440,7 +1436,6 @@ class ControlMechanism(ModulatoryMechanism_Base):
         # ASSIGN ATTRIBUTES
 
         self._objective_projection = projection_from_objective
-        self.monitor_for_control = self.monitored_output_ports
 
     def _instantiate_input_ports(self, context=None):
         from psyneulink.core.components.projections.projection import DuplicateProjectionError
