@@ -1169,6 +1169,12 @@ class ControlMechanism(ModulatoryMechanism_Base):
                 if args:
                     control.extend(convert_to_list(args))
 
+        # do not override default behavior if no specifications
+        if len(monitor_for_control) == 0:
+            monitor_for_control = None
+        if len(control) == 0:
+            control = None
+
         function = function or DefaultAllocationFunction
         self.combine_costs = combine_costs
         self.compute_net_outcome = compute_net_outcome
@@ -1202,6 +1208,7 @@ class ControlMechanism(ModulatoryMechanism_Base):
                                                   name=name,
                                                   function=function,
                                                   prefs=prefs,
+                                                  input_ports=monitor_for_control,
                                                   **kwargs)
 
         if system is not None:
@@ -1436,6 +1443,7 @@ class ControlMechanism(ModulatoryMechanism_Base):
         self.monitor_for_control = self.monitored_output_ports
 
     def _instantiate_input_ports(self, context=None):
+        from psyneulink.core.components.projections.projection import DuplicateProjectionError
 
         super()._instantiate_input_ports(context=context)
         self.input_port.name = OUTCOME
@@ -1447,10 +1455,14 @@ class ControlMechanism(ModulatoryMechanism_Base):
             self._instantiate_objective_mechanism(context=context)
 
         # Otherwise, instantiate Projections from monitor_for_control to ControlMechanism
-        elif self.monitor_for_control:
+        elif self.input_ports_spec:
             from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
-            for sender in convert_to_list(self.monitor_for_control):
-                self.aux_components.append(MappingProjection(sender=sender, receiver=self.input_ports[OUTCOME]))
+            for sender in convert_to_list(self.input_ports_spec):
+                try:
+                    proj = MappingProjection(sender=sender, receiver=self.input_ports[OUTCOME])
+                except DuplicateProjectionError:
+                    proj = [p for p in self.input_ports[OUTCOME].path_afferents if p.sender.owner is sender][0]
+                self.aux_components.append(proj)
 
     def _instantiate_output_ports(self, context=None):
 
