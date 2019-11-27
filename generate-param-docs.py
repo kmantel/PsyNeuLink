@@ -94,6 +94,7 @@ def parse_default_value_and_type(default_value):
         typ = list
     else:
         if isinstance(default_value, pnl.Component):
+            excluded_params = {'variable', 'value', 'previous_value', 'random_state'}
             default_val_string = '`{0}`({1})'.format(
                 default_value.__class__.__name__,
                 ', '.join([
@@ -101,9 +102,7 @@ def parse_default_value_and_type(default_value):
                     for (k, v) in sorted(default_value.defaults.values().items(), key=lambda x: x[0])
                     if (
                         v is not None
-                        and k != 'variable'
-                        and k != 'value'
-                        and k != 'previous_value'
+                        and k not in excluded_params
                         and 'param' not in k
                         and (isinstance(v, np.ndarray) or v != getattr(default_value.class_defaults, k))
                     )
