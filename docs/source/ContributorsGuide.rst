@@ -65,8 +65,7 @@ PsyNeuLink uses `pytest <https://docs.pytest.org/en/latest/index.html>`_ to run 
 To build documentation, we use `Sphinx <https://www.sphinx-doc.org/en/master/usage/installation.html>`_.
 To contribute, make a branch off of the ``devel`` branch.
 Make a pull request to ``devel`` once your changes are complete.
-``devel`` is periodically merged into the ``master`` branch, which is the branch most users use and is installed with
-pip install.
+``devel`` is periodically merged into the ``master`` branch, which is the branch most users use and is installed with a standard pip install.
 
 .. _Contribution_Checklist:
 
@@ -167,7 +166,7 @@ Creating a Custom Subclass of Component
 
 *Parameter specification*
 
-The constructor (``__init__ method``) of new sublcass should include an explicit argument for each `Parameter` that
+The constructor (``__init__`` method) of new sublcass should include an explicit argument for each `Parameter` that
 is introduced in the subclass (i.e., that is not defined in the parent class) and/or any that needs preprocessing in
 the constructor before being passed to the parent class for completion of initialization. Any others may be passed
 through the `__init__` hierarchy in the ``**kwargs`` argument.  Parameter defaults for the Component's function may
@@ -179,7 +178,7 @@ the value of each entry.
 
 Default/initial values for
 all these parameters should be set in the `Parameters` class, instead of the python standard default argument value,
-which should be set to `None`. This is to ensure that the `_user_specified <Parameter._user_specified>` attribute is
+which should be set to ``None``. This is to ensure that the `_user_specified <Parameter._user_specified>` attribute is
 set correctly, which is used to indicate whether the value for a Parameter was explicitly given by the user or its
 default value was assigned.
 
@@ -208,23 +207,21 @@ Broadly, the sequence of events for initialization of a `Component` are as follo
 
 Components (excluding Compositions) run the following steps during `execution <Component_Execution>`.
 
-#. Call ``_parse_function_variable`` on the input `variable <Component.variale>`.
+#. Call `_parse_function_variable` on the input `variable <Component.variable>`.
 #. Call `function <Component.function>` on the result of 1.
 
 `Mechanisms <Mechanism>` add a few extra steps:
 
-#. If no variable is passed in, call ``_update_input_ports`` and use the values of the `input_ports <Mechanism
-   .input_ports>` as `variable <Mechanism.variable>`.
-#. Call ``_update_parameter_ports``.
-#. Call ``_parse_function_variable`` on the input `variable`
+#. If no variable is passed in, call `_update_input_ports` and use the values of the `input_ports <Mechanism.input_ports>` as `variable <Mechanism.variable>`
+#. Call `_update_parameter_ports`
+#. Call `_parse_function_variable` on the input `variable`
 #. Call `function <Component.function>` on the result of 3.
-#. Call ``_update_output_ports``
+#. Call `_update_output_ports`
 #. If `execute_until_finished <Component.execute_until_finished>` is `True`, repeat steps 1-5 until one of the
    following:
 
-   a. `is_finished <Component.is_finished>` returns `True`
-   b. `num_executions_before_finished <Component.num_executions_before_finished>` is greater than or equal to
-      `max_executions_before_finished <Component.max_executions_before_finished>`.
+   a. `is_finished <Component.is_finished>` returns ``True``
+   b. `num_executions_before_finished <Component.num_executions_before_finished>` is greater than or equal to `max_executions_before_finished <Component.max_executions_before_finished>`
 
 .. [## AGAIN, I THINK IT WOULD BE GOOD TO HAVE SLIGHTLY MORE INFORMATION ABOUT WHY EACH OF THESE METHODS IS THERE AND
    WHAT THEY (CAN BE USED TO) DO]
@@ -254,8 +251,7 @@ no stored state can be created ad-hoc, using just an instance of
 `Condition <psyneulink.core.scheduling.condition.Condition>`, `While`, or `WhileNot`.
 If a Condition is need that requires stored state, then to implement a subclass you should create a function that
 returns `True` if the condition is satisfied, and `False` otherwise, and assign it to the `func <Condition.func>`
-attribute of the `Condition`. Any ``args`` and ``**kwargs`` passed in to `Condition.__init__ <psyneulink.core
-.scheduling.condition.Condition>` will be given, unchanged, to each call of `func <Condition.func>`, along with an
+attribute of the `Condition`. Any ``*args`` and ``**kwargs`` passed in to `Condition.__init__ psyneulink.core.scheduling.condition.Condition>` will be given, unchanged, to each call of `func <Condition.func>`, along with an
 ``execution_id``.
 
 .. note::
@@ -294,6 +290,8 @@ before publishing to `devel`. To generate Sphinx documentation from your local b
 while in the `docs` folder. The resulting HTML should be in your `docs/build` folder. (Do not commit these built HTML
 files to Github. They are simply for your local testing/preview purposes.)
 
+.. _Example:
+
 Example
 -------
 
@@ -316,7 +314,7 @@ Here, we will create a custom Function, ``RandomIntegrator`` that uses stored st
 ``random_state`` will be used to generate random numbers statefully and independently.
 ``previous_value_2`` will be used in our function, and has its default value set arbitrarily to 10, to distinguish it
 from `previous_value <IntegratorFunction.previous_value>` which is created on `IntegratorFunction.Parameters` and so
-does not need to be overridden here. We set the attribute ``pnl_internal`` to ``True`` on each of these Parameters
+does not need to be overridden here. We set the attribute `pnl_internal` to ``True`` on each of these Parameters
 for use with the `JSON/OpenNeuro collaboration <json>`, to indicate that they are not relevant to modeling platforms
 other than PsyNeuLink.
 
@@ -344,8 +342,7 @@ Any other Parameters will be handled through `**kwargs`.
 
 .. [JDC:  CHECK FOLLOWING EDITTED STATEMENT FOR ACCURACY]
 
-4. Write a ``_function`` method (this will be automatically wrapped and accessible as the Component's `function
-   <Component_Function>` method)::
+4. Write a ``_function`` method (this will be automatically wrapped and accessible as the Component's `function <Component_Function>` method)::
 
         def _function(
             self,
@@ -372,8 +369,7 @@ stores that result back into the appropriate previous value.
    ALSO, WHY ISN'T get_current_function_param UNDERSCORED?  IS IT MEANT TO BE USER (NOT JUST CONTRIBUTOR)
    ACCESSIBLE?
 
-We use `get_current_function_param` instead of just `_get` for ``rate``, because it is a `modulable Parameter
-<Parameter.modulable>`, meaning it has an associated `ParameterPort` on its owner Mechanism, ``RandomIntegrator``.
+We use `get_current_function_param` instead of just `_get` for ``rate``, because it is a `modulable Parameter <Parameter.modulable>`, meaning it has an associated `ParameterPort` on its owner Mechanism, ``RandomIntegrator``.
 This ensures that if ``rate`` is subject to `modulation <ModulatorySignal_Modulation>`, its modulated value is
 returned;  otherwise, its base value would be used, which is equivalent to value returned by `_get`.  In contrast,
 neither `previous_value` nor `previous_value_2` are not modulable, and so we can simply use `_get` for them.
