@@ -6615,6 +6615,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             ):
                 break
 
+            # TODO: separate all this processing into a dedicated method?
             # PROCESSING ------------------------------------------------------------------------
             # Prepare stimuli from the outside world  -- collect the inputs for this TRIAL and store them in a dict
             if callable(inputs):

@@ -2434,8 +2434,45 @@ class Mechanism_Base(Mechanism):
             port._update(context=context, params=runtime_params)
         return np.array(self.get_input_values(context))
 
-    def _update_parameter_ports(self, context=None, runtime_params=None):
+    def update_parameter_ports(
+        self,
+        context: Context = None,
+        runtime_params: dict = None
+    ):
+        """
+            Calls `_update <Port._update>` on each of this Mechanism's
+            `ParameterPort <Mechanism_Base.parameter_ports>`\\s.
 
+            Args:
+                context
+                    the `Context <Context_Overview` in which this method
+                    runs
+
+                runtime_params
+                    any
+                    `runtime parameters <Mechanism_Runtime_Parameters>`
+                    needed to be passed for all Port updates
+        """
+
+    def _update_parameter_ports(
+        self,
+        context: Context = None,
+        runtime_params: dict = None
+    ):
+        """
+            Calls `_update <Port._update>` on each of this Mechanism's
+            `ParameterPort <Mechanism_Base.parameter_ports>`\\s.
+
+            Args:
+                context
+                    the `Context <Context_Overview` in which this method
+                    runs
+
+                runtime_params
+                    any
+                    `runtime parameters <Mechanism_Runtime_Parameters>`
+                    needed to be passed for all Port updates
+        """
         for port in self._parameter_ports:
             port._update(context=context, params=runtime_params)
 
