@@ -144,12 +144,12 @@ object (see `here <Parameter_Use>` for additional information).
 
 Default contexts are specified for a Component when it is executed within `Composition.run`.  When using
 non-default contexts outside of Compositions, `_initialize_from_context` must be called manually. The below code will
-fail, because ``m`` has no parameter values for ``some custom context``::
+fail, because ``m`` has no parameter values for ``'some custom context'``::
 
     m = pnl.ProcessingMechanism()
     m.execute(1, context='some custom context')
 
-To fix this, ``some custom context`` must be initialized beforehand, as follows::
+To fix this, ``'some custom context'`` must be initialized beforehand, as follows::
 
     m._initialize_from_context(context=Context(execution_id='some custom context'))
 
@@ -168,21 +168,21 @@ Creating a Custom Subclass of Component
 
 The constructor (``__init__`` method) of new sublcass should include an explicit argument for each `Parameter` that
 is introduced in the subclass (i.e., that is not defined in the parent class) and/or any that needs preprocessing in
-the constructor before being passed to the parent class for completion of initialization. Any others may be passed
-through the `__init__` hierarchy in the ``**kwargs`` argument.  Parameter defaults for the Component's function may
-be passed in a dictionary in the ``function_params`` argument, using the parameters name as the key and it value as
-the value of each entry.
-
-.. [## DOES THE FOLLOWING APPLY TO THE COMPONENT'S function's PARAMS?  IF SO,
-   SEEMS TO CONFLICT WITH PREVIOUS SENTENCE.  IF NOT, THEN MOVE TO BEFORE PREVIOUS SENTENCE.]
+the constructor before being passed to the parent class for completion of initialization. Any others are implicitly
+through the ``__init__`` hierarchy in the ``**kwargs`` argument.
 
 Default/initial values for
 all these parameters should be set in the `Parameters` class, instead of the python standard default argument value,
 which should be set to ``None``. This is to ensure that the `_user_specified <Parameter._user_specified>` attribute is
 set correctly, which is used to indicate whether the value for a Parameter was explicitly given by the user or its
-default value was assigned.
+default value was assigned. e.g.::
 
-.. [## I THINK IT WOULD BE GOOD TO HAVE AN EXAMPLE OR TWO HERE]
+    >>> import psyneulink as pnl
+    >>> f = pnl.Linear(slope=2)
+    >>> f.parameters.slope._user_specified
+    True
+    >>> f.parameters.intercept._user_specified
+    False
 
 *Initialization sequence*
 
@@ -207,18 +207,18 @@ Broadly, the sequence of events for initialization of a `Component` are as follo
 
 Components (excluding Compositions) run the following steps during `execution <Component_Execution>`.
 
-#. Call `_parse_function_variable` on the input `variable <Component.variable>`.
-#. Call `function <Component.function>` on the result of 1.
+1. Call `_parse_function_variable` on the input `variable <Component.variable>`, which reformats `variable` for use with the function, if necessary
+2. Call `function <Component.function>` on the result of 1., which does the primary computation for the Component
 
 `Mechanisms <Mechanism>` add a few extra steps:
 
-#. If no variable is passed in, call `_update_input_ports` and use the values of the `input_ports <Mechanism.input_ports>` as `variable <Mechanism.variable>`
-#. Call `_update_parameter_ports`
-#. Call `_parse_function_variable` on the input `variable`
-#. Call `function <Component.function>` on the result of 3.
-#. Call `_update_output_ports`
-#. If `execute_until_finished <Component.execute_until_finished>` is `True`, repeat steps 1-5 until one of the
-   following:
+1. If no variable is passed in, call `_update_input_ports`,
+to update values of the `input_ports <Mechanism.input_ports>` based on their functions, and use these as the input `variable <Mechanism.variable>` (if no variable was manually specified)
+2. Call `_update_parameter_ports`, which updates the values of any `modulated parameters <ModulatorySignal_Modulation>` to be used in the Mechanism's function
+3. Call `_parse_function_variable` on the input `variable`
+4. Call `function <Component.function>` on the result of 3.
+5. Call `_update_output_ports`, which updates the values of the `output_ports <Mechanism.output_ports>` based on their functions. These values are passed on to other Mechanisms as applicable
+6. If `execute_until_finished <Component_Execute_Until_Finished>` is `True`, repeat steps 1-5 until one of the following:
 
    a. `is_finished <Component.is_finished>` returns ``True``
    b. `num_executions_before_finished <Component.num_executions_before_finished>` is greater than or equal to `max_executions_before_finished <Component.max_executions_before_finished>`
@@ -236,10 +236,36 @@ Execution
 
 The execution of a `Composition` is handled by `run <Composition.run>`, `execute <Composition.execute>` as a helper
 to `run`, and `evaluate <Composition.evaluate>` that is used to simulate the execution of a Composition when it is
-assigned as the `agent_rep <OptimizationControlMechanism.agent_rep>` of an `OptimizationControlMechanism`.
+assigned as the `agent_rep <OptimizationControlMechanism.agent_rep>` of an `OptimizationControlMechanism`. One call to `run` corresponds to one `RUN <TimeScale.RUN>` of time, and follows these steps:
 
-.. **Extensive summary of function calls here?**
-.. [JDC:  PROBABLY A GOOD IDEA]
+1. `reinitialize <Component.reinitialize>` for nodes in `reinitialize_values`
+2. `analyze_graph`
+3. initialize contexts
+
+    a. `assign_execution_ids`
+    b. `_initialize_from_context`
+
+4. loop over trials
+
+    a. `call_before_trial`
+    b. Check whether `RUN` `termination conditions <Scheduler_Termination_Conditions>` for the Composition have been met, and if so, go to 5.
+    c. Process inputs to be used for each `TRIAL`, see `Composition_Run_Inputs`
+    d. Reinitialize any nodes whose `reinitialize_when` Condition is method
+    e. Run a single trial by calling `execute <Contributors_Composition_Execute>`
+    f. `call_after_trial`
+
+5. Delete stored `simulation <>` results and data if `retain_old_simulation_data` is ``False``, because these structures can grow expensively large
+6. Add the results of each `TRIAL <TimeStep.TRIAL>`, in order, to `results <Composition.results>`.
+
+.. _Contributors_Composition_Execute:
+
+`execute <Composition.execute>` completes a single `TRIAL` with the following steps:
+
+1. Initialize the execution Context as in `Execution` step 3. above (but not if `execute` is called through `run`
+2. Assign inputs to
+3.
+
+. `Execute the learning phase <Composition_Learning_Execution>` if applicable
 
 .. _Scheduler:
 
@@ -280,10 +306,7 @@ Documentation is done in docstrings for the PsyNeuLink objects using the Sphinx 
 `master` and `devel` branches can be found `here <https://princetonuniversity.github.io/PsyNeuLink/>`_ and
 `here <https://princetonuniversity.github.io/PsyNeuLink/branch/devel/index.html>`_, respectively.
 
-.. [#JDC: Not sure what the following statement means:]
-
-When learning about PsyNeuLink, generating the Sphinx documentation is unnecessary because the online documentation
-exists. To understand Sphinx syntax, start
+To understand Sphinx syntax, start
 `here <http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_ .
 When creating and/or editing documentation, you should generate Sphinx documentation in order to preview your changes
 before publishing to `devel`. To generate Sphinx documentation from your local branch, run `make html` in Terminal
@@ -295,7 +318,7 @@ files to Github. They are simply for your local testing/preview purposes.)
 Example
 -------
 
-Here, we will create a custom Function, ``RandomIntegrator`` that uses stored state and randomness.
+Here, we will create a custom Function, ``RandomIntegrator`` that uses stored state and randomness. ``RandomIntegrator`` stores two values, `previous_value` (used in many PNL Functions) and `previous_value_2` (a second value chosen just for this example). ``RandomIntegrator`` chooses one randomly at execution time, increments it by the input `variable <Component>`, and returns the result.
 
 1. Inherit from a relevant PsyNeuLink Component; use `IntegratorFunction` so that we have access to
    its `previous_value <IntegratorFunction.previous_value>` and `rate <IntegratorFunction.rate>` Parameters::
@@ -310,6 +333,7 @@ Here, we will create a custom Function, ``RandomIntegrator`` that uses stored st
             previous_value_2 = Parameter(np.array([1000]), pnl_internal=True)
 
 .. [JDC: NOT SURE I FULLY UNDERSTAND THE RATIONALE FOR previous_value_2 AS EXPLAINED BELOW]
+.. [KDM: Added above. It's meant to be arbitrary and somewhat pointless (otherwise, wouldn't we want to include this integrator as a built-in?).]
 
 ``random_state`` will be used to generate random numbers statefully and independently.
 ``previous_value_2`` will be used in our function, and has its default value set arbitrarily to 10, to distinguish it
@@ -336,7 +360,7 @@ other than PsyNeuLink.
             )
 
 Note that the default value for ``previous_value_2`` is ``None`` (`see above <Component_Initialization>`).
-Any other Parameters will be handled through `**kwargs`.
+Any other Parameters will be handled through `**kwargs`. ``seed`` is not simply the standard time-based seed for testing and replication purposes. See `get_global_seed`.
 
 .. [JDC: WHAT ABOUT SEED?  SHOULDN'T THAT BE MENTIONED EARLIER OR HERE?]
 
@@ -361,8 +385,7 @@ Any other Parameters will be handled through `**kwargs`.
             return self.convert_output_type(new_value)
 
 When an instance of ``RandomIntegrator`` is executed, and its `function <Component.function>` method is called, it
-chooses one of its previous values, addS the product of ``rate`` and ``variable`` to it, returns the result, and
-stores that result back into the appropriate previous value.
+chooses one of its previous values, adds the product of `rate` and `variable` to it, stores the result back into the appropriate previous value, and returns the result.
 
 .. [JDC: WHERE IN THE SOURCE CODE IS THE INFORMATION BELOW EXPLAINED... IN THE DOCSTRING FOR
    get_current_function_param AND/OR _get?  IF NOT, THEN NEED TO REFERENCE WHEREVER IT IS EXPLAINED].
@@ -380,8 +403,7 @@ We call `convert_output_type` before returning as a general pattern on Functions
 Below is the fully implemented class, ready to be included in PsyNeuLink::
 
     import numpy as np
-    from psyneulink import IntegratorFunction, Parameter
-    from psyneulink.core.globals.utilities import get_global_seed
+    from psyneulink import IntegratorFunction, Parameter, get_global_seed
 
 
     class RandomIntegrator(IntegratorFunction):
