@@ -86,7 +86,18 @@ def parse_default_value_and_type(default_value):
         if '<lambda>' == default_value.__name__:
             default_val_string = re.sub('.*Parameter\\((.*?):(.*?)[,\\)].*', r'\1:\2', inspect.getsource(default_value)).strip()
         else:
-            default_val_string = '{0}.{1}'.format(default_value.__module__, default_value.__name__)
+            default_val_string = default_value.__qualname__
+            try:
+                # if the first portion of the function is a psyneulink name,
+                # bracket it for doc reference
+                split = default_val_string.split('.')
+                try:
+                    eval(f'pnl.{split[0]}')
+                    default_val_string = f'`{split[0]}`.{split[1]}'
+                except (NameError, AttributeError, SyntaxError):
+                    pass
+            except TypeError:
+                pass
 
         typ = types.FunctionType
     elif isinstance(default_value, list):
