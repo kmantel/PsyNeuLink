@@ -143,7 +143,7 @@ def parse_default_value_and_type(default_value):
     return default_val_string, typ
 
 
-def make_docstring_for_class(class_):
+def make_docstring_for_class(class_, module_fname):
     new_params = []
 
     for param in class_.parameters:
@@ -181,7 +181,24 @@ def make_docstring_for_class(class_):
 
     for param in new_params:
         result += indent_str(param.name + '\n', 2)
-        result += indent_str('see `{0} <{1}.{0}>`\n'.format(param.name, class_.__name__), 3)
+        basic_ref_str = '{1}.{0}'.format(param.name, class_.__name__)
+
+        # attempt to find common format strings like Component_Variable
+        manual_ref_str = basic_ref_str.replace('.', '_')
+        manual_ref_str = re.sub(
+            r'_(\w)',
+            lambda match: '_' + match.group(1).upper(),
+            manual_ref_str
+        )
+        sphinx_ref_str = f'.. _{manual_ref_str}:'
+
+        if sphinx_ref_str in open(module_fname, 'r', encoding='utf-8').read():
+            ref_str = manual_ref_str
+        else:
+            ref_str = basic_ref_str
+        # import code
+        # code.interact(local=locals())
+        result += indent_str('see `{0} <{1}>`\n'.format(param.name, ref_str), 3)
 
         default_val_string, typ = parse_default_value_and_type_from_param(param)
 
@@ -211,7 +228,7 @@ def print_all_pnl_docstrings():
         if isinstance(item, pnl.core.components.component.ComponentsMeta):
             if hasattr(item, 'parameters'):
                 module_fname = item.__module__.replace('.', '/') + '.py'
-                docstring = make_docstring_for_class(item)
+                docstring = make_docstring_for_class(item, module_fname)
                 if docstring is not None:
                     # assume that docstrings need to be on the 3rd level of indentation
                     # class A:
