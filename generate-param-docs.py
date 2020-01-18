@@ -177,9 +177,10 @@ def make_docstring_for_class(class_, module_fname):
         pass
 
     result += indent_str('Attributes\n', 1)
-    result += indent_str('----------\n\n', 1)
+    result += indent_str('----------', 1)
 
     for param in new_params:
+        result += '\n\n'
         result += indent_str(param.name + '\n', 2)
         basic_ref_str = '{1}.{0}'.format(param.name, class_.__name__)
 
@@ -215,9 +216,7 @@ def make_docstring_for_class(class_, module_fname):
             result += '\n'
             result += indent_str(':read only: True', 3)
 
-        result += '\n\n'
-
-    result += '"""'
+    result += '\n"""'
 
     return result
 
