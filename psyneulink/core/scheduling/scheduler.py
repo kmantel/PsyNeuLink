@@ -517,6 +517,9 @@ class Scheduler(JSONDumpable):
                         execution_dependencies[cycle_node].add(vert.component)
                 structural_dependencies[child.component].add(vert.component)
             for child in graph.get_backward_children_from_component(vert.component):
+                # REVIEW: is the below check supposed to be for
+                # structural_dependencies instead? Because it seems that
+                # it could wipe out existing entries
                 if child.component not in execution_dependencies:
                     structural_dependencies[child.component] = set()
                 structural_dependencies[child.component].add(vert.component)

@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import psyneulink as pnl
 import pytest
 
 from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import DriftDiffusionIntegrator
@@ -1182,3 +1183,94 @@ class TestTermination:
         output = comp.run(inputs={A: 1}, termination_processing=termination_conds)
         # two executions of B
         assert output == [.75]
+
+
+class TestFeedback:
+
+    def test_unspecified_feedback(self):
+        A = pnl.TransferMechanism()
+        B = pnl.TransferMechanism()
+        C = pnl.ControlMechanism(
+            monitor_for_control=B,
+            control_signals=[('slope', A)]
+        )
+        comp = pnl.Composition()
+        comp.add_linear_processing_pathway(pathway=[A, B])
+        comp.add_node(C)
+        comp._analyze_graph()
+
+        # "is" comparisons because MAYBE can be assigned to feedback
+        assert comp.graph.comp_to_vertex[A.output_port.efferents[0]].feedback is False
+        assert comp.graph.comp_to_vertex[B.output_port.efferents[0]].feedback is False
+        assert comp.graph.comp_to_vertex[C.control_signals[0].efferents[0]].feedback is True
+
+    @pytest.mark.parametrize(
+        'terminal_mech',
+        [
+            pnl.TransferMechanism,
+            pnl.RecurrentTransferMechanism
+        ]
+    )
+    def test_inline_control_acyclic(self, terminal_mech):
+        terminal_mech = terminal_mech()
+        A = pnl.TransferMechanism()
+        C = pnl.ControlMechanism(
+            monitor_for_control=A,
+            control_signals=[('slope', terminal_mech)]
+        )
+        comp = pnl.Composition()
+        comp.add_linear_processing_pathway(pathway=[A, terminal_mech])
+        comp.add_nodes([C, terminal_mech])
+        comp._analyze_graph()
+
+        # "is" comparisons because MAYBE can be assigned to feedback
+        assert comp.graph.comp_to_vertex[A.output_port.efferents[0]].feedback is False
+        assert comp.graph.comp_to_vertex[C.control_signals[0].efferents[0]].feedback is False
+
+    def test_inline_control_mechanism_example(self):
+        cueInterval = pnl.TransferMechanism(
+            default_variable=[[0.0]],
+            size=1,
+            function=pnl.Linear(slope=1, intercept=0),
+            output_ports=[pnl.RESULT],
+            name='Cue-Stimulus Interval'
+        )
+        taskLayer = pnl.TransferMechanism(
+            default_variable=[[0.0, 0.0]],
+            size=2,
+            function=pnl.Linear(slope=1, intercept=0),
+            output_ports=[pnl.RESULT],
+            name='Task Input [I1, I2]'
+        )
+        activation = pnl.LCAMechanism(
+            default_variable=[[0.0, 0.0]],
+            size=2,
+            function=pnl.Logistic(gain=1),
+            leak=.5,
+            competition=2,
+            noise=0,
+            time_step_size=.1,
+            termination_measure=pnl.TimeScale.TRIAL,
+            termination_threshold=3,
+            name='Task Activations [Act 1, Act 2]'
+        )
+        # response = pnl.ProcessingMechanism()
+        # Create controller
+        csiController = pnl.ControlMechanism(
+            name='Control Mechanism',
+            monitor_for_control=cueInterval,
+            control_signals=[(pnl.TERMINATION_THRESHOLD, activation)],
+            modulation=pnl.OVERRIDE
+        )
+        comp = pnl.Composition()
+        comp.add_linear_processing_pathway(pathway=[taskLayer, activation])
+        comp.add_node(cueInterval)
+        comp.add_node(csiController)
+
+        expected_dependencies = {
+            cueInterval: set(),
+            taskLayer: set(),
+            activation: set([csiController, taskLayer]),
+            csiController: set([cueInterval])
+        }
+        assert comp.scheduler.dependency_dict == expected_dependencies
