@@ -1809,3 +1809,63 @@ def get_all_explicit_arguments(cls_, func_str):
             break
 
     return all_arguments
+
+
+def dfs_for_cycles(dependencies, node, loop_start_set, visited, loop):
+    print(f'cycle args: \n\tdeps {dependencies[node]}\n\tnode: {node}\n\tloop_start_set: {loop_start_set}\n\tvisited: {visited}\n\tloop: {loop}')
+
+    if node in loop_start_set:
+        loop.append(node)
+        return loop
+
+    if visited is None:
+        visited = set()
+    visited.add(node)
+    loop.append(node)
+
+    if len(loop) == 2:
+        for next_node in dependencies[node]:
+            if next_node in loop_start_set:
+                loop.append(next_node)
+                return loop
+
+    print(f'\tdeps diff: {dependencies[node] - visited}')
+
+    for next_node in dependencies[node] - visited:
+        print(f'\tnext: {next_node}')
+        result = dfs_for_cycles(dependencies, next_node, loop_start_set, visited, loop.copy())
+        if result is not None:
+            return result
+
+
+def mydfs(dependencies, node, loop_start_set, visited, loop):
+    print(f'cycle args: \n\tdeps {dependencies[node]}\n\tnode: {node}\n\tloop_start_set: {loop_start_set}\n\tvisited: {visited}\n\tloop: {loop}')
+    if visited is None:
+        visited = set()
+
+    if node in visited:
+        loop.append(node)
+        return loop
+
+    visited.add(node)
+    loop.append(node)
+
+    for next_node in dependencies[node]:
+        print(f'\tnext: {next_node}')
+        result = mydfs(dependencies, next_node, loop_start_set, visited.copy(), loop.copy())
+        if result is not None:
+            return result
+    else:
+        return None
+
+
+def get_all_connected_cycles(connected_cycles, original_key, visited_keys, flattened_cycles):
+    if original_key in flattened_cycles:
+        if original_key in visited_keys:
+            return
+        cycles = flattened_cycles[original_key]
+        visited_keys.add(original_key)
+        for cycle in cycles:
+            for cycle_node in cycle:
+                connected_cycles.add(cycle_node)
+                get_all_connected_cycles(connected_cycles, cycle_node, visited_keys, flattened_cycles)

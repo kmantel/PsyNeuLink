@@ -1221,6 +1221,7 @@ Class Reference
 """
 
 import collections
+import enum
 import inspect
 import itertools
 import logging
@@ -1276,7 +1277,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.log import CompositionLog, LogCondition
 from psyneulink.core.globals.parameters import Parameter, ParametersBase
 from psyneulink.core.globals.registry import register_category
-from psyneulink.core.globals.utilities import ContentAddressableList, NodeRole, call_with_pruned_args, convert_to_list
+from psyneulink.core.globals.utilities import ContentAddressableList, NodeRole, call_with_pruned_args, convert_to_list, dfs_for_cycles, get_all_connected_cycles
 from psyneulink.core.scheduling.condition import All, Always, Condition, EveryNCalls, Never
 from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.scheduling.time import Time, TimeScale
@@ -1290,7 +1291,7 @@ from psyneulink.library.components.mechanisms.processing.objective.predictionerr
 __all__ = [
 
     'Composition', 'CompositionError', 'CompositionRegistry', 'MECH_FUNCTION_PARAMS', 'PORT_FUNCTION_PARAMS',
-    'get_compositions'
+    'get_compositions', 'EdgeType'
 ]
 
 # show_graph animation options
@@ -1329,6 +1330,12 @@ class RunError(Exception):
 
     def __str__(self):
         return repr(self.error_value)
+
+
+class EdgeType(enum.Enum):
+    NON_FEEDBACK = 0
+    FEEDBACK = 1
+    FLEXIBLE = 2
 
 
 class Vertex(object):
@@ -1374,8 +1381,30 @@ class Vertex(object):
         self.feedback = feedback
         self.backward_sources = set()
 
+        # when pruning a vertex for a processing graph, we store the
+        # connection type (the vertex.feedback) to the new child or
+        # parent here
+        # self.source_types = collections.defaultdict(EdgeType.NORMAL)
+        self.source_types = {}
+
     def __repr__(self):
         return '(Vertex {0} {1})'.format(id(self), self.component)
+
+    @property
+    def feedback(self):
+        return self._feedback
+
+    @feedback.setter
+    def feedback(self, value: EdgeType):
+        mapping = {
+            False: EdgeType.NON_FEEDBACK,
+            True: EdgeType.FEEDBACK,
+            MAYBE: EdgeType.FLEXIBLE
+        }
+        try:
+            self._feedback = mapping[value]
+        except KeyError:
+            self._feedback = value
 
 
 class Graph(object):
@@ -1580,6 +1609,221 @@ class Graph(object):
         """
 
         return list(self.comp_to_vertex[component].backward_sources)
+
+    def prune_feedback_edges(self):
+        """
+        execution_depenencies stored in self.depdency_sets
+        :return:
+        """
+
+        execution_dependencies = {}         # stores  a modified version of the self in which cycles are "flattened"
+        removed_dependencies = {}           # stores dependencies that were removed in order to flatten cycles
+        flattened_cycles = {}               # flattened_cycles[node] = [all cycles to which node belongs]
+        structural_dependencies = collections.OrderedDict()
+        self.cycle_nodes = set()
+        # Loop through the existing composition self, considering "forward" projections only
+        # If a cycle is found, "flatten" it by bringing all nodes into the same execution set
+
+
+        print('ENTER PRUNE\n-------------')
+        execution_dependencies = self.dependency_dict
+
+        import pprint
+        print('normal deps:')
+        pprint.pprint(execution_dependencies)
+        structural_dependencies = self.dependency_dict
+
+        # prunes all feedback projections
+        for node in execution_dependencies:
+            try:
+                execution_dependencies[node].remove(node)
+                self.cycle_nodes.add(node)
+            except KeyError:
+                pass
+
+            vert = self.comp_to_vertex[node]
+            print(vert, 'sources', vert.source_types)
+            execution_dependencies[node] = {
+                dep for dep in execution_dependencies[node]
+                if self.comp_to_vertex[dep] not in vert.source_types or vert.source_types[self.comp_to_vertex[dep]] is not EdgeType.FEEDBACK
+            }
+            print(vert, 'sources', vert.source_types)
+            # assert execution_dependencies[node] == self.get_forward_parents_from_component(node)
+
+        print('nonfeedback/pruned deps:')
+        pprint.pprint(execution_dependencies)
+
+        import networkx
+        g = networkx.DiGraph()
+        g.add_nodes_from(list(execution_dependencies.keys()))
+        for child in execution_dependencies:
+            for parent in execution_dependencies[child]:
+                g.add_edge(parent, child)
+                print(f'added nx edge {parent} -> {child}')
+
+        print("networkx cycles: ")
+        cycles = list(networkx.simple_cycles(g))
+        print(cycles)
+
+        # prune only one flexible edge per attempt, to remove as few
+        # edges as possible
+        # For now, just prune the first flexible edge each time. Maybe
+        # look for "best" edges to prune in future by frequency in
+        # cycles, if that occurs
+        cycles_changed = True
+        while cycles_changed:
+            cycles_changed = False
+
+            for cycle in networkx.simple_cycles(g):
+                len_cycle = len(cycle)
+
+                for i in range(len_cycle):
+                    parent = self.comp_to_vertex[cycle[i]]
+                    child = self.comp_to_vertex[cycle[(i + 1) % len_cycle]]
+
+                    if parent in child.source_types and child.source_types[parent] is EdgeType.FLEXIBLE:
+                        print(execution_dependencies, '\n\n', child, parent)
+                        execution_dependencies[child.component].remove(parent.component)
+                        child.source_types[parent] = EdgeType.FEEDBACK
+                        child.backward_sources.add(parent.component)
+                        g.remove_edge(parent.component, child.component)
+                        cycles_changed = True
+                        print(f'PRUNED edge {parent.component} => {child.component}')
+                        break
+
+        print("new networkx cycles")
+        cycles = list(networkx.simple_cycles(g))
+        print(cycles)
+
+        #     projections_to_remove = []
+        from psyneulink.core.globals.utilities import mydfs
+
+        deps = execution_dependencies.copy()
+
+        def create_union_set(*args):
+            result = set()
+            for item in args:
+                if hasattr(item, '__iter__') and not isinstance(item, str):
+                    result = result.union(item)
+                else:
+                    result = result.union([item])
+
+            return result
+
+        def merge_cycle_dicts(a, b):
+            shared_nodes = [x for x in a if x in b]
+            print('a, b', a, b)
+            print('shared', shared_nodes)
+
+            if len(shared_nodes) > 0:
+                new_cycle = {k: v for k, v in a.items()}
+                new_cycle.update(b)
+                new_cycle.update({k: create_union_set(a[k], b[k]) for k in shared_nodes})
+
+                return new_cycle
+            else:
+                return None
+
+        def merge_intersecting_cycles(cycle_list):
+            print('cycle list')
+            print(list(cycle_list))
+            cycle_dicts = [
+                {
+                    cycle[i]: cycle[(i - 1) % len(cycle)]
+                    for i in range(len(cycle))
+                }
+                for cycle in cycle_list
+            ]
+            print('dicts')
+            pprint.pprint(cycle_dicts)
+
+            new_cycles = cycle_dicts
+            cycles_changed = True
+
+            while cycles_changed:
+                cycles_changed = False
+                len_cycle_list = len(new_cycles)
+
+                i = 0
+                j = 1
+
+                while i < len(new_cycles):
+                    remove = []
+
+                    while j < len(new_cycles):
+                        merged = merge_cycle_dicts(new_cycles[i], new_cycles[j])
+                        if merged is not None:
+                            cycles_changed = True
+                            new_cycles[i] = merged
+                            new_cycles.remove(new_cycles[j])
+                        else:
+                            j += 1
+                    i += 1
+
+            return new_cycles
+
+        cycles = merge_intersecting_cycles(cycles)
+        print('merged cycles')
+        pprint.pprint(cycles)
+
+        pprint.pprint(self.vertices)
+        print('------------------------\nSTARTING PARENT CHILD PAIRS\n------------------------')
+
+        for cycle in cycles:
+            len_cycle = len(cycle)
+            acyclic_dependencies = set()
+            print('flattened', flattened_cycles)
+
+            for node in cycle:
+                # for parent in execution_dependencies[node]:
+                #     if parent not in cycle
+                acyclic_dependencies = acyclic_dependencies.union({
+                    parent for parent in execution_dependencies[node]
+                    if parent not in cycle
+                })
+
+            print(f' cycle: {cycle}   non cyclic dependencies {acyclic_dependencies}')
+
+            # loop over all nodes in the cycle in order to:
+            # (1) store the node: cycle pair in the flattened cycles dict
+            # (2) remove the dependencies that created the cycle
+            # (3) copy the dependencies of the node that "started" the cycle onto all other cycle nodes
+            for child, parents in cycle.items():
+                # node_a = cycle[i]
+                self.cycle_nodes.add(child)
+                # node_b = cycle[i + 1]
+                if not isinstance(parents, set):
+                    parents = {parents}
+                for par in parents:
+                    if par not in acyclic_dependencies:
+                        print(f'want to remove dependency {child} -> {par}')
+                        # execution_dependencies[child].remove(par)
+
+                execution_dependencies[child] = acyclic_dependencies
+
+
+                # if node_a not in flattened_cycles:
+                #     flattened_cycles[node_a] = []
+                # flattened_cycles[node_a].append(cycle)
+                # print(f'want to remove dependency {node_b} -> {node_a}')
+                # execution_dependencies[node_a].remove(node_b)
+                # if node_a not in removed_dependencies:
+                #     removed_dependencies[node_a] = set()
+                # removed_dependencies[node_a].add(node_b)
+
+                # if i != 0:
+                #     for dependency in execution_dependencies[cycle[0]]:
+                #         execution_dependencies[cycle[i]].add(dependency)
+
+        print('removed new ?')
+        pprint.pprint({node: structural_dependencies[node] - execution_dependencies[node] for node in execution_dependencies})
+        print('removed old')
+        pprint.pprint(removed_dependencies)
+
+        print('flattened')
+        pprint.pprint(flattened_cycles)
+
+        return execution_dependencies, removed_dependencies, structural_dependencies
 
     @property
     def dependency_dict(self):
@@ -1860,6 +2104,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         self.nodes_to_roles = collections.OrderedDict()
 
+        self.cycle_nodes = set()
         self.feedback_senders = set()
         self.feedback_receivers = set()
 
@@ -1970,7 +2215,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             except AttributeError:
                 pass
 
-        self._check_feedback(scheduler=scheduler, context=context)
+        # self._check_feedback(scheduler=scheduler, context=context)
         self._determine_node_roles(context=context)
         self._create_CIM_ports(context=context)
         self._update_shadow_projections(context=context)
@@ -1990,14 +2235,17 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             logger.debug('Removing', vertex)
             for parent in vertex.parents:
                 for child in vertex.children:
-                    if vertex.feedback:
+                    # MAYBE should be treated as forward sources
+                    if vertex.feedback is EdgeType.FEEDBACK:
                         child.backward_sources.add(parent.component)
+                    child.source_types[parent] = vertex.feedback
                     self._graph_processing.connect_vertices(parent, child)
             # ensure that children get handled
             if len(vertex.parents) == 0:
                 for child in vertex.children:
-                    if vertex.feedback:
+                    if vertex.feedback is EdgeType.FEEDBACK:
                         child.backward_sources.add(parent.component)
+                    child.source_types[parent] = vertex.feedback
 
             for node in cur_vertex.parents + cur_vertex.children:
                 logger.debug(
@@ -2097,7 +2345,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     projections.append((component, False))
                 elif isinstance(component, tuple):
                     if isinstance(component[0], Projection):
-                        if isinstance(component[1], bool) or component[1]==MAYBE:
+                        if isinstance(component[1], bool) or component[1] in {EdgeType.FLEXIBLE, MAYBE}:
                             projections.append(component)
                         else:
                             raise CompositionError("Invalid component specification ({}) in {}'s aux_components. If a "
@@ -2371,15 +2619,21 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     self.nodes_to_roles[node].remove(NodeRole.OUTPUT)
 
         # Cycles
-        for node in self.scheduler.cycle_nodes:
+        for node in self.graph_processing.cycle_nodes:
             self._add_node_role(node, NodeRole.CYCLE)
 
         # "Feedback" projections
-        for node in self.feedback_senders:
-            self._add_node_role(node, NodeRole.FEEDBACK_SENDER)
-
-        for node in self.feedback_receivers:
-            self._add_node_role(node, NodeRole.FEEDBACK_RECEIVER)
+        for receiver in self.graph_processing.vertices:
+            for sender, typ in receiver.source_types.items():
+                if typ is EdgeType.FEEDBACK:
+                    self._add_node_role(
+                        sender.component,
+                        NodeRole.FEEDBACK_SENDER
+                    )
+                    self._add_node_role(
+                        receiver.component,
+                        NodeRole.FEEDBACK_RECEIVER
+                    )
 
         # Required Roles
         for node_role_pair in self.required_node_roles:
@@ -3075,7 +3329,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             # TBI: Copy the projection type/matrix value of the projection that is being shadowed
                             self.add_projection(MappingProjection(sender=sender, receiver=input_port),
                                                 sender_mechanism, shadow)
-        if feedback:
+        if feedback in {True, EdgeType.FEEDBACK}:
             self.feedback_senders.add(sender_mechanism)
             self.feedback_receivers.add(receiver_mechanism)
 
@@ -3393,7 +3647,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             scheduler = self.scheduler
 
         already_tested = []
-        for vertex in [v for v in self.graph.vertices if v.feedback==MAYBE]:
+        for vertex in [v for v in self.graph.vertices if v.feedback is EdgeType.FLEXIBLE]:
             # projection = vertex.component
             # assert isinstance(projection, Projection), \
             #     f'PROGRAM ERROR: vertex identified with feedback=True that is not a Projection'
@@ -3401,7 +3655,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 continue
 
             v_set = [v for v in self.graph.vertices
-                     if (v.feedback==MAYBE
+                     if (v.feedback is EdgeType.FLEXIBLE
                          and v.component.sender.owner is vertex.component.sender.owner)]
 
             for v in v_set:
@@ -3508,7 +3762,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if (isinstance(entry, proj_specs)
                         or (isinstance(entry, tuple)
                             and isinstance(entry[0], proj_specs)
-                            and entry[1] in {True, False, MAYBE})):
+                            and entry[1] in {True, False, MAYBE, EdgeType})):
                     return True
             else:
                 return False
