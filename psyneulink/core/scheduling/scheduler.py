@@ -492,6 +492,7 @@ class Scheduler(JSONDumpable):
                     # (1) store the node: cycle pair in the flattened cycles dict
                     # (2) remove the dependencies that created the cycle
                     # (3) copy the dependencies of the node that "started" the cycle onto all other cycle nodes
+                    print([(node, graph.comp_to_vertex[node].feedback) for node in cycle])
                     for i in range(len(cycle) - 1):
                         node_a = cycle[i]
                         self.cycle_nodes.add(node_a)

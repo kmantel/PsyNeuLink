@@ -1221,6 +1221,7 @@ Class Reference
 """
 
 import collections
+import enum
 import inspect
 import itertools
 import logging
@@ -1329,6 +1330,12 @@ class RunError(Exception):
 
     def __str__(self):
         return repr(self.error_value)
+
+
+class EdgeType(enum.Enum):
+    NORMAL = 0
+    FEEDBACK = 1
+    VARIABLE = 2
 
 
 class Vertex(object):
@@ -1970,7 +1977,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             except AttributeError:
                 pass
 
-        self._check_feedback(scheduler=scheduler, context=context)
+        # self._check_feedback(scheduler=scheduler, context=context)
         self._determine_node_roles(context=context)
         self._create_CIM_ports(context=context)
         self._update_shadow_projections(context=context)
@@ -1990,13 +1997,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             logger.debug('Removing', vertex)
             for parent in vertex.parents:
                 for child in vertex.children:
-                    if vertex.feedback:
+                    # MAYBE should be treated as forward sources
+                    if vertex.feedback is True:
                         child.backward_sources.add(parent.component)
                     self._graph_processing.connect_vertices(parent, child)
             # ensure that children get handled
             if len(vertex.parents) == 0:
                 for child in vertex.children:
-                    if vertex.feedback:
+                    if vertex.feedback is True:
                         child.backward_sources.add(parent.component)
 
             for node in cur_vertex.parents + cur_vertex.children:
