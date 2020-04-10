@@ -492,7 +492,13 @@ class Scheduler(JSONDumpable):
                     # (1) store the node: cycle pair in the flattened cycles dict
                     # (2) remove the dependencies that created the cycle
                     # (3) copy the dependencies of the node that "started" the cycle onto all other cycle nodes
-                    print([(node, graph.comp_to_vertex[node].feedback) for node in cycle])
+                    import pprint
+                    from psyneulink.core.compositions.composition import EdgeType
+                    pprint.pprint([(node, graph.comp_to_vertex[node].source_types) for node in cycle])
+
+                    print(f'chose {cycle[0]} as source. with incoming edges: {graph.comp_to_vertex[cycle[0]].source_types}')
+                    assert EdgeType.FLEXIBLE in set([v for k,v in graph.comp_to_vertex[cycle[0]].source_types.items()])
+
                     for i in range(len(cycle) - 1):
                         node_a = cycle[i]
                         self.cycle_nodes.add(node_a)
@@ -540,7 +546,8 @@ class Scheduler(JSONDumpable):
                     self._get_all_connected_cycles(connected_cycles, cycle_node, visited_keys, flattened_cycles)
 
     def _init_consideration_queue_from_graph(self, graph):
-        self.consideration_queue, self.removed_dependencies, self.structural_dependencies = self._call_toposort(graph)
+        self.dependency_dict, self.removed_dependencies, self.structural_dependencies = graph.prune_feedback_edges()
+        self.consideration_queue = list(toposort(self.dependency_dict))
 
     def _init_counts(self, execution_id=None, base_execution_id=None):
         """

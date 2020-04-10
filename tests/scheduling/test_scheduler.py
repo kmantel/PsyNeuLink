@@ -10,7 +10,7 @@ from psyneulink.core.components.mechanisms.processing.transfermechanism import T
 from psyneulink.core.components.process import Process
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.core.components.system import System
-from psyneulink.core.compositions.composition import Composition
+from psyneulink.core.compositions.composition import Composition, EdgeType
 from psyneulink.core.globals.context import Context
 from psyneulink.core.globals.keywords import VALUE
 from psyneulink.core.scheduling.condition import AfterNCalls, AfterNPasses, AfterNTrials, AfterPass, All, AllHaveRun, Always, Any, AtPass, BeforeNCalls, BeforePass, \
@@ -1185,12 +1185,27 @@ class TestTermination:
         assert output == [.75]
 
 
+def _get_vertex_feedback_type(graph, sender_port, receiver_mech):
+    # there is only one projection per pair
+    projection = [
+        p for p in sender_port.efferents
+        if p.receiver.owner is receiver_mech
+    ][0]
+    return graph.comp_to_vertex[projection].feedback
+
+
+def _get_feedback_source_type(graph, sender, receiver):
+    print(graph.comp_to_vertex[sender].source_types)
+    return graph.comp_to_vertex[sender].source_types[graph.comp_to_vertex[receiver]]
+
+
 class TestFeedback:
 
     def test_unspecified_feedback(self):
-        A = pnl.TransferMechanism()
-        B = pnl.TransferMechanism()
+        A = pnl.TransferMechanism(name='A')
+        B = pnl.TransferMechanism(name='B')
         C = pnl.ControlMechanism(
+            name='C',
             monitor_for_control=B,
             control_signals=[('slope', A)]
         )
@@ -1199,10 +1214,11 @@ class TestFeedback:
         comp.add_node(C)
         comp._analyze_graph()
 
-        # "is" comparisons because MAYBE can be assigned to feedback
-        assert comp.graph.comp_to_vertex[A.output_port.efferents[0]].feedback is False
-        assert comp.graph.comp_to_vertex[B.output_port.efferents[0]].feedback is False
-        assert comp.graph.comp_to_vertex[C.control_signals[0].efferents[0]].feedback is True
+        assert comp.graph.comp_to_vertex[A.output_port.efferents[0]].feedback is EdgeType.NON_FEEDBACK
+        assert comp.graph.comp_to_vertex[B.output_port.efferents[0]].feedback is EdgeType.NON_FEEDBACK
+
+        assert _get_vertex_feedback_type(comp.graph, C.control_signals[0], A) is EdgeType.FLEXIBLE
+        assert _get_feedback_source_type(comp.graph_processing, C, A) is EdgeType.FEEDBACK
 
     @pytest.mark.parametrize(
         'terminal_mech',
@@ -1212,9 +1228,10 @@ class TestFeedback:
         ]
     )
     def test_inline_control_acyclic(self, terminal_mech):
-        terminal_mech = terminal_mech()
-        A = pnl.TransferMechanism()
+        terminal_mech = terminal_mech(name='terminal_mech')
+        A = pnl.TransferMechanism(name='A')
         C = pnl.ControlMechanism(
+            name='C',
             monitor_for_control=A,
             control_signals=[('slope', terminal_mech)]
         )
@@ -1224,8 +1241,8 @@ class TestFeedback:
         comp._analyze_graph()
 
         # "is" comparisons because MAYBE can be assigned to feedback
-        assert comp.graph.comp_to_vertex[A.output_port.efferents[0]].feedback is False
-        assert comp.graph.comp_to_vertex[C.control_signals[0].efferents[0]].feedback is False
+        assert comp.graph.comp_to_vertex[A.output_port.efferents[0]].feedback is EdgeType.NON_FEEDBACK
+        assert comp.graph.comp_to_vertex[C.control_signals[0].efferents[0]].feedback is EdgeType.NON_FEEDBACK
 
     def test_inline_control_mechanism_example(self):
         cueInterval = pnl.TransferMechanism(
@@ -1273,4 +1290,8 @@ class TestFeedback:
             activation: set([csiController, taskLayer]),
             csiController: set([cueInterval])
         }
+
+        import code
+        code.interact(local=locals())
+
         assert comp.scheduler.dependency_dict == expected_dependencies

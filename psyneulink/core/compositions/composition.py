@@ -1277,7 +1277,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.log import CompositionLog, LogCondition
 from psyneulink.core.globals.parameters import Parameter, ParametersBase
 from psyneulink.core.globals.registry import register_category
-from psyneulink.core.globals.utilities import ContentAddressableList, NodeRole, call_with_pruned_args, convert_to_list
+from psyneulink.core.globals.utilities import ContentAddressableList, NodeRole, call_with_pruned_args, convert_to_list, dfs_for_cycles, get_all_connected_cycles
 from psyneulink.core.scheduling.condition import All, Always, Condition, EveryNCalls, Never
 from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.scheduling.time import Time, TimeScale
@@ -1333,9 +1333,9 @@ class RunError(Exception):
 
 
 class EdgeType(enum.Enum):
-    NORMAL = 0
+    NON_FEEDBACK = 0
     FEEDBACK = 1
-    VARIABLE = 2
+    FLEXIBLE = 2
 
 
 class Vertex(object):
@@ -1381,8 +1381,30 @@ class Vertex(object):
         self.feedback = feedback
         self.backward_sources = set()
 
+        # when pruning a vertex for a processing graph, we store the
+        # connection type (the vertex.feedback) to the new child or
+        # parent here
+        # self.source_types = collections.defaultdict(EdgeType.NORMAL)
+        self.source_types = {}
+
     def __repr__(self):
         return '(Vertex {0} {1})'.format(id(self), self.component)
+
+    @property
+    def feedback(self):
+        return self._feedback
+
+    @feedback.setter
+    def feedback(self, value: EdgeType):
+        mapping = {
+            False: EdgeType.NON_FEEDBACK,
+            True: EdgeType.FEEDBACK,
+            MAYBE: EdgeType.FLEXIBLE
+        }
+        try:
+            self._feedback = mapping[value]
+        except KeyError:
+            self._feedback = value
 
 
 class Graph(object):
@@ -1587,6 +1609,124 @@ class Graph(object):
         """
 
         return list(self.comp_to_vertex[component].backward_sources)
+
+    def prune_feedback_edges(self):
+        """
+        execution_depenencies stored in self.depdency_sets
+        :return:
+        """
+
+        execution_dependencies = {}         # stores  a modified version of the self in which cycles are "flattened"
+        removed_dependencies = {}           # stores dependencies that were removed in order to flatten cycles
+        flattened_cycles = {}               # flattened_cycles[node] = [all cycles to which node belongs]
+        structural_dependencies = collections.OrderedDict()
+        cycle_nodes = set()
+        # Loop through the existing composition self, considering "forward" projections only
+        # If a cycle is found, "flatten" it by bringing all nodes into the same execution set
+        for vert in self.vertices:
+
+            if vert.component not in execution_dependencies:
+                execution_dependencies[vert.component] = set()
+                structural_dependencies[vert.component] = set()
+
+            # use "get_forward_children_from_component" to ignore any projections that were marked as "feedback"
+            # "feedback" projections, we've already determined, happen after all forward projections, but when "forward"
+            # projections cause cycles, we need to execute them all at once
+            for child in self.get_forward_children_from_component(vert.component):
+                if child.component not in execution_dependencies:
+                    execution_dependencies[child.component] = set()
+                    structural_dependencies[child.component] = set()
+                execution_dependencies[child.component].add(vert.component)
+
+                # loop_start_set contains the current starting point and any cycles it is already connected to
+                # if the new dependency introduces any paths that lead back to a node in loop_start_set, then
+                # we will consider the new path a cycle
+                loop_start_set = {child.component}
+                connected_cycles = set()
+                get_all_connected_cycles(connected_cycles, child.component, set(), flattened_cycles)
+                for node in connected_cycles:
+                    loop_start_set.add(node)
+
+                # if the new dependency created a cycle, return that cycle
+                cycle = dfs_for_cycles(execution_dependencies, vert.component, loop_start_set, None, [child.component])
+
+                # import code
+                # code.interact(local=locals())
+
+                flexible_projections = []
+
+                if cycle:
+                    # why is this unbound?
+                    from psyneulink.core.compositions.composition import EdgeType
+
+                    for i in range(len(cycle) - 1):
+                        node_a = self.comp_to_vertex[cycle[i]]
+                        node_b = self.comp_to_vertex[cycle[i + 1]]
+
+                        if node_a.source_types[node_b] is EdgeType.FLEXIBLE:
+                            flexible_projections.append((node_a, node_b))
+
+                    while len(flexible_projections) > 0 and cycle:
+                        c, p = flexible_projections.pop()
+                        print(execution_dependencies, '\n\n', c, p)
+                        execution_dependencies[c].remove(p)
+                        c.source_types[p] = EdgeType.FEEDBACK
+                        p.source_types[c] = EdgeType.FEEDBACK
+
+                        cycle = dfs_for_cycles(
+                            execution_dependencies,
+                            vert.component,
+                            loop_start_set,
+                            None,
+                            [child.component]
+                        )
+
+                if cycle:
+                    # loop over all nodes in the cycle in order to:
+                    # (1) store the node: cycle pair in the flattened cycles dict
+                    # (2) remove the dependencies that created the cycle
+                    # (3) copy the dependencies of the node that "started" the cycle onto all other cycle nodes
+
+                    import pprint
+                    from psyneulink.core.compositions.composition import EdgeType
+                    pprint.pprint([(node, self.comp_to_vertex[node].source_types) for node in cycle])
+
+                    print(f'chose {cycle[0]} as source. with incoming edges: {self.comp_to_vertex[cycle[0]].source_types}')
+                    assert EdgeType.FLEXIBLE in set([v for k, v in self.comp_to_vertex[cycle[0]].source_types.items()])
+
+                    for i in range(len(cycle) - 1):
+                        node_a = cycle[i]
+                        cycle_nodes.add(node_a)
+                        node_b = cycle[i + 1]
+                        if node_a not in flattened_cycles:
+                            flattened_cycles[node_a] = []
+                        flattened_cycles[node_a].append(cycle)
+                        execution_dependencies[node_a].remove(node_b)
+                        if node_a not in removed_dependencies:
+                            removed_dependencies[node_a] = set()
+                        removed_dependencies[node_a].add(node_b)
+
+                        if i != 0:
+                            for dependency in execution_dependencies[cycle[0]]:
+                                execution_dependencies[cycle[i]].add(dependency)
+                else:
+                    # necessary for the case where you want to add a projection that terminates at a node in a loop
+                    # AFTER the loop has already been created.
+                    # e.g. ORIGINAL:    A <--> B <--> C -- > D
+                    # NEW: new_node --> A <--> B <--> C -- > D
+                    # (otherwise, the order in which a user adds components to a composition would affect the graph)
+                    for cycle_node in connected_cycles:
+                        execution_dependencies[cycle_node].add(vert.component)
+                structural_dependencies[child.component].add(vert.component)
+            for child in self.get_backward_children_from_component(vert.component):
+                # REVIEW: is the below check supposed to be for
+                # structural_dependencies instead? Because it seems that
+                # it could wipe out existing entries
+                if child.component not in execution_dependencies:
+                    structural_dependencies[child.component] = set()
+                structural_dependencies[child.component].add(vert.component)
+
+        return execution_dependencies, removed_dependencies, structural_dependencies
 
     @property
     def dependency_dict(self):
@@ -1998,14 +2138,18 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             for parent in vertex.parents:
                 for child in vertex.children:
                     # MAYBE should be treated as forward sources
-                    if vertex.feedback is True:
+                    if vertex.feedback is EdgeType.FEEDBACK:
                         child.backward_sources.add(parent.component)
+                    child.source_types[parent] = vertex.feedback
+                    parent.source_types[child] = vertex.feedback
                     self._graph_processing.connect_vertices(parent, child)
             # ensure that children get handled
             if len(vertex.parents) == 0:
                 for child in vertex.children:
-                    if vertex.feedback is True:
+                    if vertex.feedback is EdgeType.FEEDBACK:
                         child.backward_sources.add(parent.component)
+                    child.source_types[parent] = vertex.feedback
+                    parent.source_types[child] = vertex.feedback
 
             for node in cur_vertex.parents + cur_vertex.children:
                 logger.debug(
@@ -2105,7 +2249,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     projections.append((component, False))
                 elif isinstance(component, tuple):
                     if isinstance(component[0], Projection):
-                        if isinstance(component[1], bool) or component[1]==MAYBE:
+                        if isinstance(component[1], bool) or component[1] in {EdgeType.FLEXIBLE, MAYBE}:
                             projections.append(component)
                         else:
                             raise CompositionError("Invalid component specification ({}) in {}'s aux_components. If a "
@@ -3401,7 +3545,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             scheduler = self.scheduler
 
         already_tested = []
-        for vertex in [v for v in self.graph.vertices if v.feedback==MAYBE]:
+        for vertex in [v for v in self.graph.vertices if v.feedback is EdgeType.FLEXIBLE]:
             # projection = vertex.component
             # assert isinstance(projection, Projection), \
             #     f'PROGRAM ERROR: vertex identified with feedback=True that is not a Projection'
@@ -3409,7 +3553,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 continue
 
             v_set = [v for v in self.graph.vertices
-                     if (v.feedback==MAYBE
+                     if (v.feedback is EdgeType.FLEXIBLE
                          and v.component.sender.owner is vertex.component.sender.owner)]
 
             for v in v_set:
