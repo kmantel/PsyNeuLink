@@ -1195,7 +1195,6 @@ def _get_vertex_feedback_type(graph, sender_port, receiver_mech):
 
 
 def _get_feedback_source_type(graph, sender, receiver):
-    print(graph.comp_to_vertex[sender].source_types)
     return graph.comp_to_vertex[sender].source_types[graph.comp_to_vertex[receiver]]
 
 
@@ -1214,8 +1213,8 @@ class TestFeedback:
         comp.add_node(C)
         comp._analyze_graph()
 
-        assert comp.graph.comp_to_vertex[A.output_port.efferents[0]].feedback is EdgeType.NON_FEEDBACK
-        assert comp.graph.comp_to_vertex[B.output_port.efferents[0]].feedback is EdgeType.NON_FEEDBACK
+        assert _get_vertex_feedback_type(comp.graph, A.output_port, B) is EdgeType.NON_FEEDBACK
+        assert _get_vertex_feedback_type(comp.graph, B.output_port, C) is EdgeType.NON_FEEDBACK
 
         assert _get_vertex_feedback_type(comp.graph, C.control_signals[0], A) is EdgeType.FLEXIBLE
         assert _get_feedback_source_type(comp.graph_processing, C, A) is EdgeType.FEEDBACK
@@ -1241,8 +1240,10 @@ class TestFeedback:
         comp._analyze_graph()
 
         # "is" comparisons because MAYBE can be assigned to feedback
-        assert comp.graph.comp_to_vertex[A.output_port.efferents[0]].feedback is EdgeType.NON_FEEDBACK
-        assert comp.graph.comp_to_vertex[C.control_signals[0].efferents[0]].feedback is EdgeType.NON_FEEDBACK
+        assert _get_vertex_feedback_type(comp.graph, A.output_port, terminal_mech) is EdgeType.NON_FEEDBACK
+
+        assert _get_vertex_feedback_type(comp.graph, C.control_signals[0], terminal_mech) is EdgeType.FLEXIBLE
+        assert _get_feedback_source_type(comp.graph_processing, C, A) is EdgeType.NON_FEEDBACK
 
     def test_inline_control_mechanism_example(self):
         cueInterval = pnl.TransferMechanism(
@@ -1271,8 +1272,6 @@ class TestFeedback:
             termination_threshold=3,
             name='Task Activations [Act 1, Act 2]'
         )
-        # response = pnl.ProcessingMechanism()
-        # Create controller
         csiController = pnl.ControlMechanism(
             name='Control Mechanism',
             monitor_for_control=cueInterval,
@@ -1290,8 +1289,4 @@ class TestFeedback:
             activation: set([csiController, taskLayer]),
             csiController: set([cueInterval])
         }
-
-        import code
-        code.interact(local=locals())
-
         assert comp.scheduler.dependency_dict == expected_dependencies
