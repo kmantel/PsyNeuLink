@@ -1659,6 +1659,7 @@ class Graph(object):
                     # why is this unbound?
                     from psyneulink.core.compositions.composition import EdgeType
 
+                    # cycle produces full loop (cycle[0] is cycle[len-1])
                     for i in range(len(cycle) - 1):
                         node_a = self.comp_to_vertex[cycle[i]]
                         node_b = self.comp_to_vertex[cycle[i + 1]]
@@ -1669,9 +1670,15 @@ class Graph(object):
                     while len(flexible_projections) > 0 and cycle:
                         c, p = flexible_projections.pop()
                         print(execution_dependencies, '\n\n', c, p)
-                        execution_dependencies[c].remove(p)
+                        execution_dependencies[c.component].remove(p.component)
                         c.source_types[p] = EdgeType.FEEDBACK
                         p.source_types[c] = EdgeType.FEEDBACK
+
+                        if p is vert and c is child:
+                            cycle = None
+                            break
+
+                        print('new deps', execution_dependencies)
 
                         cycle = dfs_for_cycles(
                             execution_dependencies,
@@ -1680,6 +1687,8 @@ class Graph(object):
                             None,
                             [child.component]
                         )
+
+                        print('cycle', cycle)
 
                 if cycle:
                     # loop over all nodes in the cycle in order to:
@@ -1692,7 +1701,6 @@ class Graph(object):
                     pprint.pprint([(node, self.comp_to_vertex[node].source_types) for node in cycle])
 
                     print(f'chose {cycle[0]} as source. with incoming edges: {self.comp_to_vertex[cycle[0]].source_types}')
-                    assert EdgeType.FLEXIBLE in set([v for k, v in self.comp_to_vertex[cycle[0]].source_types.items()])
 
                     for i in range(len(cycle) - 1):
                         node_a = cycle[i]
