@@ -1291,7 +1291,7 @@ from psyneulink.library.components.mechanisms.processing.objective.predictionerr
 __all__ = [
 
     'Composition', 'CompositionError', 'CompositionRegistry', 'MECH_FUNCTION_PARAMS', 'PORT_FUNCTION_PARAMS',
-    'get_compositions'
+    'get_compositions', 'EdgeType'
 ]
 
 # show_graph animation options
@@ -1620,7 +1620,7 @@ class Graph(object):
         removed_dependencies = {}           # stores dependencies that were removed in order to flatten cycles
         flattened_cycles = {}               # flattened_cycles[node] = [all cycles to which node belongs]
         structural_dependencies = collections.OrderedDict()
-        cycle_nodes = set()
+        self.cycle_nodes = set()
         # Loop through the existing composition self, considering "forward" projections only
         # If a cycle is found, "flatten" it by bringing all nodes into the same execution set
         for vert in self.vertices:
@@ -1704,7 +1704,7 @@ class Graph(object):
 
                     for i in range(len(cycle) - 1):
                         node_a = cycle[i]
-                        cycle_nodes.add(node_a)
+                        self.cycle_nodes.add(node_a)
                         node_b = cycle[i + 1]
                         if node_a not in flattened_cycles:
                             flattened_cycles[node_a] = []
@@ -2015,6 +2015,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         self.nodes_to_roles = collections.OrderedDict()
 
+        self.cycle_nodes = set()
         self.feedback_senders = set()
         self.feedback_receivers = set()
 
@@ -2531,7 +2532,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     self.nodes_to_roles[node].remove(NodeRole.OUTPUT)
 
         # Cycles
-        for node in self.scheduler.cycle_nodes:
+        for node in self.cycle_nodes:
             self._add_node_role(node, NodeRole.CYCLE)
 
         # "Feedback" projections
@@ -3668,7 +3669,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if (isinstance(entry, proj_specs)
                         or (isinstance(entry, tuple)
                             and isinstance(entry[0], proj_specs)
-                            and entry[1] in {True, False, MAYBE})):
+                            and entry[1] in {True, False, MAYBE, EdgeType})):
                     return True
             else:
                 return False
