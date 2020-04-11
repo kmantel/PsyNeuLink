@@ -3236,7 +3236,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             # TBI: Copy the projection type/matrix value of the projection that is being shadowed
                             self.add_projection(MappingProjection(sender=sender, receiver=input_port),
                                                 sender_mechanism, shadow)
-        if feedback:
+        if feedback in {True, MAYBE, EdgeType.FEEDBACK, EdgeType.FLEXIBLE}:
             self.feedback_senders.add(sender_mechanism)
             self.feedback_receivers.add(receiver_mechanism)
 
