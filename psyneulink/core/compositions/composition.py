@@ -1678,7 +1678,7 @@ class Graph(object):
                             cycle = None
                             break
 
-                        print('new deps', execution_dependencies)
+                        # print('new deps', execution_dependencies)
 
                         cycle = dfs_for_cycles(
                             execution_dependencies,
@@ -1688,7 +1688,7 @@ class Graph(object):
                             [child.component]
                         )
 
-                        print('cycle', cycle)
+                        # print('cycle', cycle)
 
                 if cycle:
                     # loop over all nodes in the cycle in order to:
@@ -1696,11 +1696,11 @@ class Graph(object):
                     # (2) remove the dependencies that created the cycle
                     # (3) copy the dependencies of the node that "started" the cycle onto all other cycle nodes
 
-                    import pprint
-                    from psyneulink.core.compositions.composition import EdgeType
-                    pprint.pprint([(node, self.comp_to_vertex[node].source_types) for node in cycle])
+                    # import pprint
+                    # from psyneulink.core.compositions.composition import EdgeType
+                    # pprint.pprint([(node, self.comp_to_vertex[node].source_types) for node in cycle])
 
-                    print(f'chose {cycle[0]} as source. with incoming edges: {self.comp_to_vertex[cycle[0]].source_types}')
+                    # print(f'chose {cycle[0]} as source. with incoming edges: {self.comp_to_vertex[cycle[0]].source_types}')
 
                     for i in range(len(cycle) - 1):
                         node_a = cycle[i]
