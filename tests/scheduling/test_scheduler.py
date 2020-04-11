@@ -1245,6 +1245,132 @@ class TestFeedback:
         assert _get_vertex_feedback_type(comp.graph, C.control_signals[0], terminal_mech) is EdgeType.FLEXIBLE
         assert _get_feedback_source_type(comp.graph_processing, C, A) is EdgeType.NON_FEEDBACK
 
+    # any of the projections in the B, D, E, F cycle may be deleted
+    # based on feedback specification. There are individual parametrized
+    # tests for each scenario
+    #    A -> B -> C
+    #        ^  \
+    #       /    v
+    #      F      D
+    #      ^     /
+    #       \  v
+    #         E
+    @pytest.fixture
+    def seven_node_cycle_composition(self):
+        A = pnl.TransferMechanism(name='A')
+        B = pnl.TransferMechanism(name='B')
+        C = pnl.TransferMechanism(name='C')
+        D = pnl.TransferMechanism(name='D')
+        E = pnl.TransferMechanism(name='E')
+        F = pnl.TransferMechanism(name='F')
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, C])
+        comp.add_nodes([D, E, F])
+
+        return comp.nodes, comp
+
+    @pytest.mark.parametrize(
+        'cycle_feedback_proj_pair',
+        [
+            '(B, D)',
+            '(D, E)',
+            '(E, F)',
+            '(F, B)',
+        ]
+    )
+    def test_cycle_manual_feedback_projections(
+        self,
+        seven_node_cycle_composition,
+        cycle_feedback_proj_pair
+    ):
+        [A, B, C, D, E, F], comp = seven_node_cycle_composition
+        fb_sender, fb_receiver = eval(cycle_feedback_proj_pair)
+
+        cycle_nodes = [B, D, E, F]
+        for s_i in range(len(cycle_nodes)):
+            r_i = (s_i + 1) % len(cycle_nodes)
+
+            if (
+                cycle_nodes[s_i] is not fb_sender
+                or cycle_nodes[r_i] is not fb_receiver
+            ):
+                comp.add_projection(
+                    sender=cycle_nodes[s_i],
+                    receiver=cycle_nodes[r_i]
+                )
+
+        comp.add_projection(
+            sender=fb_sender, receiver=fb_receiver,
+            feedback=EdgeType.FLEXIBLE
+        )
+        comp._analyze_graph()
+
+        for s_i in range(len(cycle_nodes)):
+            r_i = (s_i + 1) % len(cycle_nodes)
+
+            if (
+                cycle_nodes[s_i] is not fb_sender
+                or cycle_nodes[r_i] is not fb_receiver
+            ):
+                assert (
+                    _get_feedback_source_type(
+                        comp.graph_processing,
+                        cycle_nodes[s_i],
+                        cycle_nodes[r_i]
+                    )
+                    is EdgeType.NON_FEEDBACK
+                )
+
+        assert (
+            _get_feedback_source_type(
+                comp.graph_processing,
+                fb_sender,
+                fb_receiver
+            )
+            is EdgeType.FEEDBACK
+        )
+
+    @pytest.mark.parametrize(
+        'cycle_feedback_proj_pair, expected_dependencies',
+        [
+            ('(B, D)', '{A: set(), B: {A, F}, C: {B}, D: set(), E: {D}, F: {E}}'),
+            ('(D, E)', '{A: set(), B: {A, F}, C: {B}, D: {B}, E: set(), F: {E}}'),
+            ('(E, F)', '{A: set(), B: {A, F}, C: {B}, D: {B}, E: {D}, F: set()}'),
+            ('(F, B)', '{A: set(), B: {A}, C: {B}, D: {B}, E: {D}, F: {E}}'),
+        ]
+    )
+    def test_cycle_manual_feedback_dependencies(
+        self,
+        seven_node_cycle_composition,
+        cycle_feedback_proj_pair,
+        expected_dependencies
+    ):
+        [A, B, C, D, E, F], comp = seven_node_cycle_composition
+        fb_sender, fb_receiver = eval(cycle_feedback_proj_pair)
+        expected_dependencies = eval(expected_dependencies)
+
+        cycle_nodes = [B, D, E, F]
+        for s_i in range(len(cycle_nodes)):
+            r_i = (s_i + 1) % len(cycle_nodes)
+
+            if (
+                cycle_nodes[s_i] is not fb_sender
+                or cycle_nodes[r_i] is not fb_receiver
+            ):
+                comp.add_projection(
+                    sender=cycle_nodes[s_i],
+                    receiver=cycle_nodes[r_i]
+                )
+
+        comp.add_projection(
+            sender=fb_sender, receiver=fb_receiver,
+            feedback=EdgeType.FLEXIBLE
+        )
+        comp._analyze_graph()
+
+        assert comp.scheduler.dependency_dict == expected_dependencies
+
     def test_inline_control_mechanism_example(self):
         cueInterval = pnl.TransferMechanism(
             default_variable=[[0.0]],
