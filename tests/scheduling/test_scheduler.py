@@ -1374,6 +1374,28 @@ class TestFeedback:
 
         assert comp.scheduler.dependency_dict == expected_dependencies
 
+    def test_cycle_multiple_acyclic_parents(self):
+        A = pnl.TransferMechanism(name='A')
+        B = pnl.TransferMechanism(name='B')
+        C = pnl.TransferMechanism(name='C')
+        D = pnl.TransferMechanism(name='D')
+        E = pnl.TransferMechanism(name='E')
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([C, D, E, C])
+        comp.add_linear_processing_pathway([A, C])
+        comp.add_linear_processing_pathway([B, C])
+
+        expected_dependencies = {
+            A: set(),
+            B: set(),
+            C: {A, B},
+            D: {A, B},
+            E: {A, B},
+        }
+        assert comp.scheduler.dependency_dict == expected_dependencies
+
+
     def test_objective_and_control(self):
         # taken from test_3_mechanisms_2_origins_1_additive_control_1_terminal
         comp = pnl.Composition()
