@@ -105,9 +105,14 @@ def test_simplified_necker_cube(benchmark, mode):
 
     # run the model
     res = bp_comp.run(input_dict, num_trials=10, bin_execute=mode)
-    np.testing.assert_allclose(res, [[3127.65559899], [3610.74194658],
-                                     [6468.6978669], [-4615.15074428],
-                                     [-7369.73302025], [-11190.45001744]])
+    np.testing.assert_allclose(
+        res,
+        [
+            [205.67990124], [205.536034],
+            [206.29612605], [-204.87230198],
+            [-204.98539771], [-205.35434273]
+        ]
+    )
 
     benchmark(bp_comp.run, input_dict, num_trials=10, bin_execute=mode)
 
