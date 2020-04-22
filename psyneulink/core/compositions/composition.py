@@ -1380,7 +1380,6 @@ class Vertex(object):
             self.children = []
 
         self.feedback = feedback
-        self.backward_sources = set()
 
         # when pruning a vertex for a processing graph, we store the
         # connection type (the vertex.feedback) to the new child or
@@ -1536,82 +1535,6 @@ class Graph(object):
             A list[Vertex] of the child `Vertices <Vertex>` of the Vertex associated with **component** : list[`Vertex`]
         """
         return self.comp_to_vertex[component].children
-
-    def get_forward_children_from_component(self, component):
-        """
-            Arguments
-            ---------
-
-            component : Component
-                the Component whose parents will be returned
-
-            Returns
-            -------
-
-            # FIX 8/12/19:  MODIFIED FEEDBACK -
-            #  IS THIS A CORRECT DESCRIPTION? (SAME AS get_forward_parents_from_component)
-            A list[Vertex] of the parent `Vertices <Vertex>` of the Vertex associated with **component**: list[`Vertex`]
-        """
-        forward_children = []
-        for child in self.comp_to_vertex[component].children:
-            if component not in self.comp_to_vertex[child.component].backward_sources:
-                forward_children.append(child)
-        return forward_children
-
-    def get_forward_parents_from_component(self, component):
-        """
-            Arguments
-            ---------
-
-            component : Component
-                the Component whose parents will be returned
-
-            Returns
-            -------
-            # FIX 8/12/19:  MODIFIED FEEDBACK -
-            #  IS THIS A CORRECT DESCRIPTION? (SAME AS get_forward_children_from_component)
-            A list[Vertex] of the parent `Vertices <Vertex>` of the Vertex associated with **component** : list[`Vertex`]
-        """
-        forward_parents = []
-        for parent in self.comp_to_vertex[component].parents:
-            if parent.component not in self.comp_to_vertex[component].backward_sources:
-                forward_parents.append(parent)
-        return forward_parents
-
-    def get_backward_children_from_component(self, component):
-        """
-            Arguments
-            ---------
-
-            component : Component
-                the Component whose children will be returned
-
-            Returns
-            -------
-
-            A list[Vertex] of the child `Vertices <Vertex>` of the Vertex associated with **component** : list[`Vertex`]
-        """
-        backward_children = []
-        for child in self.comp_to_vertex[component].children:
-            if component in self.comp_to_vertex[child.component].backward_sources:
-                backward_children.append(child)
-        return backward_children
-
-    def get_backward_parents_from_component(self, component):
-        """
-            Arguments
-            ---------
-
-            component : Component
-                the Component whose children will be returned
-
-            Returns
-            -------
-
-            A list[Vertex] of the child `Vertices <Vertex>` of the Vertex associated with **component** : list[`Vertex`]
-        """
-
-        return list(self.comp_to_vertex[component].backward_sources)
 
     def prune_feedback_edges(self):
         """
