@@ -1622,14 +1622,13 @@ class Graph(object):
         :return:
         """
 
-        execution_dependencies = {}         # stores  a modified version of the self in which cycles are "flattened"
-        removed_dependencies = {}           # stores dependencies that were removed in order to flatten cycles
-        flattened_cycles = {}               # flattened_cycles[node] = [all cycles to which node belongs]
-        structural_dependencies = collections.OrderedDict()
-        self.cycle_vertices = set()
-
+        # stores a modified version of the self in which cycles are "flattened"
         execution_dependencies = self.dependency_dict
+        removed_dependencies = {}           # stores dependencies that were removed in order to flatten cycles
+        # stores the original unmodified dependencies
         structural_dependencies = self.dependency_dict
+        # wipe and reconstruct list of vertices in cycles
+        self.cycle_vertices = set()
 
         # prune all feedback projections
         for node in execution_dependencies:
@@ -1641,7 +1640,6 @@ class Graph(object):
                 pass
 
             vert = self.comp_to_vertex[node]
-            print(vert, 'sources', vert.source_types)
             execution_dependencies[node] = {
                 dep for dep in execution_dependencies[node]
                 if (
@@ -1649,8 +1647,6 @@ class Graph(object):
                     or vert.source_types[self.comp_to_vertex[dep]] is not EdgeType.FEEDBACK
                 )
             }
-            print(vert, 'sources', vert.source_types)
-            # assert execution_dependencies[node] == self.get_forward_parents_from_component(node)
 
         # construct a parallel networkx graph to use its cycle algorithms
         g = networkx.DiGraph()
@@ -1658,11 +1654,6 @@ class Graph(object):
         for child in execution_dependencies:
             for parent in execution_dependencies[child]:
                 g.add_edge(parent, child)
-                print(f'added nx edge {parent} -> {child}')
-
-        print("networkx cycles: ")
-        cycles = list(networkx.simple_cycles(g))
-        print(cycles)
 
         # prune only one flexible edge per attempt, to remove as few
         # edges as possible
@@ -1685,17 +1676,12 @@ class Graph(object):
                         parent in child.source_types
                         and child.source_types[parent] is EdgeType.FLEXIBLE
                     ):
-                        print(execution_dependencies, '\n\n', child, parent)
                         execution_dependencies[child.component].remove(parent.component)
                         child.source_types[parent] = EdgeType.FEEDBACK
                         g.remove_edge(parent.component, child.component)
                         cycles_changed = True
-                        print(f'PRUNED edge {parent.component} => {child.component}')
                         break
 
-        print("new networkx cycles")
-        cycles = list(networkx.simple_cycles(g))
-        print(cycles)
 
         def create_union_set(*args) -> set:
             """
@@ -1723,8 +1709,6 @@ class Graph(object):
                     shared keys
             """
             shared_keys = [x for x in a if x in b]
-            print('a, b', a, b)
-            print('shared', shared_keys)
 
             new_dict = {k: v for k, v in a.items()}
             new_dict.update(b)
@@ -1733,8 +1717,6 @@ class Graph(object):
             return new_dict, len(new_dict) < (len(a) + len(b))
 
         def merge_intersecting_cycles(cycle_list: list) -> dict:
-            print('cycle list')
-            print(list(cycle_list))
             # transforms a cycle represented as a list [c_0, ... c_n]
             # to a dependency dictionary {c_0: c_n, c_1: c_0, ..., c_n: c_{n-1}}
             cycle_dicts = [
@@ -1744,8 +1726,6 @@ class Graph(object):
                 }
                 for cycle in cycle_list
             ]
-            print('dicts')
-            pprint.pprint(cycle_dicts)
 
             new_cycles = cycle_dicts
             cycles_changed = True
@@ -1776,6 +1756,7 @@ class Graph(object):
 
             return new_cycles
 
+        cycles = list(networkx.simple_cycles(g))
         # create the longest possible cycles using any smaller, connected cycles
         cycles = merge_intersecting_cycles(cycles)
 
@@ -1784,7 +1765,6 @@ class Graph(object):
         for cycle in cycles:
             len_cycle = len(cycle)
             acyclic_dependencies = set()
-            print('flattened', flattened_cycles)
 
             for node in cycle:
                 # for parent in execution_dependencies[node]:
@@ -1793,8 +1773,6 @@ class Graph(object):
                     parent for parent in execution_dependencies[node]
                     if parent not in cycle
                 })
-
-            print(f' cycle: {cycle}   non cyclic dependencies {acyclic_dependencies}')
 
             # replace the dependencies of each node in the cycle with
             # each of the above parents outside of the cycle. This
@@ -1806,17 +1784,10 @@ class Graph(object):
             # a cycle will still depend on n_i when it is part of a
             # flattened cycle. The flattened cycle will simply add more
             # nodes to the consideration set in which n_i exists
-            for child, parents in cycle.items():
+            for child in cycle:
                 # node_a = cycle[i]
                 self.cycle_vertices.add(child)
                 # node_b = cycle[i + 1]
-                if not isinstance(parents, set):
-                    parents = {parents}
-                for par in parents:
-                    if par not in acyclic_dependencies:
-                        print(f'want to remove dependency {child} -> {par}')
-                        # execution_dependencies[child].remove(par)
-
                 execution_dependencies[child] = acyclic_dependencies
 
         return execution_dependencies, removed_dependencies, structural_dependencies
