@@ -1430,6 +1430,8 @@ class Graph(object):
         self.comp_to_vertex = collections.OrderedDict()  # Translate from PNL Mech, Comp or Proj to corresponding vertex
         self.vertices = []  # List of vertices within graph
 
+        self.cycle_vertices = set()
+
     def copy(self):
         """
             Returns
@@ -1624,17 +1626,9 @@ class Graph(object):
         removed_dependencies = {}           # stores dependencies that were removed in order to flatten cycles
         flattened_cycles = {}               # flattened_cycles[node] = [all cycles to which node belongs]
         structural_dependencies = collections.OrderedDict()
-        self.cycle_nodes = set()
-        # Loop through the existing composition self, considering "forward" projections only
-        # If a cycle is found, "flatten" it by bringing all nodes into the same execution set
+        self.cycle_vertices = set()
 
-
-        print('ENTER PRUNE\n-------------')
         execution_dependencies = self.dependency_dict
-
-        import pprint
-        print('normal deps:')
-        pprint.pprint(execution_dependencies)
         structural_dependencies = self.dependency_dict
 
         # prune all feedback projections
@@ -1642,7 +1636,7 @@ class Graph(object):
             # recurrent edges
             try:
                 execution_dependencies[node].remove(node)
-                self.cycle_nodes.add(node)
+                self.cycle_vertices.add(node)
             except KeyError:
                 pass
 
@@ -1657,9 +1651,6 @@ class Graph(object):
             }
             print(vert, 'sources', vert.source_types)
             # assert execution_dependencies[node] == self.get_forward_parents_from_component(node)
-
-        print('nonfeedback/pruned deps:')
-        pprint.pprint(execution_dependencies)
 
         # construct a parallel networkx graph to use its cycle algorithms
         g = networkx.DiGraph()
@@ -1705,11 +1696,6 @@ class Graph(object):
         print("new networkx cycles")
         cycles = list(networkx.simple_cycles(g))
         print(cycles)
-
-        #     projections_to_remove = []
-        from psyneulink.core.globals.utilities import mydfs
-
-        deps = execution_dependencies.copy()
 
         def create_union_set(*args) -> set:
             """
@@ -1792,11 +1778,6 @@ class Graph(object):
 
         # create the longest possible cycles using any smaller, connected cycles
         cycles = merge_intersecting_cycles(cycles)
-        print('merged cycles')
-        pprint.pprint(cycles)
-
-        pprint.pprint(self.vertices)
-        print('------------------------\nSTARTING PARENT CHILD PAIRS\n------------------------')
 
         # find all the parent nodes for each node in a cycle, excluding
         # parents that are part of the cycle
@@ -1827,7 +1808,7 @@ class Graph(object):
             # nodes to the consideration set in which n_i exists
             for child, parents in cycle.items():
                 # node_a = cycle[i]
-                self.cycle_nodes.add(child)
+                self.cycle_vertices.add(child)
                 # node_b = cycle[i + 1]
                 if not isinstance(parents, set):
                     parents = {parents}
@@ -1837,28 +1818,6 @@ class Graph(object):
                         # execution_dependencies[child].remove(par)
 
                 execution_dependencies[child] = acyclic_dependencies
-
-
-                # if node_a not in flattened_cycles:
-                #     flattened_cycles[node_a] = []
-                # flattened_cycles[node_a].append(cycle)
-                # print(f'want to remove dependency {node_b} -> {node_a}')
-                # execution_dependencies[node_a].remove(node_b)
-                # if node_a not in removed_dependencies:
-                #     removed_dependencies[node_a] = set()
-                # removed_dependencies[node_a].add(node_b)
-
-                # if i != 0:
-                #     for dependency in execution_dependencies[cycle[0]]:
-                #         execution_dependencies[cycle[i]].add(dependency)
-
-        print('removed new ?')
-        pprint.pprint({node: structural_dependencies[node] - execution_dependencies[node] for node in execution_dependencies})
-        print('removed old')
-        pprint.pprint(removed_dependencies)
-
-        print('flattened')
-        pprint.pprint(flattened_cycles)
 
         return execution_dependencies, removed_dependencies, structural_dependencies
 
@@ -2141,7 +2100,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         self.nodes_to_roles = collections.OrderedDict()
 
-        self.cycle_nodes = set()
+        self.cycle_vertices = set()
         self.feedback_senders = set()
         self.feedback_receivers = set()
 
@@ -2651,7 +2610,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     self.nodes_to_roles[node].remove(NodeRole.OUTPUT)
 
         # Cycles
-        for node in self.graph_processing.cycle_nodes:
+        for node in self.graph_processing.cycle_vertices:
             self._add_node_role(node, NodeRole.CYCLE)
 
         # "Feedback" projections
