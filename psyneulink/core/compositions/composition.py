@@ -1225,6 +1225,7 @@ import enum
 import inspect
 import itertools
 import logging
+import networkx
 import warnings
 import sys
 
@@ -1612,7 +1613,10 @@ class Graph(object):
 
     def prune_feedback_edges(self):
         """
-        execution_depenencies stored in self.depdency_sets
+            Produces an acyclic graph from this Graph. `feedback <EdgeType.FEEDBACK>` edges are pruned, as well
+            as any edges that are `potentially feedback <EdgeType.FLEXIBLE>` that are in cycles. After these edges
+            are removed, if cycles still remain, they are "flattened." That is, each edge in the cycle is pruned, and
+            each
         :return:
         """
 
@@ -1633,8 +1637,9 @@ class Graph(object):
         pprint.pprint(execution_dependencies)
         structural_dependencies = self.dependency_dict
 
-        # prunes all feedback projections
+        # prune all feedback projections
         for node in execution_dependencies:
+            # recurrent edges
             try:
                 execution_dependencies[node].remove(node)
                 self.cycle_nodes.add(node)
@@ -1645,7 +1650,10 @@ class Graph(object):
             print(vert, 'sources', vert.source_types)
             execution_dependencies[node] = {
                 dep for dep in execution_dependencies[node]
-                if self.comp_to_vertex[dep] not in vert.source_types or vert.source_types[self.comp_to_vertex[dep]] is not EdgeType.FEEDBACK
+                if (
+                    self.comp_to_vertex[dep] not in vert.source_types
+                    or vert.source_types[self.comp_to_vertex[dep]] is not EdgeType.FEEDBACK
+                )
             }
             print(vert, 'sources', vert.source_types)
             # assert execution_dependencies[node] == self.get_forward_parents_from_component(node)
@@ -1653,7 +1661,7 @@ class Graph(object):
         print('nonfeedback/pruned deps:')
         pprint.pprint(execution_dependencies)
 
-        import networkx
+        # construct a parallel networkx graph to use its cycle algorithms
         g = networkx.DiGraph()
         g.add_nodes_from(list(execution_dependencies.keys()))
         for child in execution_dependencies:
@@ -1674,6 +1682,7 @@ class Graph(object):
         while cycles_changed:
             cycles_changed = False
 
+            # recompute cycles after each prune
             for cycle in networkx.simple_cycles(g):
                 len_cycle = len(cycle)
 
@@ -1681,11 +1690,13 @@ class Graph(object):
                     parent = self.comp_to_vertex[cycle[i]]
                     child = self.comp_to_vertex[cycle[(i + 1) % len_cycle]]
 
-                    if parent in child.source_types and child.source_types[parent] is EdgeType.FLEXIBLE:
+                    if (
+                        parent in child.source_types
+                        and child.source_types[parent] is EdgeType.FLEXIBLE
+                    ):
                         print(execution_dependencies, '\n\n', child, parent)
                         execution_dependencies[child.component].remove(parent.component)
                         child.source_types[parent] = EdgeType.FEEDBACK
-                        child.backward_sources.add(parent.component)
                         g.remove_edge(parent.component, child.component)
                         cycles_changed = True
                         print(f'PRUNED edge {parent.component} => {child.component}')
@@ -1700,7 +1711,12 @@ class Graph(object):
 
         deps = execution_dependencies.copy()
 
-        def create_union_set(*args):
+        def create_union_set(*args) -> set:
+            """
+                Returns:
+                    a ``set`` containing all items in **args**,
+                    expanding iterables
+            """
             result = set()
             for item in args:
                 if hasattr(item, '__iter__') and not isinstance(item, str):
@@ -1710,23 +1726,31 @@ class Graph(object):
 
             return result
 
-        def merge_cycle_dicts(a, b):
-            shared_nodes = [x for x in a if x in b]
+        def merge_dictionaries(a: dict, b: dict) -> (dict, bool):
+            """
+                Returns: a tuple containing:
+                    - a ``dict`` containing each key-value pair in **a**
+                    and **b** where the values of shared keys are sets
+                    of their original values
+
+                    - a ``bool`` indicating if **a** and **b** have any
+                    shared keys
+            """
+            shared_keys = [x for x in a if x in b]
             print('a, b', a, b)
-            print('shared', shared_nodes)
+            print('shared', shared_keys)
 
-            if len(shared_nodes) > 0:
-                new_cycle = {k: v for k, v in a.items()}
-                new_cycle.update(b)
-                new_cycle.update({k: create_union_set(a[k], b[k]) for k in shared_nodes})
+            new_dict = {k: v for k, v in a.items()}
+            new_dict.update(b)
+            new_dict.update({k: create_union_set(a[k], b[k]) for k in shared_keys})
 
-                return new_cycle
-            else:
-                return None
+            return new_dict, len(new_dict) < (len(a) + len(b))
 
-        def merge_intersecting_cycles(cycle_list):
+        def merge_intersecting_cycles(cycle_list: list) -> dict:
             print('cycle list')
             print(list(cycle_list))
+            # transforms a cycle represented as a list [c_0, ... c_n]
+            # to a dependency dictionary {c_0: c_n, c_1: c_0, ..., c_n: c_{n-1}}
             cycle_dicts = [
                 {
                     cycle[i]: cycle[(i - 1) % len(cycle)]
@@ -1740,6 +1764,7 @@ class Graph(object):
             new_cycles = cycle_dicts
             cycles_changed = True
 
+            # repeatedly join cycles that have a node in common
             while cycles_changed:
                 cycles_changed = False
                 len_cycle_list = len(new_cycles)
@@ -1751,8 +1776,11 @@ class Graph(object):
                     remove = []
 
                     while j < len(new_cycles):
-                        merged = merge_cycle_dicts(new_cycles[i], new_cycles[j])
-                        if merged is not None:
+                        merged, has_shared_keys = merge_dictionaries(
+                            new_cycles[i],
+                            new_cycles[j]
+                        )
+                        if has_shared_keys:
                             cycles_changed = True
                             new_cycles[i] = merged
                             new_cycles.remove(new_cycles[j])
@@ -1762,6 +1790,7 @@ class Graph(object):
 
             return new_cycles
 
+        # create the longest possible cycles using any smaller, connected cycles
         cycles = merge_intersecting_cycles(cycles)
         print('merged cycles')
         pprint.pprint(cycles)
@@ -1769,6 +1798,8 @@ class Graph(object):
         pprint.pprint(self.vertices)
         print('------------------------\nSTARTING PARENT CHILD PAIRS\n------------------------')
 
+        # find all the parent nodes for each node in a cycle, excluding
+        # parents that are part of the cycle
         for cycle in cycles:
             len_cycle = len(cycle)
             acyclic_dependencies = set()
@@ -1784,10 +1815,16 @@ class Graph(object):
 
             print(f' cycle: {cycle}   non cyclic dependencies {acyclic_dependencies}')
 
-            # loop over all nodes in the cycle in order to:
-            # (1) store the node: cycle pair in the flattened cycles dict
-            # (2) remove the dependencies that created the cycle
-            # (3) copy the dependencies of the node that "started" the cycle onto all other cycle nodes
+            # replace the dependencies of each node in the cycle with
+            # each of the above parents outside of the cycle. This
+            # ensures that they all share the same parents and will then
+            # exist in the same consideration set
+
+            # NOTE: it is unnecessary to change any childrens'
+            # dependencies because any child dependent on a node n_i in
+            # a cycle will still depend on n_i when it is part of a
+            # flattened cycle. The flattened cycle will simply add more
+            # nodes to the consideration set in which n_i exists
             for child, parents in cycle.items():
                 # node_a = cycle[i]
                 self.cycle_nodes.add(child)
@@ -2235,16 +2272,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             logger.debug('Removing', vertex)
             for parent in vertex.parents:
                 for child in vertex.children:
-                    # MAYBE should be treated as forward sources
-                    if vertex.feedback is EdgeType.FEEDBACK:
-                        child.backward_sources.add(parent.component)
                     child.source_types[parent] = vertex.feedback
                     self._graph_processing.connect_vertices(parent, child)
             # ensure that children get handled
             if len(vertex.parents) == 0:
                 for child in vertex.children:
-                    if vertex.feedback is EdgeType.FEEDBACK:
-                        child.backward_sources.add(parent.component)
                     child.source_types[parent] = vertex.feedback
 
             for node in cur_vertex.parents + cur_vertex.children:
