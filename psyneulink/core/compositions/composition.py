@@ -1278,7 +1278,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.log import CompositionLog, LogCondition
 from psyneulink.core.globals.parameters import Parameter, ParametersBase
 from psyneulink.core.globals.registry import register_category
-from psyneulink.core.globals.utilities import ContentAddressableList, NodeRole, call_with_pruned_args, convert_to_list, dfs_for_cycles, get_all_connected_cycles
+from psyneulink.core.globals.utilities import ContentAddressableList, NodeRole, call_with_pruned_args, convert_to_list
 from psyneulink.core.scheduling.condition import All, Always, Condition, EveryNCalls, Never
 from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.scheduling.time import Time, TimeScale
