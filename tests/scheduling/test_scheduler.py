@@ -10,7 +10,8 @@ from psyneulink.core.components.mechanisms.processing.transfermechanism import T
 from psyneulink.core.components.process import Process
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.core.components.system import System
-from psyneulink.core.compositions.composition import Composition, EdgeType
+from psyneulink.core.compositions.composition import Composition
+from psyneulink.core.globals.graph import EdgeType
 from psyneulink.core.globals.context import Context
 from psyneulink.core.globals.keywords import VALUE
 from psyneulink.core.scheduling.condition import AfterNCalls, AfterNPasses, AfterNTrials, AfterPass, All, AllHaveRun, Always, Any, AtPass, BeforeNCalls, BeforePass, \

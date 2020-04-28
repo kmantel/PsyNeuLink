@@ -3,7 +3,8 @@ import pytest
 
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
-from psyneulink.core.compositions.composition import Composition, Graph, Vertex
+from psyneulink.core.compositions.composition import Composition
+from psyneulink.core.globals.graph import Vertex, Graph
 
 
 class TestGraph:
