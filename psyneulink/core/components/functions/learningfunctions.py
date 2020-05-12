@@ -22,19 +22,22 @@ Functions that parameterize a function.
 
 """
 
+import types
 from collections import namedtuple
 
 import numpy as np
 import typecheck as tc
-import types
 
+from psyneulink.core.components.component import ComponentError
+from psyneulink.core.components.functions.combinationfunctions import PredictionErrorDeltaFunction
 from psyneulink.core.components.functions.function import Function_Base, FunctionError, is_function_type
 from psyneulink.core.components.functions.transferfunctions import Logistic
-from psyneulink.core.components.component import ComponentError
-from psyneulink.core.globals.keywords import \
-    CONTRASTIVE_HEBBIAN_FUNCTION, DEFAULT_VARIABLE, TDLEARNING_FUNCTION, LEARNING_FUNCTION_TYPE, LEARNING_RATE, \
-    KOHONEN_FUNCTION, GAUSSIAN, LINEAR, EXPONENTIAL, HEBBIAN_FUNCTION, RL_FUNCTION, BACKPROPAGATION_FUNCTION, MATRIX, \
-    MSE, SSE
+from psyneulink.core.globals.context import handle_external_context
+from psyneulink.core.globals.keywords import (
+    BACKPROPAGATION_FUNCTION, CONTRASTIVE_HEBBIAN_FUNCTION, DEFAULT_VARIABLE, EXPONENTIAL, GAUSSIAN,
+    HEBBIAN_FUNCTION, KOHONEN_FUNCTION, LEARNING_FUNCTION_TYPE, LEARNING_RATE, LINEAR, MATRIX, MSE, NAME,
+    OUTCOME, RL_FUNCTION, SAMPLE, SSE, TARGET, TDLEARNING_FUNCTION, VARIABLE, WEIGHT
+)
 from psyneulink.core.globals.parameters import Parameter
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
 from psyneulink.core.globals.utilities import is_numeric, scalar_distance, get_global_seed
@@ -1647,6 +1650,60 @@ class Reinforcement(LearningFunction):  # --------------------------------------
         weight_change_matrix = np.diag(error_array)
         return [error_array, error_array]
 
+    @staticmethod
+    def _create_related_mechanisms(
+        input_source,
+        output_source,
+        error_function,
+        learned_projection,
+        learning_rate,
+        learning_update
+    ):
+        from psyneulink.core.components.mechanisms.modulatory.learning import LearningMechanism
+        from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
+        from psyneulink.library.components.mechanisms.processing.objective.comparatormechanism import (
+            ComparatorMechanism
+        )
+
+        target_mechanism = ProcessingMechanism(name='Target')
+
+        objective_mechanism = ComparatorMechanism(
+            name='Comparator',
+            sample={
+                NAME: SAMPLE,
+                VARIABLE: [0.],
+                WEIGHT: -1
+            },
+            target={
+                NAME: TARGET,
+                VARIABLE: [0.]
+            },
+            function=error_function,
+            output_ports=[OUTCOME, MSE],
+        )
+
+        learning_mechanism = LearningMechanism(
+            function=Reinforcement(
+                default_variable=[
+                    input_source.output_ports[0].value,
+                    output_source.output_ports[0].value,
+                    objective_mechanism.output_ports[0].value
+                ],
+                learning_rate=learning_rate
+            ),
+            default_variable=[
+                input_source.output_ports[0].value,
+                output_source.output_ports[0].value,
+                objective_mechanism.output_ports[0].value
+            ],
+            error_sources=objective_mechanism,
+            learning_enabled=learning_update,
+            in_composition=True,
+            name="Learning Mechanism for " + learned_projection.name
+        )
+
+        return target_mechanism, objective_mechanism, learning_mechanism
+
 
 class BackPropagation(LearningFunction):
     """
@@ -2176,3 +2233,52 @@ class TDLearning(Reinforcement):
         #     raise ComponentError("Error term does not match the length of the sample sequence")
 
         return variable
+
+    @staticmethod
+    def _create_related_mechanisms(
+        input_source,
+        output_source,
+        error_function,
+        learned_projection,
+        learning_rate,
+        learning_update
+    ):
+        from psyneulink.core.components.mechanisms.modulatory.learning import LearningMechanism
+        from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
+        from psyneulink.library.components.mechanisms.processing.objective.predictionerrormechanism import (
+            PredictionErrorMechanism
+        )
+
+        target_mechanism = ProcessingMechanism(
+            name='Target',
+            default_variable=output_source.defaults.value
+        )
+
+        objective_mechanism = PredictionErrorMechanism(
+            name='PredictionError',
+            sample={
+                NAME: SAMPLE,
+                VARIABLE: output_source.defaults.value
+            },
+            target={
+                NAME: TARGET,
+                VARIABLE: output_source.defaults.value
+            },
+            function=PredictionErrorDeltaFunction(gamma=1.0)
+        )
+
+        learning_mechanism = LearningMechanism(
+            function=TDLearning(
+                learning_rate=learning_rate),
+            default_variable=[
+                input_source.output_ports[0].defaults.value,
+                output_source.output_ports[0].defaults.value,
+                objective_mechanism.output_ports[0].defaults.value
+            ],
+            error_sources=objective_mechanism,
+            learning_enabled=learning_update,
+            in_composition=True,
+            name="Learning Mechanism for " + learned_projection.name
+        )
+
+        return target_mechanism, objective_mechanism, learning_mechanism

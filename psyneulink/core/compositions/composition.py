@@ -5530,21 +5530,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         """Creates *TARGET_MECHANISM*, `ComparatorMechanism` and `LearningMechanism` for RL and TD learning"""
 
         if isinstance(learning_function, type):
-            if issubclass(learning_function, TDLearning):
-                creation_method = self._create_td_related_mechanisms
-            elif issubclass(learning_function, Reinforcement):
-                creation_method = self._create_rl_related_mechanisms
-            else:
+            try:
+                res = learning_function._create_related_mechanisms(
+                    input_source,
+                    output_source,
+                    error_function,
+                    learned_projection,
+                    learning_rate,
+                    learning_update
+                )
+                target_mechanism, objective_mechanism, learning_mechanism = res
+            except AttributeError:
                 raise CompositionError(f"'learning_function' argument for add_linear_learning_pathway "
                                        f"({learning_function}) must be a class of {LearningFunction.__name__}")
-
-            target_mechanism, objective_mechanism, learning_mechanism  = creation_method(input_source,
-                                                                                          output_source,
-                                                                                          error_function,
-                                                                                          learned_projection,
-                                                                                          learning_rate,
-                                                                                          learning_update)
-
         elif is_function_type(learning_function):
             target_mechanism = ProcessingMechanism(name='Target')
             objective_mechanism = ComparatorMechanism(name='Comparator',
@@ -5610,69 +5608,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         learned_projection.has_learning_projection = True
 
         return learning_projection
-
-    def _create_rl_related_mechanisms(self,
-                                      input_source,
-                                      output_source,
-                                      error_function,
-                                      learned_projection,
-                                      learning_rate,
-                                      learning_update):
-
-        target_mechanism = ProcessingMechanism(name='Target')
-
-        objective_mechanism = ComparatorMechanism(name='Comparator',
-                                                  sample={NAME: SAMPLE,
-                                                          VARIABLE: [0.], WEIGHT: -1},
-                                                  target={NAME: TARGET,
-                                                          VARIABLE: [0.]},
-                                                  function=error_function,
-                                                  output_ports=[OUTCOME, MSE],
-                                                  )
-
-        learning_mechanism = \
-            LearningMechanism(function=Reinforcement(default_variable=[input_source.output_ports[0].value,
-                                                                       output_source.output_ports[0].value,
-                                                                       objective_mechanism.output_ports[0].value],
-                                                     learning_rate=learning_rate),
-                              default_variable=[input_source.output_ports[0].value,
-                                                output_source.output_ports[0].value,
-                                                objective_mechanism.output_ports[0].value],
-                              error_sources=objective_mechanism,
-                              learning_enabled=learning_update,
-                              in_composition=True,
-                              name="Learning Mechanism for " + learned_projection.name)
-
-        return target_mechanism, objective_mechanism, learning_mechanism
-
-    def _create_td_related_mechanisms(self,
-                                      input_source,
-                                      output_source,
-                                      error_function,
-                                      learned_projection,
-                                      learning_rate,
-                                      learning_update):
-
-        target_mechanism = ProcessingMechanism(name='Target',
-                                               default_variable=output_source.defaults.value)
-
-        objective_mechanism = PredictionErrorMechanism(name='PredictionError',
-                                                        sample={NAME: SAMPLE,
-                                                                VARIABLE: output_source.defaults.value},
-                                                        target={NAME: TARGET,
-                                                                VARIABLE: output_source.defaults.value},
-                                                        function=PredictionErrorDeltaFunction(gamma=1.0))
-
-        learning_mechanism = LearningMechanism(function=TDLearning(learning_rate=learning_rate),
-                                               default_variable=[input_source.output_ports[0].defaults.value,
-                                                                 output_source.output_ports[0].defaults.value,
-                                                                 objective_mechanism.output_ports[0].defaults.value],
-                                               error_sources=objective_mechanism,
-                                               learning_enabled=learning_update,
-                                               in_composition=True,
-                                               name="Learning Mechanism for " + learned_projection.name)
-
-        return target_mechanism, objective_mechanism, learning_mechanism
 
     def _create_backpropagation_learning_pathway(self,
                                                  pathway,
