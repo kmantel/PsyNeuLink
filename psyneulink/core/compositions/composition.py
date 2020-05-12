@@ -9534,13 +9534,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
             check_spec_type = self._input_matches_variable(stimulus, input_must_match)
             # If a node provided a single input, wrap it in one more list in order to represent trials
-            if check_spec_type == "homogeneous" or check_spec_type == "heterogeneous":
-                if check_spec_type == "homogeneous":
-                    # np.atleast_2d will catch any single-input ports specified without an outer list
-                    # e.g. [2.0, 2.0] --> [[2.0, 2.0]]
-                    adjusted_stimuli[node] = np.atleast_2d(stimulus)
-                else:
-                    adjusted_stimuli[node] = stimulus
+            if check_spec_type == "homogeneous":
+                # np.atleast_2d will catch any single-input ports specified without an outer list
+                # e.g. [2.0, 2.0] --> [[2.0, 2.0]]
+                adjusted_stimuli[node] = np.atleast_2d(stimulus)
+            elif check_spec_type == "heterogeneous":
+                adjusted_stimuli[node] = stimulus
             else:
                 raise CompositionError("Input stimulus ({}) for {} is incompatible with its variable ({})."
                                        .format(stimulus, node.name, input_must_match))
