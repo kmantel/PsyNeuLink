@@ -352,20 +352,11 @@ def copy_parameter_value(value, shared_types=None, memo=None):
     else:
         shared_types = tuple(shared_types)
 
-    try:
-        return copy_iterable_with_shared(
-            value,
-            shared_types=shared_types,
-            memo=memo
-        )
-    except TypeError:
-        # this will attempt to copy the current object if it
-        # is referenced in a parameter, such as
-        # ComparatorMechanism, which does this for input_ports
-        if not isinstance(value, shared_types):
-            return copy.deepcopy(value, memo)
-        else:
-            return value
+    return copy_iterable_with_shared(
+        value,
+        shared_types=shared_types,
+        memo=memo
+    )
 
 
 class ParametersTemplate:

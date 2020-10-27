@@ -727,12 +727,12 @@ def copy_iterable_with_shared(obj, shared_types=None, memo=None):
     try:
         shared_types = tuple(shared_types)
     except TypeError:
-        shared_types = (shared_types, )
+        if shared_types is not None:
+            shared_types = (shared_types, )
 
     dict_types = (dict, collections.UserDict)
     list_types = (list, collections.UserList, collections.deque)
     tuple_types = (tuple, )
-    all_types_using_recursion = dict_types + list_types + tuple_types
 
     if isinstance(obj, dict_types):
         result = obj.__class__()
@@ -754,36 +754,29 @@ def copy_iterable_with_shared(obj, shared_types=None, memo=None):
                 result.__additem__(new_k, new_v)
 
     elif isinstance(obj, list_types + tuple_types):
-        is_tuple = isinstance(obj, tuple_types)
-        if is_tuple:
-            result = list()
-
-        # If this is a deque, make sure we copy the maxlen parameter as well
-        elif isinstance(obj, collections.deque):
+        if isinstance(obj, (collections.deque, ContentAddressableList)):
             # FIXME: Should have a better method for supporting properties like this in general
             # We could do something like result = copy(obj); result.clear() but that would be
             # wasteful copying I guess.
-            result = obj.__class__(maxlen=obj.maxlen)
+            # KDM 10/27/20: copying anyway to generalize
+            result = copy.copy(obj)
+
+            for i in range(len(obj)):
+                result[i] = copy_iterable_with_shared(obj[i], shared_types, memo)
         else:
-            result = obj.__class__()
+            result = [copy_iterable_with_shared(item, shared_types, memo) for item in obj]
 
-        for item in obj:
-            if isinstance(item, all_types_using_recursion):
-                new_item = copy_iterable_with_shared(item, shared_types)
-            elif isinstance(item, shared_types):
-                new_item = item
-            else:
-                new_item = copy.deepcopy(item, memo)
-            result.append(new_item)
+            if isinstance(obj, tuple_types):
+                try:
+                    result = obj.__class__(result)
+                except TypeError:
+                    # handle namedtuple
+                    result = obj.__class__(*result)
 
-        if is_tuple:
-            try:
-                result = obj.__class__(result)
-            except TypeError:
-                # handle namedtuple
-                result = obj.__class__(*result)
+    elif shared_types is not None and isinstance(obj, shared_types):
+        return obj
     else:
-        raise TypeError
+        return copy.deepcopy(obj, memo)
 
     return result
 
