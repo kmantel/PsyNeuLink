@@ -1453,14 +1453,7 @@ class Parameter(ParameterBase):
                 except KeyError:
                     new_history = NotImplemented
 
-                shared_types = (Component, types.MethodType)
-
-                if isinstance(new_val, (dict, list)):
-                    new_val = copy_iterable_with_shared(new_val, shared_types)
-                elif not isinstance(new_val, shared_types):
-                    new_val = copy.deepcopy(new_val)
-
-                self.values[context.execution_id] = new_val
+                self.values[context.execution_id] = copy_parameter_value(new_val)
 
                 if new_history is None:
                     raise ParameterError('history should always be a collections.deque if it exists')

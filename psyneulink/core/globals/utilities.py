@@ -710,13 +710,10 @@ def get_deepcopy_with_shared(shared_keys=frozenset(), shared_types=()):
         memo[id(self)] = result
 
         for k, v in self.__dict__.items():
-            if k in shared_keys or isinstance(v, shared_types):
+            if k in shared_keys:
                 res_val = v
             else:
-                try:
-                    res_val = copy_iterable_with_shared(v, shared_types, memo)
-                except TypeError:
-                    res_val = copy.deepcopy(v, memo)
+                res_val = copy_iterable_with_shared(v, shared_types, memo)
             setattr(result, k, res_val)
         return result
 
@@ -739,13 +736,7 @@ def copy_iterable_with_shared(obj, shared_types=None, memo=None):
         for (k, v) in obj.items():
             # key can never be unhashable dict or list
             new_k = k if isinstance(k, shared_types) else copy.deepcopy(k, memo)
-
-            if isinstance(v, all_types_using_recursion):
-                new_v = copy_iterable_with_shared(v, shared_types)
-            elif isinstance(v, shared_types):
-                new_v = v
-            else:
-                new_v = copy.deepcopy(v, memo)
+            new_v = copy_iterable_with_shared(v, shared_types, memo)
 
             try:
                 result[new_k] = new_v
