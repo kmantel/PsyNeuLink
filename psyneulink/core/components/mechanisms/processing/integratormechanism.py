@@ -86,7 +86,7 @@ import typecheck as tc
 import numpy as np
 
 from psyneulink.core.components.functions.function import Function
-from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import AdaptiveIntegrator
+from psyneulink.core.components.functions.statefulfunctions.integratorfunctions import AdaptiveIntegrator, DriftDiffusionIntegrator
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism_Base
 from psyneulink.core.components.mechanisms.mechanism import Mechanism
 from psyneulink.core.globals.context import ContextFlags
@@ -177,8 +177,11 @@ class IntegratorMechanism(ProcessingMechanism_Base):
 
         # IMPLEMENT: INITIALIZE LOG ENTRIES, NOW THAT ALL PARTS OF THE MECHANISM HAVE BEEN INSTANTIATED
 
-    # def _parse_function_variable(self, variable, context=None, context=None):
-    #     super()._parse_function_variable(variable, context, context)
+    def _parse_function_variable(self, variable, context=None):
+        if isinstance(self.function, DriftDiffusionIntegrator):
+            return variable[0]
+        else:
+            return variable
 
     def _handle_default_variable(self, default_variable=None, size=None, input_ports=None, function=None, params=None):
         """If any parameters with len>1 have been specified for the Mechanism's function, and Mechanism's

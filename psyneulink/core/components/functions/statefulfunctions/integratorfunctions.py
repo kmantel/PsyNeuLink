@@ -44,7 +44,7 @@ from psyneulink.core.globals.keywords import \
     MULTIPLICATIVE_PARAM, NOISE, OFFSET, OPERATION, ORNSTEIN_UHLENBECK_INTEGRATOR_FUNCTION, OUTPUT_PORTS, PRODUCT, \
     RATE, REST, SIMPLE_INTEGRATOR_FUNCTION, SUM, TIME_STEP_SIZE, THRESHOLD, VARIABLE
 from psyneulink.core.globals.parameters import Parameter
-from psyneulink.core.globals.utilities import parameter_spec, all_within_range, iscompatible, get_global_seed
+from psyneulink.core.globals.utilities import parameter_spec, all_within_range, iscompatible, get_global_seed, convert_all_elements_to_np_array
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
 from psyneulink.core.globals.preferences.basepreferenceset import is_pref_set
 
@@ -372,7 +372,11 @@ class IntegratorFunction(StatefulFunction):  # ---------------------------------
         # Get rid of 2d array.
         # When part of a Mechanism, the input and output are 2d arrays.
         arg_in = pnlvm.helpers.unwrap_2d_array(builder, arg_in)
-        arg_out = pnlvm.helpers.unwrap_2d_array(builder, arg_out)
+
+        # output may be 2d with multiple items (e.g. DriftDiffusionIntegrator,
+        # FitzHughNagumoIntegrator)
+        if arg_out.type.pointee.count == 1:
+            arg_out = pnlvm.helpers.unwrap_2d_array(builder, arg_out)
 
         with pnlvm.helpers.array_ptr_loop(builder, arg_in, "integrate") as args:
             self._gen_llvm_integrate(*args, ctx, arg_in, arg_out, params, state)
@@ -2451,7 +2455,7 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         time_step_size = self._get_current_parameter_value(TIME_STEP_SIZE, context)
         random_state = self._get_current_parameter_value("random_state", context)
 
-        previous_value = np.atleast_2d(self.parameters.previous_value._get(context))
+        previous_value = self.parameters.previous_value._get(context)
 
         random_draw = np.array([random_state.normal() for _ in list(variable)])
         value = previous_value + rate * variable * time_step_size \
@@ -2466,16 +2470,11 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         if not self.is_initializing:
             previous_value = adjusted_value
             previous_time = previous_time + time_step_size
-            if not np.isscalar(variable):
-                previous_time = np.broadcast_to(
-                    previous_time,
-                    variable.shape
-                ).copy()
 
             self.parameters.previous_time._set(previous_time, context)
 
         self.parameters.previous_value._set(previous_value, context)
-        return previous_value, previous_time
+        return convert_all_elements_to_np_array([previous_value, previous_time])
 
     def _gen_llvm_integrate(self, builder, index, ctx, vi, vo, params, state):
         # Get parameter pointers
@@ -2502,8 +2501,7 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
 
         # value = previous_value + rate * variable * time_step_size \
         #       + np.sqrt(time_step_size * noise) * random_state.normal()
-        prev_val_ptr = builder.gep(prev_ptr, [ctx.int32_ty(0),
-                                              ctx.int32_ty(0), index])
+        prev_val_ptr = builder.gep(prev_ptr, [ctx.int32_ty(0), index])
         prev_val = builder.load(prev_val_ptr)
         val = builder.load(builder.gep(vi, [ctx.int32_ty(0), index]))
         if isinstance(val.type, pnlvm.ir.ArrayType):
@@ -2526,7 +2524,7 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         val = pnlvm.helpers.fclamp(builder, val, neg_threshold, threshold)
 
         # Store value result
-        data_vo_ptr = builder.gep(vo, [ctx.int32_ty(0), ctx.int32_ty(0),
+        data_vo_ptr = builder.gep(vo, [ctx.int32_ty(0),
                                        ctx.int32_ty(0), index])
         builder.store(val, data_vo_ptr)
         builder.store(val, prev_val_ptr)
