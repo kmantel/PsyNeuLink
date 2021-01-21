@@ -2,16 +2,12 @@ name: PsyNeuLink Master AutoPR
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '*/5 * * * *'
 
 jobs:
   master-autopr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: devel
-
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
