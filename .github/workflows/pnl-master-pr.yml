@@ -1,0 +1,28 @@
+name: PsyNeuLink Master AutoPR
+
+on:
+  schedule:
+    - cron: '*/3 * * * *'
+
+jobs:
+  master-autopr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: devel
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.PNLHELP_SSH_PRIVATE_KEY }}
+          base: master
+          branch: devel
+          delete-branch: false
+          title: '[auto] devel'
+          labels:
+            automated pr
+          team-reviewers: |
+            owners
+            maintainers
+          draft: false
