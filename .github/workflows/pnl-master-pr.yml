@@ -2,7 +2,7 @@ name: PsyNeuLink Master AutoPR
 
 on:
   schedule:
-    - cron: '*/3 * * * *'
+    - cron: '0 */6 * * *'
 
 jobs:
   master-autopr:
