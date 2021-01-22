@@ -2,7 +2,7 @@ name: PsyNeuLink Master AutoPR
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '0 */6 * * *'
 
 jobs:
   master-autopr:
@@ -16,7 +16,6 @@ jobs:
           github_token: ${{ secrets.PNLHELP_SSH_PRIVATE_KEY }}
           source_branch: devel
           destination_branch: master
-          delete-branch: false
           pr_title: '[auto] ${{ github.ref }}'
           pr_reviewer: "maintainers"
           draft: false
