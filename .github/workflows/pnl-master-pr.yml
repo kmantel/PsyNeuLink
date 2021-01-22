@@ -11,13 +11,15 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.PNLHELP_SSH_PRIVATE_KEY }}
-          ref: master
-      - name: Create Pull Request
+          ref: weekly-release
+      - name: Create Master Update PR
         uses: peter-evans/create-pull-request@v3
         with:
           base: master
-          branch: devel
-          delete-branch: false
+          branch: weekly-release
+          run: |
+            git fetch origin devel:devel
+            git reset --hard devel
           title: '[auto] devel'
           labels:
             automated pr
