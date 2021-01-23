@@ -1,4 +1,4 @@
-name: PsyNeuLink Master AutoPR
+name: PsyNeuLink Master Auto PR
 
 on:
   schedule:
@@ -22,10 +22,7 @@ jobs:
         with:
           base: master
           branch: devel
-          title: '[auto] devel'
+          title: 'Devel'
           labels:
-            automated pr
-          team-reviewers: |
-            owners
-            maintainers
-          draft: false
+            automated release
+          reviewers: |
