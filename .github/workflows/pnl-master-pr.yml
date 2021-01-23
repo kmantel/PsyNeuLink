@@ -13,10 +13,6 @@ jobs:
         with:
           ssh-key: ${{ secrets.PNLHELP_SSH_PRIVATE_KEY }}
           ref: devel
-      - name: Create master update branch
-        # run: |
-        #   git fetch origin devel:devel
-        #   git reset --hard devel
       - name: Create master update PR
         uses: peter-evans/create-pull-request@v3
         with:
