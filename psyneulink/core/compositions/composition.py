@@ -3443,6 +3443,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
     def termination_processing(self, termination_conds):
         self.scheduler.termination_conds = termination_conds
 
+    @property
+    def exact_time_mode(self):
+        return self.scheduler.exact_time_mode
+
+    @exact_time_mode.setter
+    def exact_time_mode(self, exact_time_mode):
+        self.scheduler.exact_time_mode = exact_time_mode
+
     # ******************************************************************************************************************
     #                                              GRAPH
     # ******************************************************************************************************************
