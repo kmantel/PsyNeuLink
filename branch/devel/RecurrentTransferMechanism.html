@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
@@ -8,7 +9,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>RecurrentTransferMechanism &mdash; PsyNeuLink 0.6.0.2+14.g9c92de0 documentation</title>
+  <title>RecurrentTransferMechanism &mdash; PsyNeuLink 0.5.2.1+3314.g0f78ef369 documentation</title>
   
 
   
@@ -17,133 +18,130 @@
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'./',
-              VERSION:'0.6.0.2+14.g9c92de0',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
 
+  
+  
     
 
   
+
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="_static/css/custom.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="LCAMechanism" href="LCAMechanism.html" />
-    <link rel="prev" title="Transfer Mechanisms" href="TransferMechanisms.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 </head>
 
-<body class="wy-body-for-nav">
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://princetonuniversity.github.io/PsyNeuLink/"></a>
+<!--      <a class="header-logo"></a>-->
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://github.com/PrincetonUniversity/PsyNeuLink">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="psyneulink-body">
 
    
-  <div class="wy-grid-for-nav">
+
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-          
 
-          
-            <a href="index.html" class="icon icon-home"> PsyNeuLink
-          
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
 
-          
-          </a>
-
-          
+    <nav data-toggle="wy-nav-shift" class="psyneulink-left-menu" id="psyneulink-left-menu">
+      <div class="psyneulink-side-scroll">
+        <div class="psyneulink-menu psyneulink-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="psyneulink-left-menu-search">
             
-            
-              <div class="version">
-                0.6.0.2+14
-              </div>
-            
-          
 
-          
+            
+              
+              
+                <div class="version">
+                  0.5.2.1+3314
+                </div>
+              
+            
+
+            
+
+
+  
+
+
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search Docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
 
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+            
+          </div>
           
             
             
               
             
             
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to PsyNeuLink </a></li>
-<li class="toctree-l1"><a class="reference internal" href="BasicsAndSampler.html">Basics and Sampler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BasicsAndPrimer.html">Basics and Primer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="QuickReference.html">Quick Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Core.html">Core</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="Library.html">Library</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="Components.html">Components</a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="Mechanisms.html">Mechanisms</a><ul class="current">
-<li class="toctree-l4 current"><a class="reference internal" href="ProcessingMechanisms.html">Processing Mechanisms</a><ul class="current">
-<li class="toctree-l5 current"><a class="reference internal" href="TransferMechanisms.html">Transfer Mechanisms</a></li>
-<li class="toctree-l5"><a class="reference internal" href="IntegratorMechanisms.html">IntegratorMechanisms</a></li>
-<li class="toctree-l5"><a class="reference internal" href="ObjectiveMechanisms.html">Objective Mechanisms</a></li>
-<li class="toctree-l5"><a class="reference internal" href="LeabraMechanism.html">LeabraMechanism</a></li>
-</ul>
-</li>
-<li class="toctree-l4"><a class="reference internal" href="ModulatoryMechanisms.html">Modulatory Mechanisms</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="Projections.html">Projections</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="Compositions.html">Compositions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Subystems.html">Subsystems</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Models.html">Models</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="Library.html">Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ContributorsGuide.html">Contributors Guide</a></li>
 </ul>
 
             
           
+          <div class="psyneulink-dev-mode-toggle">
+          </div>
         </div>
       </div>
     </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">PsyNeuLink</a>
-        
-      </nav>
-
-
-      <div class="wy-nav-content">
-        
-        <div class="rst-content">
-        
+    <div class="psyneulink-container">
+      <div class="psyneulink-page-level-bar" id="psyneulink-page-level-bar">
+        <div class="psyneulink-breadcrumbs-wrapper">
           
 
 
@@ -162,63 +160,89 @@
 
 <div role="navigation" aria-label="breadcrumbs navigation">
 
-  <ul class="wy-breadcrumbs">
+  <ul class="psyneulink-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="Library.html">Library</a> &raquo;</li>
-        
-          <li><a href="Components.html">Components</a> &raquo;</li>
-        
-          <li><a href="Mechanisms.html">Mechanisms</a> &raquo;</li>
-        
-          <li><a href="ProcessingMechanisms.html">Processing Mechanisms</a> &raquo;</li>
-        
-          <li><a href="TransferMechanisms.html">Transfer Mechanisms</a> &raquo;</li>
+      <li>
+        <a href="index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
         
       <li>RecurrentTransferMechanism</li>
-    
-    
-      <li class="wy-breadcrumbs-aside">
-        
-            
-            <a href="_sources/RecurrentTransferMechanism.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
     
   </ul>
 
   
-  <hr/>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
+        </div>
+
+        <div class="psyneulink-shortcuts-wrapper" id="psyneulink-shortcuts-wrapper">
+          Shortcuts
+        </div>
+      </div>
+
+      <section data-toggle="wy-nav-shift" id="psyneulink-content-wrap" class="psyneulink-content-wrap">
+        <div class="psyneulink-content-left">
+
+        
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" id="psyneulink-article" class="psyneulink-article">
+              
   <div class="section" id="module-psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism">
 <span id="recurrenttransfermechanism"></span><h1>RecurrentTransferMechanism<a class="headerlink" href="#module-psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="#recurrenttransfermechanism-overview"><span class="std std-ref">Overview</span></a></p></li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#recurrenttransfermechanism-creation"><span class="std std-ref">Creating a RecurrentTransferMechanism</span></a></dt><dd><ul>
+<li><p><a class="reference internal" href="#recurrenttransfermechanism-learning"><span class="std std-ref">Configuring Learning</span></a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><a class="reference internal" href="#recurrenttransfermechanism-structure"><span class="std std-ref">Structure</span></a></p></li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#recurrenttransfermechanism-execution"><span class="std std-ref">Execution</span></a></dt><dd><ul>
+<li><p><a class="reference internal" href="#recurrenttransfermechanism-execution-learning"><span class="std std-ref">Learning</span></a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><a class="reference internal" href="#recurrenttransfermechanism-class-reference"><span class="std std-ref">Class Reference</span></a></p></li>
+</ul>
+</div></blockquote>
+</div>
 <div class="section" id="overview">
-<span id="recurrent-transfer-overview"></span><h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<span id="recurrenttransfermechanism-overview"></span><h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>A RecurrentTransferMechanism is a subclass of <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a> that implements a single-layered recurrent
 network, in which each element is connected to every other element (instantiated in a recurrent
-<a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a> referenced by the Mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> parameter).
-Like a TransferMechanism, it can integrate its input prior to executing its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>. It can also report the energy and, if appropriate, the entropy of its output,
-and can be configured to implement autoassociative (e.g., Hebbian) learning.</p>
+<a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a> referenced by the Mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> parameter).
+Like a TransferMechanism, it can integrate its input prior to executing its <a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">function</span></code></a>. It
+can also report the energy and, if appropriate, the entropy of its output, and can be configured to implement
+autoassociative (e.g., Hebbian) learning.</p>
 </div>
 <div class="section" id="creating-a-recurrenttransfermechanism">
-<span id="recurrent-transfer-creation"></span><h2>Creating a RecurrentTransferMechanism<a class="headerlink" href="#creating-a-recurrenttransfermechanism" title="Permalink to this headline">¶</a></h2>
+<span id="recurrenttransfermechanism-creation"></span><h2>Creating a RecurrentTransferMechanism<a class="headerlink" href="#creating-a-recurrenttransfermechanism" title="Permalink to this headline">¶</a></h2>
 <p>A RecurrentTransferMechanism is created directly by calling its constructor, for example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">psyneulink</span> <span class="k">as</span> <span class="nn">pnl</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">psyneulink</span> <span class="k">as</span> <span class="nn">pnl</span>
 <span class="n">my_linear_recurrent_transfer_mechanism</span> <span class="o">=</span> <span class="n">pnl</span><span class="o">.</span><span class="n">RecurrentTransferMechanism</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">pnl</span><span class="o">.</span><span class="n">Linear</span><span class="p">)</span>
 <span class="n">my_logistic_recurrent_transfer_mechanism</span> <span class="o">=</span> <span class="n">pnl</span><span class="o">.</span><span class="n">RecurrentTransferMechanism</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">pnl</span><span class="o">.</span><span class="n">Logistic</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
                                                                                                 <span class="n">bias</span><span class="o">=-</span><span class="mf">4.0</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>The recurrent projection is automatically created using (1) the <strong>matrix</strong> argument or (2) the <strong>auto</strong> and <strong>hetero</strong>
-arguments of the Mechanism’s constructor, and is assigned to the mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> attribute.</p>
-<p>If the <strong>matrix</strong> argument is used to create the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>, it must specify either a square matrix or an
-<a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a> that uses one (the default is <a class="reference internal" href="Keywords.html#psyneulink.core.globals.keywords.MatrixKeywords.HOLLOW_MATRIX" title="psyneulink.core.globals.keywords.MatrixKeywords.HOLLOW_MATRIX"><code class="xref any py py-attr docutils literal"><span class="pre">HOLLOW_MATRIX</span></code></a>).:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">recurrent_mech_1</span> <span class="o">=</span> <span class="n">pnl</span><span class="o">.</span><span class="n">RecurrentTransferMechanism</span><span class="p">(</span><span class="n">default_variable</span><span class="o">=</span><span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span>
+arguments of the Mechanism’s constructor, and is assigned to the mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> attribute.</p>
+<p>If the <strong>matrix</strong> argument is used to create the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>, it must specify either a square matrix or an
+<a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a> that uses one (the default is <a class="reference internal" href="Keywords.html#psyneulink.core.globals.keywords.MatrixKeywords.HOLLOW_MATRIX" title="psyneulink.core.globals.keywords.MatrixKeywords.HOLLOW_MATRIX"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">HOLLOW_MATRIX</span></code></a>).:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">recurrent_mech_1</span> <span class="o">=</span> <span class="n">pnl</span><span class="o">.</span><span class="n">RecurrentTransferMechanism</span><span class="p">(</span><span class="n">default_variable</span><span class="o">=</span><span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span>
                                                   <span class="n">matrix</span><span class="o">=</span><span class="p">[[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
                                                           <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
                                                           <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]])</span>
@@ -227,150 +251,106 @@ arguments of the Mechanism’s constructor, and is assigned to the mechanism’s
                                                   <span class="n">matrix</span><span class="o">=</span><span class="n">pnl</span><span class="o">.</span><span class="n">AutoAssociativeProjection</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>If the <strong>auto</strong> and <strong>hetero</strong> arguments are used to create the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>, they set the diagonal and off-diagonal terms, respectively.:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">recurrent_mech_3</span> <span class="o">=</span> <span class="n">pnl</span><span class="o">.</span><span class="n">RecurrentTransferMechanism</span><span class="p">(</span><span class="n">default_variable</span><span class="o">=</span><span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span>
+<p>If the <strong>auto</strong> and <strong>hetero</strong> arguments are used to create the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>, they set the diagonal and off-diagonal terms, respectively.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">recurrent_mech_3</span> <span class="o">=</span> <span class="n">pnl</span><span class="o">.</span><span class="n">RecurrentTransferMechanism</span><span class="p">(</span><span class="n">default_variable</span><span class="o">=</span><span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span>
                                                   <span class="n">auto</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
                                                   <span class="n">hetero</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">In the examples above, recurrent_mech_1 and recurrent_mech_3 are identical.</p>
+<p class="admonition-title">Note</p>
+<p>In the examples above, recurrent_mech_1 and recurrent_mech_3 are identical.</p>
 </div>
 <p>In all other respects, a RecurrentTransferMechanism is specified in the same way as a standard <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a>.</p>
 <div class="section" id="configuring-learning">
-<span id="recurrent-transfer-learning"></span><h3><em>Configuring Learning</em><a class="headerlink" href="#configuring-learning" title="Permalink to this headline">¶</a></h3>
-<p>A RecurrentTransferMechanism can be configured for learning when it is created by assigning <code class="xref any docutils literal"><span class="pre">True</span></code> to the
+<span id="recurrenttransfermechanism-learning"></span><h3><em>Configuring Learning</em><a class="headerlink" href="#configuring-learning" title="Permalink to this headline">¶</a></h3>
+<p>A RecurrentTransferMechanism can be configured for learning when it is created by assigning <code class="xref any docutils literal notranslate"><span class="pre">True</span></code> to the
 <strong>enable_learning</strong> argument of its constructor.  This creates an <a class="reference internal" href="AutoAssociativeLearningMechanism.html"><span class="doc">AutoAssociativeLearningMechanism</span></a> that is used to
-train its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>, and assigns as its <a class="reference internal" href="Functions.html#psyneulink.core.components.functions.function.Function_Base.function" title="psyneulink.core.components.functions.function.Function_Base.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a> the one  specified in the <strong>learning_function</strong> argument of the RecurrentTransferMechanism’s
-constructor.  By default, this is the <a class="reference internal" href="LearningFunctions.html#psyneulink.core.components.functions.learningfunctions.Hebbian" title="psyneulink.core.components.functions.learningfunctions.Hebbian"><code class="xref any py py-class docutils literal"><span class="pre">Hebbian</span></code></a> Function;  however, it can be replaced by any other function that is
+train its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>, and assigns as its <a class="reference internal" href="Functions.html#psyneulink.core.components.functions.function.Function_Base.function" title="psyneulink.core.components.functions.function.Function_Base.function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">function</span></code></a> the one  specified in the <strong>learning_function</strong> argument of the RecurrentTransferMechanism’s
+constructor.  By default, this is the <a class="reference internal" href="LearningFunctions.html#psyneulink.core.components.functions.learningfunctions.Hebbian" title="psyneulink.core.components.functions.learningfunctions.Hebbian"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Hebbian</span></code></a> Function;  however, it can be replaced by any other function that is
 suitable for autoassociative learning;  that is, one that takes a list or 1d array of numeric values
 (an “activity vector”) and returns a 2d array or square matrix (the “weight change matrix”) with the same dimensions
-as the length of the activity vector. The AutoAssociativeLearningMechanism is assigned to the <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code> attribute and is used to modify the <a class="reference internal" href="AutoAssociativeProjection.html#psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix" title="psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> parameter of its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> (also referenced by the RecurrentTransferMechanism’s own <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> parameter.</p>
-<p>If a RecurrentTransferMechanism is created without configuring learning (i.e., <strong>enable_learning</strong> is assigned <code class="xref any docutils literal"><span class="pre">False</span></code>
+as the length of the activity vector. The AutoAssociativeLearningMechanism is assigned to the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a> attribute and is used to modify the <a class="reference internal" href="AutoAssociativeProjection.html#psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix" title="psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> parameter of its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> (also referenced by the RecurrentTransferMechanism’s own <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> parameter.</p>
+<p>If a RecurrentTransferMechanism is created without configuring learning (i.e., <strong>enable_learning</strong> is assigned <code class="xref any docutils literal notranslate"><span class="pre">False</span></code>
 in its constructor – the default value), then learning cannot be enabled for the Mechanism until it has been
 configured for learning;  any attempt to do so will issue a warning and then be ignored.  Learning can be configured
-once the Mechanism has been created by calling its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning"><code class="xref any py py-meth docutils literal"><span class="pre">configure_learning</span></code></a>
+once the Mechanism has been created by calling its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">configure_learning</span></code></a>
 method, which also enables learning.</p>
 </div>
 </div>
 <div class="section" id="structure">
-<span id="recurrent-transfer-structure"></span><h2>Structure<a class="headerlink" href="#structure" title="Permalink to this headline">¶</a></h2>
-<p>The distinguishing feature of a RecurrentTransferMechanism is its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> attribute: a self-projecting <a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a>.
-By default, <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> projects from the Mechanism’s
-<a class="reference internal" href="OutputState.html#outputstate-primary"><span class="std std-ref">primary OutputState</span></a> back to its <a class="reference internal" href="InputState.html#inputstate-primary"><span class="std std-ref">primary InputState</span></a>.  This can be
-parameterized using its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a>, <code class="xref any docutils literal"><span class="pre">auto</span></code>,
-and <code class="xref any docutils literal"><span class="pre">hetero</span></code> attributes, and is stored in its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> attribute.  Using the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_state" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_state"><code class="xref any py py-attr docutils literal"><span class="pre">has_recurrent_input_state</span></code></a> attribute, the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> can also be made to project to a separate <em>RECURRENT</em> InputState
-rather, than the primary one (named <em>EXTERNAL</em>).  In this case, the InputStates’ results will be combined using the
-<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.combination_function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.combination_function"><code class="xref any py py-attr docutils literal"><span class="pre">combination_function</span></code></a> <em>before</em> being passed to the
-RecurrentTransferMechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>.</p>
-<p>A RecurrentTransferMechanism also has two additional <a class="reference internal" href="OutputState.html"><span class="doc">OutputStates</span></a>:  an <em>ENERGY</em> OutputState and, if its
-<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a> is bounded between 0 and 1 (e.g., a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal"><span class="pre">Logistic</span></code></a> function), an <em>ENTROPY</em>
-OutputState.  Each of these report the respective values of the vector in it its <em>RESULTS</em> (<a class="reference internal" href="OutputState.html#outputstate-primary"><span class="std std-ref">primary</span></a>) OutputState.</p>
-<p>Finally, if it has been <a class="reference internal" href="#recurrent-transfer-learning"><span class="std std-ref">specified for learning</span></a>, the RecurrentTransferMechanism is
-associated with an <a class="reference internal" href="AutoAssociativeLearningMechanism.html"><span class="doc">AutoAssociativeLearningMechanism</span></a> that is used to train its <a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a>.
-The <code class="xref any docutils literal"><span class="pre">learning_enabled</span></code> attribute indicates whether learning
+<span id="recurrenttransfermechanism-structure"></span><h2>Structure<a class="headerlink" href="#structure" title="Permalink to this headline">¶</a></h2>
+<p>The distinguishing feature of a RecurrentTransferMechanism is its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> attribute: a self-projecting <a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a>.
+By default, <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> projects from the Mechanism’s
+<a class="reference internal" href="OutputPort.html#outputport-primary"><span class="std std-ref">primary OutputPort</span></a> back to its <a class="reference internal" href="InputPort.html#inputport-primary"><span class="std std-ref">primary InputPort</span></a>.  This can be
+parameterized using its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a>, <code class="xref any docutils literal notranslate"><span class="pre">auto</span></code>,
+and <code class="xref any docutils literal notranslate"><span class="pre">hetero</span></code> attributes, and is stored in its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> attribute.  Using the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_port" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_port"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">has_recurrent_input_port</span></code></a> attribute, the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> can also be made to project to a separate <em>RECURRENT</em> InputPort
+rather, than the primary one (named <em>EXTERNAL</em>).  In this case, the InputPorts’ results will be combined using the
+<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.combination_function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.combination_function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">combination_function</span></code></a> <em>before</em> being passed to the
+RecurrentTransferMechanism’s <a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">function</span></code></a>.</p>
+<p>A RecurrentTransferMechanism also has two additional <a class="reference internal" href="OutputPort.html"><span class="doc">OutputPorts</span></a>:  an <em>ENERGY</em> OutputPort and, if its
+<a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">function</span></code></a> is bounded between 0 and 1 (e.g., a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Logistic</span></code></a> function), an <em>ENTROPY</em> OutputPort.
+Each of these report the respective values of the vector in it its <em>RESULT</em> (<a class="reference internal" href="OutputPort.html#outputport-primary"><span class="std std-ref">primary</span></a>) OutputPort.</p>
+<p>Finally, if it has been <a class="reference internal" href="#recurrenttransfermechanism-learning"><span class="std std-ref">specified for learning</span></a>, the RecurrentTransferMechanism
+is associated with an <a class="reference internal" href="AutoAssociativeLearningMechanism.html"><span class="doc">AutoAssociativeLearningMechanism</span></a> that is used to train its <a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a>.
+The <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_enabled" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_enabled"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_enabled</span></code></a> attribute indicates whether learning
 is enabled or disabled for the Mechanism.  If learning was not configured when the Mechanism was created, then it cannot
-be enabled until the Mechanism is <a class="reference internal" href="#recurrent-transfer-learning"><span class="std std-ref">configured for learning</span></a>.</p>
+be enabled until the Mechanism is <a class="reference internal" href="#recurrenttransfermechanism-learning"><span class="std std-ref">configured for learning</span></a>.</p>
 <p>In all other respects the Mechanism is identical to a standard  <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a>.</p>
 </div>
 <div class="section" id="execution">
-<span id="recurrent-transfer-execution"></span><h2>Execution<a class="headerlink" href="#execution" title="Permalink to this headline">¶</a></h2>
+<span id="recurrenttransfermechanism-execution"></span><h2>Execution<a class="headerlink" href="#execution" title="Permalink to this headline">¶</a></h2>
 <p>When a RecurrentTransferMechanism executes, its variable, as is the case with all mechanisms, is determined by the
 projections the mechanism receives. This means that a RecurrentTransferMechanism’s variable is determined in part by
-the value of its own <a class="reference internal" href="OutputState.html#outputstate-primary"><span class="std std-ref">primary OutputState</span></a> on the previous execution, and the <a class="reference internal" href="AutoAssociativeProjection.html#psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix" title="psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> of the
-<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>.</p>
-<p>Like a <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a>, the function used to update each element can be specified in the <strong>function</strong> argument
-of its constructor.  It then transforms its input (including from the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>) using the specified function and parameters (see
-<a class="reference internal" href="TransferMechanism.html#transfer-execution"><span class="std std-ref">Execution</span></a>), and returns the results in its OutputStates.</p>
-<p>Also like a <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a>, the function used to integrate its input before passing it to <code class="xref any docutils literal"><span class="pre">function</span>
-<span class="pre">RecurrentTransferMechanism.function</span></code> (when <code class="xref any docutils literal"><span class="pre">integrator_mode</span></code> is <code class="xref any docutils literal"><span class="pre">True</span></code>)
-can be specified in the <strong>integrator_function</strong> argument of its constructor.</p>
-<p>If a <code class="xref any docutils literal"><span class="pre">convergence_criterion</span></code> is specified, then on each execution
-the <code class="xref any docutils literal"><span class="pre">convergence_function</span></code> is evaluated, and execution in the current
-<a class="reference internal" href="Time.html#psyneulink.core.scheduling.time.Time.trial" title="psyneulink.core.scheduling.time.Time.trial"><code class="xref any py py-attr docutils literal"><span class="pre">trial</span></code></a> continues until the result returned is less than or equal to the <code class="xref any docutils literal"><span class="pre">convergence_criterion</span></code> or the number of executions reaches <code class="xref any docutils literal"><span class="pre">max_passes</span></code> (if it is specified).</p>
-<p>If it has been <a class="reference internal" href="#recurrent-transfer-learning"><span class="std std-ref">configured for learning</span></a> and is executed as part of a <a class="reference internal" href="System.html"><span class="doc">System</span></a>,
-then its <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code> is executed when the <code class="xref any docutils literal"><span class="pre">learning_condition</span></code> is satisfied,  during the <a class="reference internal" href="System.html#system-execution"><span class="std std-ref">execution phase</span></a> of
-the System’s execution.  Note that this is distinct from the behavior of supervised learning algorithms (such as
-<a class="reference internal" href="LearningFunctions.html#psyneulink.core.components.functions.learningfunctions.Reinforcement" title="psyneulink.core.components.functions.learningfunctions.Reinforcement"><code class="xref any py py-class docutils literal"><span class="pre">Reinforcement</span></code></a> and <a class="reference internal" href="LearningFunctions.html#psyneulink.core.components.functions.learningfunctions.BackPropagation" title="psyneulink.core.components.functions.learningfunctions.BackPropagation"><code class="xref any py py-class docutils literal"><span class="pre">BackPropagation</span></code></a>), that are executed during the <a class="reference internal" href="System.html#system-execution"><span class="std std-ref">learning phase</span></a> of a
-System’s execution.  By default, the <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code> executes,
-and updates the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> immediately after the
-RecurrentTransferMechanism executes.</p>
+the value of its own <a class="reference internal" href="OutputPort.html#outputport-primary"><span class="std std-ref">primary OutputPort</span></a> on the previous execution, and the <a class="reference internal" href="AutoAssociativeProjection.html#psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix" title="psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> of the
+<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>.</p>
+<p>Like any <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a>, the function used to update each element can be specified in the <strong>function</strong> argument
+of its constructor.  This transforms its input (including from the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>) using the specified function and parameters (see
+<a class="reference internal" href="TransferMechanism.html#transfermechanism-execution"><span class="std std-ref">Execution</span></a>), and returns the results in its OutputPorts.  Also like a TransferMechanism,
+a RecurrentTransferMechanism can be configured to integrate its input, by setting its <code class="xref any docutils literal notranslate"><span class="pre">integration_mode</span></code> to True  (see <a class="reference internal" href="TransferMechanism.html#transfermechanism-integration"><span class="std std-ref">Integration</span></a>), and to do so for a
+single step of integration or until it reaches some termination condition each time it is executed (see
+<a class="reference internal" href="TransferMechanism.html#transfermechanism-termination"><span class="std std-ref">Termination</span></a>). Finally, it can be reset using its <a class="reference internal" href="TransferMechanism.html#psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.reset" title="psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.reset"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">reset</span></code></a> method (see <a class="reference internal" href="TransferMechanism.html#transfermechanism-reinitialization"><span class="std std-ref">Reinitialization</span></a>).</p>
+<div class="section" id="learning">
+<span id="recurrenttransfermechanism-execution-learning"></span><h3><em>Learning</em><a class="headerlink" href="#learning" title="Permalink to this headline">¶</a></h3>
+<p>If the RecurrentTransferMechanism has been <a class="reference internal" href="#recurrenttransfermechanism-learning"><span class="std std-ref">configured for learning</span></a> and is
+executed as part of a <a class="reference internal" href="Composition.html"><span class="doc">Composition</span></a>, then its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a>
+is executed when the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_condition" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_condition"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_condition</span></code></a> is satisfied.  By default,
+the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a> executes, and updates the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> immediately after the RecurrentTransferMechanism executes.</p>
+</div>
 </div>
 <div class="section" id="class-reference">
-<span id="recurrent-transfer-class-reference"></span><h2>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RECURRENT_OUTPUT">
-<em class="property">class </em><code class="descclassname">psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.</code><code class="descname">RECURRENT_OUTPUT</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RECURRENT_OUTPUT" title="Permalink to this definition">¶</a></dt>
-<dd><p id="recurrenttransfermechanism-standard-outputstates"><a class="reference internal" href="OutputState.html#outputstate-standard"><span class="std std-ref">Standard OutputStates</span></a> for
-<a class="reference internal" href="#"><span class="doc">RecurrentTransferMechanism</span></a></p>
-<dl class="docutils">
-<dt><em>RESULT</em> <span class="classifier-delimiter">:</span> <span class="classifier">1d np.array</span></dt>
-<dd>the result of the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>
-of the Mechanism</dd>
-</dl>
-<dl class="docutils">
-<dt><em>OUTPUT_MEAN</em> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>the mean of the result</dd>
-<dt><em>OUTPUT_VARIANCE</em> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>the variance of the result</dd>
-</dl>
-<dl class="docutils">
-<dt><em>ENERGY</em> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>the energy of the result, which is calculated using the <code class="xref any docutils literal"><span class="pre">Stability</span>
-<span class="pre">Function</span></code> with the <code class="docutils literal"><span class="pre">ENERGY</span></code> metric</dd>
-</dl>
-<dl class="docutils">
-<dt><em>ENTROPY</em> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>The entropy of the result, which is calculated using the <code class="xref any docutils literal"><span class="pre">Stability</span>
-<span class="pre">Function</span></code> with the ENTROPY metric
-(Note: this is only present if the Mechanism’s <a class="reference internal" href="AGTControlMechanism.html#psyneulink.library.components.mechanisms.modulatory.control.agt.agtcontrolmechanism.AGTControlMechanism.function" title="psyneulink.library.components.mechanisms.modulatory.control.agt.agtcontrolmechanism.AGTControlMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a> is bounded
-between 0 and 1 (e.g. the <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal"><span class="pre">Logistic</span></code></a> Function)).</dd>
-</dl>
-</dd></dl>
+<span id="recurrenttransfermechanism-class-reference"></span><h2>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h2>
+<dl class="py exception">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferError">
+<em class="property">exception </em><code class="sig-prename descclassname">psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.</code><code class="sig-name descname">RecurrentTransferError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">error_value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism">
-<em class="property">class </em><code class="descclassname">psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.</code><code class="descname">RecurrentTransferMechanism</code><span class="sig-paren">(</span><em>                             default_variable=None,                                  size=None,                                              function=Linear,                                        matrix=HOLLOW_MATRIX,                                   auto=None,                                              hetero=None,                                            has_recurrent_input_state=False                         combination_function=LinearCombination,                 integrator_mode=False,                                  integrator_function=AdaptiveIntegrator,                 initial_value=None,                                     integration_rate=0.5,                                   noise=0.0,                                              clip=[float:min, float:max],                            convergence_function=Distance(metric=MAX_ABS_DIFF),     convergence_criterion=None,                             max_passes=None,                                        enable_learning=False,                                  learning_rate=None,                                     learning_function=Hebbian,                              learning_condition=UPDATE,                              params=None,                                            name=None,                                              prefs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subclass of <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a> that implements a single-layer auto-recurrent network.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>default_variable</strong> (<em>number</em><em>, </em><em>list</em><em> or </em><em>np.ndarray : default Transfer_DEFAULT_BIAS</em>) – specifies the input to the Mechanism to use if none is provided in a call to its
-<a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.execute" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.execute"><code class="xref any py py-meth docutils literal"><span class="pre">execute</span></code></a> or <a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.run" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.run"><code class="xref any py py-meth docutils literal"><span class="pre">run</span></code></a> method;
-also serves as a template to specify the length of <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable"><code class="xref any py py-attr docutils literal"><span class="pre">variable</span></code></a> for
-<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>, and the <a class="reference internal" href="OutputState.html#outputstate-primary"><span class="std std-ref">primary OutputState</span></a>
-of the Mechanism.</li>
-<li><strong>size</strong> (<em>int</em><em>, </em><em>list</em><em> or </em><em>np.ndarray of ints</em>) – <p>specifies variable as array(s) of zeros if <strong>variable</strong> is not passed as an argument;
-if <strong>variable</strong> is specified, it takes precedence over the specification of <strong>size</strong>.
-As an example, the following mechanisms are equivalent:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">T1</span> <span class="o">=</span> <span class="n">TransferMechanism</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
-<span class="n">T2</span> <span class="o">=</span> <span class="n">TransferMechanism</span><span class="p">(</span><span class="n">default_variable</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
-</pre></div>
-</div>
-</li>
-<li><strong>function</strong> (<em>TransferFunction : default Linear</em>) – specifies the function used to transform the input;  can be <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Linear" title="psyneulink.core.components.functions.transferfunctions.Linear"><code class="xref any py py-class docutils literal"><span class="pre">Linear</span></code></a>, <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal"><span class="pre">Logistic</span></code></a>, <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Exponential" title="psyneulink.core.components.functions.transferfunctions.Exponential"><code class="xref any py py-class docutils literal"><span class="pre">Exponential</span></code></a>,
-or a custom function.</li>
-<li><strong>matrix</strong> (<em>list</em><em>, </em><em>np.ndarray</em><em>, </em><em>np.matrix</em><em>, </em><em>matrix keyword</em><em>, or </em><em>AutoAssociativeProjection : default HOLLOW_MATRIX</em>) – <p>specifies the matrix to use for creating a <a class="reference internal" href="#recurrent-transfer-structure"><span class="std std-ref">recurrent AutoAssociativeProjection</span></a>,
-or an AutoAssociativeProjection to use.</p>
+<em class="property">class </em><code class="sig-prename descclassname">psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.</code><code class="sig-name descname">RecurrentTransferMechanism</code><span class="sig-paren">(</span><em class="sig-param">matrix=HOLLOW_MATRIX</em>, <em class="sig-param">auto=None</em>, <em class="sig-param">hetero=None</em>, <em class="sig-param">has_recurrent_input_port=False                              combination_function=LinearCombination</em>, <em class="sig-param">integrator_mode=False</em>, <em class="sig-param">integrator_function=AdaptiveIntegrator</em>, <em class="sig-param">enable_learning=False</em>, <em class="sig-param">learning_rate=None</em>, <em class="sig-param">learning_function=Hebbian</em>, <em class="sig-param">learning_condition=UPDATE</em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subclass of <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a> that implements a single-layer auto-recurrent network.
+See <a class="reference internal" href="TransferMechanism.html#transfermechanism-class-reference"><span class="std std-ref">TransferMechanism</span></a> for additional arguments and attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> (<em>list</em><em>, </em><em>np.ndarray</em><em>, </em><em>np.matrix</em><em>, </em><em>matrix keyword</em><em>, or </em><em>AutoAssociativeProjection : default HOLLOW_MATRIX</em>) – <p>specifies the matrix to use for creating a <a class="reference internal" href="#recurrenttransfermechanism-structure"><span class="std std-ref">recurrent AutoAssociativeProjection</span></a>, or an AutoAssociativeProjection to use.</p>
 <ul>
-<li>If <strong>auto</strong> and <strong>matrix</strong> are both specified, the diagonal terms are determined by auto and the off-diagonal
-terms are determined by matrix.</li>
-<li>If <strong>hetero</strong> and <strong>matrix</strong> are both specified, the diagonal terms are determined by matrix and the
-off-diagonal terms are determined by hetero.</li>
-<li>If <strong>auto</strong>, <strong>hetero</strong>, and <strong>matrix</strong> are all specified, matrix is ignored in favor of auto and hetero.</li>
+<li><p>If <strong>auto</strong> and <strong>matrix</strong> are both specified, the diagonal terms are determined by auto and the off-diagonal
+terms are determined by matrix.</p></li>
+<li><p>If <strong>hetero</strong> and <strong>matrix</strong> are both specified, the diagonal terms are determined by matrix and the
+off-diagonal terms are determined by hetero.</p></li>
+<li><p>If <strong>auto</strong>, <strong>hetero</strong>, and <strong>matrix</strong> are all specified, matrix is ignored in favor of auto and hetero.</p></li>
 </ul>
-</li>
-<li><strong>auto</strong> (<em>number</em><em>, </em><em>1D array</em><em>, or </em><em>None : default None</em>) – <p>specifies matrix as a diagonal matrix with diagonal entries equal to <strong>auto</strong>, if <strong>auto</strong> is not None;
+</p></li>
+<li><p><strong>auto</strong> (<em>number</em><em>, </em><em>1D array</em><em>, or </em><em>None : default None</em>) – <p>specifies matrix as a diagonal matrix with diagonal entries equal to <strong>auto</strong>, if <strong>auto</strong> is not None;
 If <strong>auto</strong> and <strong>hetero</strong> are both specified, then matrix is the sum of the two matrices from <strong>auto</strong> and
 <strong>hetero</strong>.</p>
 <p>In the following examples, assume that the default variable of the mechanism is length 4:</p>
 <ul>
-<li>setting <strong>auto</strong> to 1 and <strong>hetero</strong> to -1 sets matrix to have a diagonal of
-1 and all non-diagonal entries -1:<blockquote>
-<div><div class="math">
+<li><p>setting <strong>auto</strong> to 1 and <strong>hetero</strong> to -1 sets matrix to have a diagonal of
+1 and all non-diagonal entries -1:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
 \[\begin{split}\begin{bmatrix}
     1 &amp; -1 &amp; -1 &amp; -1 \\
     -1 &amp; 1 &amp; -1 &amp; -1 \\
@@ -379,8 +359,9 @@ If <strong>auto</strong> and <strong>hetero</strong> are both specified, then ma
 \end{bmatrix}\end{split}\]</div>
 </div></blockquote>
 </li>
-<li>setting <strong>auto</strong> to [1, 1, 2, 2] and <strong>hetero</strong> to -1 sets matrix to:<blockquote>
-<div><div class="math">
+<li><p>setting <strong>auto</strong> to [1, 1, 2, 2] and <strong>hetero</strong> to -1 sets matrix to:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
 \[\begin{split}\begin{bmatrix}
     1 &amp; -1 &amp; -1 &amp; -1 \\
     -1 &amp; 1 &amp; -1 &amp; -1 \\
@@ -389,9 +370,10 @@ If <strong>auto</strong> and <strong>hetero</strong> are both specified, then ma
 \end{bmatrix}\end{split}\]</div>
 </div></blockquote>
 </li>
-<li>setting <strong>auto</strong> to [1, 1, 2, 2] and <strong>hetero</strong> to  [[3, 3, 3, 3], [3, 3, 3, 3], [4, 4, 4, 4], [4, 4, 4, 4]]
-sets matrix to:<blockquote>
-<div><div class="math">
+<li><p>setting <strong>auto</strong> to [1, 1, 2, 2] and <strong>hetero</strong> to  [[3, 3, 3, 3], [3, 3, 3, 3], [4, 4, 4, 4], [4, 4, 4, 4]]
+sets matrix to:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
 \[\begin{split}\begin{bmatrix}
     1 &amp; 3 &amp; 3 &amp; 3 \\
     3 &amp; 1 &amp; 3 &amp; 3 \\
@@ -403,8 +385,8 @@ sets matrix to:<blockquote>
 </ul>
 <p>See <strong>matrix</strong> for details on how <strong>auto</strong> and <strong>hetero</strong> may overwrite matrix.</p>
 <p>Can be modified by control.</p>
-</li>
-<li><strong>hetero</strong> (<em>number</em><em>, </em><em>2D array</em><em>, or </em><em>None : default None</em>) – <p>specifies matrix as a hollow matrix with all non-diagonal entries equal to <strong>hetero</strong>, if <strong>hetero</strong> is not None;
+</p></li>
+<li><p><strong>hetero</strong> (<em>number</em><em>, </em><em>2D array</em><em>, or </em><em>None : default None</em>) – <p>specifies matrix as a hollow matrix with all non-diagonal entries equal to <strong>hetero</strong>, if <strong>hetero</strong> is not None;
 If <strong>auto</strong> and <strong>hetero</strong> are both specified, then matrix is the sum of the two matrices from <strong>auto</strong> and
 <strong>hetero</strong>.</p>
 <p>When diagonal entries of <strong>hetero</strong> are specified with non-zero values, these entries are set to zero before
@@ -413,306 +395,310 @@ hetero is used to produce a matrix.</p>
 matrix.</p>
 <p>See <strong>matrix</strong> (above) for details on how <strong>auto</strong> and <strong>hetero</strong> may overwrite matrix.</p>
 <p>Can be modified by control.</p>
-</li>
-<li><strong>has_recurrent_input_state</strong> (<em>boolean : default False</em>) – specifies whether the mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>
-points to a separate input state. By default, if False, the recurrent_projection points to its <a class="reference internal" href="InputState.html#inputstate-primary"><span class="std std-ref">primary
-InputState</span></a>. If True, the recurrent_projection points to a separate input state, and
-the values of all input states are combined using <code class="xref any docutils literal"><span class="pre">LinearCombination</span></code> <em>before</em>
-being passed to the RecurrentTransferMechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>.</li>
-<li><strong>combination_function</strong> (<em>function : default LinearCombination</em>) – specifies function used to combine the <em>RECURRENT</em> and <em>INTERNAL</em> <a class="reference internal" href="#recurrent-transfer-structure"><span class="std std-ref">InputStates</span></a>;
-must accept a 2d array with one or two items of the same length, and generate a result that is the same size
-as each of these;  default simply adds the two items.</li>
-<li><strong>integrator_mode</strong> (<em>bool : False</em>) – specifies whether or not the RecurrentTransferMechanism should be executed using its <a class="reference internal" href="#"><span class="doc">integrator_function</span></a> to integrate its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable"><code class="xref any py py-attr docutils literal"><span class="pre">variable</span></code></a> (
-when set to <code class="xref any docutils literal"><span class="pre">True</span></code>), or simply report the asymptotic value of the output of its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a> (when set to <code class="xref any docutils literal"><span class="pre">False</span></code>).</li>
-<li><strong>integrator_function</strong> (<em>IntegratorFunction : default AdaptiveIntegrator</em>) – specifies <code class="xref any docutils literal"><span class="pre">IntegratorFunction</span></code> to use in <code class="xref any docutils literal"><span class="pre">integration_mode</span></code>.</li>
-<li><strong>initial_value</strong> (<a class="reference internal" href="AutoAssociativeProjection.html#psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.value" title="psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.value"><em>value</em></a><em>, </em><em>list</em><em> or </em><em>np.ndarray : default Transfer_DEFAULT_BIAS</em>) – specifies the starting value for time-averaged input if <code class="xref any docutils literal"><span class="pre">integrator_mode</span></code> is <code class="xref any docutils literal"><span class="pre">True</span></code>).</li>
-<li><strong>integration_rate</strong> (<em>float : default 0.5</em>) – <p>the rate used for integrating <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable"><code class="xref any py py-attr docutils literal"><span class="pre">variable</span></code></a> when <code class="xref any docutils literal"><span class="pre">integrator_mode</span></code> is set to <code class="xref any docutils literal"><span class="pre">True</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">integration_rate</span> <span class="o">*</span> <span class="n">variable</span><span class="p">)</span> <span class="o">+</span>
-<span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">integration_rate</span> <span class="o">*</span> <span class="nb">input</span> <span class="n">to</span> <span class="n">mechanism</span><span class="s1">&#39;s function on the previous time step)</span>
-</pre></div>
-</div>
-</li>
-<li><strong>noise</strong> (<em>float</em><em> or </em><em>function : default 0.0</em>) – a value added to the result of the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a> or to the result of
-<code class="xref any docutils literal"><span class="pre">integrator_function</span></code>, depending on whether <code class="xref any docutils literal"><span class="pre">integrator_mode</span></code> is <code class="xref any docutils literal"><span class="pre">True</span></code> or <code class="xref any docutils literal"><span class="pre">False</span></code>. See
-<code class="xref any docutils literal"><span class="pre">noise</span></code> for additional details.</li>
-<li><strong>clip</strong> (<em>list</em><em> [</em><em>float</em><em>, </em><em>float</em><em>] </em><em>: default None</em><em> (</em><em>Optional</em><em>)</em>) – specifies the allowable range for the result of <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a> the item in
-index 0 specifies the minimum allowable value of the result, and the item in index 1 specifies the maximum
-allowable value; any element of the result that exceeds the specified minimum or maximum value is set to the
-value of <code class="xref any docutils literal"><span class="pre">clip</span></code> that it exceeds.</li>
-<li><strong>convergence_function</strong> (<em>function : default Distance</em><em>(</em><em>metric=MAX_ABS_DIFF</em><em>)</em>) – specifies the function that calculates <code class="xref any docutils literal"><span class="pre">delta</span></code>, and determines when
-<code class="xref any docutils literal"><span class="pre">is_converged</span></code> is <code class="xref any docutils literal"><span class="pre">True</span></code>.</li>
-<li><strong>convergence_criterion</strong> (<em>float : default 0.01</em>) – specifies the value of <code class="xref any docutils literal"><span class="pre">delta</span></code> at which <code class="xref any docutils literal"><span class="pre">is_converged</span></code> is <code class="xref any docutils literal"><span class="pre">True</span></code>.</li>
-<li><strong>max_passes</strong> (<em>int : default 1000</em>) – specifies maximum number of executions (<a class="reference internal" href="Time.html#psyneulink.core.scheduling.time.TimeScale.PASS" title="psyneulink.core.scheduling.time.TimeScale.PASS"><code class="xref any py py-attr docutils literal"><span class="pre">passes</span></code></a>) that can occur in a trial before reaching
-the <code class="xref any docutils literal"><span class="pre">convergence_criterion</span></code>, after which an error occurs;
-if <code class="xref any docutils literal"><span class="pre">None</span></code> is specified, execution may continue indefinitely or until an interpreter exception is generated.</li>
-<li><strong>enable_learning</strong> (<em>boolean : default False</em>) – specifies whether the Mechanism should be configured for learning;  if it is not (the default), then learning
-cannot be enabled until it is configured for learning by calling the Mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning"><code class="xref any py py-meth docutils literal"><span class="pre">configure_learning</span></code></a> method.</li>
-<li><strong>learning_rate</strong> (<em>scalar</em><em>, or </em><em>list</em><em>, </em><em>1d</em><em> or </em><em>2d np.array</em><em>, or </em><em>np.matrix of numeric values: default False</em>) – specifies the learning rate used by its <code class="xref any docutils literal"><span class="pre">learning</span> <span class="pre">function</span></code>.
-If it is <code class="xref any docutils literal"><span class="pre">None</span></code>, the <a class="reference internal" href="LearningMechanism.html#learningmechanism-learning-rate"><span class="std std-ref">default learning_rate for a LearningMechanism</span></a> is
-used; if it is assigned a value, that is used as the learning_rate (see <code class="xref any docutils literal"><span class="pre">learning_rate</span></code> for details).</li>
-<li><strong>learning_function</strong> (<em>function : default Hebbian</em>) – specifies the function for the LearningMechanism if <a class="reference internal" href="#recurrent-transfer-learning"><span class="std std-ref">learning has been specified</span></a> for the RecurrentTransferMechanism.  It can be any function so long as it
-takes a list or 1d array of numeric values as its <a class="reference internal" href="Functions.html#psyneulink.core.components.functions.function.Function_Base.variable" title="psyneulink.core.components.functions.function.Function_Base.variable"><code class="xref any py py-attr docutils literal"><span class="pre">variable</span></code></a> and returns a sqaure
-matrix of numeric values with the same dimensions as the length of the input.</li>
-<li><strong>learning_condition</strong> (<a class="reference internal" href="Condition.html#psyneulink.core.scheduling.condition.Condition" title="psyneulink.core.scheduling.condition.Condition"><em>Condition</em></a><em>, </em><em>UPDATE</em><em>, </em><em>CONVERGENCE : default UPDATE</em>) – <p>specifies the <a class="reference internal" href="Condition.html"><span class="doc">Condition</span></a> assigned to <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code>;
+</p></li>
+<li><p><strong>has_recurrent_input_port</strong> (<em>boolean : default False</em>) – specifies whether the mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>
+points to a separate InputPort. By default, if False, the recurrent_projection points to its <a class="reference internal" href="InputPort.html#inputport-primary"><span class="std std-ref">primary
+InputPort</span></a>. If True, the recurrent_projection points to a separate InputPort, and
+the values of all input ports are combined using <code class="xref any docutils literal notranslate"><span class="pre">LinearCombination</span></code> <em>before</em>
+being passed to the RecurrentTransferMechanism’s <a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">function</span></code></a>.</p></li>
+<li><p><strong>combination_function</strong> (<em>function : default LinearCombination</em>) – specifies function used to combine the <em>RECURRENT</em> and <em>INTERNAL</em> <a class="reference internal" href="#recurrenttransfermechanism-structure"><span class="std std-ref">InputPorts</span></a>; must accept a 2d array with one or two items of the same length,
+and generate a result that is the same size as each of these;  default simply adds the two items.</p></li>
+<li><p><strong>enable_learning</strong> (<em>boolean : default False</em>) – specifies whether the Mechanism should be configured for <code class="xref any docutils literal notranslate"><span class="pre">learning</span></code> method.</p></li>
+<li><p><strong>learning_rate</strong> (<em>scalar</em><em>, or </em><em>list</em><em>, </em><em>1d</em><em> or </em><em>2d np.array</em><em>, or </em><em>np.matrix of numeric values: default False</em>) – specifies the learning rate used by its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning</span> <span class="pre">function</span></code></a>.
+If it is <code class="xref any docutils literal notranslate"><span class="pre">None</span></code>, the <a class="reference internal" href="LearningMechanism.html#learningmechanism-learning-rate"><span class="std std-ref">default learning_rate for a LearningMechanism</span></a> is
+used; if it is assigned a value, that is used as the learning_rate (see <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_rate" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_rate"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_rate</span></code></a> for details).</p></li>
+<li><p><strong>learning_function</strong> (<em>function : default Hebbian</em>) – specifies the function for the LearningMechanism if <a class="reference internal" href="#recurrenttransfermechanism-learning"><span class="std std-ref">learning has been specified</span></a> for the RecurrentTransferMechanism.  It can be any function so long as
+it takes a list or 1d array of numeric values as its <a class="reference internal" href="Functions.html#psyneulink.core.components.functions.function.Function_Base.variable" title="psyneulink.core.components.functions.function.Function_Base.variable"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">variable</span></code></a> and returns a sqaure
+matrix of numeric values with the same dimensions as the length of the input.</p></li>
+<li><p><strong>learning_condition</strong> (<a class="reference internal" href="Condition.html#psyneulink.core.scheduling.condition.Condition" title="psyneulink.core.scheduling.condition.Condition"><em>Condition</em></a><em>, </em><em>UPDATE</em><em>, </em><em>CONVERGENCE : default UPDATE</em>) – <p>specifies the <a class="reference internal" href="Condition.html"><span class="doc">Condition</span></a> assigned to <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a>;
 A <a class="reference internal" href="Condition.html"><span class="doc">Condition</span></a> can be used, or one of the following two keywords:</p>
 <ul>
-<li><em>UPDATE:</em> <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code> is executed immediately after
-every execution of the RecurrentTransferMechanism;  this is equivalent to assigning no <a class="reference internal" href="Condition.html"><span class="doc">Condition</span></a></li>
+<li><p><em>UPDATE:</em> <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a> is executed immediately after
+every execution of the RecurrentTransferMechanism;  this is equivalent to assigning no <a class="reference internal" href="Condition.html"><span class="doc">Condition</span></a></p></li>
 </ul>
 <ul>
-<li><em>CONVERGENCE:</em> <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code> is executed whenever the
-the <a class="reference internal" href="OptimizationFunctions.html#psyneulink.core.components.functions.optimizationfunctions.GradientOptimization.convergence_criterion" title="psyneulink.core.components.functions.optimizationfunctions.GradientOptimization.convergence_criterion"><code class="xref any py py-attr docutils literal"><span class="pre">convergence_criterion</span></code></a> is satisfied;  this is equivalent to a WhenFinished(<code class="docutils literal"><span class="pre">rec_mech</span></code>) <a class="reference internal" href="Condition.html"><span class="doc">Condition</span></a>
-in which <code class="docutils literal"><span class="pre">rec_mech</span></code> is the RecurrentTransferMechanism.</li>
+<li><p><em>CONVERGENCE:</em> <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a> is executed whenever the
+the <a class="reference internal" href="TransferMechanism.html#psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.termination_threshold" title="psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.termination_threshold"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">termination_threshold</span></code></a> is satisfied;  this is equivalent to a WhenFinished(<code class="docutils literal notranslate"><span class="pre">rec_mech</span></code>) <a class="reference internal" href="Condition.html"><span class="doc">Condition</span></a>
+in which <code class="docutils literal notranslate"><span class="pre">rec_mech</span></code> is the RecurrentTransferMechanism.</p></li>
 </ul>
-<p>See <code class="xref any docutils literal"><span class="pre">learning_condition</span></code> for additional details.</p>
-</li>
-<li><strong>params</strong> (<em>Dict</em><em>[</em><em>param keyword: param value</em><em>] </em><em>: default None</em>) – a <a class="reference internal" href="ParameterState.html#parameterstate-specification"><span class="std std-ref">parameter dictionary</span></a> that can be used to specify the parameters for
-the Mechanism, its function, and/or a custom function and its parameters.  Values specified for parameters in
-the dictionary override any assigned to those parameters in arguments of the constructor.</li>
-<li><strong>name</strong> (str : default see <code class="xref any docutils literal"><span class="pre">name</span></code>) – specifies the name of the RecurrentTransferMechanism.</li>
-<li><strong>prefs</strong> (<a class="reference internal" href="Preferences.html#psyneulink.core.globals.preferences.PreferenceSet" title="psyneulink.core.globals.preferences.PreferenceSet"><em>PreferenceSet</em></a><em> or </em><em>specification dict : default Mechanism.classPreferences</em>) – specifies the <a class="reference internal" href="Preferences.html#psyneulink.core.globals.preferences.PreferenceSet" title="psyneulink.core.globals.preferences.PreferenceSet"><code class="xref any py py-class docutils literal"><span class="pre">PreferenceSet</span></code></a> for the RecurrentTransferMechanism; see <code class="xref any docutils literal"><span class="pre">prefs</span></code>
-for details.</li>
-<li><strong>context</strong> (<em>str : default componentType+INITIALIZING</em>) – string used for contextualization of instantiation, hierarchical calls, executions, etc.</li>
+<p>See <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_condition" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_condition"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_condition</span></code></a> for additional details.</p>
+</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="attribute">
-<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable">
-<code class="descname">variable</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>2d np.array with one item in axis 0.</em> – the input to Mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function">
-<code class="descname">function</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>Function</em> – the Function used to transform the input.</p>
-</dd></dl>
-
-<dl class="attribute">
+</dd>
+</dl>
+<dl class="py attribute">
 <dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix">
-<code class="descname">matrix</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>2d np.array</em> – the <a class="reference internal" href="AutoAssociativeProjection.html#psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix" title="psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> parameter of the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> for the Mechanism.</p>
+<code class="sig-name descname">matrix</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>the <a class="reference internal" href="AutoAssociativeProjection.html#psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix" title="psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> parameter of the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> for the Mechanism.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>2d np.array</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection">
-<code class="descname">recurrent_projection</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>AutoAssociativeProjection</em> –</p>
-<dl class="docutils">
-<dt>an <a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a> that projects from the Mechanism’s <a class="reference internal" href="OutputState.html#outputstate-primary"><span class="std std-ref">primary OutputState</span></a></dt>
-<dd>to its <a class="reference internal" href="Mechanism.html#mechanism-inputstates"><span class="std std-ref">primary InputState</span></a>.</dd>
+<code class="sig-name descname">recurrent_projection</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="Permalink to this definition">¶</a></dt>
+<dd><p>an <a class="reference internal" href="AutoAssociativeProjection.html"><span class="doc">AutoAssociativeProjection</span></a> that projects from the Mechanism’s <a class="reference internal" href="OutputPort.html#outputport-primary"><span class="std std-ref">primary OutputPort</span></a>
+to its <a class="reference internal" href="Mechanism.html#mechanism-inputports"><span class="std std-ref">primary InputPort</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="AutoAssociativeProjection.html#psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection" title="psyneulink.library.components.projections.pathway.autoassociativeprojection.AutoAssociativeProjection">AutoAssociativeProjection</a></p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_state">
-<code class="descname">has_recurrent_input_state</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_state" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>boolean</em> – specifies whether the mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>
-points to a separate input state. If False, the recurrent_projection points to its <a class="reference internal" href="InputState.html#inputstate-primary"><span class="std std-ref">primary
-InputState</span></a>. If True, the recurrent_projection points to a separate input state, and
-the values of all input states are combined using <code class="xref any docutils literal"><span class="pre">LinearCombination</span></code> <em>before</em>
-being passed to the RecurrentTransferMechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>.</p>
+<dl class="py attribute">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_port">
+<code class="sig-name descname">has_recurrent_input_port</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>specifies whether the mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>
+points to a separate InputPort. If False, the recurrent_projection points to its <a class="reference internal" href="InputPort.html#inputport-primary"><span class="std std-ref">primary
+InputPort</span></a>. If True, the recurrent_projection points to a separate InputPort, and
+the values of all input ports are combined using <code class="xref any docutils literal notranslate"><span class="pre">LinearCombination</span></code> <em>before</em>
+being passed to the RecurrentTransferMechanism’s <a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">function</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.combination_function">
-<code class="descname">combination_function</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.combination_function" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>function</em> – the Function used to combine the <em>RECURRENT</em> and <em>EXTERNAL</em> InputStates if <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_state" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_state"><code class="xref any py py-attr docutils literal"><span class="pre">has_recurrent_input_state</span></code></a> is <code class="xref any docutils literal"><span class="pre">True</span></code>.  By default this is a <a class="reference internal" href="CombinationFunctions.html#psyneulink.core.components.functions.combinationfunctions.LinearCombination" title="psyneulink.core.components.functions.combinationfunctions.LinearCombination"><code class="xref any py py-class docutils literal"><span class="pre">LinearCombination</span></code></a>
+<code class="sig-name descname">combination_function</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.combination_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>the Function used to combine the <em>RECURRENT</em> and <em>EXTERNAL</em> InputPorts if <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_port" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.has_recurrent_input_port"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">has_recurrent_input_port</span></code></a> is <code class="xref any docutils literal notranslate"><span class="pre">True</span></code>.  By default this is a <a class="reference internal" href="CombinationFunctions.html#psyneulink.core.components.functions.combinationfunctions.LinearCombination" title="psyneulink.core.components.functions.combinationfunctions.LinearCombination"><code class="xref any py py-class docutils literal notranslate"><span class="pre">LinearCombination</span></code></a>
 Function that simply adds them.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.initial_value">
-<code class="descname">initial_value</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.initial_value" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>value, list or np.ndarray : Transfer_DEFAULT_BIAS</em> – determines the starting value for time-averaged input (only relevant if <code class="xref any docutils literal"><span class="pre">integration_rate</span></code> parameter is not 1.0).</p>
-</dd></dl>
-
-<dl class="docutils">
-<dt>integrator_mode :</dt>
-<dd><p class="first"><strong>When integrator_mode is set to True:</strong></p>
-<p>the variable of the mechanism is first passed into the following equation:</p>
-<div class="math">
-\[value = previous\_value(1-integration\_rate) + variable \cdot integration\_rate + noise\]</div>
-<p>The result of the integrator function above is then passed into the mechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>. Note that on the first execution, <em>initial_value</em> determines the
-<code class="xref any docutils literal"><span class="pre">integrator_function's</span></code> <a class="reference internal" href="IntegratorFunctions.html#psyneulink.core.components.functions.statefulfunctions.integratorfunctions.AdaptiveIntegrator.previous_value" title="psyneulink.core.components.functions.statefulfunctions.integratorfunctions.AdaptiveIntegrator.previous_value"><code class="xref any py py-attr docutils literal"><span class="pre">previous_value</span></code></a>.</p>
-<p><strong>When integrator_mode is set to False:</strong></p>
-<p class="last">The variable of the mechanism is passed into the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">mechanism</span></code></a>. The Mechanism’s <code class="xref any docutils literal"><span class="pre">integrator_function</span></code> is skipped entirely, and all related arguments
-(<em>noise</em>, <em>leak</em>, <em>initial_value</em>, and <em>time_step_size</em>) are ignored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>function</p>
 </dd>
-<dt>integrator_mode <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first">determines whether the RecurrentTransferMechanism uses its <code class="xref any docutils literal"><span class="pre">integrator_function</span></code> to integrate its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable"><code class="xref any py py-attr docutils literal"><span class="pre">variable</span></code></a> when it executes.</p>
-<p><strong>If integrator_mode is set to</strong> <code class="xref any docutils literal"><span class="pre">True</span></code>:</p>
-<blockquote>
-<div><p>the RecurrentTransferMechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable"><code class="xref any py py-attr docutils literal"><span class="pre">variable</span></code></a> is first passed to its
-<code class="xref any docutils literal"><span class="pre">integrator_function</span></code>, and then the result is passed to
-its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a> which computes the RecurrentTransferMechanism’s <code class="xref any docutils literal"><span class="pre">value</span></code>.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">The RecurrentTransferMechanism’s <code class="xref any docutils literal"><span class="pre">integration_rate</span></code>,
-<code class="xref any docutils literal"><span class="pre">noise</span></code>, and <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.initial_value" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.initial_value"><code class="xref any py py-attr docutils literal"><span class="pre">initial_value</span></code></a> parameters specify the respective parameters of its
-<code class="xref any docutils literal"><span class="pre">integrator_function</span></code> (with <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.initial_value" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.initial_value"><code class="xref any py py-attr docutils literal"><span class="pre">initial_value</span></code></a> corresponding to <code class="xref any docutils literal"><span class="pre">initializer</span></code> and <code class="xref any docutils literal"><span class="pre">integration_rate</span></code>
-corresponding to <code class="xref any docutils literal"><span class="pre">rate</span></code> of <code class="xref any docutils literal"><span class="pre">integrator_function</span></code>). However, if there are any disagreements between
-these (e.g., any of these parameters is specified in the constructor for an <code class="xref any docutils literal"><span class="pre">IntegratorFunction</span></code>
-assigned as the <strong>integration_function</strong> arg of the RecurrentTransferMechanism), the values specified
-for the <code class="xref any docutils literal"><span class="pre">integrator_function</span></code> take precedence,
-and their value(s) are assigned as those of the corresponding parameters on the
-RecurrentTransferMechanism.</p>
-</div>
-</div></blockquote>
-<p><strong>If integrator_mode is set to</strong> <code class="xref any docutils literal"><span class="pre">False</span></code>:</p>
-<blockquote class="last">
-<div>if <code class="xref any docutils literal"><span class="pre">noise</span></code> is non-zero, it is applied to the RecurrentTransferMechanism’s
-<a class="reference internal" href="#"><span class="doc">variable</span></a> which is htne passed directly to its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>  – that is, its <code class="xref any docutils literal"><span class="pre">integrator_function</span></code> is bypassed, and its related attributes (<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.initial_value" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.initial_value"><code class="xref any py py-attr docutils literal"><span class="pre">initial_value</span></code></a> and <code class="xref any docutils literal"><span class="pre">integration_rate</span></code>) are ignored.</div></blockquote>
-</dd>
-<dt>integrator_function <span class="classifier-delimiter">:</span> <span class="classifier">IntegratorFunction</span></dt>
-<dd>the <code class="xref any docutils literal"><span class="pre">IntegratorFunction</span></code> used when <a class="reference internal" href="TransferMechanism.html#psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.integrator_mode" title="psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.integrator_mode"><code class="xref any py py-attr docutils literal"><span class="pre">integrator_mode</span></code></a> is set to
-<code class="xref any docutils literal"><span class="pre">True</span></code> (see <a class="reference internal" href="TransferMechanism.html#psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.integrator_mode" title="psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.integrator_mode"><code class="xref any py py-attr docutils literal"><span class="pre">integrator_mode</span></code></a> for details).</dd>
-<dt>integration_rate <span class="classifier-delimiter">:</span> <span class="classifier">float</span> <span class="classifier-delimiter">:</span> <span class="classifier">default 0.5</span></dt>
-<dd><p class="first">the rate used for integrating of <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable"><code class="xref any py py-attr docutils literal"><span class="pre">variable</span></code></a> when <code class="xref any docutils literal"><span class="pre">integrator_mode</span></code> is set to <code class="xref any docutils literal"><span class="pre">True</span></code>:</p>
-<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">integration_rate</span> <span class="o">*</span> <span class="n">current</span> <span class="nb">input</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">integration_rate</span> <span class="o">*</span> <span class="n">result</span> <span class="n">on</span> <span class="n">previous</span> <span class="n">time_step</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd>
-<dt>noise <span class="classifier-delimiter">:</span> <span class="classifier">float or function</span> <span class="classifier-delimiter">:</span> <span class="classifier">default 0.0</span></dt>
-<dd><p class="first">When <code class="xref any docutils literal"><span class="pre">integrator_mode</span></code> is set to <code class="xref any docutils literal"><span class="pre">True</span></code>, noise is passed into the
-<code class="xref any docutils literal"><span class="pre">integrator_function</span></code>. Otherwise, noise is added to the result
-of the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>.</p>
-<p>If noise is a list or array, it must be the same length as <code class="xref any docutils literal"><span class="pre">variable</span></code>.</p>
-<p>If noise is specified as a single float or function, while <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.variable"><code class="xref any py py-attr docutils literal"><span class="pre">variable</span></code></a> is
-a list or array, noise will be applied to each variable element. In the case of a noise function, this means
-that the function will be executed separately for each variable element.</p>
-<div class="last admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">In order to generate random noise, we recommend selecting a probability distribution function
-(see <code class="xref any docutils literal"><span class="pre">Distribution</span> <span class="pre">Functions</span></code> for details), which will generate a new noise value
-from its distribution on each execution. If noise is specified as a float or as a function with a fixed
-output, then the noise will simply be an offset that remains the same across all executions.</p>
-</div>
-</dd>
-<dt>clip <span class="classifier-delimiter">:</span> <span class="classifier">list [float, float]</span> <span class="classifier-delimiter">:</span> <span class="classifier">default None (Optional)</span></dt>
-<dd><p class="first">specifies the allowable range for the result of <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a></p>
-<p class="last">the item in index 0 specifies the minimum allowable value of the result, and the item in index 1 specifies the
-maximum allowable value; any element of the result that exceeds the specified minimum or maximum value is set
-to the value of <code class="xref any docutils literal"><span class="pre">clip</span></code> that it exceeds.</p>
-</dd>
-<dt>previous_value <span class="classifier-delimiter">:</span> <span class="classifier">2d np.array [array(float64)]</span> <span class="classifier-delimiter">:</span> <span class="classifier">default None</span></dt>
-<dd><p class="first"><code class="xref any docutils literal"><span class="pre">value</span></code> after the previous execution of the Mechanism; it is assigned <code class="xref any docutils literal"><span class="pre">None</span></code>
-until the 2nd execution, and when the Mechanism’s <code class="xref any docutils literal"><span class="pre">reinitialize</span></code> method is called.</p>
-<div class="last admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">The RecurrentTransferMechanism’s <a class="reference internal" href="ContrastiveHebbianMechanism.html#psyneulink.library.components.mechanisms.processing.transfer.contrastivehebbianmechanism.ContrastiveHebbianMechanism.previous_value" title="psyneulink.library.components.mechanisms.processing.transfer.contrastivehebbianmechanism.ContrastiveHebbianMechanism.previous_value"><code class="xref any py py-attr docutils literal"><span class="pre">previous_value</span></code></a> attribute is distinct from the <a class="reference internal" href="IntegratorFunctions.html#psyneulink.core.components.functions.statefulfunctions.integratorfunctions.AdaptiveIntegrator.previous_value" title="psyneulink.core.components.functions.statefulfunctions.integratorfunctions.AdaptiveIntegrator.previous_value"><code class="xref any py py-attr docutils literal"><span class="pre">previous_value</span></code></a> attribute of its <code class="xref any docutils literal"><span class="pre">integrator_function</span></code>.</p>
-</div>
-</dd>
-<dt>delta <span class="classifier-delimiter">:</span> <span class="classifier">scalar</span></dt>
-<dd>value returned by <code class="xref any docutils literal"><span class="pre">convergence_function</span></code>;  used to determined
-when <code class="xref any docutils literal"><span class="pre">is_converged</span></code> is <code class="xref any docutils literal"><span class="pre">True</span></code>.</dd>
-<dt>is_converged <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><code class="xref any docutils literal"><span class="pre">True</span></code> if <code class="xref any docutils literal"><span class="pre">delta</span></code> is less than or equal to <code class="xref any docutils literal"><span class="pre">convergence_criterion</span></code>.</dd>
-<dt>convergence_function <span class="classifier-delimiter">:</span> <span class="classifier">function</span></dt>
-<dd>compares <code class="xref any docutils literal"><span class="pre">value</span></code> with <code class="xref any docutils literal"><span class="pre">previous_value</span></code>; result is used to determine when <code class="xref any docutils literal"><span class="pre">is_converged</span></code> is <code class="xref any docutils literal"><span class="pre">True</span></code>.</dd>
-<dt>convergence_criterion <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>determines the value of <code class="xref any docutils literal"><span class="pre">delta</span></code> at which <code class="xref any docutils literal"><span class="pre">is_converged</span></code> is <code class="xref any docutils literal"><span class="pre">True</span></code>.</dd>
-<dt>max_passes <span class="classifier-delimiter">:</span> <span class="classifier">int or None</span></dt>
-<dd>determines maximum number of executions (<a class="reference internal" href="Time.html#psyneulink.core.scheduling.time.TimeScale.PASS" title="psyneulink.core.scheduling.time.TimeScale.PASS"><code class="xref any py py-attr docutils literal"><span class="pre">passes</span></code></a>) that can occur in a trial before reaching
-the <code class="xref any docutils literal"><span class="pre">convergence_criterion</span></code>, after which an error occurs;
-if <code class="xref any docutils literal"><span class="pre">None</span></code> is specified, execution may continue indefinitely or until an interpreter exception is generated.</dd>
-<dt>learning_enabled <span class="classifier-delimiter">:</span> <span class="classifier">bool</span> <span class="classifier-delimiter">:</span> <span class="classifier">default False</span></dt>
-<dd>indicates whether learning has been enabled for the RecurrentTransferMechanism.  It is set to <code class="xref any docutils literal"><span class="pre">True</span></code> if
-<a class="reference internal" href="#recurrent-transfer-learning"><span class="std std-ref">learning is specified</span></a> at the time of construction (i.e., if the
-<strong>enable_learning</strong> argument of the Mechanism’s constructor is assigned <code class="xref any docutils literal"><span class="pre">True</span></code>, or when it is configured for
-learning using the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning"><code class="xref any py py-meth docutils literal"><span class="pre">configure_learning</span></code></a> method.  Once learning
-has been configured, <code class="xref any docutils literal"><span class="pre">learning_enabled</span></code> can be toggled at any time to
-enable or disable learning; however, if the Mechanism has not been configured for learning, an attempt to
-set <code class="xref any docutils literal"><span class="pre">learning_enabled</span></code> to <code class="xref any docutils literal"><span class="pre">True</span></code> elicits a warning and is then
-ignored.</dd>
-<dt>learning_mechanism <span class="classifier-delimiter">:</span> <span class="classifier">LearningMechanism</span></dt>
-<dd>created automatically if <a class="reference internal" href="#recurrent-transfer-learning"><span class="std std-ref">learning is specified</span></a>, and used to train the
-<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>.</dd>
-<dt>learning_rate <span class="classifier-delimiter">:</span> <span class="classifier">float, 1d or 2d np.array, or np.matrix of numeric values</span> <span class="classifier-delimiter">:</span> <span class="classifier">default None</span></dt>
-<dd>determines the learning rate used by the <code class="xref any docutils literal"><span class="pre">learning_function</span></code>
-of the <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code> (see <a class="reference internal" href="AutoAssociativeLearningMechanism.html#psyneulink.library.components.mechanisms.modulatory.learning.autoassociativelearningmechanism.AutoAssociativeLearningMechanism.learning_rate" title="psyneulink.library.components.mechanisms.modulatory.learning.autoassociativelearningmechanism.AutoAssociativeLearningMechanism.learning_rate"><code class="xref any py py-attr docutils literal"><span class="pre">learning_rate</span></code></a> for details concerning specification and default value
-assignment).</dd>
-<dt>learning_function <span class="classifier-delimiter">:</span> <span class="classifier">function</span> <span class="classifier-delimiter">:</span> <span class="classifier">default Hebbian</span></dt>
-<dd>the function used by the <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code> to train the
-<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a> if <a class="reference internal" href="#recurrent-transfer-learning"><span class="std std-ref">learning is specified</span></a>.</dd>
-<dt>learning_condition <span class="classifier-delimiter">:</span> <span class="classifier">Condition</span> <span class="classifier-delimiter">:</span> <span class="classifier">default None</span></dt>
-<dd><p class="first">determines the condition under which the <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code>
-is executed in the context of a <a class="reference internal" href="Composition.html"><span class="doc">Composition</span></a>; it can be specified in the <strong>learning_condition</strong> argument of
-the Mechanism’s constructor or of its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning"><code class="xref any py py-meth docutils literal"><span class="pre">configure_learning</span></code></a>
-method. By default, it executes immediately after the RecurrentTransferMechanism executes.</p>
-<div class="last admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">The <code class="xref any docutils literal"><span class="pre">learning_mechanism</span></code> is an
-<a class="reference internal" href="AutoAssociativeLearningMechanism.html"><span class="doc">AutoAssociativeLearningMechanism</span></a>, which executes during the <a class="reference internal" href="System.html#system-execution"><span class="std std-ref">execution phase</span></a>
-of the System’s execution.  Note that this is distinct from the behavior of supervised learning algorithms
-(such as <a class="reference internal" href="LearningFunctions.html#psyneulink.core.components.functions.learningfunctions.Reinforcement" title="psyneulink.core.components.functions.learningfunctions.Reinforcement"><code class="xref any py py-class docutils literal"><span class="pre">Reinforcement</span></code></a> and <a class="reference internal" href="LearningFunctions.html#psyneulink.core.components.functions.learningfunctions.BackPropagation" title="psyneulink.core.components.functions.learningfunctions.BackPropagation"><code class="xref any py py-class docutils literal"><span class="pre">BackPropagation</span></code></a>), that are executed during the
-<a class="reference internal" href="System.html#system-execution"><span class="std std-ref">learning phase</span></a> of a System’s execution</p>
-</div>
-</dd>
-<dt>value <span class="classifier-delimiter">:</span> <span class="classifier">2d np.array [array(float64)]</span></dt>
-<dd>result of executing <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>; same value as first item of
-<code class="xref any docutils literal"><span class="pre">output_values</span></code>.</dd>
-<dt>output_states <span class="classifier-delimiter">:</span> <span class="classifier">Dict[str: OutputState]</span></dt>
-<dd><p class="first">an OrderedDict with the following <a class="reference internal" href="OutputState.html"><span class="doc">OutputStates</span></a>:</p>
-<ul class="last simple">
-<li><code class="xref any docutils literal"><span class="pre">TRANSFER_RESULT</span></code>, the <code class="xref std std-keyword docutils literal"><span class="pre">value</span></code> of which is the <strong>result</strong> of <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.function"><code class="xref any py py-attr docutils literal"><span class="pre">function</span></code></a>;</li>
-<li><code class="xref any docutils literal"><span class="pre">TRANSFER_MEAN</span></code>, the <code class="xref std std-keyword docutils literal"><span class="pre">value</span></code> of which is the mean of the result;</li>
-<li><code class="xref any docutils literal"><span class="pre">TRANSFER_VARIANCE</span></code>, the <code class="xref std std-keyword docutils literal"><span class="pre">value</span></code> of which is the variance of the result;</li>
-<li><a class="reference internal" href="Keywords.html#psyneulink.core.globals.keywords.DistanceMetrics.ENERGY" title="psyneulink.core.globals.keywords.DistanceMetrics.ENERGY"><code class="xref any py py-attr docutils literal"><span class="pre">ENERGY</span></code></a>, the <code class="xref std std-keyword docutils literal"><span class="pre">value</span></code> of which is the energy of the result,
-calculated using the <a class="reference internal" href="ObjectiveFunctions.html#psyneulink.core.components.functions.objectivefunctions.Stability" title="psyneulink.core.components.functions.objectivefunctions.Stability"><code class="xref any py py-class docutils literal"><span class="pre">Stability</span></code></a> Function with the ENERGY metric;</li>
-<li><code class="xref any docutils literal"><span class="pre">ENTROPY</span></code>, the <code class="xref std std-keyword docutils literal"><span class="pre">value</span></code> of which is the entropy of the result,
-calculated using the <a class="reference internal" href="ObjectiveFunctions.html#psyneulink.core.components.functions.objectivefunctions.Stability" title="psyneulink.core.components.functions.objectivefunctions.Stability"><code class="xref any py py-class docutils literal"><span class="pre">Stability</span></code></a> Function with the ENTROPY metric;
-note:  this is only present if the Mechanism’s <code class="xref std std-keyword docutils literal"><span class="pre">function</span></code> is bounded between 0 and 1
-(e.g., the <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal"><span class="pre">Logistic</span></code></a> function).</li>
-</ul>
-</dd>
-<dt>output_values <span class="classifier-delimiter">:</span> <span class="classifier">List[array(float64), float, float]</span></dt>
-<dd><p class="first">a list with the following items:</p>
-<ul class="last simple">
-<li><strong>result</strong> of the <code class="docutils literal"><span class="pre">function</span></code> calculation (value of TRANSFER_RESULT OutputState);</li>
-<li><strong>mean</strong> of the result (<code class="docutils literal"><span class="pre">value</span></code> of TRANSFER_MEAN OutputState)</li>
-<li><strong>variance</strong> of the result (<code class="docutils literal"><span class="pre">value</span></code> of TRANSFER_VARIANCE OutputState);</li>
-<li><strong>energy</strong> of the result (<code class="docutils literal"><span class="pre">value</span></code> of ENERGY OutputState);</li>
-<li><strong>entropy</strong> of the result (if the ENTROPY OutputState is present).</li>
-</ul>
-</dd>
-<dt>name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd>the name of the RecurrentTransferMechanism; if it is not specified in the <strong>name</strong> argument of the constructor,
-a default is assigned by MechanismRegistry (see <a class="reference internal" href="Naming.html"><span class="doc">Naming</span></a> for conventions used for default and duplicate names).</dd>
-<dt>prefs <span class="classifier-delimiter">:</span> <span class="classifier">PreferenceSet or specification dict</span></dt>
-<dd>the <a class="reference internal" href="Preferences.html#psyneulink.core.globals.preferences.PreferenceSet" title="psyneulink.core.globals.preferences.PreferenceSet"><code class="xref any py py-class docutils literal"><span class="pre">PreferenceSet</span></code></a> for the RecurrentTransferMechanism; if it is not specified in the <strong>prefs</strong> argument of the
-constructor, a default is assigned using <code class="xref any docutils literal"><span class="pre">classPreferences</span></code> defined in __init__.py (see <span class="xref std std-doc">PreferenceSet</span> for details).</dd>
 </dl>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>instance of RecurrentTransferMechanism</strong></td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism">RecurrentTransferMechanism</a></td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_enabled">
+<code class="sig-name descname">learning_enabled</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates whether learning has been enabled for the RecurrentTransferMechanism.  It is set to <code class="xref any docutils literal notranslate"><span class="pre">True</span></code> if
+<a class="reference internal" href="#recurrenttransfermechanism-learning"><span class="std std-ref">learning is specified</span></a> at the time of construction (i.e., if the
+<strong>enable_learning</strong> argument of the Mechanism’s constructor is assigned <code class="xref any docutils literal notranslate"><span class="pre">True</span></code>, or when it is configured for
+learning using the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">configure_learning</span></code></a> method.  Once learning
+has been configured, <code class="xref any docutils literal notranslate"><span class="pre">learning_enabled</span></code> can be toggled at any time to
+enable or disable learning; however, if the Mechanism has not been configured for learning, an attempt to
+set <code class="xref any docutils literal notranslate"><span class="pre">learning_enabled</span></code> to <code class="xref any docutils literal notranslate"><span class="pre">True</span></code> elicits a warning and is then
+ignored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism">
+<code class="sig-name descname">learning_mechanism</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="Permalink to this definition">¶</a></dt>
+<dd><p>created automatically if <a class="reference internal" href="#recurrenttransfermechanism-learning"><span class="std std-ref">learning is specified</span></a>, and used to train the
+<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="LearningMechanism.html#psyneulink.core.components.mechanisms.modulatory.learning.learningmechanism.LearningMechanism" title="psyneulink.core.components.mechanisms.modulatory.learning.learningmechanism.LearningMechanism">LearningMechanism</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_rate">
+<code class="sig-name descname">learning_rate</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>determines the learning rate used by the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_function" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_function"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_function</span></code></a>
+of the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a> (see <a class="reference internal" href="AutoAssociativeLearningMechanism.html#psyneulink.library.components.mechanisms.modulatory.learning.autoassociativelearningmechanism.AutoAssociativeLearningMechanism.learning_rate" title="psyneulink.library.components.mechanisms.modulatory.learning.autoassociativelearningmechanism.AutoAssociativeLearningMechanism.learning_rate"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_rate</span></code></a> for details concerning specification and default value
+assignment).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float, 1d or 2d np.array, or np.matrix of numeric values : default None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_function">
+<code class="sig-name descname">learning_function</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>the function used by the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a> to train the
+<a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a> if <a class="reference internal" href="#recurrenttransfermechanism-learning"><span class="std std-ref">learning is specified</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_condition">
+<code class="sig-name descname">learning_condition</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_condition" title="Permalink to this definition">¶</a></dt>
+<dd><p>determines the condition under which the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a>
+is executed in the context of a <a class="reference internal" href="Composition.html"><span class="doc">Composition</span></a>; it can be specified in the <strong>learning_condition</strong> argument of
+the Mechanism’s constructor or of its <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">configure_learning</span></code></a>
+method. By default, it executes immediately after the RecurrentTransferMechanism executes.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.learning_mechanism"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">learning_mechanism</span></code></a> is an
+<a class="reference internal" href="AutoAssociativeLearningMechanism.html"><span class="doc">AutoAssociativeLearningMechanism</span></a>, which executes during the <code class="xref any docutils literal notranslate"><span class="pre">execution</span> <span class="pre">phase</span></code>
+of the System’s execution.  Note that this is distinct from the behavior of supervised learning algorithms
+(such as <a class="reference internal" href="LearningFunctions.html#psyneulink.core.components.functions.learningfunctions.Reinforcement" title="psyneulink.core.components.functions.learningfunctions.Reinforcement"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Reinforcement</span></code></a> and <a class="reference internal" href="LearningFunctions.html#psyneulink.core.components.functions.learningfunctions.BackPropagation" title="psyneulink.core.components.functions.learningfunctions.BackPropagation"><code class="xref any py py-class docutils literal notranslate"><span class="pre">BackPropagation</span></code></a>), that are executed during the
+<code class="xref any docutils literal notranslate"><span class="pre">learning</span> <span class="pre">phase</span></code> of a System’s execution</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="Condition.html#psyneulink.core.scheduling.condition.Condition" title="psyneulink.core.scheduling.condition.Condition">Condition</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.standard_output_ports">
+<code class="sig-name descname">standard_output_ports</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.standard_output_ports" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of <a class="reference internal" href="OutputPort.html#outputport-standard"><span class="std std-ref">Standard OutputPorts</span></a> that includes the following in addition to the
+<a class="reference internal" href="TransferMechanism.html#psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.standard_output_ports" title="psyneulink.core.components.mechanisms.processing.transfermechanism.TransferMechanism.standard_output_ports"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">standard_output_ports</span></code></a> of a <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a>:</p>
+<dl class="simple">
+<dt><em>ENERGY</em><span class="classifier">float</span></dt><dd><p>the energy of the elements in the LCAMechanism’s <a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.value" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.value"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">value</span></code></a>,
+calculated using the <a class="reference internal" href="ObjectiveFunctions.html#psyneulink.core.components.functions.objectivefunctions.Stability" title="psyneulink.core.components.functions.objectivefunctions.Stability"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Stability</span></code></a> Function using the <a class="reference internal" href="Keywords.html#psyneulink.core.globals.keywords.DistanceMetrics.ENERGY" title="psyneulink.core.globals.keywords.DistanceMetrics.ENERGY"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">ENERGY</span></code></a> metric.</p>
+</dd>
+</dl>
+<dl class="simple" id="lcamechanism-entropy">
+<dt><em>ENTROPY</em><span class="classifier">float</span></dt><dd><p>the entropy of the elements in the LCAMechanism’s <a class="reference internal" href="Mechanism.html#psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.value" title="psyneulink.core.components.mechanisms.mechanism.Mechanism_Base.value"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">value</span></code></a>,
+calculated using the <a class="reference internal" href="ObjectiveFunctions.html#psyneulink.core.components.functions.objectivefunctions.Stability" title="psyneulink.core.components.functions.objectivefunctions.Stability"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Stability</span></code></a> Function using the <a class="reference internal" href="Keywords.html#psyneulink.core.globals.keywords.DistanceMetrics.CROSS_ENTROPY" title="psyneulink.core.globals.keywords.DistanceMetrics.CROSS_ENTROPY"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">ENTROPY</span></code></a> metric.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>instance of RecurrentTransferMechanism</strong></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism">RecurrentTransferMechanism</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._validate_params">
+<code class="sig-name descname">_validate_params</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">request_set</span></em>, <em class="sig-param"><span class="n">target_set</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">context</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._validate_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate shape and size of auto, hetero, matrix.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._instantiate_attributes_before_function">
+<code class="sig-name descname">_instantiate_attributes_before_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">function</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">context</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._instantiate_attributes_before_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>using the <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> argument the user passed in (which is now stored in function_params), instantiate
+ParameterPorts for auto and hetero if they haven’t already been instantiated. This is useful if auto and
+hetero were None in the initialization call.
+:param function:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._instantiate_attributes_after_function">
+<code class="sig-name descname">_instantiate_attributes_after_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">context</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._instantiate_attributes_after_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiate recurrent_projection, matrix, and the functions for the ENERGY and ENTROPY OutputPorts</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._instantiate_recurrent_projection">
+<code class="sig-name descname">_instantiate_recurrent_projection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mech</span></em>, <em class="sig-param"><span class="n">matrix</span><span class="o">=</span><span class="default_value">'HollowMatrix'</span></em>, <em class="sig-param"><span class="n">context</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._instantiate_recurrent_projection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiate an AutoAssociativeProjection from Mechanism to itself</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning">
-<code class="descname">configure_learning</code><span class="sig-paren">(</span><em>learning_function: &lt;typecheck.framework.optional object at 0x115ac5b70&gt; = None</em>, <em>learning_rate: &lt;typecheck.framework.optional object at 0x115ac5c18&gt; = None</em>, <em>learning_condition: &lt;typecheck.tc_predicates.any object at 0x115ac5d68&gt; = None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">configure_learning</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">learning_function</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">learning_rate</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">learning_condition</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">context</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.configure_learning" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provide user-accessible-interface to _instantiate_learning_mechanism</p>
 <p>Configure RecurrentTransferMechanism for learning. Creates the following Components:</p>
 <ul class="simple">
-<li>an <a class="reference internal" href="AutoAssociativeLearningMechanism.html"><span class="doc">AutoAssociativeLearningMechanism</span></a> – if the <strong>learning_function</strong> and/or <strong>learning_rate</strong> arguments are
+<li><p>an <a class="reference internal" href="AutoAssociativeLearningMechanism.html"><span class="doc">AutoAssociativeLearningMechanism</span></a> – if the <strong>learning_function</strong> and/or <strong>learning_rate</strong> arguments are
 specified, they are used to construct the LearningMechanism, otherwise the values specified in the
-RecurrentTransferMechanism’s constructor are used;</li>
+RecurrentTransferMechanism’s constructor are used;</p></li>
 </ul>
 <ul class="simple">
-<li>a <a class="reference internal" href="MappingProjection.html"><span class="doc">MappingProjection</span></a> from the RecurrentTransferMechanism’s <a class="reference internal" href="OutputState.html#outputstate-primary"><span class="std std-ref">primary OutputState</span></a>
-to the AutoAssociativeLearningMechanism’s <em>ACTIVATION_INPUT</em> InputState;</li>
+<li><p>a <a class="reference internal" href="MappingProjection.html"><span class="doc">MappingProjection</span></a> from the RecurrentTransferMechanism’s <a class="reference internal" href="OutputPort.html#outputport-primary"><span class="std std-ref">primary OutputPort</span></a>
+to the AutoAssociativeLearningMechanism’s <em>ACTIVATION_INPUT</em> InputPort;</p></li>
 </ul>
 <ul class="simple">
-<li>a <a class="reference internal" href="LearningProjection.html"><span class="doc">LearningProjection</span></a> from the AutoAssociativeLearningMechanism’s <em>LEARNING_SIGNAL</em> OutputState to
-the RecurrentTransferMechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal"><span class="pre">recurrent_projection</span></code></a>.</li>
+<li><p>a <a class="reference internal" href="LearningProjection.html"><span class="doc">LearningProjection</span></a> from the AutoAssociativeLearningMechanism’s <em>LEARNING_SIGNAL</em> OutputPort to
+the RecurrentTransferMechanism’s <a class="reference internal" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection" title="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism.recurrent_projection"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">recurrent_projection</span></code></a>.</p></li>
 </ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._execute">
+<code class="sig-name descname">_execute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variable</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">context</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runtime_params</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute TransferMechanism function and return transform of input</p>
+<dl class="simple">
+<dt>Execute TransferMechanism function on input, and assign to output_values:</dt><dd><ul class="simple">
+<li><p>Activation value for all units</p></li>
+<li><p>Mean of the activation values across units</p></li>
+<li><p>Variance of the activation values across units</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>value of input transformed by TransferMechanism function in outputPort[TransferOuput.RESULT].value
+mean of items in RESULT outputPort[TransferOuput.MEAN].value
+variance of items in RESULT outputPort[TransferOuput.VARIANCE].value</p>
+</dd>
+</dl>
+<p>Arguments:</p>
+<p># CONFIRM:
+variable (float): set to self.value (= self.input_value)
+- params (dict):  runtime_params passed from Mechanism, used as one-time value for current execution:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>NOISE (float)</p></li>
+<li><p>INTEGRATION_RATE (float)</p></li>
+<li><p>RANGE ([float, float])</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>context (str)</p></li>
+</ul>
+<dl class="simple">
+<dt>Returns the following values in self.value (2D np.array) and in</dt><dd><p>the value of the corresponding outputPort in the self.output_ports list:
+- activation value (float)
+- mean activation value (float)
+- standard deviation of activation values (float)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>self</strong> – </p>
+</dd>
+</dl>
+<p>:param variable (float)
+:param params: (dict)
+:param context: (str)
+:rtype self.outputPort.value: (number)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._parse_function_variable">
+<code class="sig-name descname">_parse_function_variable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variable</span></em>, <em class="sig-param"><span class="n">context</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._parse_function_variable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses the <strong>variable</strong> passed in to a Component into a function_variable that can be used with the
+Function associated with this Component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._learning_signal_source">
+<em class="property">property </em><code class="sig-name descname">_learning_signal_source</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._learning_signal_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return default source of learning signal (<code class="xref any docutils literal notranslate"><span class="pre">Primary</span> <span class="pre">OutputPort</span> <span class="pre">&lt;OutputPort_Primary&gt;)</span></code>
+Subclass can override this to provide another source (e.g., see <a class="reference internal" href="ContrastiveHebbianMechanism.html"><span class="doc">ContrastiveHebbianMechanism</span></a>)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._dependent_components">
+<em class="property">property </em><code class="sig-name descname">_dependent_components</code><a class="headerlink" href="#psyneulink.library.components.mechanisms.processing.transfer.recurrenttransfermechanism.RecurrentTransferMechanism._dependent_components" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a set of Components that will be executed if this Component is executed</p>
 </dd></dl>
 
 </dd></dl>
@@ -721,52 +707,144 @@ the RecurrentTransferMechanism’s <a class="reference internal" href="#psyneuli
 </div>
 
 
-           </div>
-           
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="LCAMechanism.html" class="btn btn-neutral float-right" title="LCAMechanism" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="TransferMechanisms.html" class="btn btn-neutral float-left" title="Transfer Mechanisms" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
+             </article>
+             
+            </div>
+            <footer>
   
 
-  <hr/>
+  
+
+    <hr>
+
+  
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2016, Jonathan D. Cohen
+        &copy; Copyright 2016, Jonathan D. Cohen.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+      </div>
+     
 
 </footer>
 
+          </div>
         </div>
-      </div>
 
-    </section>
+        <div class="psyneulink-content-right" id="psyneulink-content-right">
+          <div class="psyneulink-right-menu" id="psyneulink-right-menu">
+            <div class="psyneulink-side-scroll" id="psyneulink-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">RecurrentTransferMechanism</a><ul>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#creating-a-recurrenttransfermechanism">Creating a RecurrentTransferMechanism</a><ul>
+<li><a class="reference internal" href="#configuring-learning"><em>Configuring Learning</em></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#structure">Structure</a></li>
+<li><a class="reference internal" href="#execution">Execution</a><ul>
+<li><a class="reference internal" href="#learning"><em>Learning</em></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#class-reference">Class Reference</a></li>
+</ul>
+</li>
+</ul>
 
-  </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
   
 
+
+  
+
+     
+       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+         <script src="_static/jquery.js"></script>
+         <script src="_static/underscore.js"></script>
+         <script src="_static/doctools.js"></script>
+         <script src="_static/language_data.js"></script>
+         <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+     
+
+  
+
+  <script type="text/javascript" src="_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
+  </script> 
+
+  <!-- Begin Footer -->
+
+  <footer class="site-footer" id="docs-tutorials-resources">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://princetonuniversity.github.io/PsyNeuLink/" class="footer-logo"></a>
+      </div>
+
+  </footer>
+
+  
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container mobile-logo-container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://princetonuniversity.github.io/PsyNeuLink/" aria-label="PsyNeuLink"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://github.com/PrincetonUniversity/PsyNeuLink">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      psyneulinkAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.psyneulink-article a span.pre").each(function(e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
   </script>
-
-  
-  
-    
-   
-
 </body>
 </html>

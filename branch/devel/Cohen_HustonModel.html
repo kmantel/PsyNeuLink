@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
@@ -8,7 +9,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Stroop GRAIN model (Cohen &amp; Huston, 1994) &mdash; PsyNeuLink 0.6.0.2+14.g9c92de0 documentation</title>
+  <title>Stroop GRAIN model (Cohen &amp; Huston, 1994) &mdash; PsyNeuLink 0.5.2.1+3314.g0f78ef369 documentation</title>
   
 
   
@@ -17,75 +18,105 @@
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'./',
-              VERSION:'0.6.0.2+14.g9c92de0',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
 
+  
+  
     
 
   
+
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="_static/css/custom.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 </head>
 
-<body class="wy-body-for-nav">
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://princetonuniversity.github.io/PsyNeuLink/"></a>
+<!--      <a class="header-logo"></a>-->
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://github.com/PrincetonUniversity/PsyNeuLink">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="psyneulink-body">
 
    
-  <div class="wy-grid-for-nav">
+
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-          
 
-          
-            <a href="index.html" class="icon icon-home"> PsyNeuLink
-          
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
 
-          
-          </a>
-
-          
+    <nav data-toggle="wy-nav-shift" class="psyneulink-left-menu" id="psyneulink-left-menu">
+      <div class="psyneulink-side-scroll">
+        <div class="psyneulink-menu psyneulink-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="psyneulink-left-menu-search">
             
-            
-              <div class="version">
-                0.6.0.2+14
-              </div>
-            
-          
 
-          
+            
+              
+              
+                <div class="version">
+                  0.5.2.1+3314
+                </div>
+              
+            
+
+            
+
+
+  
+
+
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search Docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
 
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+            
+          </div>
           
             
             
@@ -94,7 +125,7 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to PsyNeuLink </a></li>
-<li class="toctree-l1"><a class="reference internal" href="BasicsAndSampler.html">Basics and Sampler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BasicsAndPrimer.html">Basics and Primer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="QuickReference.html">Quick Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Core.html">Core</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Library.html">Library</a></li>
@@ -103,25 +134,14 @@
 
             
           
+          <div class="psyneulink-dev-mode-toggle">
+          </div>
         </div>
       </div>
     </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">PsyNeuLink</a>
-        
-      </nav>
-
-
-      <div class="wy-nav-content">
-        
-        <div class="rst-content">
-        
+    <div class="psyneulink-container">
+      <div class="psyneulink-page-level-bar" id="psyneulink-page-level-bar">
+        <div class="psyneulink-breadcrumbs-wrapper">
           
 
 
@@ -140,29 +160,40 @@
 
 <div role="navigation" aria-label="breadcrumbs navigation">
 
-  <ul class="wy-breadcrumbs">
+  <ul class="psyneulink-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li>
+        <a href="index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
         
       <li>Stroop GRAIN model (Cohen &amp; Huston, 1994)</li>
-    
-    
-      <li class="wy-breadcrumbs-aside">
-        
-            
-            <a href="_sources/Cohen_HustonModel.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
     
   </ul>
 
   
-  <hr/>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
+        </div>
+
+        <div class="psyneulink-shortcuts-wrapper" id="psyneulink-shortcuts-wrapper">
+          Shortcuts
+        </div>
+      </div>
+
+      <section data-toggle="wy-nav-shift" id="psyneulink-content-wrap" class="psyneulink-content-wrap">
+        <div class="psyneulink-content-left">
+
+        
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" id="psyneulink-article" class="psyneulink-article">
+              
   <div class="section" id="stroop-grain-model-cohen-huston-1994">
 <h1>Stroop GRAIN model (Cohen &amp; Huston, 1994)<a class="headerlink" href="#stroop-grain-model-cohen-huston-1994" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference external" href="https://books.google.com/books?hl=de&amp;lr=&amp;id=cOAmbT3ORLcC&amp;oi=fnd&amp;pg=PA453&amp;dq=cohen+%26+huston+1994&amp;ots=nguFNK-b7W&amp;sig=DdKsbgaUPawQbckBjMU-52ODt1M#v=onepage&amp;q&amp;f=false">“Progress in the use of interactive models for understanding attention and performance. In C. Umilta &amp; M. Moscovitch(Eds.)”</a></p>
@@ -198,38 +229,38 @@ Below the Graph of the model is shown.</p>
 <div class="figure align-center" id="grain-stroop-graph-fig" style="width: 75%">
 <a class="reference external image-reference" href="_static/GRAIN_STROOP_GRAPH.svg"><img alt="Cohen&amp;Huston System Graph" src="_images/GRAIN_STROOP_GRAPH.svg" /></a>
 </div>
-<div class="section" id="system">
-<h3>System<a class="headerlink" href="#system" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="composition">
+<h3>Composition<a class="headerlink" href="#composition" title="Permalink to this headline">¶</a></h3>
 <p><strong>COLOR INPUT LAYER</strong>:  a <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a> with <strong>size</strong> = 3 (one element for the input to each color in the
-<em>HIDDEN COLOR LAYER</em>, respectively), and assigned a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Linear" title="psyneulink.core.components.functions.transferfunctions.Linear"><code class="xref any py py-class docutils literal"><span class="pre">Linear</span></code></a> function with <strong>slope</strong> = 1.0 and <strong>intercept</strong> = 0.0.</p>
+<em>HIDDEN COLOR LAYER</em>, respectively), and assigned a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Linear" title="psyneulink.core.components.functions.transferfunctions.Linear"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Linear</span></code></a> function with <strong>slope</strong> = 1.0 and <strong>intercept</strong> = 0.0.</p>
 <p><strong>WORD INPUT LAYER</strong>:  a <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a> with <strong>size</strong> = 3 (one element for the input to each word in the
-<em>HIDDEN WORD LAYER</em>, respectively), and assigned a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Linear" title="psyneulink.core.components.functions.transferfunctions.Linear"><code class="xref any py py-class docutils literal"><span class="pre">Linear</span></code></a> function with <strong>slope</strong> = 1.0 and <strong>intercept</strong> = 0.0.</p>
+<em>HIDDEN WORD LAYER</em>, respectively), and assigned a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Linear" title="psyneulink.core.components.functions.transferfunctions.Linear"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Linear</span></code></a> function with <strong>slope</strong> = 1.0 and <strong>intercept</strong> = 0.0.</p>
 <p><strong>TASK INPUT LAYER</strong>:  a <a class="reference internal" href="TransferMechanism.html"><span class="doc">TransferMechanism</span></a> with <strong>size</strong> = 2 (one element for the input to each task in the
-<em>TASK LAYER</em>, respectively), and assigned a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Linear" title="psyneulink.core.components.functions.transferfunctions.Linear"><code class="xref any py py-class docutils literal"><span class="pre">Linear</span></code></a> function with <strong>slope</strong> = 1.0 and <strong>intercept</strong> = 0.0.</p>
+<em>TASK LAYER</em>, respectively), and assigned a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Linear" title="psyneulink.core.components.functions.transferfunctions.Linear"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Linear</span></code></a> function with <strong>slope</strong> = 1.0 and <strong>intercept</strong> = 0.0.</p>
 <p><strong>HIDDEN COLOR LAYER</strong>: a <a class="reference internal" href="RecurrentTransferMechanism.html"><span class="doc">RecurrentTransferMechanism</span></a> Mechanism of <strong>size</strong> = 3 (one element each for the color units),
-and assigned a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal"><span class="pre">Logistic</span></code></a> Function with a bias = 4.0 and intercept = 0.0.  Each element is connected to every other
+and assigned a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Logistic</span></code></a> Function with a bias = 4.0 and intercept = 0.0.  Each element is connected to every other
 element by mutually inhibitory connections with a weight specified by <strong>hetero</strong> = -2.0.  An integrator mechanism is
-specified by setting the <strong>integrator_mode</strong> = <code class="xref any docutils literal"><span class="pre">True</span></code> and <strong>smoothing_factor</strong> = 0.1.</p>
+specified by setting the <strong>integrator_mode</strong> = <code class="xref any docutils literal notranslate"><span class="pre">True</span></code> and <strong>smoothing_factor</strong> = 0.1.</p>
 <p><strong>HIDDEN WORD LAYER</strong>: a <a class="reference internal" href="RecurrentTransferMechanism.html"><span class="doc">RecurrentTransferMechanism</span></a> specified as the <em>HIDDEN COLOR LAYER</em> with <strong>size</strong> = 3,
-a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal"><span class="pre">Logistic</span></code></a> Function with a <strong>bias</strong> = 4.0 and <strong>intercept</strong> = 0.0, mutually inhibitory connections with a weight specified by
-<strong>hetero</strong> = -2.0, <strong>integrator_mode</strong> = <code class="xref any docutils literal"><span class="pre">True</span></code> and <strong>smoothing_factor</strong> = 0.1..</p>
+a <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Logistic</span></code></a> Function with a <strong>bias</strong> = 4.0 and <strong>intercept</strong> = 0.0, mutually inhibitory connections with a weight specified by
+<strong>hetero</strong> = -2.0, <strong>integrator_mode</strong> = <code class="xref any docutils literal notranslate"><span class="pre">True</span></code> and <strong>smoothing_factor</strong> = 0.1..</p>
 <p><strong>RESPONSE LAYER</strong>: a <a class="reference internal" href="RecurrentTransferMechanism.html"><span class="doc">RecurrentTransferMechanism</span></a> specified as the <em>HIDDEN COLOR LAYER</em> with the only difference of
-changing the bias to 0 in the <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal"><span class="pre">Logistic</span></code></a> Function, and the size of 2.</p>
+changing the bias to 0 in the <a class="reference internal" href="TransferFunctions.html#psyneulink.core.components.functions.transferfunctions.Logistic" title="psyneulink.core.components.functions.transferfunctions.Logistic"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Logistic</span></code></a> Function, and the size of 2.</p>
 <p><strong>TASK LAYER</strong>: a <a class="reference internal" href="RecurrentTransferMechanism.html"><span class="doc">RecurrentTransferMechanism</span></a> specified as the <em>RESPONSE LAYER</em>.</p>
 <p><strong>PROJECTIONS</strong>:  The weights of the  network are implemented as <a class="reference internal" href="MappingProjection.html"><span class="doc">MappingProjections</span></a>.
 The projections for colors are as follows:
-The <a class="reference internal" href="MappingProjection.html#psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix" title="psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> parameter for the one from the <em>INPUT COLOR LAYER</em> to the <em>HIDDEN COLOR LAYER</em>
+The <a class="reference internal" href="MappingProjection.html#psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix" title="psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> parameter for the one from the <em>INPUT COLOR LAYER</em> to the <em>HIDDEN COLOR LAYER</em>
 uses a numpy array with a value of 1.0 for the diagonal elements and a value of 0.0 for the off-diagonal elements;
 the one from the <em>HIDDEN COLOR LAYER</em> to the <em>RESPONSE LAYER</em> uses a numpy array with 1.5 for the diagonal elements and
 0 for the off-diagonal elements; the one from the <em>HIDDEN COLOR LAYER</em> to the <em>TASK LAYER</em> uses a numpy array with 4.0
 for the diagonal elements and 0 for the off-diagonal elements.
 The projections for words are as follows:
-The <a class="reference internal" href="MappingProjection.html#psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix" title="psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> parameter for the one from the <em>INPUT WORD LAYER</em> to the <em>HIDDEN WORD LAYER</em>
+The <a class="reference internal" href="MappingProjection.html#psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix" title="psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> parameter for the one from the <em>INPUT WORD LAYER</em> to the <em>HIDDEN WORD LAYER</em>
 uses a numpy array with a value of 1.0 for the diagonal elements and a value of 0.0 for the off-diagonal elements;
 the one from the <em>HIDDEN WORD LAYER</em> to the <em>RESPONSE LAYER</em> uses a numpy array with 2.5 for the diagonal elements and
 0 for the off-diagonal elements; the one from the <em>HIDDEN WORD LAYER</em> to the <em>TASK LAYER</em> uses a numpy array with 4.0
 for the diagonal elements and 0 for the off-diagonal elements.
-During initialization the <em>RESPONSE LAYER</em> is silenced by setting the <a class="reference internal" href="MappingProjection.html#psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix" title="psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> from
+During initialization the <em>RESPONSE LAYER</em> is silenced by setting the <a class="reference internal" href="MappingProjection.html#psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix" title="psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> from
 <em>HIDDEN WORD LAYER</em> and <em>HIDDEN COLOR LAYER</em> to all 0. The <em>TASK LAYER</em> receives input from the <em>TASK INPUT LAYER</em>
 during initialization.</p>
 </div>
@@ -240,7 +271,7 @@ during initialization.</p>
 period. During the settling period, the <em>TASK LAYER</em> receives an input of 1 for the unit which represent the given task
 from the  <em>TASK INPUT LAYER</em>. The other unit receives an input of 0. This allows the system to settle into a ready state
 for the given task.
-After the settling period the <a class="reference internal" href="MappingProjection.html#psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix" title="psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix"><code class="xref any py py-attr docutils literal"><span class="pre">matrix</span></code></a> is changed from all 0 to 1.5 on the diaginals and 0 on
+After the settling period the <a class="reference internal" href="MappingProjection.html#psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix" title="psyneulink.core.components.projections.pathway.mappingprojection.MappingProjection.matrix"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">matrix</span></code></a> is changed from all 0 to 1.5 on the diaginals and 0 on
 the off-diagonals for the <em>HIDDEN COLOR LAYER</em> to the <em>RESPONSE LAYER</em> and to 2.5 on the diagonals and 0 on the
 off-diagonals for the <em>HIDDEN WORD LAYER</em> to the <em>RESPONSE LAYER</em>.</p>
 <p>During the stimulus presentation period, the <em>TASK LAYER</em> keeps receiving input from <em>TASK INPUT LAYER</em>. In addition,
@@ -248,9 +279,9 @@ the <em>HIDDEN COLOR LAYER</em> and the <em>HIDDEN WORD LAYER</em> receive input
 INPUT LAYER</em> and <em>WORD INPUT LAYER</em>,
 respectively.
 The system is executed until one of the two response units hit a threshold. This is specified in the
-<code class="xref any docutils literal"><span class="pre">termination_processing</span></code> parameter in the <a class="reference internal" href="AutodiffComposition.html#psyneulink.library.compositions.autodiffcomposition.AutodiffComposition.run" title="psyneulink.library.compositions.autodiffcomposition.AutodiffComposition.run"><code class="xref any py py-meth docutils literal"><span class="pre">run</span></code></a> command.</p>
-<p>The <a class="reference internal" href="Component.html#psyneulink.core.components.component.Component.log" title="psyneulink.core.components.component.Component.log"><code class="xref any py py-attr docutils literal"><span class="pre">log</span></code></a> function is used to record the output values of the <em>RESPONSE LAYER</em>. The cyles until a threshold is reached
-is used for the regression we used here to transfer cycles to milliseconds. We used the regression <code class="xref any docutils literal"><span class="pre">cycles*5</span> <span class="pre">+</span> <span class="pre">115</span></code> to
+<code class="xref any docutils literal notranslate"><span class="pre">termination_processing</span></code> parameter in the <a class="reference internal" href="Composition.html#psyneulink.core.compositions.composition.Composition.run" title="psyneulink.core.compositions.composition.Composition.run"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">run</span></code></a> command.</p>
+<p>The <a class="reference internal" href="Component.html#psyneulink.core.components.component.Component.log" title="psyneulink.core.components.component.Component.log"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">log</span></code></a> function is used to record the output values of the <em>RESPONSE LAYER</em>. The cyles until a threshold is reached
+is used for the regression we used here to transfer cycles to milliseconds. We used the regression <code class="xref any docutils literal notranslate"><span class="pre">cycles*5</span> <span class="pre">+</span> <span class="pre">115</span></code> to
 produce the plot below.</p>
 </div>
 <div class="section" id="execution-horse-race-figure">
@@ -278,49 +309,146 @@ runs, averaging these runs and plotting standard errors for these averages (whic
 runs). Finally,  different SOA and a different linear regression formula was used to reproduce the figures.
 Regardless of these modifications, we were able to reproduce the core Figures with the same weights of the
 original model.</p>
-<p>Script: <a class="reference download internal" href="_downloads/Cohen_Huston1994.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Cohen_Huston1994.py</span></code></a></p>
-<p>Script: <a class="reference download internal" href="_downloads/Cohen_Huston1994_horse_race.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Cohen_Huston1994_horse_race.py</span></code></a></p>
+<p>Script: <a class="reference download internal" download="" href="_downloads/0e250fd5f7fdb8f2faa472e6658bed55/Cohen_Huston1994.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Cohen_Huston1994.py</span></code></a></p>
+<p>Script: <a class="reference download internal" download="" href="_downloads/08bdb54817a4817ad8e274272625aa24/Cohen_Huston1994_horse_race.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Cohen_Huston1994_horse_race.py</span></code></a></p>
 </div>
 </div>
 
 
-           </div>
-           
-          </div>
-          <footer>
+             </article>
+             
+            </div>
+            <footer>
   
 
-  <hr/>
+  
+
+    <hr>
+
+  
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2016, Jonathan D. Cohen
+        &copy; Copyright 2016, Jonathan D. Cohen.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+      </div>
+     
 
 </footer>
 
+          </div>
         </div>
-      </div>
 
-    </section>
+        <div class="psyneulink-content-right" id="psyneulink-content-right">
+          <div class="psyneulink-right-menu" id="psyneulink-right-menu">
+            <div class="psyneulink-side-scroll" id="psyneulink-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">Stroop GRAIN model (Cohen &amp; Huston, 1994)</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#the-model">The Model</a><ul>
+<li><a class="reference internal" href="#composition">Composition</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#execution">Execution</a></li>
+<li><a class="reference internal" href="#execution-horse-race-figure">Execution horse race Figure</a></li>
+<li><a class="reference internal" href="#please-note">PLEASE NOTE:</a></li>
+</ul>
+</li>
+</ul>
 
-  </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
   
 
+
+  
+
+     
+       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+         <script src="_static/jquery.js"></script>
+         <script src="_static/underscore.js"></script>
+         <script src="_static/doctools.js"></script>
+         <script src="_static/language_data.js"></script>
+         <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+     
+
+  
+
+  <script type="text/javascript" src="_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
+  </script> 
+
+  <!-- Begin Footer -->
+
+  <footer class="site-footer" id="docs-tutorials-resources">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://princetonuniversity.github.io/PsyNeuLink/" class="footer-logo"></a>
+      </div>
+
+  </footer>
+
+  
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container mobile-logo-container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://princetonuniversity.github.io/PsyNeuLink/" aria-label="PsyNeuLink"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://github.com/PrincetonUniversity/PsyNeuLink">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      psyneulinkAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.psyneulink-article a span.pre").each(function(e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
   </script>
-
-  
-  
-    
-   
-
 </body>
 </html>
