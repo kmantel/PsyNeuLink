@@ -20,7 +20,7 @@ jobs:
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v1
         with:
-          # configuration: "actions-changelog-config.json"
+          configuration: ".github/workflows/changelog-config.json"
           toTag: ${{ steps.tag.outputs.new_tag }}
           commitMode: true
         env:
