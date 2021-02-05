@@ -18,7 +18,7 @@ jobs:
 
       - name: Generate version changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@{latest-release}
+        uses: mikepenz/release-changelog-builder-action@v1
         with:
           # configuration: "actions-changelog-config.json"
           toTag: ${{ steps.tag.outputs.new_tag }}
