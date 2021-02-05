@@ -22,7 +22,8 @@ jobs:
         with:
           # configuration: "actions-changelog-config.json"
           toTag: ${{ steps.tag.outputs.new_tag }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         uses: actions/create-release@v1
