@@ -22,6 +22,7 @@ jobs:
         with:
           # configuration: "actions-changelog-config.json"
           toTag: ${{ steps.tag.outputs.new_tag }}
+          commitMode: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
