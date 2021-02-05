@@ -12,7 +12,7 @@ jobs:
 
       - name: Push version tag
         id: tag
-        uses: hennejg/github-tag-action@v4.1.jh1
+        uses:  mathieudutour/github-tag-action@v5
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
