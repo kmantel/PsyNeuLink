@@ -28,9 +28,11 @@ jobs:
 
       - name: Generate changelog
         id: cl
-        uses: kmantel/changelog-ci@v0.7.0
+        uses: heinrichreimer/action-github-changelog-generator@v2.2
         with:
-          config_file: .github/workflows/changelog-ci-config.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          onlyLastTag: true
+          stripGeneratorNotice: true
 
       - name: Create Release
         uses: actions/create-release@v1
