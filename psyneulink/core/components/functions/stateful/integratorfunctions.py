@@ -52,7 +52,7 @@ from psyneulink.core.globals.keywords import \
     RATE, REST, SIMPLE_INTEGRATOR_FUNCTION, SUM, TIME_STEP_SIZE, THRESHOLD, VARIABLE, MODEL_SPEC_ID_MDF_VARIABLE
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
-from psyneulink.core.globals.utilities import ValidParamSpecType, all_within_range, \
+from psyneulink.core.globals.utilities import ValidParamSpecType, all_within_range, is_numeric_scalar, \
     convert_all_elements_to_np_array, parse_valid_identifier, safe_len
 
 __all__ = ['SimpleIntegrator', 'AdaptiveIntegrator', 'DriftDiffusionIntegrator', 'DriftOnASphereIntegrator',
@@ -1100,7 +1100,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
         if RATE in request_set:
             rate = request_set[RATE]
             if isinstance(rate, (list, np.ndarray)):
-                if len(rate) != 1 and len(rate) != np.array(self.defaults.variable).size:
+                if safe_len(rate) != 1 and safe_len(rate) != np.array(self.defaults.variable).size:
                     # If the variable was not specified, then reformat it to match rate specification
                     #    and assign class_defaults.variable accordingly
                     # Note: this situation can arise when the rate is parametrized (e.g., as an array) in the
@@ -1116,11 +1116,11 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
                                 "The length ({}) of the array specified for the {} parameter ({}) of {} "
                                 "must match the length ({}) of the default input ({});  "
                                 "the default input has been updated to match".
-                                    format(len(rate), repr(RATE), rate, self.name,
+                                    format(safe_len(rate), repr(RATE), rate, self.name,
                                     np.array(self.defaults.variable).size, self.defaults.variable))
                     else:
                         raise FunctionError(
-                            f"The length ({len(rate)}) of the array specified for the rate parameter ({rate}) "
+                            f"The length ({safe_len(rate)}) of the array specified for the rate parameter ({rate}) "
                             f"of {self.name} must match the length ({np.array(self.defaults.variable).size}) "
                             f"of the default input ({self.defaults.variable}).")
 
@@ -1626,7 +1626,7 @@ class DualAdaptiveIntegrator(IntegratorFunction):  # ---------------------------
         if RATE in request_set:
             rate = request_set[RATE]
             if isinstance(rate, (list, np.ndarray)):
-                if len(rate) != 1 and len(rate) != np.array(self.defaults.variable).size:
+                if safe_len(rate) != 1 and safe_len(rate) != np.array(self.defaults.variable).size:
                     # If the variable was not specified, then reformat it to match rate specification
                     #    and assign class_defaults.variable accordingly
                     # Note: this situation can arise when the rate is parametrized (e.g., as an array) in the
@@ -1642,7 +1642,7 @@ class DualAdaptiveIntegrator(IntegratorFunction):  # ---------------------------
                                 "The length ({}) of the array specified for the rate parameter ({}) of {} "
                                 "must match the length ({}) of the default input ({});  "
                                 "the default input has been updated to match".format(
-                                    len(rate),
+                                    safe_len(rate),
                                     rate,
                                     self.name,
                                     np.array(self.defaults.variable).size
@@ -1653,7 +1653,7 @@ class DualAdaptiveIntegrator(IntegratorFunction):  # ---------------------------
                         raise FunctionError(
                             "The length ({}) of the array specified for the rate parameter ({}) of {} "
                             "must match the length ({}) of the default input ({})".format(
-                                len(rate),
+                                safe_len(rate),
                                 rate,
                                 self.name,
                                 np.array(self.defaults.variable).size,
@@ -3566,7 +3566,7 @@ class OrnsteinUhlenbeckIntegrator(IntegratorFunction):  # ----------------------
         )
 
     def _validate_noise(self, noise):
-        if noise is not None and not isinstance(noise, float):
+        if noise is not None and not is_numeric_scalar(noise):
             raise FunctionError(
                 "Invalid noise parameter for {}. OrnsteinUhlenbeckIntegrator requires noise parameter to be a float. "
                 "Noise parameter is used to construct the standard DDM noise distribution".format(self.name))

@@ -45,7 +45,7 @@ from psyneulink.core.globals.keywords import \
     CROSS_ENTROPY, DEFAULT_VARIABLE, EXPONENTS, LINEAR_COMBINATION_FUNCTION, MULTIPLICATIVE_PARAM, OFFSET, OPERATION, \
     PREDICTION_ERROR_DELTA_FUNCTION, PRODUCT, REARRANGE_FUNCTION, REDUCE_FUNCTION, SCALE, SUM, WEIGHTS, \
     PREFERENCE_SET_NAME
-from psyneulink.core.globals.utilities import convert_to_np_array, is_numeric, np_array_less_than_2d, ValidParamSpecType
+from psyneulink.core.globals.utilities import is_numeric_scalar, convert_to_np_array, is_numeric, np_array_less_than_2d, ValidParamSpecType
 from psyneulink.core.globals.context import ContextFlags
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import \
@@ -247,12 +247,12 @@ class Concatenate(CombinationFunction):  # -------------------------------------
 
         if SCALE in target_set and target_set[SCALE] is not None:
             scale = target_set[SCALE]
-            if not isinstance(scale, numbers.Number):
+            if not is_numeric_scalar(scale):
                 raise FunctionError("{} param of {} ({}) must be a scalar".format(SCALE, self.name, scale))
 
         if OFFSET in target_set and target_set[OFFSET] is not None:
             offset = target_set[OFFSET]
-            if not isinstance(offset, numbers.Number):
+            if not is_numeric_scalar(offset):
                 raise FunctionError("{} param of {} ({}) must be a scalar".format(OFFSET, self.name, offset))
 
     def _function(self,
@@ -485,12 +485,12 @@ class Rearrange(CombinationFunction):  # ---------------------------------------
         # Check that SCALE and OFFSET are scalars.
         if SCALE in target_set and target_set[SCALE] is not None:
             scale = target_set[SCALE]
-            if not isinstance(scale, numbers.Number):
+            if not is_numeric_scalar(scale):
                 raise FunctionError("{} param of {} ({}) must be a scalar".format(SCALE, self.name, scale))
 
         if OFFSET in target_set and target_set[OFFSET] is not None:
             offset = target_set[OFFSET]
-            if not isinstance(offset, numbers.Number):
+            if not is_numeric_scalar(offset):
                 raise FunctionError("{} param of {} ({}) must be a scalar".format(OFFSET, self.name, offset))
 
     def _instantiate_attributes_before_function(self, function=None, context=None):
@@ -813,12 +813,12 @@ class Reduce(CombinationFunction):  # ------------------------------------------
 
         if SCALE in target_set and target_set[SCALE] is not None:
             scale = target_set[SCALE]
-            if not isinstance(scale, numbers.Number):
+            if not is_numeric_scalar(scale):
                 raise FunctionError("{} param of {} ({}) must be a scalar".format(SCALE, self.name, scale))
 
         if OFFSET in target_set and target_set[OFFSET] is not None:
             offset = target_set[OFFSET]
-            if not isinstance(offset, numbers.Number):
+            if not is_numeric_scalar(offset):
                 raise FunctionError("{} param of {} ({}) must be a scalar".format(OFFSET, self.name, offset))
 
     def _function(self,
@@ -1274,10 +1274,8 @@ class LinearCombination(
                 pass
             elif isinstance(scale, np.ndarray):
                 target_set[SCALE] = np.array(scale)
-            scale_is_a_scalar = isinstance(scale, numbers.Number) or (len(scale) == 1) and isinstance(scale[0],
-                                                                                                      numbers.Number)
             if context.execution_phase & (ContextFlags.PROCESSING | ContextFlags.LEARNING):
-                if not scale_is_a_scalar:
+                if not is_numeric_scalar(scale):
                     err_msg = "Scale is using Hadamard modulation but its shape and/or size (scale shape: {}, size:{})" \
                               " do not match the variable being modulated (variable shape: {}, size: {})". \
                         format(scale.shape, scale.size, self.defaults.variable.shape,
@@ -1295,10 +1293,8 @@ class LinearCombination(
             elif isinstance(offset, np.ndarray):
                 target_set[OFFSET] = np.array(offset)
 
-            offset_is_a_scalar = isinstance(offset, numbers.Number) or (len(offset) == 1) and isinstance(offset[0],
-                                                                                                         numbers.Number)
             if context.execution_phase & (ContextFlags.PROCESSING | ContextFlags.LEARNING):
-                if not offset_is_a_scalar:
+                if not is_numeric_scalar(offset):
                     err_msg = "Offset is using Hadamard modulation but its shape and/or size (offset shape: {}, size:{})" \
                               " do not match the variable being modulated (variable shape: {}, size: {})". \
                         format(offset.shape, offset.size, self.defaults.variable.shape,
@@ -1390,12 +1386,14 @@ class LinearCombination(
 
         # CW 3/19/18: a total hack, e.g. to make scale=[4.] turn into scale=4. Used b/c the `scale` ParameterPort
         # changes scale's format: e.g. if you write c = pnl.LinearCombination(scale = 4), print(c.scale) returns [4.]
-        if isinstance(scale, (list, np.ndarray)):
-            if len(scale) == 1 and isinstance(scale[0], numbers.Number):
-                scale = scale[0]
-        if isinstance(offset, (list, np.ndarray)):
-            if len(offset) == 1 and isinstance(offset[0], numbers.Number):
-                offset = offset[0]
+        try:
+            scale = scale.item()
+        except (AttributeError, ValueError):
+            pass
+        try:
+            offset = offset.item()
+        except (AttributeError, ValueError):
+            pass
 
         # CALCULATE RESULT USING RELEVANT COMBINATION OPERATION AND MODULATION
         if operation == SUM:

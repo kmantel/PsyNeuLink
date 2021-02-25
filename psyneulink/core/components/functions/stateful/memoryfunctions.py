@@ -51,7 +51,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.utilities import \
-    all_within_range, convert_to_np_array, convert_to_list, convert_all_elements_to_np_array
+    all_within_range, convert_to_np_array, convert_to_list, convert_all_elements_to_np_array, is_numeric_scalar, convert_all_elements_to_np_array
 
 __all__ = ['MemoryFunction', 'Buffer', 'DictionaryMemory', 'ContentAddressableMemory', 'RETRIEVAL_PROB', 'STORAGE_PROB']
 
@@ -62,6 +62,7 @@ class MemoryFunction(StatefulFunction):  # -------------------------------------
     # TODO: refactor to avoid skip of direct super
     def _update_default_variable(self, new_default_variable, context=None):
         if not self.parameters.initializer._user_specified:
+            new_default_variable = convert_all_elements_to_np_array(new_default_variable)
             # use * 0 instead of zeros_like to deal with ragged arrays
             self._initialize_previous_value([new_default_variable * 0], context)
 
@@ -349,9 +350,14 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
         if len(previous_value):
             # TODO: remove this shape hack when buffer shapes made consistent
             noise = np.reshape(noise, np.asarray(previous_value[0]).shape)
+            variable = np.reshape(variable, np.asarray(previous_value[0]).shape)
             previous_value = convert_to_np_array(previous_value) * rate + noise
 
-        previous_value = deque(previous_value, maxlen=self.parameters.history._get(context))
+        maxlen = self.parameters.history._get(context)
+        previous_value = deque(
+            previous_value,
+            maxlen=maxlen.item() if maxlen is not None else None
+        )
 
         previous_value.append(variable)
 
@@ -2438,7 +2444,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
             fct_msg = 'Function'
         try:
             distance_result = distance_function(test_var, context=context)
-            if not np.isscalar(distance_result):
+            if not is_numeric_scalar(distance_result):
                 raise FunctionError("Value returned by {} specified for {} ({}) must return a scalar".
                                     format(repr(DISTANCE_FUNCTION), self.__name__.__class__, distance_result))
         except:
@@ -2586,8 +2592,8 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
 
         # Set key_size and val_size if this is the first entry
         if len(self.parameters.previous_value._get(context)[KEYS]) == 0:
-            self.parameters.key_size._set(len(key), context)
-            self.parameters.val_size._set(len(val), context)
+            self.parameters.key_size._set(np.array(len(key)), context)
+            self.parameters.val_size._set(np.array(len(val)), context)
 
         # Retrieve value from current dict with key that best matches key
         if retrieval_prob == 1.0 or (retrieval_prob > 0.0 and retrieval_prob > random_state.uniform()):
@@ -2600,7 +2606,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
         # Store variable to dict:
         if noise is not None:
             key = np.asarray(key, dtype=float)
-            if isinstance(noise, numbers.Number):
+            if is_numeric_scalar(noise):
                 key += noise
             else:
                 # assume array with same shape as variable
@@ -2687,8 +2693,10 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
                             for other in indices_of_selected_items[1:])):
                 warnings.warn(f'More than one item matched key ({query_key}) in memory for {self.name} of '
                               f'{self.owner.name} even though {repr("duplicate_keys")} is False')
-                return [[0]* self.parameters.key_size._get(context),
-                        [0]* self.parameters.val_size._get(context)]
+                return [
+                    [0] * self.parameters.key_size._get(context).item(),
+                    [0] * self.parameters.val_size._get(context).item()
+                ]
             if self.equidistant_keys_select == RANDOM:
                 random_state = self._get_current_parameter_value('random_state', context)
                 index_of_selected_item = random_state.choice(indices_of_selected_items)

@@ -275,6 +275,7 @@ from psyneulink.core.compositions.report \
     LEARN_REPORT, EXECUTE_REPORT, PROGRESS_REPORT
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
 from psyneulink.core.globals.keywords import AUTODIFF_COMPOSITION, SOFT_CLAMP, Loss
+from psyneulink.core.globals.utilities import is_numeric_scalar
 from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.scheduling.time import TimeScale
@@ -437,7 +438,7 @@ class AutodiffComposition(Composition):
         return self.parameters.pytorch_representation._get(context)
 
     def _make_optimizer(self, optimizer_type, learning_rate, weight_decay, context):
-        if not isinstance(learning_rate, (int, float)):
+        if not is_numeric_scalar(learning_rate):
             raise AutodiffCompositionError("Learning rate must be an integer or float value.")
         if optimizer_type not in ['sgd', 'adam']:
             raise AutodiffCompositionError("Invalid optimizer specified. Optimizer argument must be a string. "

@@ -2919,7 +2919,10 @@ def _parse_port_spec(port_type=None,
                 pass
 
         else:
-            port_specification = port_spec[PORT_SPEC_ARG]
+            try:
+                port_specification = port_spec[PORT_SPEC_ARG].item()
+            except (AttributeError, ValueError):
+                port_specification = port_spec[PORT_SPEC_ARG]
 
         # Delete the Port specification dictionary from port_spec
         del port_spec[PORT_SPEC_ARG]
