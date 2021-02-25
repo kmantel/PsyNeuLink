@@ -2853,7 +2853,7 @@ from psyneulink.core.globals.parameters import Parameter, ParametersBase, check_
 from psyneulink.core.globals.preferences.basepreferenceset import BasePreferenceSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel, _assign_prefs
 from psyneulink.core.globals.registry import register_category
-from psyneulink.core.globals.utilities import ContentAddressableList, call_with_pruned_args, convert_to_list, \
+from psyneulink.core.globals.utilities import ContentAddressableList, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list, \
     nesting_depth, convert_to_np_array, is_numeric, is_matrix, is_matrix_keyword, parse_valid_identifier
 from psyneulink.core.scheduling.condition import All, AllHaveRun, Always, Any, Condition, Never
 from psyneulink.core.scheduling.scheduler import Scheduler, SchedulingMode
@@ -3910,8 +3910,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         context = Context(source=ContextFlags.CONSTRUCTOR, execution_id=None)
 
         self._initialize_parameters(
-            **param_defaults,
-            retain_old_simulation_data=retain_old_simulation_data,
+            {
+                **param_defaults,
+                'retain_old_simulation_data': retain_old_simulation_data,
+            },
             context=context
         )
 
@@ -11961,6 +11963,8 @@ _
                                                                               entry,
                                                                               param_key,
                                                                               param_spec[entry])
+            if is_numeric(param_spec):
+                param_spec = convert_all_elements_to_np_array(param_spec)
             return (param_spec, param_condition)
 
         if runtime_params is None:

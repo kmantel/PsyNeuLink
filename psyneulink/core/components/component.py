@@ -537,9 +537,9 @@ from psyneulink.core.globals.preferences.preferenceset import \
 from psyneulink.core.globals.registry import register_category, _get_auto_name_prefix
 from psyneulink.core.globals.sampleiterator import SampleIterator
 from psyneulink.core.globals.utilities import \
-    ContentAddressableList, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
+    ContentAddressableList, convert_all_elements_to_np_array, convert_to_np_array, try_extract_0d_array_item, get_deepcopy_with_shared, \
     is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, \
-    get_all_explicit_arguments, call_with_pruned_args, safe_equals, safe_len, parse_valid_identifier
+    get_all_explicit_arguments, is_numeric, call_with_pruned_args, safe_equals, safe_len, parse_valid_identifier
 from psyneulink.core.scheduling.condition import Never
 from psyneulink.core.scheduling.time import Time, TimeScale
 
@@ -1127,8 +1127,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         )
 
         self._initialize_parameters(
-            context=context,
-            **parameter_values
+            parameter_values,
+            context=context
         )
 
         var = call_with_pruned_args(
@@ -1161,7 +1161,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         # Validate the set passed in
         self._instantiate_defaults(variable=default_variable,
-               request_set=parameter_values,  # requested set
+               request_set={k: v for (k, v) in self.defaults.values().items() if k in parameter_values},  # requested set
                assign_missing=True,                   # assign missing params from classPreferences to instanceDefaults
                target_set=self.defaults.values(), # destination set to which params are being assigned
                default_set=self.class_defaults.values(),   # source set from which missing params are assigned
@@ -1898,7 +1898,12 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                         self._runtime_params_reset[context.execution_id] = {}
                     self._runtime_params_reset[context.execution_id][param_name] = getattr(self.parameters,
                                                                                            param_name)._get(context)
-                    self._set_parameter_value(param_name, runtime_params[param_name], context)
+                    if is_numeric(runtime_params[param_name]):
+                        runtime_value = convert_all_elements_to_np_array(runtime_params[param_name])
+                    else:
+                        runtime_value = runtime_params[param_name]
+
+                    self._set_parameter_value(param_name, runtime_value, context)
                 # Any remaining params should either belong to the Component's function
                 #    or, if the Component is a Function, to it or its owner
                 elif ( # If Component is not a function, and its function doesn't have the parameter or
@@ -2147,7 +2152,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         return parameter_values, function_params
 
-    def _initialize_parameters(self, context=None, **param_defaults):
+    def _initialize_parameters(self, param_defaults, context=None):
         from psyneulink.core.components.shellclasses import (
             Composition_Base, Function, Mechanism, Port, Process_Base,
             Projection, System_Base
@@ -3164,6 +3169,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     def _update_default_variable(self, new_default_variable, context=None):
         from psyneulink.core.components.shellclasses import Function
 
+        new_default_variable = convert_all_elements_to_np_array(new_default_variable)
         self.defaults.variable = copy.deepcopy(new_default_variable)
 
         # exclude value from validation because it isn't updated until
@@ -3363,16 +3369,23 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             self._runtime_params_reset[context.execution_id] = {}
 
     def _try_execute_param(self, param, var, context=None):
-        def fill_recursively(arr, value, indices=()):
-            if arr.ndim == 0:
+        def execute_if_callable(value, context=None):
+            try:
+                return value(context=context)
+            except TypeError:
                 try:
-                    value = value(context=context)
+                    return value()
                 except TypeError:
-                    try:
-                        value = value()
-                    except TypeError:
-                        pass
-                return value
+                    return value
+
+        def fill_recursively(arr, value, indices=()):
+            try:
+                is_scalar = arr.ndim == 0
+            except AttributeError:
+                is_scalar = True
+
+            if is_scalar:
+                return execute_if_callable(value, context)
 
             try:
                 len_value = len(value)
@@ -3413,7 +3426,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             (isinstance(param, list) and len(param) == 1)
             or (isinstance(param, np.ndarray) and param.shape == (1,))
         ):
-            if isinstance(param[0], Component):
+            if isinstance(param[0], Component) or len(var) > 1:
                 param = param[0]
 
         # Currently most noise functions do not return noise in the same
@@ -3443,6 +3456,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             # param not directly compatible with variable, continue elementwise
             pass
 
+        param = try_extract_0d_array_item(param)
         fill_recursively(var, param)
         return var
 

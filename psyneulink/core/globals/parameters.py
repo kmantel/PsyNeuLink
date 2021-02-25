@@ -321,8 +321,8 @@ import toposort
 from psyneulink.core.globals.context import Context, ContextError, ContextFlags, _get_time, handle_external_context
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
-from psyneulink.core.globals.utilities import call_with_pruned_args, copy_iterable_with_shared, \
-    get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, unproxy_weakproxy, create_union_set, safe_equals, get_function_sig_default_value
+from psyneulink.core.globals.utilities import call_with_pruned_args, convert_all_elements_to_np_array, copy_iterable_with_shared, \
+    try_extract_0d_array_item, get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, is_numeric, unproxy_weakproxy, create_union_set, safe_equals, get_function_sig_default_value
 from psyneulink.core.rpc.graph_pb2 import Entry, ndArray
 
 __all__ = [
@@ -1176,6 +1176,7 @@ class Parameter(ParameterBase):
         # no default specified, must be inherited or invalid
         if self._parent is not None:
             self._inherited = True
+            return
         else:
             raise ParameterError(
                 'Parameter {0} cannot be reset, as it does not have a default specification '
@@ -1262,6 +1263,8 @@ class Parameter(ParameterBase):
         return self._owner._validate(self.name, value)
 
     def _parse(self, value):
+        if is_numeric(value):
+            value = convert_all_elements_to_np_array(value)
         return self._owner._parse(self.name, value)
 
     @property
@@ -1298,7 +1301,8 @@ class Parameter(ParameterBase):
                 kwargs
                     any additional arguments to be passed to this `Parameter`'s `getter` if it exists
         """
-        return self._get(context, **kwargs)
+        base_val = self._get(context, **kwargs)
+        return try_extract_0d_array_item(base_val)
 
     def _get(self, context=None, **kwargs):
         if not self.stateful:

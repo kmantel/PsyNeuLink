@@ -676,7 +676,7 @@ class EpisodicMemoryMechanism(ProcessingMechanism_Base):
         if self._dictionary_memory:
             # If assoc has not been specified, add empty list to call to function (which expects two items in its variable)
             if len(variable) != 2:
-                return convert_to_np_array([variable[0],[]])
+                return convert_all_elements_to_np_array([variable[0], []])
             else:
                 # Check that both are assigned inputs:
                 missing_inputs = [self.input_ports.names[i] for i,t in enumerate([v for v in variable]) if t is None]
