@@ -392,6 +392,7 @@ class CompExecution(CUDAExecution):
             execution = pnlvm.CompExecution(composition, [context.execution_id],
                                             additional_tags=additional_tags)
             executions[additional_tags] = execution
+            composition._record_parameter_shapes(context)
 
         return execution
 

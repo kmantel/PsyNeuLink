@@ -2436,6 +2436,21 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         for (k, v) in kwargs.items():
             getattr(self.parameters, k)._set(v, context)
 
+    def _record_parameter_shapes(self, context, visited=None):
+        if visited is None:
+            visited = set([self])
+
+        if context is None:
+            context = self.most_recent_context
+
+        for p in self.parameters:
+            p._record_shape(context)
+
+        for obj in self._dependent_components:
+            if obj not in visited:
+                visited.add(obj)
+                obj._record_parameter_shapes(context, visited=visited)
+
     # ------------------------------------------------------------------------------------------------------------------
     # Parsing methods
     # ------------------------------------------------------------------------------------------------------------------

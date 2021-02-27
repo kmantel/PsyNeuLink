@@ -318,7 +318,7 @@ import toposort
 from psyneulink.core.globals.context import Context, ContextError, ContextFlags, _get_time, handle_external_context
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
-from psyneulink.core.globals.utilities import call_with_pruned_args, convert_all_elements_to_np_array, copy_iterable_with_shared, \
+from psyneulink.core.globals.utilities import call_with_pruned_args, convert_all_elements_to_np_array, copy_iterable_with_shared, extended_shape, \
     extract_0d_array_item, get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, is_numeric, unproxy_weakproxy, create_union_set, safe_equals, get_function_sig_default_value
 from psyneulink.core.rpc.graph_pb2 import Entry, ndArray
 
@@ -991,6 +991,7 @@ class Parameter(ParameterBase):
         _inherited_source=None,
         _user_specified=False,
         # if modulated, set to the ParameterPort
+        _shape=None,
         **kwargs
     ):
         if isinstance(aliases, str):
@@ -1052,6 +1053,7 @@ class Parameter(ParameterBase):
             _inherited_source=_inherited_source,
             _user_specified=_user_specified,
             _temp_uninherited=set(),
+            _shape=_shape,
             **kwargs
         )
 
@@ -1508,6 +1510,10 @@ class Parameter(ParameterBase):
         return value
 
     def _set_value(self, value, execution_id=None, context=None, skip_history=False, skip_log=False, skip_delivery=False):
+        # before compilation has happened, we don't need to track shape changes
+        if self._shape is not None:
+            self._record_shape(context, value)
+
         # store history
         if not skip_history:
             if execution_id in self.values:
@@ -1731,6 +1737,23 @@ class Parameter(ParameterBase):
 
         except ParameterError as e:
             raise ParameterError('Error when attempting to initialize from {0}: {1}'.format(base_context.execution_id, e))
+
+    def _record_shape(self, context, value=NotImplemented):
+        if value is NotImplemented:
+            value = self._get(context)
+
+        try:
+            new_shape = extended_shape(value)
+        except TypeError:
+            new_shape = type(value)
+
+        if self._shape is not None and new_shape != self._shape:
+            self._shape = new_shape
+            try:
+                for comp in self._owner._owner.compositions:
+                    comp._delete_compilation_data(context)
+            except AttributeError:
+                pass
 
     # KDM 7/30/18: the below is weird like this in order to use this like a property, but also include it
     # in the interface for user simplicity: that is, inheritable (by this Parameter's children or from its parent),
