@@ -1032,6 +1032,8 @@ class Projection_Base(Projection):
             # composition may be ALL or None, in this case we don't need to add
             pass
 
+        self._add_to_composition(composition)
+
     def _activate_for_all_compositions(self):
         self._activate_for_compositions(ConnectionInfo.ALL)
 
