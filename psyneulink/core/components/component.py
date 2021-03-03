@@ -1283,6 +1283,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         self._update_parameter_components(context)
 
+        self.compositions = []
+
     def __repr__(self):
         return '({0} {1})'.format(type(self).__name__, self.name)
         #return '{1}'.format(type(self).__name__, self.name)
@@ -4030,6 +4032,22 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             pass
 
         model.args[arg] = value
+
+    def _add_to_composition(self, composition):
+        if composition not in self.compositions:
+            self.compositions.append(composition)
+
+        for obj in self._parameter_components:
+            obj._add_to_composition(composition)
+
+    def _remove_from_composition(self, composition):
+        try:
+            self.compositions.remove(composition)
+        except ValueError:
+            pass
+
+        for obj in self._parameter_components:
+            obj._remove_from_composition(composition)
 
     @property
     def logged_items(self):
