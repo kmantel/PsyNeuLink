@@ -4031,6 +4031,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self._executed_from_command_line = False
 
         self.projections = ContentAddressableList(component_type=Component)
+        self.compositions = []
 
         self._scheduler = None
         self._partially_added_nodes = []
@@ -4296,6 +4297,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         except AttributeError:
             pass
 
+        node._add_to_composition(self)
         node._check_for_composition(context=context)
 
         # Add node to Composition's graph
@@ -4415,6 +4417,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         del self.nodes[node]
         self.node_ordering.remove(node)
+        node._remove_from_composition(self)
 
         for p in self.pathways:
             try:
@@ -6636,6 +6639,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # step 2 - remove Projection from Composition's list
         if projection in self.projections:
             self.projections.remove(projection)
+
+        projection._remove_from_composition(self)
 
         # step 3 - deactivate Projection in this Composition
         projection._deactivate_for_compositions(self)
