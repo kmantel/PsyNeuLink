@@ -1,8 +1,9 @@
 from collections.abc import Iterable
 import numpy as np
 import pytest
+import warnings
 
-from psyneulink.core.globals.utilities import convert_all_elements_to_np_array, prune_unused_args
+from psyneulink.core.globals.utilities import convert_all_elements_to_np_array, prune_unused_args, extended_shape
 
 
 @pytest.mark.parametrize(
@@ -67,3 +68,18 @@ def test_prune_unused_args(func, args, kwargs, expected_pruned_args, expected_pr
 
     assert pruned_args == expected_pruned_args
     assert pruned_kwargs == expected_pruned_kwargs
+
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
+    extended_shape_parametrization = [
+        # (np.array([0, 0, 0]), (3,)),
+        # (np.array([[[0, 0, 0], [0, 0, 0]]]), (1, 2, 3)),
+        # (np.array([[0], [0, 0]]), ((1,), (2,))),
+        (np.array([[0], [0, 0], [[[[0]]]], 0]), ((1,), (2, ), ((((1,),),),), (0,))),
+    ]
+
+
+@pytest.mark.parametrize('arr, expected_shape', extended_shape_parametrization)
+def test_extended_shape(arr, expected_shape):
+    assert extended_shape(arr) == expected_shape

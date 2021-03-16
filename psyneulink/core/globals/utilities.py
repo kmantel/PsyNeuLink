@@ -142,7 +142,7 @@ __all__ = [
     'scalar_distance', 'sinusoid',
     'tensor_power', 'TEST_CONDTION', 'type_match',
     'underscore_to_camelCase', 'UtilitiesError', 'unproxy_weakproxy', 'create_union_set', 'merge_dictionaries',
-    'contains_type', 'is_numeric_scalar', 'extract_0d_array_item',
+    'contains_type', 'is_numeric_scalar', 'extract_0d_array_item', 'extended_shape'
 ]
 
 logger = logging.getLogger(__name__)
@@ -2094,3 +2094,46 @@ def extract_0d_array_item(arr: np.ndarray):
             return arr.item()
     except AttributeError as e:
         raise ValueError(f'{arr} is not a 0-dimensional numpy.ndarray') from e
+
+
+def extended_shape(arr: typing.Union[np.ndarray, list, tuple]) -> tuple:
+    """
+        Returns:
+            a numpy.ndarray-like shape of **arr** that handles ragged
+            arrays. If **arr** is not ragged, returns the standard numpy
+            shape
+
+        Note:
+            the purpose of this function is to distinguish shapes of
+            inner items of ragged arrays. (e.g.
+            np.array([[0], [0, 0]]).shape and
+            np.array([[0], [0, 0, 0]]).shape are both (2,))
+    """
+    def _extended_shape(arr):
+        try:
+            if arr.dtype != object:
+                return arr.shape
+        except AttributeError:
+            pass
+
+        shape = []
+        try:
+            for item in arr:
+                shape.append(_extended_shape(item))
+        except TypeError:
+            return (0, )
+        if all([i == (0, ) for i in shape]):
+            return (len(arr), )
+        else:
+            return tuple(shape)
+
+    try:
+        if arr.dtype != object:
+            return arr.shape
+        else:
+            return _extended_shape(arr)
+    except AttributeError:
+        if isinstance(arr, (list, tuple)):
+            return _extended_shape(convert_all_elements_to_np_array(arr))
+        else:
+            raise TypeError(f'{arr} is not an array, list, or tuple')
