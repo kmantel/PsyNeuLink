@@ -3315,10 +3315,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 try:
                     arr[i] = fill_recursively(arr[i], value[i], new_indices)
                 except (IndexError, TypeError):
-                    try:
-                        arr[i] = fill_recursively(arr[i], value, new_indices)
-                    except ValueError:
-                        arr[i] = execute_if_callable(value[i], context)
+                    arr[i] = fill_recursively(arr[i], value, new_indices)
 
             return arr
 
