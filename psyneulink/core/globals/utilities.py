@@ -145,7 +145,7 @@ __all__ = [
     'scalar_distance', 'sinusoid',
     'tensor_power', 'TEST_CONDTION', 'type_match',
     'underscore_to_camelCase', 'UtilitiesError', 'unproxy_weakproxy', 'create_union_set', 'merge_dictionaries',
-    'contains_type', 'is_numeric_scalar', 'try_extract_0d_array_item',
+    'contains_type', 'is_numeric_scalar', 'try_extract_0d_array_item', 'extended_shape'
 ]
 
 logger = logging.getLogger(__name__)
@@ -2134,3 +2134,68 @@ def try_extract_0d_array_item(arr: np.ndarray):
     except AttributeError:
         pass
     return arr
+
+
+def extended_shape(obj):
+    """
+    Produces a shape tuple of **obj** that handles optionally-nested
+    objects, including standard, ragged, or object-dtype numpy.ndarray,
+    torch.tensor, list, and tuple. The standard numpy shape is returned
+    when **obj** can be represented as a non-ragged numpy.ndarray.
+
+    Returns:
+        tuple: a numpy.ndarray-style shape of **obj**
+
+    Note:
+        The purpose of this function is to distinguish shapes of inner
+        items of ragged arrays.
+
+    Example:
+        `A = np.array([[0], [0, 0]], dtype=object)`
+        `B = np.array([[0], [0, 0, 0]], dtype=object)`
+
+        | array | np.shape | extended_shape |
+        |-------|----------|----------------|
+        | A     | (2, )    | ((1,), (2,))   |
+        | B     | (2, )    | ((1,), (3,))   |
+    """
+    def _extended_shape(obj):
+        try:
+            if obj.dtype != object:
+                return obj.shape
+        except AttributeError:
+            pass
+
+        shape = []
+        try:
+            for item in obj:
+                shape.append(_extended_shape(item))
+        except TypeError:
+            return tuple()
+
+        if all([i == tuple() for i in shape]):
+            return (len(obj), )
+        else:
+            return tuple(shape)
+
+    # handle numpy.ndarray
+    try:
+        obj_dtype = obj.dtype
+    except AttributeError:
+        pass
+    else:
+        if obj_dtype != object:
+            return obj.shape
+        else:
+            return _extended_shape(obj)
+
+    # assume object with .shape is not irregular (torch tensor)
+    try:
+        return tuple(obj.shape)
+    except (AttributeError, TypeError):
+        pass
+
+    if isinstance(obj, (list, tuple)):
+        return _extended_shape(convert_all_elements_to_np_array(obj))
+    else:
+        return tuple()

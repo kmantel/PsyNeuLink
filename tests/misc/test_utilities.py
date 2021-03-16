@@ -1,8 +1,13 @@
+import warnings
 from collections.abc import Iterable
+
 import numpy as np
 import pytest
+from packaging import version as pversion
 
-from psyneulink.core.globals.utilities import convert_all_elements_to_np_array, prune_unused_args
+from psyneulink.core.globals.utilities import (
+    convert_all_elements_to_np_array, extended_shape, prune_unused_args,
+)
 
 
 @pytest.mark.parametrize(
@@ -67,3 +72,29 @@ def test_prune_unused_args(func, args, kwargs, expected_pruned_args, expected_pr
 
     assert pruned_args == expected_pruned_args
     assert pruned_kwargs == expected_pruned_kwargs
+
+
+extended_shape_parametrization = [
+    (np.array([0, 0, 0]), (3,)),
+    (np.array([[[0, 0, 0], [0, 0, 0]]]), (1, 2, 3)),
+    (np.array([[[0, 0, 0], [0, 0, 0]]], dtype=object), (((3,), (3,)),)),
+    (np.array([[0], [0, 0]], dtype=object), ((1,), (2,))),
+    (np.array([[0], [0, 0], [[[[0]]]], 0], dtype=object), ((1,), (2, ), ((((1,),),),), tuple())),
+    (None, tuple()),
+    (100, tuple()),
+    ('abcd', tuple()),
+]
+
+# ragged arrays throw ValueError in numpy 1.24+
+if pversion.parse(np.version.version) < pversion.parse('1.24'):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
+        extended_shape_parametrization.extend([
+            (np.array([[0], [0, 0]]), ((1,), (2,))),
+            (np.array([[0], [0, 0], [[[[0]]]], 0]), ((1,), (2, ), ((((1,),),),), tuple())),
+        ])
+
+
+@pytest.mark.parametrize('obj, expected_shape', extended_shape_parametrization)
+def test_extended_shape(obj, expected_shape):
+    assert extended_shape(obj) == expected_shape
