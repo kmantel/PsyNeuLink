@@ -1111,7 +1111,7 @@ from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import rename_instance_in_registry
 from psyneulink.core.globals.sampleiterator import SampleIterator, SampleSpec
-from psyneulink.core.globals.utilities import convert_to_list, ContentAddressableList, extract_0d_array_item, is_numeric
+from psyneulink.core.globals.utilities import convert_to_list, ContentAddressableList, try_extract_0d_array_item, is_numeric
 from psyneulink.core.llvm.debug import debug_env
 
 __all__ = [
