@@ -775,7 +775,7 @@ ProcessingMechanisms for a pathway are executed first, and then its `learning co
 
     **Composition with Learning**
 
-    .. figure:: _static/Composition_XOR_animation.gif
+    .. figure:: _generated/Composition_XOR_animation.gif
        :alt: Animation of Composition with learning
        :scale: 50 %
 
