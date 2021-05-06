@@ -3660,7 +3660,9 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
         function_dict = {}
         try:
             if isinstance(self.function, Component):
-                function_dict['functions'] = [self.function._dict_summary]
+                function_dict['functions'] = {
+                    self.function.name: self.function._dict_summary
+                }
         except AttributeError:
             pass
 
