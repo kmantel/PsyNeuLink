@@ -1,13 +1,19 @@
 import logging
 
 import pytest
-
+from psyneulink import _unit_registry
 from psyneulink.core.components.functions.nonstateful.transferfunctions import Linear
 from psyneulink.core.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.core.compositions.composition import Composition
-from psyneulink.core.scheduling.condition import AfterCall, AfterNCalls, AfterNCallsCombined, AfterNPasses, AfterNTrials, AfterPass, AfterTrial, All, AllHaveRun, Always, Any, AtPass, AtTimeStep, AtTrial, AtTrialStart, BeforeNCalls, BeforePass, BeforeTimeStep, BeforeTrial, Condition, ConditionError, \
-    EveryNCalls, EveryNPasses, NWhen, Not, WhenFinished, WhenFinishedAll, WhenFinishedAny, WhileNot
+from psyneulink.core.scheduling.condition import (
+    AfterCall, AfterNCalls, AfterNCallsCombined, AfterNPasses, AfterNTrials,
+    AfterPass, AfterTrial, All, AllHaveRun, Always, Any, AtPass, AtTimeStep,
+    AtTrial, AtTrialStart, BeforeNCalls, BeforePass, BeforeTimeStep,
+    BeforeTrial, Condition, ConditionError, EveryNCalls, EveryNPasses, Not,
+    NWhen, TimeInterval, TimeTermination, WhenFinished, WhenFinishedAll,
+    WhenFinishedAny, WhileNot,
+)
 from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.scheduling.time import TimeScale
 
@@ -871,3 +877,140 @@ class TestWhenFinished:
             set([A, B]), C, set([A, B]), C, set([A, B]),
         ]
         assert output == pytest.helpers.setify_expected_output(expected_output)
+
+
+class TestAbsolute:
+    A = TransferMechanism(name='scheduler-pytests-A')
+    B = TransferMechanism(name='scheduler-pytests-B')
+    C = TransferMechanism(name='scheduler-pytests-C')
+
+    @pytest.mark.parametrize(
+        'conditions, termination_conds',
+        [
+            (
+                {A: TimeInterval(n=8), B: TimeInterval(n=4), C: TimeInterval(n=2)},
+                {TimeScale.TRIAL: AfterNCalls(A, 2)},
+            ),
+            (
+                {A: TimeInterval(n=5), B: TimeInterval(n=3), C: TimeInterval(n=1)},
+                {TimeScale.TRIAL: AfterNCalls(A, 2)},
+            ),
+            (
+                {A: TimeInterval(n=3), B: TimeInterval(n=2)},
+                {TimeScale.TRIAL: AfterNCalls(A, 2)},
+            ),
+            (
+                {A: TimeInterval(n=5), B: TimeInterval(n=7)},
+                {TimeScale.TRIAL: AfterNCalls(B, 2)},
+            ),
+            (
+                {A: TimeInterval(n=1200), B: TimeInterval(n=1000)},
+                {TimeScale.TRIAL: AfterNCalls(A, 3)},
+            ),
+        ]
+    )
+    def test_TimeInterval_linear_everynms(self, conditions, termination_conds):
+        comp = Composition()
+
+        comp.add_linear_processing_pathway([self.A, self.B, self.C])
+        comp.scheduler.add_condition_set(conditions)
+
+        list(comp.scheduler.run(termination_conds=termination_conds))
+
+        for node, cond in conditions.items():
+            executions = [
+                comp.scheduler.execution_timestamps[comp.default_execution_id][i].absolute
+                for i in range(len(comp.scheduler.execution_list[comp.default_execution_id]))
+                if node in comp.scheduler.execution_list[comp.default_execution_id][i]
+            ]
+
+            for i in range(1, len(executions)):
+                assert (executions[i] - executions[i - 1]) == cond.n
+
+    @pytest.mark.parametrize(
+        'conditions, termination_conds',
+        [
+            (
+                {
+                    A: TimeInterval(n=10, start=100),
+                    B: TimeInterval(n=10, start=300),
+                    C: TimeInterval(n=10, start=400)
+                },
+                {TimeScale.TRIAL: TimeInterval(start=500)}
+            ),
+            (
+                {
+                    A: TimeInterval(n=2, start=105),
+                    B: TimeInterval(n=7, start=317),
+                    C: TimeInterval(n=11, start=431)
+                },
+                {TimeScale.TRIAL: TimeInterval(start=597)}
+            ),
+        ]
+    )
+    def test_TimeInterval_no_dependencies(self, conditions, termination_conds):
+        comp = Composition()
+        comp.add_nodes([self.A, self.B, self.C])
+        comp.scheduler.add_condition_set(conditions)
+
+        list(comp.scheduler.run(termination_conds=termination_conds))
+
+        for node, cond in conditions.items():
+            executions = [
+                comp.scheduler.execution_timestamps[comp.default_execution_id][i].absolute
+                for i in range(len(comp.scheduler.execution_list[comp.default_execution_id]))
+                if node in comp.scheduler.execution_list[comp.default_execution_id][i]
+            ]
+
+            for i in range(1, len(executions)):
+                assert (executions[i] - executions[i - 1]) == cond.n
+
+            if cond.start is not None:
+                if cond.start_inclusive:
+                    assert cond.start in executions
+                else:
+                    assert cond.start + comp.scheduler._get_absolute_time_step_unit(termination_conds) in executions
+
+    @pytest.mark.parametrize(
+        'n, unit, expected_n',
+        [
+            (1, None, 1 * _unit_registry.ms),
+            ('1ms', None, 1 * _unit_registry.ms),
+            (1 * _unit_registry.ms, None, 1 * _unit_registry.ms),
+            (1, 'ms', 1 * _unit_registry.ms),
+            (1, _unit_registry.ms, 1 * _unit_registry.ms),
+            ('1', _unit_registry.ms, 1 * _unit_registry.ms),
+            (1 * _unit_registry.ms, _unit_registry.ns, 1 * _unit_registry.ms),
+            (1000 * _unit_registry.ms, None, 1000 * _unit_registry.ms),
+        ]
+    )
+    def test_TimeInterval_time_specs(self, n, unit, expected_n):
+        if unit is None:
+            c = TimeInterval(n=n)
+        else:
+            c = TimeInterval(n=n, unit=unit)
+
+        assert c.n == expected_n
+
+    @pytest.mark.parametrize(
+        'n, inclusive, last_time',
+        [
+            (10, True, 10 * _unit_registry.ms),
+            (10, False, 11 * _unit_registry.ms),
+        ]
+    )
+    def test_TimeTermination(
+        self,
+        three_node_linear_composition,
+        n,
+        inclusive,
+        last_time
+    ):
+        _, comp = three_node_linear_composition
+
+        comp.scheduler.termination_conds = {
+            TimeScale.TRIAL: TimeTermination(n, inclusive)
+        }
+        list(comp.scheduler.run())
+
+        assert comp.scheduler.clock.time.absolute == last_time

@@ -1,8 +1,10 @@
+import fractions
 import logging
 import numpy as np
 import psyneulink as pnl
 import pytest
 
+from psyneulink import _unit_registry
 from psyneulink.core.components.functions.stateful.integratorfunctions import DriftDiffusionIntegrator
 from psyneulink.core.components.functions.nonstateful.transferfunctions import Linear
 from psyneulink.core.components.mechanisms.processing.integratormechanism import IntegratorMechanism
@@ -11,7 +13,7 @@ from psyneulink.core.components.projections.pathway.mappingprojection import Map
 from psyneulink.core.compositions.composition import Composition, EdgeType
 from psyneulink.core.globals.keywords import VALUE
 from psyneulink.core.scheduling.condition import AfterNCalls, AfterNPasses, AfterNTrials, AfterPass, All, AllHaveRun, Always, Any, AtPass, BeforeNCalls, BeforePass, \
-    EveryNCalls, EveryNPasses, JustRan, WhenFinished
+    EveryNCalls, EveryNPasses, JustRan, TimeInterval, WhenFinished
 from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.scheduling.time import TimeScale
 from psyneulink.library.components.mechanisms.processing.integrator.ddm import DDM
@@ -1633,3 +1635,27 @@ class TestFeedback:
         r = comp.run(inputs=[1], num_trials=5, execution_mode=mode)
         assert np.allclose(r, expected_result[-1])
         assert np.allclose(comp.results, expected_result)
+
+
+class TestAbsoluteTime:
+
+    @pytest.mark.parametrize(
+        'conditions, interval',
+        [
+            ({'A': TimeInterval(n=8), 'B': TimeInterval(n=4)}, fractions.Fraction(4, 3) * _unit_registry.ms),
+            ({'A': TimeInterval(n=1), 'B': TimeInterval(n=3)}, fractions.Fraction(1, 3) * _unit_registry.ms),
+            ({'A': Any(TimeInterval(n=2), TimeInterval(n=3))}, fractions.Fraction(1, 3) * _unit_registry.ms),
+            ({'A': TimeInterval(n=6), 'B': TimeInterval(n=3)}, 1 * _unit_registry.ms),
+            ({'A': TimeInterval(n=100 * _unit_registry.us), 'B': TimeInterval(n=2)}, fractions.Fraction(100, 3) * _unit_registry.us),
+            ({'A': Any(TimeInterval(n=1000 * _unit_registry.us), TimeInterval(n=2))}, fractions.Fraction(1, 3) * _unit_registry.ms),
+            ({'A': TimeInterval(n=1000 * _unit_registry.us), 'B': TimeInterval(n=2)}, fractions.Fraction(1, 3) * _unit_registry.ms),
+            ({'A': Any(TimeInterval(n=1000), TimeInterval(n=1500)), 'B': TimeInterval(n=2000)}, fractions.Fraction(500, 3) * _unit_registry.ms),
+        ]
+    )
+    def test_absolute_interval_linear(self, three_node_linear_composition, conditions, interval):
+        [A, B, C], comp = three_node_linear_composition
+
+        for node in conditions:
+            comp.scheduler.add_condition(eval(node), conditions[node])
+
+        assert comp.scheduler._get_absolute_time_step_unit() == interval
