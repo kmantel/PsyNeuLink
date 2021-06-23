@@ -1508,6 +1508,8 @@ class TestFeedback:
     # python values during execution is not implemented.
     @pytest.mark.usefixtures("comp_mode_no_llvm")
     def test_time_termination_measures(self, comp_mode, timescale, expected):
+        if comp_mode is pnl.ExecutionMode.Python:
+            return
         in_one_pass = timescale in {TimeScale.TIME_STEP, TimeScale.PASS}
         attention = pnl.TransferMechanism(name='Attention',
                                  integrator_mode=True,
