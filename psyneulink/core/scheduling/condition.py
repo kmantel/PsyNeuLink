@@ -295,8 +295,10 @@ Class Reference
 ---------------
 
 """
+
 import functools
 import inspect
+import re
 
 import condition_scheduler
 import dill
@@ -307,6 +309,29 @@ from psyneulink.core.globals.keywords import MODEL_SPEC_ID_TYPE
 from psyneulink.core.globals.parameters import parse_context
 
 __all__ = condition_scheduler.condition.__all__
+
+
+# timescale mappings to pnl versions
+_time_scales = {
+    "TIME_STEP": condition_scheduler.time.TimeScale.CONSIDERATION_SET_EXECUTION,
+    "TRIAL": condition_scheduler.time.TimeScale.ENVIRONMENT_STATE_UPDATE,
+    "RUN": condition_scheduler.time.TimeScale.ENVIRONMENT_SEQUENCE,
+}
+
+
+def _modify_docstring(docstring):
+    if docstring is None:
+        return None
+
+    new_docstring = docstring
+    for ts_name in _time_scales:
+        scheduler_ts_name = _time_scales[ts_name].name
+        new_docstring = re.sub(f'{scheduler_ts_name}', f'{ts_name}', new_docstring)
+
+    return new_docstring
+
+
+__doc__ = _modify_docstring(condition_scheduler.condition.__doc__)
 
 
 def _create_as_pnl_condition(condition):
@@ -419,3 +444,5 @@ for cond_name in sorted(
         pnl_conditions_module[cond_name] = type(cond_name, tuple(new_mro), {})
     elif isinstance(sched_module_cond_obj, type):
         pnl_conditions_module[cond_name] = sched_module_cond_obj
+
+    pnl_conditions_module[cond_name].__doc__ = _modify_docstring(sched_module_cond_obj.__doc__)
