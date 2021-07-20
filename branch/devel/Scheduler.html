@@ -10,7 +10,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Scheduler &mdash; PsyNeuLink 0.5.2.1+3685.ga61bd8cde documentation</title>
+  <title>Scheduler &mdash; PsyNeuLink 0+untagged.30.g863dbcb documentation</title>
   
 
   
@@ -97,7 +97,7 @@
               
               
                 <div class="version">
-                  0.5.2.1+3685
+                  0+untagged.30.g863dbcb
                 </div>
               
             
@@ -380,6 +380,15 @@ consideration after. There are many of these examples, and while it may
 be solveable in some cases, it is not a simple problem. So,
 <a class="reference internal" href="#scheduler-exact-time"><span class="std std-ref">Exact Time Mode</span></a> exists as an alternative
 option for these cases, though it comes with its own drawbacks.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Due to issues with floating-point precision, absolute time values in
+conditions and <a class="reference internal" href="Time.html"><span class="doc">Time</span></a> are limited to 8 decimal points. If more
+precision is needed, use
+<a class="reference external" href="https://docs.python.org/3/library/fractions.html">fractions</a>,
+where possible, or smaller units (e.g. microseconds instead of
+milliseconds).</p>
+</div>
 <section id="exact-time-mode">
 <span id="scheduler-exact-time"></span><h3>Exact Time Mode<a class="headerlink" href="#exact-time-mode" title="Permalink to this headline">¶</a></h3>
 <p>When <a class="reference internal" href="#psyneulink.core.scheduling.scheduler.Scheduler.mode" title="psyneulink.core.scheduling.scheduler.Scheduler.mode"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">Scheduler.mode</span></code></a> is <a class="reference internal" href="#psyneulink.core.scheduling.scheduler.SchedulingMode.EXACT_TIME" title="psyneulink.core.scheduling.scheduler.SchedulingMode.EXACT_TIME"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">SchedulingMode.EXACT_TIME</span></code></a>, the scheduler is
@@ -488,7 +497,7 @@ inputs to nodes accordingly. Additionally, non-absolute conditions like
 <h4>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h4>
 <dl class="py class">
 <dt id="psyneulink.core.scheduling.scheduler.Scheduler">
-<em class="property">class </em><code class="sig-prename descclassname">psyneulink.core.scheduling.scheduler.</code><code class="sig-name descname">Scheduler</code><span class="sig-paren">(</span><em class="sig-param">composition=None</em>, <em class="sig-param">graph=None</em>, <em class="sig-param">conditions=None</em>, <em class="sig-param">termination_conds={&lt;TimeScale.TRIAL: 2&gt;: &lt;psyneulink.core.scheduling.condition.AllHaveRun object&gt;</em>, <em class="sig-param">&lt;TimeScale.RUN: 3&gt;: &lt;psyneulink.core.scheduling.condition.Never object&gt;}</em>, <em class="sig-param">default_execution_id=None</em>, <em class="sig-param">mode=&lt;SchedulingMode.STANDARD: 1&gt;</em>, <em class="sig-param">default_absolute_time_unit=&lt;Quantity(1</em>, <em class="sig-param">'millisecond')&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.core.scheduling.scheduler.Scheduler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">psyneulink.core.scheduling.scheduler.</code><code class="sig-name descname">Scheduler</code><span class="sig-paren">(</span><em class="sig-param">composition=None</em>, <em class="sig-param">graph=None</em>, <em class="sig-param">conditions=None</em>, <em class="sig-param">termination_conds=None</em>, <em class="sig-param">default_execution_id=None</em>, <em class="sig-param">mode=&lt;SchedulingMode.STANDARD: 1&gt;</em>, <em class="sig-param">default_absolute_time_unit=&lt;Quantity(1</em>, <em class="sig-param">'millisecond')&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#psyneulink.core.scheduling.scheduler.Scheduler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates an order of execution for <a class="reference internal" href="Component.html"><span class="doc">Components</span></a> in a <a class="reference internal" href="Composition.html"><span class="doc">Composition</span></a> or graph
 specification dictionary, possibly determined by a set of <a class="reference internal" href="Condition.html"><span class="doc">Conditions</span></a>.</p>
 <dl class="field-list simple">
@@ -593,17 +602,6 @@ For example, <code class="xref any docutils literal notranslate"><span class="pr
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>Dict[TimeScale: Dict[TimeScale: int]]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="psyneulink.core.scheduling.scheduler.Scheduler.clock">
-<code class="sig-name descname">clock</code><a class="headerlink" href="#psyneulink.core.scheduling.scheduler.Scheduler.clock" title="Permalink to this definition">¶</a></dt>
-<dd><p>a <a class="reference internal" href="Time.html#psyneulink.core.scheduling.time.Clock" title="psyneulink.core.scheduling.time.Clock"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Clock</span></code></a> object that stores the current time in this Scheduler</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="Time.html#psyneulink.core.scheduling.time.Clock" title="psyneulink.core.scheduling.time.Clock"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Clock</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
