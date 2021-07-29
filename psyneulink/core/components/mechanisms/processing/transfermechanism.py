@@ -1803,3 +1803,8 @@ class TransferMechanism(ProcessingMechanism_Base):
             self.parameters.initial_value._set(copy.deepcopy(integrator_function_variable), context)
 
         super()._update_default_variable(new_default_variable, context=context)
+
+    def as_mdf_model(self):
+        model = super().as_mdf_model()
+        # model.functions.append(self.integrator_function.as_mdf_model())
+        return model
