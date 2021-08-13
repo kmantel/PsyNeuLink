@@ -17,10 +17,10 @@ args = parser.parse_args()
 
 # Based on tests/composition/test_learning.py::TestLearningPathwayMethods::test_run_no_targets
 def composition_xor_animation():
-    in_to_hidden_matrix = np.random.rand(2, 10)
+    in_to_hidden_matrix = np.random.rand(2, 20)
     hidden_to_out_matrix = np.random.rand(10, 1)
 
-    inp = pnl.TransferMechanism(name="Input", default_variable=np.zeros(2))
+    inp = pnl.TransferMechanism(name="NEW NAME", default_variable=np.zeros(2))
 
     hidden = pnl.TransferMechanism(
         name="Hidden", default_variable=np.zeros(10), function=pnl.Logistic()
