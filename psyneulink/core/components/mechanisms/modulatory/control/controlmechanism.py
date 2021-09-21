@@ -1117,6 +1117,7 @@ class ControlMechanism(ModulatoryMechanism_Base):
             stateful=False,
             loggable=False,
             read_only=True,
+            structural=True,
         )
 
         output_ports = Parameter(
