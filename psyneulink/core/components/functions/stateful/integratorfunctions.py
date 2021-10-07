@@ -691,7 +691,7 @@ class AccumulatorIntegrator(IntegratorFunction):  # ----------------------------
         builder.store(res, prev_ptr)
 
     def as_expression(self):
-        return 'previous_value * rate + increment'
+        return 'previous_value * rate + noise + increment'
 
 
 class SimpleIntegrator(IntegratorFunction):  # -------------------------------------------------------------------------
@@ -923,7 +923,7 @@ class SimpleIntegrator(IntegratorFunction):  # ---------------------------------
         builder.store(res, prev_ptr)
 
     def as_expression(self):
-        return f'previous_value + ({MODEL_SPEC_ID_MDF_VARIABLE} * rate) + offset'
+        return f'previous_value + ({MODEL_SPEC_ID_MDF_VARIABLE} * rate) + noise + offset'
 
 
 class AdaptiveIntegrator(IntegratorFunction):  # -----------------------------------------------------------------------
@@ -1247,7 +1247,7 @@ class AdaptiveIntegrator(IntegratorFunction):  # -------------------------------
         # MODIFIED 6/21/19 END
 
     def as_expression(self):
-        return f'(1 - rate) * previous_value + rate * {MODEL_SPEC_ID_MDF_VARIABLE} + offset'
+        return f'(1 - rate) * previous_value + rate * {MODEL_SPEC_ID_MDF_VARIABLE} + noise + offset'
 
 
 S_MINUS_L = 's-l'
@@ -3854,7 +3854,7 @@ class LeakyCompetingIntegrator(IntegratorFunction):  # -------------------------
         builder.store(ret, prev_ptr)
 
     def as_expression(self):
-        return f'previous_value + (-rate * previous_value + {MODEL_SPEC_ID_MDF_VARIABLE}) * time_step_size'
+        return f'previous_value + (-rate * previous_value + {MODEL_SPEC_ID_MDF_VARIABLE}) * time_step_size + noise * (time_step_size ** 0.5)'
 
 
 class FitzHughNagumoIntegrator(IntegratorFunction):  # ----------------------------------------------------------------------------

@@ -2,6 +2,8 @@ import numpy as np
 import os
 import psyneulink as pnl
 import pytest
+import sys
+
 
 pytest.importorskip(
     'modeci_mdf',
@@ -161,20 +163,38 @@ def test_write_json_file_multiple_comps(
         assert orig_results[composition_name] == final_results, f'{composition_name}:'
 
 
+# These runtime_params are necessary because noise seeding is not
+# replicable between numpy and onnx.
+# Values are generated from running onnx function RandomUniform and
+# RandomNormal with parameters used in model_integrators.py (seed 0).
+# RandomNormal values are different on mac versus linux and windows
+if sys.platform == 'darwin':
+    onnx_integrators_fixed_seeded_noise = (
+        'runtime_params={A: {"noise": -0.9999843239784241}, B: {"noise": -0.8846577405929565},'
+        'C: {"noise": 0.0576711297035217}, D: {"noise": -0.49999216198921204},'
+        'E: {"noise": -0.2499941289424896} }'
+    )
+else:
+    onnx_integrators_fixed_seeded_noise = (
+        'runtime_params={A: {"noise": -0.9999843239784241}, B: {"noise": -1.1295466423034668},'
+        'C: {"noise": -0.06477329879999161}, D: {"noise": -0.49999216198921204},'
+        'E: {"noise": -0.2499941289424896} }'
+    )
+
 @pytest.mark.parametrize(
-    'filename, composition_name, input_dict, simple_edge_format',
+    'filename, composition_name, input_dict, simple_edge_format, run_args',
     [
-        ('model_basic.py', 'comp', {'A': [[1.0]]}, True),
-        ('model_basic.py', 'comp', {'A': 1}, False),
-        ('model_basic_non_identity.py', 'comp', {'A': [[1.0]]}, True),  # requires simple edges
-        ('model_udfs.py', 'comp', {'A': [[10.0]]}, True),
-        ('model_udfs.py', 'comp', {'A': 10}, False),
-        ('model_varied_matrix_sizes.py', 'comp', {'A': [[1.0, 2.0]]}, True),
-        ('model_integrators.py', 'comp', {'A': [[1.0]]}, True),
-        ('model_integrators.py', 'comp', {'A': 1.0}, False),
+        ('model_basic.py', 'comp', {'A': [[1.0]]}, True, ''),
+        ('model_basic.py', 'comp', {'A': 1}, False, ''),
+        ('model_basic_non_identity.py', 'comp', {'A': [[1.0]]}, True, ''),  # requires simple edges
+        ('model_udfs.py', 'comp', {'A': [[10.0]]}, True, ''),
+        ('model_udfs.py', 'comp', {'A': 10}, False, ''),
+        ('model_varied_matrix_sizes.py', 'comp', {'A': [[1.0, 2.0]]}, True, ''),
+        ('model_integrators.py', 'comp', {'A': 1.0}, True, onnx_integrators_fixed_seeded_noise),
+        ('model_integrators.py', 'comp', {'A': 1.0}, False, onnx_integrators_fixed_seeded_noise),
     ]
 )
-def test_mdf_equivalence(filename, composition_name, input_dict, simple_edge_format):
+def test_mdf_equivalence(filename, composition_name, input_dict, simple_edge_format, run_args):
     from modeci_mdf.utils import load_mdf
     import modeci_mdf.execution_engine as ee
 
@@ -183,7 +203,7 @@ def test_mdf_equivalence(filename, composition_name, input_dict, simple_edge_for
     with open(filename, 'r') as orig_file:
         exec(orig_file.read())
         inputs_str = str(input_dict).replace("'", '')
-        exec(f'{composition_name}.run(inputs={inputs_str})')
+        exec(f'{composition_name}.run(inputs={inputs_str}, {run_args})')
         orig_results = eval(f'{composition_name}.results')
 
     # Save json_summary of Composition to file and read back in.
