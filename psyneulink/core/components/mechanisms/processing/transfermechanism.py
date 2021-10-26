@@ -1805,6 +1805,8 @@ class TransferMechanism(ProcessingMechanism_Base):
         super()._update_default_variable(new_default_variable, context=context)
 
     def as_mdf_model(self):
+        import modeci_mdf.mdf as mdf
+
         model = super().as_mdf_model()
         # model.functions.append(self.integrator_function.as_mdf_model())
         return model
