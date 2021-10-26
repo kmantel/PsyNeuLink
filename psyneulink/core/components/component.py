@@ -507,7 +507,6 @@ from enum import Enum, IntEnum
 
 import dill
 import graph_scheduler
-import modeci_mdf.mdf as mdf
 import numpy as np
 
 from psyneulink.core import llvm as pnlvm
@@ -3698,6 +3697,8 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
         }
 
     def _get_mdf_parameters(self):
+        import modeci_mdf.mdf as mdf
+
         from psyneulink.core.compositions.composition import Composition
         from psyneulink.core.components.ports.port import Port
         from psyneulink.core.components.ports.outputport import OutputPort
