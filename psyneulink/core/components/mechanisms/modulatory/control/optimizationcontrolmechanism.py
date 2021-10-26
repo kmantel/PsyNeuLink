@@ -1101,7 +1101,7 @@ class OptimizationControlMechanism(ControlMechanism):
             # We shouldn't get this far if execution mode is not Python
             assert self.parameters.comp_execution_mode._get(context) == "Python"
             exec_mode = pnlvm.ExecutionMode.Python
-            outcome, result = self.agent_rep.evaluate(self.parameters.state_feature_values._get(context),
+            eval_result = self.agent_rep.evaluate(self.parameters.state_feature_values._get(context),
                                                       control_allocation,
                                                       self.parameters.num_estimates._get(context),
                                                       self.parameters.num_trials_per_estimate._get(context),
@@ -1116,10 +1116,7 @@ class OptimizationControlMechanism(ControlMechanism):
             # If results of the simulation should be returned then, do so. agent_rep's evaluate method will
             # return a tuple in this case in which the first element is the outcome as usual and the second
             # is the results of the composition run.
-            if return_results:
-                return outcome, result
-            else:
-                return outcome
+            return eval_result
 
         # agent_rep is a CompositionFunctionApproximator (since runs_simuluations = False)
         else:

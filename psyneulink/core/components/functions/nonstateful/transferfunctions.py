@@ -3410,7 +3410,7 @@ class CostFunctions(IntFlag):
     DURATION      = 1 << 3
     ALL           = INTENSITY | ADJUSTMENT | DURATION
     # DEFAULTS      = INTENSITY
-    DEFAULTS      = NONE
+    DEFAULTS      = INTENSITY
 
 
 TRANSFER_FCT = 'transfer_fct'
