@@ -2597,7 +2597,6 @@ from inspect import isgenerator, isgeneratorfunction
 from typing import Union
 
 import graph_scheduler
-import modeci_mdf.mdf as mdf
 import networkx
 import numpy as np
 import pint
@@ -11211,6 +11210,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         Returns:
             modeci_mdf.Model: a ModECI Model representing this Composition
         """
+        import modeci_mdf.mdf as mdf
+
         def is_included_projection(proj):
             included_types = (
                 CompositionInterfaceMechanism,
