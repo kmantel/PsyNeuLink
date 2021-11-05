@@ -498,7 +498,9 @@ import inspect
 import itertools
 import logging
 import numbers
+import re
 import types
+import typing
 import warnings
 from abc import ABCMeta
 from collections.abc import Iterable
@@ -1099,8 +1101,6 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
         Note: if parameter_validation is off, validation is suppressed (for efficiency) (Component class default = on)
 
         """
-        self._handle_illegal_kwargs(**kwargs)
-
         context = Context(
             source=ContextFlags.CONSTRUCTOR,
             execution_phase=ContextFlags.IDLE,
@@ -1116,6 +1116,16 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
             function_params = copy.copy(param_defaults[FUNCTION_PARAMS])
         except (KeyError, TypeError):
             function_params = {}
+
+        # if function is string, assume any unknown kwargs are for the
+        # corresponding UDF expression
+        if isinstance(function, (types.FunctionType, str)):
+            function_params = {
+                **kwargs,
+                **function_params
+            }
+        else:
+            self._handle_illegal_kwargs(**kwargs)
 
         # allow override of standard arguments with arguments specified in
         # params (here, param_defaults) argument
@@ -1324,7 +1334,7 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
             x = p.get(context)
             if isinstance(x, np.random.RandomState):
                 # Skip first element of random state (id string)
-                val = pnlvm._tupleize(x.get_state()[1:])
+                val = pnlvm._tupleize((*x.get_state()[1:], x.used_seed[0]))
             elif isinstance(x, Time):
                 val = tuple(getattr(x, graph_scheduler.time._time_scale_to_attr_str(t)) for t in TimeScale)
             elif isinstance(x, Component):
@@ -1349,12 +1359,13 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
                      "input_port_variables", "results", "simulation_results",
                      "monitor_for_control", "state_feature_values", "simulation_ids",
                      "input_labels_dict", "output_labels_dict",
-                     "modulated_mechanisms", "grid",
+                     "modulated_mechanisms", "grid", "control_signal_params",
                      "activation_derivative_fct", "input_specification",
                      # Reference to other components
                      "objective_mechanism", "agent_rep", "projections",
                      # Shape mismatch
                      "auto", "hetero", "cost", "costs", "combined_costs",
+                     "control_signal",
                      # autodiff specific types
                      "pytorch_representation", "optimizer"}
         # Mechanism's need few extra entires:
@@ -1420,8 +1431,9 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
             elif isinstance(x, Component):
                 return x._get_param_initializer(context)
 
-            try:   # This can't use tupleize and needs to recurse to handle
-                   # 'search_space' list of SampleIterators
+            try:
+                # This can't use tupleize and needs to recurse to handle
+                # 'search_space' list of SampleIterators
                 return tuple(_convert(i) for i in x)
             except TypeError:
                 return x if x is not None else tuple()
@@ -1433,6 +1445,7 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
                 return (param,)
             elif p.name == 'num_estimates':
                 return 0 if param is None else param
+            # FIX: ADD num_trials_per_estimate HERE  11/3/21
             elif p.name == 'matrix': # Flatten matrix
                 return tuple(np.asfarray(param).flatten())
             return _convert(param)
@@ -1947,6 +1960,7 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
             Composition_Base,
             ComponentsMeta,
             types.MethodType,
+            types.ModuleType,
             functools.partial,
         )
         alias_names = {p.name for p in self.class_parameters if isinstance(p, ParameterAlias)}
@@ -2536,10 +2550,10 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
                     inspect.isclass(param_value) and
                     inspect.isclass(getattr(self.defaults, param_name))
                     and issubclass(param_value, getattr(self.defaults, param_name))):
-                    # Assign instance to target and move on
-                    #  (compatiblity check no longer needed and can't handle function)
-                    target_set[param_name] = param_value()
-                    continue
+                # Assign instance to target and move on
+                #  (compatiblity check no longer needed and can't handle function)
+                target_set[param_name] = param_value()
+                continue
 
             # Check if param value is of same type as one with the same name in defaults
             #    don't worry about length
@@ -2818,11 +2832,14 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
 
         # Specification is a standard python function, so wrap as a UserDefnedFunction
         # Note:  parameter_ports for function's parameters will be created in_instantiate_attributes_after_function
-        if isinstance(function, types.FunctionType):
-            function = UserDefinedFunction(default_variable=function_variable,
-                                                custom_function=function,
-                                                owner=self,
-                                                context=context)
+        if isinstance(function, (types.FunctionType, str)):
+            function = UserDefinedFunction(
+                default_variable=function_variable,
+                custom_function=function,
+                owner=self,
+                context=context,
+                **function_params,
+            )
 
         # Specification is an already implemented Function
         elif isinstance(function, Function):
@@ -3512,6 +3529,81 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
             if obj not in visited:
                 visited.add(obj)
                 obj._propagate_most_recent_context(context, visited)
+
+    def all_dependent_parameters(
+        self,
+        filter_name: typing.Union[str, typing.Iterable[str]] = None,
+        filter_regex: typing.Union[str, typing.Iterable[str]] = None,
+    ):
+        """Dictionary of Parameters of this Component and its \
+        `_dependent_components` filtered by **filter_name** and \
+        **filter_regex**. If no filter is specified, all Parameters \
+        are included.
+
+        Args:
+            filter_name (Union[str, Iterable[str]], optional): The \
+                exact name or names of Parameters to include. Defaults \
+                to None.
+            filter_regex (Union[str, Iterable[str]], optional): \
+                Regular expression patterns. If any pattern matches a \
+                Parameter name (using re.match), it will be included \
+                in the result. Defaults to None.
+
+        Returns:
+            dict[Parameter:Component]: Dictionary of filtered Parameters
+        """
+        def _all_dependent_parameters(obj, filter_name, filter_regex, visited):
+            parameters = {}
+
+            if isinstance(filter_name, str):
+                filter_name = [filter_name]
+
+            if isinstance(filter_regex, str):
+                filter_regex = [filter_regex]
+
+            if filter_name is not None:
+                filter_name = set(filter_name)
+
+            try:
+                filter_regex = [re.compile(r) for r in filter_regex]
+            except TypeError:
+                pass
+
+            for p in obj.parameters:
+                include = filter_name is None and filter_regex is None
+
+                if filter_name is not None:
+                    if p.name in filter_name:
+                        include = True
+
+                if not include and filter_regex is not None:
+                    for r in filter_regex:
+                        if r.match(p.name):
+                            include = True
+                            break
+
+                # owner check is primarily for value parameter on
+                # Composition which is deleted in
+                # ba56af82585e2d61f5b5bd13d9a19b7ee3b60124 presumably
+                # for clarity (results is used instead)
+                if include and p._owner._owner is obj:
+                    parameters[p] = obj
+
+            for c in obj._dependent_components:
+                if c not in visited:
+                    visited.add(c)
+                    parameters.update(
+                        _all_dependent_parameters(
+                            c,
+                            filter_name,
+                            filter_regex,
+                            visited
+                        )
+                    )
+
+            return parameters
+
+        return _all_dependent_parameters(self, filter_name, filter_regex, set())
 
     @property
     def _dict_summary(self):
