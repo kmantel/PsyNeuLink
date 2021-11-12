@@ -699,7 +699,7 @@ def _outcome_getter(owning_component=None, context=None):
     """Return array of values of outcome_input_ports"""
     try:
         return np.array([port.parameters.value._get(context) for port in owning_component.outcome_input_ports])
-    except TypeError:
+    except (AttributeError, TypeError):
         return None
 
 def _net_outcome_getter(owning_component=None, context=None):
@@ -1180,6 +1180,14 @@ class ControlMechanism(ModulatoryMechanism_Base):
             constructor_argument='control'
         )
 
+        outcome_input_ports = Parameter(
+            [OUTCOME],
+            stateful=False,
+            loggable=False,
+            read_only=True,
+            structural=True,
+        )
+
         def _parse_output_ports(self, output_ports):
             def is_2tuple(o):
                 return isinstance(o, tuple) and len(o) == 2
@@ -1486,7 +1494,11 @@ class ControlMechanism(ModulatoryMechanism_Base):
         other_input_ports = input_ports or []
 
         # FIX 11/3/21: THIS SHOULD BE MODIFIED TO BE A LIST, THAT CONTAINS REFERENCES TO THE OUTCOME InputPorts
-        self.outcome_input_ports = ContentAddressableList(component_type=OutputPort)
+        self.parameters.outcome_input_ports._set(
+            ContentAddressableList(component_type=OutputPort),
+            context=context,
+            override=True
+        )
 
         # If ObjectiveMechanism is specified, instantiate it and OUTCOME InputPort that receives projection from it
         if self.objective_mechanism:
