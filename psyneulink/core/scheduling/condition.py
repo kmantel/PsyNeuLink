@@ -8,6 +8,8 @@
 
 # ********************************************* Condition **************************************************************
 
+import collections
+import copy
 import functools
 import inspect
 
@@ -16,10 +18,11 @@ import graph_scheduler
 
 from psyneulink.core.globals.context import handle_external_context
 from psyneulink.core.globals.json import JSONDumpable
-from psyneulink.core.globals.keywords import MODEL_SPEC_ID_TYPE
+from psyneulink.core.globals.keywords import MODEL_SPEC_ID_TYPE, comparison_operators
 from psyneulink.core.globals.parameters import parse_context
 
-__all__ = graph_scheduler.condition.__all__
+__all__ = copy.copy(graph_scheduler.condition.__all__)
+__all__.extend(['Threshold'])
 
 
 def _create_as_pnl_condition(condition):
@@ -152,3 +155,35 @@ _doc_subs = {
         )
     ]
 }
+
+
+class Threshold(graph_scheduler.condition._DependencyValidation, Condition):
+    def __init__(
+        self, dependency, parameter, threshold, comparator, indices=None
+    ):
+        if comparator not in comparison_operators:
+            raise graph_scheduler.ConditionError(f'Operator must be one of {list(comparison_operators.keys())}')
+
+        if parameter not in dependency.parameters:
+            raise graph_scheduler.ConditionError(f'{dependency} has no {parameter} parameter')
+
+        if (
+            not isinstance(indices, graph_scheduler.TimeScale)
+            and not isinstance(indices, collections.Iterable)
+        ):
+            indices = [indices]
+
+        def func(dependency, parameter, threshold, comparator, indices, execution_id=None):
+            param_value = self.get_parameter_value(execution_id)
+            if isinstance(indices, graph_scheduler.TimeScale):
+                param_value = param_value._get_by_time_scale(indices)
+            elif indices is not None:
+                for i in indices:
+                    param_value = param_value[i]
+
+            return comparison_operators[comparator](float(param_value), threshold)
+
+        super().__init__(func, dependency, parameter, threshold, comparator, indices)
+
+    def get_parameter_value(self, execution_id=None):
+        return getattr(self.dependency.parameters, self.parameter).get(execution_id)
