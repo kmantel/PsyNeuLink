@@ -159,7 +159,7 @@ _doc_subs = {
 
 class Threshold(graph_scheduler.condition._DependencyValidation, Condition):
     def __init__(
-        self, dependency, parameter, threshold, comparator, indices=None
+        self, dependency, parameter, threshold, comparator, indices=None, atol=0, rtol=0,
     ):
         if comparator not in comparison_operators:
             raise graph_scheduler.ConditionError(f'Operator must be one of {list(comparison_operators.keys())}')
@@ -173,7 +173,11 @@ class Threshold(graph_scheduler.condition._DependencyValidation, Condition):
         ):
             indices = [indices]
 
-        def func(dependency, parameter, threshold, comparator, indices, execution_id=None):
+        tolerance_value = rtol * abs(threshold) + atol
+
+        def func(
+            dependency, parameter, threshold, comparator, indices, atol, rtol, execution_id
+        ):
             param_value = self.get_parameter_value(execution_id)
             if isinstance(indices, graph_scheduler.TimeScale):
                 param_value = param_value._get_by_time_scale(indices)
@@ -181,9 +185,37 @@ class Threshold(graph_scheduler.condition._DependencyValidation, Condition):
                 for i in indices:
                     param_value = param_value[i]
 
-            return comparison_operators[comparator](float(param_value), threshold)
+            param_value = float(param_value)
 
-        super().__init__(func, dependency, parameter, threshold, comparator, indices)
+            if tolerance_value == 0:
+                return comparison_operators[comparator](param_value, threshold)
+            else:
+                if comparator == '==':
+                    return abs(param_value - threshold) <= tolerance_value
+                elif comparator == '!=':
+                    return abs(param_value - threshold) > tolerance_value
+                elif comparator in {'<', '<='}:
+                    return comparison_operators[comparator](
+                        param_value, threshold + tolerance_value
+                    )
+                elif comparator in {'>', '>='}:
+                    return comparison_operators[comparator](
+                        param_value, threshold - tolerance_value
+                    )
+                else:
+                    # values for comparator are validated on construction so this should not occur
+                    assert False
+
+        super().__init__(
+            func,
+            dependency=dependency,
+            parameter=parameter,
+            threshold=threshold,
+            comparator=comparator,
+            indices=indices,
+            atol=atol,
+            rtol=rtol,
+        )
 
     def get_parameter_value(self, execution_id=None):
         return getattr(self.dependency.parameters, self.parameter).get(execution_id)

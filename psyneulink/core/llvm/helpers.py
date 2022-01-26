@@ -696,6 +696,8 @@ class ConditionGenerator:
             comparator = condition.comparator
             indices = condition.indices
 
+            tolerance_value = condition.rtol * abs(threshold) + condition.atol
+
             if isinstance(indices, TimeScale):
                 indices = [indices.value]
             elif indices is None:
@@ -742,14 +744,32 @@ class ConditionGenerator:
                     )
                 )
 
-            if is_integer(val) and isinstance(threshold, int):
+            if is_integer(val) and isinstance(threshold, int) and isinstance(tolerance_value, int):
                 cmp_method = builder.icmp_signed
-            elif is_floating_point(val) or isinstance(threshold, float):
+            elif is_floating_point(val) or isinstance(threshold, float) or isinstance(tolerance_value, float):
                 val = convert_type(builder, val, self.ctx.float_ty)
                 cmp_method = builder.fcmp_ordered
             else:
                 assert False, f"Unsupported type of '{param}' ({val.type}) or threshold ({type(threshold)})"
 
-            return cmp_method(comparator, val, val.type(threshold))
+            threshold = val.type(threshold)
+
+            if tolerance_value == 0:
+                return cmp_method(comparator, val, threshold)
+            else:
+                fabs = self.ctx.get_builtin("fabs", [val.type])
+                val_thresh_diff = builder.call(fabs, [builder.fsub(val, threshold)])
+                tolerance_value = val.type(tolerance_value)
+
+                if comparator == '==':
+                    return cmp_method('<=', val_thresh_diff, tolerance_value)
+                elif comparator == '!=':
+                    return cmp_method('>', val_thresh_diff, tolerance_value)
+                elif comparator in {'<', '<='}:
+                    return cmp_method(comparator, val, builder.fadd(threshold, tolerance_value))
+                elif comparator in {'>', '>='}:
+                    return cmp_method(comparator, val, builder.fsub(threshold, tolerance_value))
+                else:
+                    assert False, "Unsupported comparator: {}".format(comparator)
 
         assert False, "Unsupported scheduling condition: {}".format(condition)
