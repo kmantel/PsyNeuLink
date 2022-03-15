@@ -168,18 +168,38 @@ def test_write_json_file_multiple_comps(
 # Values are generated from running onnx function RandomUniform and
 # RandomNormal with parameters used in model_integrators.py (seed 0).
 # RandomNormal values are different on mac versus linux and windows
-if sys.platform == 'darwin':
-    onnx_integrators_fixed_seeded_noise = (
-        'runtime_params={A: {"noise": -0.9999843239784241}, B: {"noise": -0.8846577405929565},'
-        'C: {"noise": 0.0576711297035217}, D: {"noise": -0.49999216198921204},'
-        'E: {"noise": -0.2499941289424896} }'
-    )
+if sys.platform == 'linux':
+    onnx_integrators_fixed_seeded_noise = {
+        'A': [[-0.9999843239784241]],
+        'B': [[-1.1295466423034668]],
+        'C': [[-0.0647732987999916]],
+        'D': [[-0.499992161989212]],
+        'E': [[-0.2499941289424896]],
+    }
+elif sys.platform == 'win32':
+    onnx_integrators_fixed_seeded_noise = {
+        'A': [[0.0976270437240601]],
+        'B': [[-0.4184607267379761]],
+        'C': [[0.290769636631012]],
+        'D': [[0.04881352186203]],
+        'E': [[0.1616101264953613]],
+    }
 else:
-    onnx_integrators_fixed_seeded_noise = (
-        'runtime_params={A: {"noise": -0.9999843239784241}, B: {"noise": -1.1295466423034668},'
-        'C: {"noise": -0.06477329879999161}, D: {"noise": -0.49999216198921204},'
-        'E: {"noise": -0.2499941289424896} }'
-    )
+    assert sys.platform == 'darwin'
+    onnx_integrators_fixed_seeded_noise = {
+        'A': [[-0.9999550580978394]],
+        'B': [[-0.8846577405929565]],
+        'C': [[0.0576711297035217]],
+        'D': [[-0.4999775290489197]],
+        'E': [[-0.2499831467866898]],
+    }
+
+integrators_runtime_params = (
+    'runtime_params={'
+    + ','.join([f'{k}: {{ "noise": {v} }}' for k, v in onnx_integrators_fixed_seeded_noise.items()])
+    + '}'
+)
+
 
 @pytest.mark.parametrize(
     'filename, composition_name, input_dict, simple_edge_format, run_args',
@@ -190,8 +210,8 @@ else:
         ('model_udfs.py', 'comp', {'A': [[10.0]]}, True, ''),
         ('model_udfs.py', 'comp', {'A': 10}, False, ''),
         ('model_varied_matrix_sizes.py', 'comp', {'A': [[1.0, 2.0]]}, True, ''),
-        ('model_integrators.py', 'comp', {'A': 1.0}, True, onnx_integrators_fixed_seeded_noise),
-        ('model_integrators.py', 'comp', {'A': 1.0}, False, onnx_integrators_fixed_seeded_noise),
+        ('model_integrators.py', 'comp', {'A': 1.0}, True, integrators_runtime_params),
+        ('model_integrators.py', 'comp', {'A': 1.0}, False, integrators_runtime_params),
     ]
 )
 def test_mdf_equivalence(filename, composition_name, input_dict, simple_edge_format, run_args):
