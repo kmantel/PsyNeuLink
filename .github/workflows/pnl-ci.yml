@@ -79,48 +79,10 @@ jobs:
       with:
         features: 'dev'
 
-    - name: Lint with flake8
-      shell: bash
-      run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: seeds
+      run: python generate-mdf-model-noise-nums.py
 
     - name: Test with pytest
       timeout-minutes: 180
-      run: pytest --junit-xml=tests_out.xml --verbosity=0 -n auto ${{ matrix.extra-args }}
+      run: pytest tests/json/test_json.py -k "integrator" --junit-xml=tests_out.xml --verbosity=0 -n 0 ${{ matrix.extra-args }}
 
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}-${{ matrix.extra-args }}
-        path: tests_out.xml
-        retention-days: 5
-      if: success() || failure()
-
-    - name: Upload coveralls code coverage
-      if: contains(matrix.extra-args, '--cov=psyneulink')
-      shell: bash
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: |
-        if [ -n "$COVERALLS_REPO_TOKEN" ]; then
-          pip install coveralls
-          coveralls
-        else
-          echo "::warning::Not uploading to coveralls.io, token not available!"
-        fi
-
-    - name: Build dist
-      run: |
-        pip install setuptools wheel
-        python setup.py sdist bdist_wheel
-
-    - name: Upload dist packages
-      uses: actions/upload-artifact@v3
-      with:
-        name: dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}
-        path: dist/
-        retention-days: 2
