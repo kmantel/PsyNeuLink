@@ -7371,3 +7371,68 @@ class TestInputSpecsDocumentationExamples:
         )
 
         assert np.allclose(check_inputs, [[[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]])
+
+    @pytest.mark.parametrize(
+        'removed_nodes, expected_dependencies',
+        [
+            (['A'], {'B': set(), 'C': set('B'), 'D': set('C'), 'E': set('C')}),
+        ]
+    )
+    def test_remove_node(self, removed_nodes, expected_dependencies):
+        def stringify_dependency_dict(dd):
+            return {node.name: {n.name for n in deps} for node, deps in dd.items()}
+
+        A = pnl.TransferMechanism(name='A')
+        B = pnl.TransferMechanism(name='B')
+        C = pnl.TransferMechanism(name='C')
+        D = pnl.TransferMechanism(name='D')
+        E = pnl.TransferMechanism(name='E')
+
+        for i, n in enumerate(removed_nodes):
+            removed_nodes[i] = eval(removed_nodes[i])
+
+        comp = pnl.Composition(
+            pathways=[
+                [A, C, D],
+                [A, C, D],
+                [B, C, D],
+                [B, C, E],
+            ]
+        )
+
+        comp.remove_nodes(removed_nodes)
+
+        assert stringify_dependency_dict(comp.scheduler.dependency_dict) == expected_dependencies
+        assert stringify_dependency_dict(comp.graph.dependency_dict) == expected_dependencies
+        assert stringify_dependency_dict(comp.graph_processing.dependency_dict) == expected_dependencies
+
+        for node in removed_nodes:
+            assert node not in comp.nodes
+            assert node not in comp.nodes_to_roles
+            assert node not in comp.graph.comp_to_vertex
+            assert node not in comp.graph_processing.comp_to_vertex
+
+            for proj in node.afferents + node.efferents:
+                assert proj not in comp.projections
+
+
+        comp.run(inputs={n: [0] for n in comp.get_nodes_by_role(pnl.NodeRole.INPUT)})
+
+
+    def test_remove_node_control(self):
+        A = pnl.TransferMechanism(name='A')
+        B = pnl.TransferMechanism(name='B')
+        C = pnl.TransferMechanism(name='C')
+        D = pnl.TransferMechanism(name='D')
+        E = pnl.TransferMechanism(name='E')
+
+        comp = pnl.Composition(pathways=[
+            [A, C, D],
+            [A, C, D],
+            [B, C, D],
+            [B, C, E],
+        ])
+
+        comp.remove_nodes(rem)
+
+        assert comp.graph_processing
