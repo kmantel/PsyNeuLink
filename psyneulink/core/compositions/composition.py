@@ -4119,6 +4119,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for proj in node.afferents + node.efferents:
             self.remove_projection(proj)
 
+        for param_port in node.parameter_ports:
+            for proj in param_port.mod_afferents:
+                if proj.sender.owner is self.controller:
+                    assert self.controller is not None
+                    self.remove_projection(proj)
+
         self.graph.remove_component(node)
         del self.nodes_to_roles[node]
 

@@ -29,6 +29,7 @@ from psyneulink.core.components.ports.inputport import InputPort
 from psyneulink.core.components.ports.modulatorysignals.controlsignal import ControlSignal, CostFunctions
 from psyneulink.core.components.projections.modulatory.controlprojection import ControlProjection
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
+from psyneulink.core.compositions import composition
 from psyneulink.core.compositions.composition import Composition, CompositionError, NodeRole
 from psyneulink.core.compositions.pathway import Pathway, PathwayRole
 from psyneulink.core.globals.context import Context
@@ -7191,8 +7192,8 @@ class TestMisc:
         D = pnl.TransferMechanism(name='D')
         E = pnl.TransferMechanism(name='E')
 
-        for i in range(len(removed_nodes)):
-            removed_nodes[i] = eval(removed_nodes[i])
+        locs = locals()
+        removed_nodes = [locs[n] for n in removed_nodes]
 
         comp = pnl.Composition(
             pathways=[
@@ -7242,13 +7243,8 @@ class TestMisc:
         A = pnl.TransferMechanism(name='A', function=pnl.Linear(slope=slope_A))
         B = pnl.TransferMechanism(name='B', function=pnl.Linear(slope=slope_B))
 
-        for i in range(len(removed_nodes)):
-            try:
-                removed_nodes[i] = eval(removed_nodes[i])
-            except TypeError:
-                # pytest modifies the actual list used in parametrization
-                # so eval needs to happen only once per removed_nodes item
-                pass
+        locs = locals()
+        removed_nodes = [locs[n] for n in removed_nodes]
 
         search_space_len = sum(1 if isinstance(s, tuple) else 0 for s in [slope_A, slope_B])
 
@@ -7259,8 +7255,10 @@ class TestMisc:
             )
         )
         comp.remove_nodes(removed_nodes)
-        comp.show_graph(show_cim=True, show_controller=True)
 
+        for n in removed_nodes:
+            for proj in n.parameter_ports['slope'].all_afferents:
+                assert not proj.is_active_in_composition(comp), f'{n.name} {proj.name}'
 
 
 class TestInputSpecsDocumentationExamples:
