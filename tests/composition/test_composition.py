@@ -1,9 +1,11 @@
+import collections
 import functools
 import logging
 from timeit import timeit
 
 import numpy as np
 import pytest
+from typecheck.framework import enable
 
 import psyneulink as pnl
 from psyneulink.core.components.functions.nonstateful.combinationfunctions import LinearCombination
@@ -18,6 +20,7 @@ from psyneulink.core.components.mechanisms.modulatory.control.controlmechanism i
 from psyneulink.core.components.mechanisms.modulatory.control.optimizationcontrolmechanism import \
     OptimizationControlMechanism
 from psyneulink.core.components.mechanisms.modulatory.learning.learningmechanism import LearningMechanism
+from psyneulink.core.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
 from psyneulink.core.components.mechanisms.processing.integratormechanism import IntegratorMechanism
 from psyneulink.core.components.mechanisms.processing.objectivemechanism import ObjectiveMechanism
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
@@ -7167,6 +7170,98 @@ class TestMisc:
         comp.add_node(Reward)
         # no assert, should only complete without error
 
+    @pytest.mark.parametrize(
+        'removed_nodes, expected_dependencies',
+        [
+            (['A'], {'B': set(), 'C': set('B'), 'D': set('C'), 'E': set('C')}),
+            (['C'], {'A': set(), 'B': set(), 'D': set(), 'E': set()}),
+            (['E'], {'A': set(), 'B': set(), 'C': {'A', 'B'}, 'D': set('C')}),
+            (['A', 'B'], {'C': set(), 'D': set('C'), 'E': set('C')}),
+            (['D', 'E'], {'A': set(), 'B': set(), 'C': {'A', 'B'}}),
+            (['A', 'B', 'C', 'D', 'E'], {}),
+        ]
+    )
+    def test_remove_node(self, removed_nodes, expected_dependencies):
+        def stringify_dependency_dict(dd):
+            return {node.name: {n.name for n in deps} for node, deps in dd.items()}
+
+        A = pnl.TransferMechanism(name='A')
+        B = pnl.TransferMechanism(name='B')
+        C = pnl.TransferMechanism(name='C')
+        D = pnl.TransferMechanism(name='D')
+        E = pnl.TransferMechanism(name='E')
+
+        for i in range(len(removed_nodes)):
+            removed_nodes[i] = eval(removed_nodes[i])
+
+        comp = pnl.Composition(
+            pathways=[
+                [A, C, D],
+                [A, C, D],
+                [B, C, D],
+                [B, C, E],
+            ]
+        )
+
+        comp.remove_nodes(removed_nodes)
+
+        assert stringify_dependency_dict(comp.scheduler.dependency_dict) == expected_dependencies
+        assert stringify_dependency_dict(comp.graph_processing.dependency_dict) == expected_dependencies
+
+        proj_dependencies = collections.defaultdict(set)
+        for node in comp.nodes:
+            if node not in removed_nodes:
+                for proj in node.afferents:
+                    if (
+                        proj.sender.owner not in removed_nodes
+                        and proj.receiver.owner not in removed_nodes
+                        and not isinstance(proj.sender.owner, CompositionInterfaceMechanism)
+                        and not isinstance(proj.receiver.owner, CompositionInterfaceMechanism)
+                    ):
+                        proj_dependencies[node.name].add(proj.name)
+                        proj_dependencies[proj.name].add(proj.sender.owner.name)
+        assert stringify_dependency_dict(comp.graph.dependency_dict) == {**expected_dependencies, **proj_dependencies}
+
+        for node in removed_nodes:
+            assert node not in comp.nodes
+            assert node not in comp.nodes_to_roles
+            assert node not in comp.graph.comp_to_vertex
+            assert node not in comp.graph_processing.comp_to_vertex
+
+            for proj in node.afferents + node.efferents:
+                assert proj not in comp.projections
+
+
+        comp.run(inputs={n: [0] for n in comp.get_nodes_by_role(pnl.NodeRole.INPUT)})
+
+
+    @pytest.mark.parametrize('slope_A', [1, (1, pnl.CONTROL)])
+    @pytest.mark.parametrize('slope_B', [1, (1, pnl.CONTROL)])
+    @pytest.mark.parametrize('removed_nodes', [['A'], ['B'], ['A', 'B']])
+    def test_remove_node_control(self, slope_A, slope_B, removed_nodes):
+        A = pnl.TransferMechanism(name='A', function=pnl.Linear(slope=slope_A))
+        B = pnl.TransferMechanism(name='B', function=pnl.Linear(slope=slope_B))
+
+        for i in range(len(removed_nodes)):
+            try:
+                removed_nodes[i] = eval(removed_nodes[i])
+            except TypeError:
+                # pytest modifies the actual list used in parametrization
+                # so eval needs to happen only once per removed_nodes item
+                pass
+
+        search_space_len = sum(1 if isinstance(s, tuple) else 0 for s in [slope_A, slope_B])
+
+        comp = pnl.Composition(pathways=[A, B])
+        comp.add_controller(
+            pnl.OptimizationControlMechanism(
+                agent_rep=comp, search_space=[0, 1] * search_space_len
+            )
+        )
+        comp.remove_nodes(removed_nodes)
+        comp.show_graph(show_cim=True, show_controller=True)
+
+
 
 class TestInputSpecsDocumentationExamples:
 
@@ -7371,68 +7466,3 @@ class TestInputSpecsDocumentationExamples:
         )
 
         assert np.allclose(check_inputs, [[[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]])
-
-    @pytest.mark.parametrize(
-        'removed_nodes, expected_dependencies',
-        [
-            (['A'], {'B': set(), 'C': set('B'), 'D': set('C'), 'E': set('C')}),
-        ]
-    )
-    def test_remove_node(self, removed_nodes, expected_dependencies):
-        def stringify_dependency_dict(dd):
-            return {node.name: {n.name for n in deps} for node, deps in dd.items()}
-
-        A = pnl.TransferMechanism(name='A')
-        B = pnl.TransferMechanism(name='B')
-        C = pnl.TransferMechanism(name='C')
-        D = pnl.TransferMechanism(name='D')
-        E = pnl.TransferMechanism(name='E')
-
-        for i, n in enumerate(removed_nodes):
-            removed_nodes[i] = eval(removed_nodes[i])
-
-        comp = pnl.Composition(
-            pathways=[
-                [A, C, D],
-                [A, C, D],
-                [B, C, D],
-                [B, C, E],
-            ]
-        )
-
-        comp.remove_nodes(removed_nodes)
-
-        assert stringify_dependency_dict(comp.scheduler.dependency_dict) == expected_dependencies
-        assert stringify_dependency_dict(comp.graph.dependency_dict) == expected_dependencies
-        assert stringify_dependency_dict(comp.graph_processing.dependency_dict) == expected_dependencies
-
-        for node in removed_nodes:
-            assert node not in comp.nodes
-            assert node not in comp.nodes_to_roles
-            assert node not in comp.graph.comp_to_vertex
-            assert node not in comp.graph_processing.comp_to_vertex
-
-            for proj in node.afferents + node.efferents:
-                assert proj not in comp.projections
-
-
-        comp.run(inputs={n: [0] for n in comp.get_nodes_by_role(pnl.NodeRole.INPUT)})
-
-
-    def test_remove_node_control(self):
-        A = pnl.TransferMechanism(name='A')
-        B = pnl.TransferMechanism(name='B')
-        C = pnl.TransferMechanism(name='C')
-        D = pnl.TransferMechanism(name='D')
-        E = pnl.TransferMechanism(name='E')
-
-        comp = pnl.Composition(pathways=[
-            [A, C, D],
-            [A, C, D],
-            [B, C, D],
-            [B, C, E],
-        ])
-
-        comp.remove_nodes(rem)
-
-        assert comp.graph_processing
