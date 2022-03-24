@@ -5,7 +5,6 @@ from timeit import timeit
 
 import numpy as np
 import pytest
-from typecheck.framework import enable
 
 import psyneulink as pnl
 from psyneulink.core.components.functions.nonstateful.combinationfunctions import LinearCombination
@@ -29,7 +28,6 @@ from psyneulink.core.components.ports.inputport import InputPort
 from psyneulink.core.components.ports.modulatorysignals.controlsignal import ControlSignal, CostFunctions
 from psyneulink.core.components.projections.modulatory.controlprojection import ControlProjection
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
-from psyneulink.core.compositions import composition
 from psyneulink.core.compositions.composition import Composition, CompositionError, NodeRole
 from psyneulink.core.compositions.pathway import Pathway, PathwayRole
 from psyneulink.core.globals.context import Context
