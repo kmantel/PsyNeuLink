@@ -7226,13 +7226,12 @@ class TestMisc:
             assert node not in comp.nodes_to_roles
             assert node not in comp.graph.comp_to_vertex
             assert node not in comp.graph_processing.comp_to_vertex
+            assert node not in comp.scheduler.conditions
 
             for proj in node.afferents + node.efferents:
                 assert proj not in comp.projections
 
-
         comp.run(inputs={n: [0] for n in comp.get_nodes_by_role(pnl.NodeRole.INPUT)})
-
 
     @pytest.mark.parametrize('slope_A', [1, (1, pnl.CONTROL)])
     @pytest.mark.parametrize('slope_B', [1, (1, pnl.CONTROL)])
