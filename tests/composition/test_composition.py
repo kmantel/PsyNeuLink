@@ -7257,6 +7257,42 @@ class TestMisc:
             for proj in n.parameter_ports['slope'].all_afferents:
                 assert not proj.is_active_in_composition(comp), f'{n.name} {proj.name}'
 
+    def test_remove_node_from_conditions(self):
+        def assert_conditions_do_not_contain(*args):
+            conds_queue = list(comp.scheduler.conditions.conditions.values())
+            while len(conds_queue) > 0:
+                cur_cond = conds_queue.pop()
+                deps = []
+
+                try:
+                    deps = [cur_cond.dependency]
+                except AttributeError:
+                    try:
+                        deps = cur_cond.dependencies
+                    except AttributeError:
+                        pass
+
+                for d in deps:
+                    if isinstance(d, pnl.Condition):
+                        conds_queue.append(d)
+                    assert d not in args
+
+        A = pnl.TransferMechanism(name='A')
+        B = pnl.TransferMechanism(name='B')
+        C = pnl.TransferMechanism(name='C')
+        D = pnl.TransferMechanism(name='D')
+
+        comp = pnl.Composition(pathways=[[A, D], [B, D], [C, D]])
+
+        comp.run(inputs={A: [0], B: [0], C: [0]})
+        comp.remove_node(A)
+        comp.run(inputs={B: [0], C: [0]})
+        assert_conditions_do_not_contain(A)
+
+        comp.remove_node(B)
+        comp.run(inputs={C: [0]})
+        assert_conditions_do_not_contain(A, B)
+
 
 class TestInputSpecsDocumentationExamples:
 
