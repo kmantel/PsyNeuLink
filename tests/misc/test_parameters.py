@@ -439,3 +439,125 @@ class TestSharedParameters:
                     raise
 
         delattr(pnl.AdaptiveIntegrator.Parameters, '_parse_noise')
+
+
+class TestSpecificationType:
+    @staticmethod
+    def _create_params_class_variant(cls_param, init_param, parent_class=pnl.Component):
+        if cls_param == 'NO_PARAMETERS' and init_param == 'NO_INIT':
+            class TestComponent(parent_class):
+                pass
+
+        elif cls_param == 'NO_PARAMETERS':
+            class TestComponent(parent_class):
+                def __init__(self, p=init_param):
+                    super().__init__(p=p)
+
+        elif init_param == 'NO_INIT':
+            class TestComponent(parent_class):
+                class Parameters(parent_class.Parameters):
+                    p = cls_param
+        else:
+            class TestComponent(parent_class):
+                class Parameters(parent_class.Parameters):
+                    p = cls_param
+
+                def __init__(self, p=init_param):
+                    super().__init__(p=p)
+
+        return TestComponent
+
+    @pytest.mark.parametrize(
+        'cls_param, init_param, param_default',
+        [
+            (1, 1, 1),
+            (1, None, 1),
+            (None, 1, 1),
+            (1, 'NO_INIT', 1),
+            ('foo', 'foo', 'foo'),
+            (np.array(1), np.array(1), np.array(1)),
+            (np.array([1]), np.array([1]), np.array([1])),
+        ]
+    )
+    def test_valid_assignment(self, cls_param, init_param, param_default):
+        TestComponent = TestSpecificationType._create_params_class_variant(cls_param, init_param)
+        assert TestComponent.defaults.p == param_default
+        assert TestComponent.parameters.p.default_value == param_default
+
+    @pytest.mark.parametrize(
+        'cls_param, init_param, param_default',
+        [
+            (1, 2, None),
+            (2, 1, None),
+            (1, 1.0, None),
+            (np.array(1), 1, None),
+            (np.array([1]), 1, None),
+            (np.array([1]), np.array(1), None),
+            ('foo', 'bar', None),
+        ]
+    )
+    def test_conflicting_assignments(self, cls_param, init_param, param_default):
+        with pytest.raises(AssertionError, match='Conflicting default parameter'):
+            TestSpecificationType._create_params_class_variant(cls_param, init_param)
+
+    @pytest.mark.parametrize(
+        'child_cls_param, child_init_param, parent_value, child_value',
+        [
+            ('NO_PARAMETERS', 'NO_INIT', 1, 1),
+            (2, 'NO_INIT', 1, 2),
+            ('NO_PARAMETERS', 2, 1, 2),
+            (2, 2, 1, 2),
+        ]
+    )
+    @pytest.mark.parametrize('parent_cls_param, parent_init_param', [(1, 1), (1, None), (None, 1)])
+    def test_inheritance(
+        self, parent_cls_param, parent_init_param, child_cls_param, child_init_param, parent_value, child_value
+    ):
+        TestParent = TestSpecificationType._create_params_class_variant(parent_cls_param, parent_init_param)
+        TestChild = TestSpecificationType._create_params_class_variant(child_cls_param, child_init_param, parent_class=TestParent)
+
+        assert TestParent.defaults.p == parent_value
+        assert TestParent.parameters.p.default_value == parent_value
+
+        assert TestChild.defaults.p == child_value
+        assert TestChild.parameters.p.default_value == child_value
+
+    @pytest.mark.parametrize('set_from_defaults', [True, False])
+    @pytest.mark.parametrize('child_cls_param, child_init_param', [(1, 1), (1, None), (None, 1), ('NO_PARAMETERS', 1), (1, 'NO_INIT')])
+    @pytest.mark.parametrize('parent_cls_param, parent_init_param', [(0, 0), (0, None)])
+    # @pytest.mark.parametrize('grandchild_cls_param, grandchild_init_param', [(2, None), (None, 2), ('NO_PARAMETERS', 2), (2, 'NO_INIT')])
+    def test_set_and_reset(self, parent_cls_param, parent_init_param, child_cls_param, child_init_param, set_from_defaults):
+        def set_p_default(obj, val):
+            if set_from_defaults:
+                obj.defaults.p = val
+            else:
+                obj.parameters.p.default_value = val
+
+        TestParent = TestSpecificationType._create_params_class_variant(parent_cls_param, parent_init_param)
+        TestChild = TestSpecificationType._create_params_class_variant(child_cls_param, child_init_param, parent_class=TestParent)
+        TestGrandchild = TestSpecificationType._create_params_class_variant('NO_PARAMETERS', 'NO_INIT', parent_class=TestChild)
+
+        set_p_default(TestChild, 10)
+        assert TestParent.defaults.p == 0
+        assert TestChild.defaults.p == 10
+        assert TestGrandchild.defaults.p == 10
+
+        set_p_default(TestGrandchild, 20)
+        assert TestParent.defaults.p == 0
+        assert TestChild.defaults.p == 10
+        assert TestGrandchild.defaults.p == 20
+
+        TestChild.parameters.p.reset()
+        assert TestParent.defaults.p == 0
+        assert TestChild.defaults.p == 1
+        assert TestGrandchild.defaults.p == 20
+
+        TestGrandchild.parameters.p.reset()
+        assert TestParent.defaults.p == 0
+        assert TestChild.defaults.p == 1
+        assert TestGrandchild.defaults.p == 1
+
+        set_p_default(TestGrandchild, 20)
+        assert TestParent.defaults.p == 0
+        assert TestChild.defaults.p == 1
+        assert TestGrandchild.defaults.p == 20

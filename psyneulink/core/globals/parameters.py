@@ -99,7 +99,10 @@ To create new Parameters, reference this example of a new class *B*
     class B(A):
         class Parameters(A.Parameters):
             p = 1.0
-            q = Parameter(1.0, modulable=True)
+            q = Parameter(modulable=True)
+
+        def __init__(p=None, q=1.0):
+            super(p=p, q=q)
 
 
 - create an inner class Parameters on the Component, inheriting from the parent Component's Parameters class
@@ -108,6 +111,8 @@ To create new Parameters, reference this example of a new class *B*
     - as with *p*, specifying only a value uses default values for the attributes of the Parameter
     - as with *q*, specifying an explicit instance of the Parameter class allows you to modify the
       `Parameter attributes <Parameter_Attributes_Table>`
+- default values for the parameters can be specified in the Parameters class body, or in the
+  arguments for *B*.__init__. If both are specified and the values differ, an exception will be raised
 - if you want assignments to parameter *p* to be validated, add a method _validate_p(value),
   that returns None if value is a valid assignment, or an error string if value is not a valid assignment
 - if you want all values set to *p* to be parsed beforehand, add a method _parse_p(value) that returns the parsed value
@@ -295,6 +300,7 @@ Class Reference
 
 import collections
 import copy
+import inspect
 import itertools
 import logging
 import types
@@ -307,7 +313,7 @@ from psyneulink.core.globals.context import Context, ContextError, ContextFlags,
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
 from psyneulink.core.globals.utilities import call_with_pruned_args, copy_iterable_with_shared, \
-    get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, unproxy_weakproxy, create_union_set
+    get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, unproxy_weakproxy, create_union_set, safe_equals, get_function_default_value
 from psyneulink.core.rpc.graph_pb2 import Entry, ndArray
 
 __all__ = [
@@ -390,6 +396,14 @@ def copy_parameter_value(value, shared_types=None, memo=None):
             return copy.deepcopy(value, memo)
         else:
             return value
+
+
+def get_init_signature_default_value(obj, parameter):
+    # only use the signature if it's on the owner class, not a parent
+    if '__init__' in obj.__dict__:
+        return get_function_default_value(obj.__init__, parameter)
+    else:
+        return inspect._empty
 
 
 class ParametersTemplate:
@@ -1028,20 +1042,38 @@ class Parameter(ParameterBase):
             Resets *default_value* to the value specified in its `Parameters` class declaration, or
             inherits from parent `Parameters` classes if it is not explicitly specified.
         """
+        # check for default in Parameters class
         try:
-            self.default_value = self._owner.__class__.__dict__[self.name].default_value
-        except (AttributeError, KeyError):
-            try:
-                self.default_value = self._owner.__class__.__dict__[self.name]
-            except KeyError:
-                if self._parent is not None:
-                    self._inherited = True
-                else:
-                    raise ParameterError(
-                        'Parameter {0} cannot be reset, as it does not have a default specification '
-                        'or a parent. This may occur if it was added dynamically rather than in an'
-                        'explict Parameters inner class on a Component'
-                    )
+            cls_param_value = self._owner.__class__.__dict__[self.name]
+        except KeyError:
+            pass
+        else:
+            if self._owner._param_is_specified_in_class(self.name):
+                try:
+                    val = cls_param_value.default_value
+                except AttributeError:
+                    val = cls_param_value
+
+                # TODO: replace this when allowing None as a proper value
+                if val is not None:
+                    self.default_value = val
+                    return
+
+        # check for default in __init__ signature
+        init_param_value = get_init_signature_default_value(self._owner._owner, self.name)
+        if init_param_value != inspect._empty and init_param_value is not None:
+            self.default_value = init_param_value
+            return
+
+        # no default specified, must be inherited or invalid
+        if self._parent is not None:
+            self._inherited = True
+        else:
+            raise ParameterError(
+                'Parameter {0} cannot be reset, as it does not have a default specification '
+                'or a parent. This may occur if it was added dynamically rather than in an'
+                'explict Parameters inner class on a Component'
+            )
 
     def _register_alias(self, name):
         if self.aliases is None:
@@ -1951,16 +1983,20 @@ class ParametersBase(ParametersTemplate):
     _validation_method_prefix = '_validate_'
 
     def __init__(self, owner, parent=None):
+        self._initializing = True
+
         super().__init__(owner=owner, parent=parent)
 
         aliases_to_create = set()
         for param_name, param_value in self.values(show_all=True).items():
+            constructor_default = get_init_signature_default_value(self._owner, param_name)
+
             if (
-                param_name in self.__class__.__dict__
-                and (
-                    param_name not in self._parent.__class__.__dict__
-                    or self._parent.__class__.__dict__[param_name] is not self.__class__.__dict__[param_name]
+                (
+                    constructor_default is not None
+                    and constructor_default is not inspect._empty
                 )
+                or self._param_is_specified_in_class(param_name)
             ):
                 # KDM 6/25/18: NOTE: this may need special handling if you're creating a ParameterAlias directly
                 # in a class's Parameters class
@@ -1985,6 +2021,8 @@ class ParametersBase(ParametersTemplate):
 
         for param, value in self.values(show_all=True).items():
             self._validate(param, value.default_value)
+
+        self._initializing = False
 
     def __getattr__(self, attr):
         def throw_error():
@@ -2028,6 +2066,10 @@ class ParametersBase(ParametersTemplate):
                     value.name = attr
 
                 value._owner = self
+
+                if self._initializing and not value._inherited:
+                    value.default_value = self._reconcile_value_with_init_default(attr, value.default_value)
+
                 super().__setattr__(attr, value)
 
                 if value.aliases is not None:
@@ -2079,6 +2121,9 @@ class ParametersBase(ParametersTemplate):
                 except AttributeError:
                     current_value = None
 
+                if self._initializing:
+                    value = self._reconcile_value_with_init_default(attr, value)
+
                 # assign value to default_value
                 if isinstance(current_value, (Parameter, ParameterAlias)):
                     # construct a copy because the original may be used as a base for reset()
@@ -2098,6 +2143,39 @@ class ParametersBase(ParametersTemplate):
 
             self._validate(attr, getattr(self, attr).default_value)
             self._register_parameter(attr)
+
+    def _reconcile_value_with_init_default(self, attr, value):
+        constructor_default = get_init_signature_default_value(self._owner, attr)
+        if constructor_default is not None and constructor_default is not inspect._empty:
+            if (
+                value is None
+                or not self._param_is_specified_in_class(attr)
+                or (
+                    type(constructor_default) == type(value)
+                    and safe_equals(constructor_default, value)
+                )
+            ):
+                # TODO: consider placing a developer-focused warning here?
+                return constructor_default
+            else:
+                assert False, (
+                    'PROGRAM ERROR: '
+                    f'Conflicting default parameter values assigned for Parameter {attr} of {self._owner} in:'
+                    f'\n\t{self._owner}.Parameters: {value}'
+                    f'\n\t{self._owner}.__init__: {constructor_default}'
+                    f'\nRemove one of these assignments. Prefer removing the default_value of {attr} in {self._owner}.Parameters'
+                )
+
+        return value
+
+    def _param_is_specified_in_class(self, param_name):
+        return (
+            param_name in self.__class__.__dict__
+            and (
+                param_name not in self._parent.__class__.__dict__
+                or self._parent.__class__.__dict__[param_name] is not self.__class__.__dict__[param_name]
+            )
+        )
 
     def _get_prefixed_method(
         self,
