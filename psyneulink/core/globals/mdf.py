@@ -1438,7 +1438,7 @@ def generate_script_from_mdf(model_input, outfile=None):
         return model_output
 
 
-def generate_json(*compositions, simple_edge_format=True):
+def generate_json(*compositions, simple_edge_format=True, sort_keys=True):
     """
         Generate the `general JSON format <JSON_Model_Specification>`
         for one or more `Compositions <Composition>` and associated
@@ -1497,7 +1497,7 @@ def get_mdf_serialized(*compositions, fmt='json', simple_edge_format=True):
         ) from e
 
 
-def write_json_file(compositions, filename:str, path:str=None, simple_edge_format=True):
+def write_json_file(compositions, filename:str, path:str=None, simple_edge_format=True, sort_keys=True):
     """
         Write one or more `Compositions <Composition>` and associated objects to file in the `general JSON format
         <JSON_Model_Specification>`
