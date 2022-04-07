@@ -257,12 +257,13 @@ def test_copy():
 @pytest.mark.parametrize(
     'cls_, kwargs, parameter, is_user_specified',
     [
-        (pnl.AdaptiveIntegrator, {'rate': None}, 'rate', False),
-        (pnl.AdaptiveIntegrator, {'rate': None}, 'multiplicative_param', False),
+        (pnl.AdaptiveIntegrator, {'rate': 0.5}, 'additive_param', False),
         (pnl.AdaptiveIntegrator, {'rate': 0.5}, 'rate', True),
         (pnl.AdaptiveIntegrator, {'rate': 0.5}, 'multiplicative_param', True),
-        (pnl.TransferMechanism, {'integration_rate': None}, 'integration_rate', False),
         (pnl.TransferMechanism, {'integration_rate': 0.5}, 'integration_rate', True),
+        (pnl.TransferMechanism, {'initial_value': 0}, 'initial_value', True),
+        (pnl.TransferMechanism, {'initial_value': None}, 'initial_value', False),
+        (pnl.TransferMechanism, {}, 'initial_value', False),
     ]
 )
 def test_user_specified(cls_, kwargs, parameter, is_user_specified):

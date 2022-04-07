@@ -848,7 +848,7 @@ from psyneulink.core.globals.keywords import \
     CURRENT_VALUE, LESS_THAN_OR_EQUAL, MAX_ABS_DIFF, \
     NAME, NOISE, NUM_EXECUTIONS_BEFORE_FINISHED, OWNER_VALUE, RESET, RESULT, RESULTS, \
     SELECTION_FUNCTION_TYPE, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE
-from psyneulink.core.globals.parameters import Parameter, FunctionParameter
+from psyneulink.core.globals.parameters import Parameter, FunctionParameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import is_pref_set
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.utilities import \
@@ -1218,7 +1218,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         function = Parameter(Linear, stateful=False, loggable=False, dependencies='integrator_function')
         integrator_function_value = Parameter([[0]], read_only=True)
         on_resume_integrator_mode = Parameter(CURRENT_VALUE, stateful=False, loggable=False)
-        clip = None
+        clip = Parameter()
         noise = FunctionParameter(0.0, function_name='integrator_function')
         termination_measure = Parameter(
             Distance(metric=MAX_ABS_DIFF),
@@ -1283,6 +1283,7 @@ class TransferMechanism(ProcessingMechanism_Base):
                 return f"must be boolean comparison operator or one of the following strings:" \
                        f" {','.join(comparison_operators.keys())}."
 
+    @check_user_specified
     @tc.typecheck
     def __init__(self,
                  default_variable=None,

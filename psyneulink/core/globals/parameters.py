@@ -300,6 +300,7 @@ Class Reference
 
 import collections
 import copy
+import functools
 import inspect
 import itertools
 import logging
@@ -409,6 +410,57 @@ def get_init_signature_default_value(obj, parameter):
         return get_function_sig_default_value(obj.__init__, parameter)
     else:
         return inspect._empty
+
+
+def check_user_specified(func):
+    @functools.wraps(func)
+    def check_user_specified_wrapper(self, *args, **kwargs):
+        if 'params' in kwargs and kwargs['params'] is not None:
+            orig_kwargs = copy.copy(kwargs)
+            kwargs = {**kwargs, **kwargs['params']}
+            del kwargs['params']
+        else:
+            orig_kwargs = kwargs
+
+        # do not override once set
+        try:
+            self._user_specified_args
+        except AttributeError:
+            self._user_specified_args = copy.copy(kwargs)
+
+            for k, v in self._user_specified_args.items():
+                try:
+                    p = getattr(self.parameters, k)
+                except AttributeError:
+                    pass
+                else:
+                    if k == p.constructor_argument:
+                        self._user_specified_args[p.name] = v
+        else:
+            # find the corresponding constructor in chained wrappers
+            constructor = func
+            while '__init__' not in constructor.__qualname__:
+                constructor = constructor.__wrapped__
+
+            # add args determined in constructor to user_specifed.
+            # since some args are set by the values of other
+            # user_specified args in a constructor, we label these as
+            # user_specified also (ex. LCAMechanism hetero/competition)
+            for k, v in kwargs.items():
+                if k not in self._user_specified_args:
+                    constructor_default = get_function_sig_default_value(constructor, k)
+                    if (
+                        constructor_default is not inspect._empty
+                        and (
+                            type(constructor_default) != type(v)
+                            or not safe_equals(constructor_default, v)
+                        )
+                    ):
+                        self._user_specified_args[k] = v
+
+        return func(self, *args, **orig_kwargs)
+
+    return check_user_specified_wrapper
 
 
 class ParametersTemplate:
