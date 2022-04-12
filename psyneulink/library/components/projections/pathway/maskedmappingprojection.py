@@ -73,6 +73,7 @@ from psyneulink.core.components.functions.function import get_matrix
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.core.components.projections.projection import projection_keywords
 from psyneulink.core.globals.keywords import MASKED_MAPPING_PROJECTION, MATRIX
+from psyneulink.core.globals.parameters import Parameter
 from psyneulink.core.globals.preferences.basepreferenceset import is_pref_set
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 
@@ -155,7 +156,7 @@ class MaskedMappingProjection(MappingProjection):
                     :default value: `MULTIPLY`
                     :type: ``str``
         """
-        variable = np.array([[0]])    # function is always LinearMatrix that requires 1D input
+        variable = Parameter(np.array([[0]]), constructor_argument='default_variable')    # function is always LinearMatrix that requires 1D input
         mask = None
         mask_operation = MULTIPLY
 

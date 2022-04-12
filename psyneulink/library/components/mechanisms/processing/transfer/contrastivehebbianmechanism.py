@@ -920,7 +920,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
                     :default value: 0
                     :type: ``int``
         """
-        variable = np.array([[0, 0]])
+        variable = Parameter(np.array([[0, 0]]), constructor_argument='default_variable')
         current_activity = Parameter(None, aliases=['recurrent_activity'])
         plus_phase_activity = None
         minus_phase_activity = None
