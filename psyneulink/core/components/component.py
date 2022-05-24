@@ -999,7 +999,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     :type: ``int``
                     :read only: True
         """
-        variable = Parameter(np.array([0]), read_only=True, pnl_internal=True, constructor_argument='default_variable')
+        variable = Parameter(read_only=True, pnl_internal=True, constructor_argument='default_variable')
         value = Parameter(np.array([0]), read_only=True, pnl_internal=True)
         has_initializers = Parameter(False, setter=_has_initializers_setter, pnl_internal=True)
         # execution_count is not stateful because it is a global counter;
@@ -1088,8 +1088,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
     @check_user_specified
     def __init__(self,
-                 default_variable,
-                 param_defaults,
+                 default_variable=np.array([0]),
+                 param_defaults=None,
                  size=NotImplemented,  # 7/5/17 CW: this is a hack to check whether the user has passed in a size arg
                  function=None,
                  name=None,
