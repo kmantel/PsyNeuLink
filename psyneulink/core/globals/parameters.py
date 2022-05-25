@@ -983,7 +983,6 @@ class Parameter(ParameterBase):
         # attributes will be taken from
         _inherited_source=None,
         _user_specified=False,
-        # if modulated, set to the ParameterPort
         **kwargs
     ):
         if isinstance(aliases, str):
