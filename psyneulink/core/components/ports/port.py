@@ -989,6 +989,7 @@ class Port_Base(Port):
                     :type: ``bool``
                     :read only: True
         """
+        variable = Parameter(read_only=True, pnl_internal=True)
         function = Parameter(Linear, stateful=False, loggable=False)
         projections = Parameter(
             None,
@@ -1009,7 +1010,7 @@ class Port_Base(Port):
     @abc.abstractmethod
     def __init__(self,
                  owner:tc.any(Mechanism, Projection),
-                 variable=None,
+                 variable=np.array([0]),
                  size=None,
                  projections=None,
                  function=None,

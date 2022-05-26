@@ -24,8 +24,9 @@ def shared_parameter_warning_regex(param_name, shared_name=None):
 # (ancestor, child, should_override)
 ancestor_child_data = [
     (pnl.Component, pnl.TransferMechanism, False),
-    (pnl.Component, pnl.OutputPort, False),
-    (pnl.Component, pnl.InputPort, True),
+    (pnl.Component, pnl.InputPort, False),
+    (pnl.Port_Base, pnl.OutputPort, False),
+    (pnl.Port_Base, pnl.InputPort, True),
     (pnl.Component, pnl.SimpleIntegrator, True),
     (pnl.Function_Base, pnl.SimpleIntegrator, True),
     (pnl.TransferMechanism, pnl.RecurrentTransferMechanism, True)
