@@ -399,17 +399,34 @@ def copy_parameter_value(value, shared_types=None, memo=None):
             return value
 
 
-def get_init_signature_default_value(obj, parameter):
+def get_constructor_parameter_default(obj, parameter: typing.Union['Parameter', str]):
     """
         Returns:
-            the default value of the **parameter** argument of
+            the default value of the **parameter** argument or Parameter of
             the __init__ method of **obj** if it exists, or inspect._empty
     """
-    # only use the signature if it's on the owner class, not a parent
-    if '__init__' in obj.__dict__:
-        return get_function_sig_default_value(obj.__init__, parameter)
-    else:
+
+    # only use the signature if it's on the exact obj class, not a parent
+    if '__init__' not in obj.__dict__:
         return inspect._empty
+
+    # find the actual __init__ signature under wrappers
+    constructor = obj.__init__
+    while '__init__' not in constructor.__qualname__:
+        constructor = constructor.__wrapped__
+
+    if isinstance(parameter, str):
+        try:
+            parameter = obj.parameters._constructor_arg_mapping[parameter]
+        except (AttributeError, KeyError):
+            pass
+    else:
+        if parameter.constructor_argument is not None:
+            parameter = parameter.constructor_argument
+        else:
+            parameter = parameter.name
+
+    return get_function_sig_default_value(constructor, parameter)
 
 
 def check_user_specified(func):
@@ -2073,7 +2090,10 @@ class ParametersBase(ParametersTemplate):
 
         aliases_to_create = set()
         for param_name, param_value in self.values(show_all=True).items():
-            constructor_default = get_init_signature_default_value(self._owner, param_name)
+            if isinstance(param_value, Parameter):
+                constructor_default = get_constructor_parameter_default(self._owner, param_value)
+            else:
+                constructor_default = get_constructor_parameter_default(self._owner, param_name)
 
             if (
                 (
@@ -2159,7 +2179,7 @@ class ParametersBase(ParametersTemplate):
                     value.name = attr
 
                 if self._initializing and not value._inherited:
-                    value.default_value = self._reconcile_value_with_init_default(attr, value.default_value)
+                    value.default_value = self._reconcile_value_with_init_default(attr, value)
 
                 super().__setattr__(attr, value)
 
@@ -2236,7 +2256,14 @@ class ParametersBase(ParametersTemplate):
             self._register_parameter(attr)
 
     def _reconcile_value_with_init_default(self, attr, value):
-        constructor_default = get_init_signature_default_value(self._owner, attr)
+        # need ability to handle Parameter because constructor arguments
+        # aren't populated during Parameters.__init__
+        if isinstance(value, Parameter):
+            constructor_default = get_constructor_parameter_default(self._owner, value)
+            value = value.default_value
+        else:
+            constructor_default = get_constructor_parameter_default(self._owner, attr)
+
         if constructor_default is not None and constructor_default is not inspect._empty:
             if (
                 value is None
