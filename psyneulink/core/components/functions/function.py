@@ -586,8 +586,6 @@ class Function_Base(Function):
                     :type: `FunctionOutputType`
 
         """
-        variable = Parameter(read_only=True, pnl_internal=True, constructor_argument='default_variable')
-
         output_type = Parameter(
             FunctionOutputType.DEFAULT,
             stateful=False,
