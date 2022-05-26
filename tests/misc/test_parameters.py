@@ -26,7 +26,7 @@ ancestor_child_data = [
     (pnl.Component, pnl.TransferMechanism, False),
     (pnl.Component, pnl.OutputPort, False),
     (pnl.Component, pnl.InputPort, True),
-    (pnl.Component, pnl.SimpleIntegrator, False),
+    (pnl.Component, pnl.SimpleIntegrator, True),
     (pnl.Function_Base, pnl.SimpleIntegrator, True),
     (pnl.TransferMechanism, pnl.RecurrentTransferMechanism, True)
 ]
