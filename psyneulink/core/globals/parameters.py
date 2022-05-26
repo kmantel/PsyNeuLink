@@ -2067,6 +2067,7 @@ class ParametersBase(ParametersTemplate):
 
     def __init__(self, owner, parent=None):
         self._initializing = True
+        self._constructor_arg_mapping = {}
 
         super().__init__(owner=owner, parent=parent)
 
@@ -2104,6 +2105,7 @@ class ParametersBase(ParametersTemplate):
 
         for param, value in self.values(show_all=True).items():
             self._validate(param, value.default_value)
+            self._constructor_arg_mapping[param] = value.constructor_argument or param
 
         self._initializing = False
 
