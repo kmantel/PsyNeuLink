@@ -725,11 +725,7 @@ class ControlSignal(ModulatorySignal):
         )
 
         function = Parameter(TransferWithCosts, stateful=False, loggable=False)
-        transfer_function = FunctionParameter(
-            Linear,
-            function_parameter_name='transfer_fct',
-            primary=False
-        )
+        transfer_function = FunctionParameter(function_parameter_name='transfer_fct', primary=False)
 
         value = Parameter(
             np.array([defaultControlAllocation]),
@@ -738,35 +734,19 @@ class ControlSignal(ModulatorySignal):
             pnl_internal=True,
             history_min_length=1
         )
-        allocation_samples = Parameter(None, modulable=True)
+        allocation_samples = Parameter(modulable=True)
 
-        cost_options = FunctionParameter(
-            CostFunctions.DEFAULTS,
-            function_parameter_name=ENABLED_COST_FUNCTIONS,
-            valid_types=(CostFunctions, list)
-        )
+        cost_options = FunctionParameter(function_parameter_name=ENABLED_COST_FUNCTIONS, valid_types=(CostFunctions, list))
         intensity_cost = FunctionParameter(None)
         adjustment_cost = FunctionParameter(0)
         duration_cost = FunctionParameter(0)
 
         cost = FunctionParameter(None, function_parameter_name=COMBINED_COSTS)
 
-        intensity_cost_function = FunctionParameter(
-            Exponential,
-            function_parameter_name='intensity_cost_fct'
-        )
-        adjustment_cost_function = FunctionParameter(
-            Linear,
-            function_parameter_name='adjustment_cost_fct'
-        )
-        duration_cost_function = FunctionParameter(
-            SimpleIntegrator,
-            function_parameter_name='duration_cost_fct'
-        )
-        combine_costs_function = FunctionParameter(
-            Reduce,
-            function_parameter_name='combine_costs_fct'
-        )
+        intensity_cost_function = FunctionParameter(function_parameter_name='intensity_cost_fct')
+        adjustment_cost_function = FunctionParameter(function_parameter_name='adjustment_cost_fct')
+        duration_cost_function = FunctionParameter(function_parameter_name='duration_cost_fct')
+        combine_costs_function = FunctionParameter(function_parameter_name='combine_costs_fct')
         _validate_intensity_cost_function = get_validator_by_function(is_function_type)
         _validate_adjustment_cost_function = get_validator_by_function(is_function_type)
         _validate_duration_cost_function = get_validator_by_function(is_function_type)
@@ -800,12 +780,12 @@ class ControlSignal(ModulatorySignal):
                  reference_value=None,
                  default_allocation=None,
                  size=None,
-                 transfer_function=None,
-                 cost_options:tc.optional(tc.any(CostFunctions, list))=None,
-                 intensity_cost_function:tc.optional(is_function_type)=None,
-                 adjustment_cost_function:tc.optional(is_function_type)=None,
-                 duration_cost_function:tc.optional(is_function_type)=None,
-                 combine_costs_function:tc.optional(is_function_type)=None,
+                 transfer_function=Linear,
+                 cost_options: tc.optional(tc.any(CostFunctions, list)) = CostFunctions.DEFAULTS,
+                 intensity_cost_function: tc.optional(is_function_type) = Exponential,
+                 adjustment_cost_function: tc.optional(is_function_type) = Linear,
+                 duration_cost_function: tc.optional(is_function_type) = SimpleIntegrator,
+                 combine_costs_function: tc.optional(is_function_type) = Reduce,
                  allocation_samples=None,
                  modulation:tc.optional(str)=None,
                  control=None,
