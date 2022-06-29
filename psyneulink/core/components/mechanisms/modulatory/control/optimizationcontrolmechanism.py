@@ -3720,4 +3720,13 @@ class OptimizationControlMechanism(ControlMechanism):
                 )
             )
 
+        begin_simulation = mdf.Parameter(id='begin_simulation', default_initial_value=0, value='1 - begin_simulation')
+        end_simulation = mdf.Parameter(id='end_simulation', default_initial_value=0, value='1 - end_simulation')
+        best_result = mdf.Parameter(id='best_result', default_initial_value=np.inf, value=f'min(best_result, {parse_valid_identifier(self.function.name)}')
+        model.parameters.extend([begin_simulation, end_simulation, best_result])
+
+        context_port = mdf.OutputPort(id='context_port', value='begin_simulation ^ end_simulation')
+        model.output_ports.append(context_port)
+
+
         return model

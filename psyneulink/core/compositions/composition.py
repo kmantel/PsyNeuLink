@@ -11864,6 +11864,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     )
                 )
 
+        if self.controller is not None:
+            for proj in self.projections:
+                if isinstance(proj, ControlProjection):
+                    receiver_node = [
+                        n for n in graph.nodes
+                        if n.id == parse_valid_identifier(proj.receiver.owner.name)
+                    ][0]
+                    print(receiver_node)
+                    # add routing input inputport to control projection receivers here
+                    receiver_node.input_ports.append(
+                        mdf.InputPort(id='routing_input')
+                    )
+
         return graph
 
     # ******************************************************************************************************************
