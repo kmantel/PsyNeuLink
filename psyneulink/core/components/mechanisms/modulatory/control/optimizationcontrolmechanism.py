@@ -3720,8 +3720,14 @@ class OptimizationControlMechanism(ControlMechanism):
                 )
             )
 
+        function_model = [
+            f for f in model.functions
+            if f.id == parse_valid_identifier(self.function.name)
+        ][0]
+        function_model.args['trigger_begin_simulation'] = 'begin_simulation'
+
         begin_simulation = mdf.Parameter(id='begin_simulation', default_initial_value=0, value='1 - begin_simulation')
-        end_simulation = mdf.Parameter(id='end_simulation', default_initial_value=0, value='1 - end_simulation')
+        end_simulation = mdf.Parameter(id='end_simulation', default_initial_value=0, value=f'1 - end_simulation + (0 * {function_model.id})')
         best_result = mdf.Parameter(
             id='best_result',
             default_initial_value=np.full(len(self.output_ports), np.inf),
