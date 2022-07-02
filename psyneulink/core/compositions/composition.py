@@ -2781,6 +2781,7 @@ from psyneulink.core.globals.keywords import \
     PROCESSING_PATHWAY, PROJECTION, PROJECTION_TYPE, PROJECTION_PARAMS, PULSE_CLAMP, RECEIVER, \
     SAMPLE, SENDER, SHADOW_INPUTS, SOFT_CLAMP, SSE, \
     TARGET, TARGET_MECHANISM, TEXT, VARIABLE, WEIGHT, OWNER_MECH
+from psyneulink.core.globals.json import _get_variable_parameter_name
 from psyneulink.core.globals.log import CompositionLog, LogCondition
 from psyneulink.core.globals.parameters import Parameter, ParametersBase, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import BasePreferenceSet
@@ -11865,16 +11866,42 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 )
 
         if self.controller is not None:
+            controller_id = parse_valid_identifier(self.controller.name)
+
             for proj in self.projections:
                 if isinstance(proj, ControlProjection):
                     receiver_node = [
                         n for n in graph.nodes
                         if n.id == parse_valid_identifier(proj.receiver.owner.name)
                     ][0]
-                    print(receiver_node)
-                    # add routing input inputport to control projection receivers here
-                    receiver_node.input_ports.append(
-                        mdf.InputPort(id='routing_input')
+                    receiver_node.input_ports.extend([
+                        mdf.InputPort(id='context_input_port'),
+                        mdf.InputPort(id='input_port2'),  # direct from samkg, find what this is meant to represent
+                    ])
+                    graph.edges.append(
+                        mdf.Edge(
+                            id=f'{controller_id}_context_edge_to_{receiver_node.id}',
+                            sender=controller_id,
+                            sender_port='context_output_port',
+                            receiver=receiver_node.id,
+                            receiver_port='context_input_port',
+                            parameters={'weight': 1}
+                        )
+                    )
+                    # get name of current primary variable0 from receiver_node function
+                    function_model = [
+                        f for f in receiver_node.functions
+                        if f.id == parse_valid_identifier(proj.receiver.owner.function.name)
+                    ][0]
+                    primary_input = function_model.args[_get_variable_parameter_name(proj.receiver.owner.function)]
+                    receiver_node.parameters.append(
+                        mdf.Parameter(
+                            id='routed_input',
+                            conditions=[
+                                mdf.ParameterCondition(id='simulation_on', test='context_input_port == 1', value='input_port2'),
+                                mdf.ParameterCondition(id='simulation_off', test='context_input_port == 0', value=primary_input),
+                            ]
+                        )
                     )
 
         return graph

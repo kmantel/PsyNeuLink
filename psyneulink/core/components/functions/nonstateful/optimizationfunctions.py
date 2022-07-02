@@ -2048,6 +2048,9 @@ class GridSearch(OptimizationFunction):
         except AttributeError:
             return True
 
+    def as_expression(self):
+        return 'variable0, variable0'
+
 
 class GaussianProcess(OptimizationFunction):
     """
