@@ -2049,7 +2049,7 @@ class GridSearch(OptimizationFunction):
             return True
 
     def as_expression(self):
-        return 'variable0, variable0'
+        return 'numpy.array([variable0, variable0])'
 
 
 class GaussianProcess(OptimizationFunction):

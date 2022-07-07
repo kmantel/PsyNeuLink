@@ -11860,7 +11860,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         sender=parse_valid_identifier(self.controller.name),
                         sender_port=self.controller._mdf_state_feature_id(agent_rep_input_port),
                         receiver=parse_valid_identifier(agent_rep_input_port.owner.name),
-                        receiver_port=parse_valid_identifier(agent_rep_input_port.name),
+                        receiver_port=parse_valid_identifier(f'{agent_rep_input_port.owner.name}_{agent_rep_input_port.name}'),
                         parameters={'weight': 1}
                     )
                 )
