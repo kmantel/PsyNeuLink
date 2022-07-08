@@ -13,11 +13,13 @@ import numpy as np
 import typecheck as tc
 from inspect import signature, _empty, getsourcelines, getsourcefile, getclosurevars
 import ast
+import re
 
 from psyneulink.core.components.functions.function import FunctionError, Function_Base
+from psyneulink.core.globals.json import MODEL_SPEC_ID_MDF_VARIABLE
 from psyneulink.core.globals.keywords import \
     CONTEXT, CUSTOM_FUNCTION, OWNER, PARAMS, \
-    SELF, USER_DEFINED_FUNCTION, USER_DEFINED_FUNCTION_TYPE
+    SELF, USER_DEFINED_FUNCTION, USER_DEFINED_FUNCTION_TYPE, VARIABLE
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences import is_pref_set
 from psyneulink.core.globals.utilities import _is_module_class, iscompatible
@@ -484,9 +486,10 @@ class UserDefinedFunction(Function_Base):
 
                 if 'variable' in parameters:
                     parameters.remove('variable')
-                    variable = kwargs['variable']
-                else:
-                    variable = None
+                    try:
+                        variable = kwargs['variable']
+                    except KeyError:
+                        variable = None
 
                 args = {}
                 for p in parameters:
@@ -651,6 +654,7 @@ class UserDefinedFunction(Function_Base):
                 # Try calling with just variable and cust_fct_params
                 value = self.custom_function(variable, **call_params)
             else:
+                kwargs[VARIABLE] = variable
                 value = eval(self.custom_function, kwargs)
 
         if self.stateful_parameter is not None and not self.is_initializing:
@@ -697,18 +701,24 @@ class UserDefinedFunction(Function_Base):
         model = super().as_mdf_model()
         ext_function_str = None
 
-        if self.custom_function in [
+        if isinstance(self.custom_function, str):
+            ext_function_str = self.custom_function
+        elif self.custom_function in [
             func_dict['function']
             for name, func_dict
             in modeci_mdf.functions.standard.mdf_functions.items()
         ]:
             ext_function_str = self.custom_function.__name__
-
-        if _is_module_class(self.custom_function, math):
+        elif _is_module_class(self.custom_function, math):
             ext_function_str = f'{self.custom_function.__module__}.{self.custom_function.__name__}'
 
         if ext_function_str is not None:
             model.metadata['custom_function'] = ext_function_str
             del model.metadata['type']
+            model.value = re.sub(
+                f'([^_\\w\\d]){VARIABLE}([^_\\w\\d])',
+                f'\\1{MODEL_SPEC_ID_MDF_VARIABLE}\\2',
+                ext_function_str
+            )
 
         return model
