@@ -3815,12 +3815,7 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
                         if val is None:
                             val = p.default_value
 
-                if p.name in self._mdf_unexpanded_parameter_list:
-                    no_expand_components = True
-                else:
-                    no_expand_components = False
-
-                val = parse_parameter_value(val, functions_as_dill=True, no_expand_components=no_expand_components)
+                val = parse_parameter_value(val, functions_as_dill=True)
 
                 # split parameters designated as PsyNeuLink-specific and
                 # parameters that are universal
@@ -4030,10 +4025,6 @@ class Component(JSONDumpable, metaclass=ComponentsMeta):
             constructor string
         """
         return {'function', 'value', 'execution_count', 'is_finished_flag', 'num_executions', 'num_executions_before_finished'}
-
-    @property
-    def _mdf_unexpanded_parameter_list(self):
-        return {'input_ports', 'output_ports'}
 
 
 COMPONENT_BASE_CLASS = Component
