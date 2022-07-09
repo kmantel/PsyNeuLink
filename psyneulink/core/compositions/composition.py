@@ -11875,16 +11875,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         if n.id == parse_valid_identifier(proj.receiver.owner.name)
                     ][0]
                     receiver_node.input_ports.extend([
-                        mdf.InputPort(id='context_input_port'),
-                        mdf.InputPort(id='input_port2'),  # direct from samkg, find what this is meant to represent
+                        mdf.InputPort(id='is_simulating_input_port', shape=np.array(True).shape, type='bool'),
+                        mdf.InputPort(id='input_port2'),  # state feature input from OCM and must go
                     ])
                     graph.edges.append(
                         mdf.Edge(
                             id=f'{controller_id}_context_edge_to_{receiver_node.id}',
                             sender=controller_id,
-                            sender_port='context_output_port',
+                            sender_port='is_simulating_output_port',
                             receiver=receiver_node.id,
-                            receiver_port='context_input_port',
+                            receiver_port='is_simulating_input_port',
                             parameters={'weight': 1}
                         )
                     )
@@ -11893,16 +11893,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         f for f in receiver_node.functions
                         if f.id == parse_valid_identifier(proj.receiver.owner.function.name)
                     ][0]
-                    primary_input = function_model.args[_get_variable_parameter_name(proj.receiver.owner.function)]
-                    receiver_node.parameters.append(
-                        mdf.Parameter(
-                            id='routed_input',
-                            conditions=[
-                                mdf.ParameterCondition(id='simulation_on', test='context_input_port == 1', value='input_port2'),
-                                mdf.ParameterCondition(id='simulation_off', test='context_input_port == 0', value=primary_input),
-                            ]
-                        )
-                    )
 
         return graph
 

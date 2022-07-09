@@ -3724,18 +3724,24 @@ class OptimizationControlMechanism(ControlMechanism):
             f for f in model.functions
             if f.id == parse_valid_identifier(self.function.name)
         ][0]
-        function_model.args['trigger_begin_simulation'] = 'begin_simulation'
 
-        begin_simulation = mdf.Parameter(id='begin_simulation', default_initial_value=0, value='1 - begin_simulation')
-        end_simulation = mdf.Parameter(id='end_simulation', default_initial_value=0, value=f'1 - end_simulation + (0 * len({function_model.id}))')
+        simulation_count = mdf.Parameter(id='simulation_count', default_initial_value=0, value='simulation_count + 1')
+        is_simulating = mdf.Parameter(id='is_simulating', value='(simulation_count % (num_iterations + 1)) != 0')
+        try:
+            num_iterations = mdf.Parameter(id='num_iterations', value=self.function.num_iterations)
+        except AttributeError:
+            warnings.warn(f'Cannot create control: function {self.function.__name__} has no num_iterations attribute')
+        else:
+            model.parameters.append(num_iterations)
+
         best_result = mdf.Parameter(
             id='best_result',
             default_initial_value=np.full(len(self.output_ports), np.inf),
             value=', '.join([f'min(best_result[{i}], {parse_valid_identifier(self.function.name)}[{i}])' for i in range(len(self.output_ports))])
         )
-        model.parameters.extend([begin_simulation, end_simulation, best_result])
+        model.parameters.extend([simulation_count, is_simulating, best_result])
 
-        context_port = mdf.OutputPort(id='context_output_port', value='begin_simulation ^ end_simulation')
+        context_port = mdf.OutputPort(id='is_simulating_output_port', value='is_simulating')
         model.output_ports.append(context_port)
 
         return model

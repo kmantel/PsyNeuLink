@@ -4132,6 +4132,12 @@ class Mechanism_Base(Mechanism):
             self.parameter_ports,
         ))
 
+    def _mdf_parameter_controlled_input_port_name(self, parameter):
+        return parse_valid_identifier(f'{self.name}_{parameter.name}_controlled_input')
+
+    def _mdf_parameter_controlled_parameter_name(self, parameter):
+        return parse_valid_identifier(f'{self.name}_{parameter.name}_controlled_parameter_value')
+
     def as_mdf_model(self):
         import modeci_mdf.mdf as mdf
 
@@ -4195,6 +4201,27 @@ class Mechanism_Base(Mechanism):
             model.output_ports.append(op_model)
 
         function_model = self.function.as_mdf_model()
+
+        for pp in self.parameter_ports:
+            if len(pp.mod_afferents) > 0:
+                model.input_ports.append(
+                    mdf.InputPort(
+                        id=self._mdf_parameter_controlled_input_port_name(pp.source),
+                        shape=str(pp.mod_afferents[0].defaults.value.shape),
+                        type=str(pp.mod_afferents[0].defaults.value.dtype),
+                    )
+                )
+                model.parameters.append(
+                    mdf.Parameter(
+                        id=self._mdf_parameter_controlled_parameter_name(pp.source),
+                        default_initial_value=pp.source.default_value,
+                        conditions=[
+                            mdf.ParameterCondition(id='simulation_on', test='is_simulating_input_port', value=self._mdf_parameter_controlled_input_port_name(pp.source)),
+                            mdf.ParameterCondition(id='simulation_off', test='not is_simulating_input_port', value=pp.source.default_value),
+                        ]
+                    )
+                )
+                function_model.args[pp.source.name] = self._mdf_parameter_controlled_parameter_name(pp.source)
 
         for _, func_param in function_model.metadata['function_stateful_params'].items():
             model.parameters.append(mdf.Parameter(**func_param))
