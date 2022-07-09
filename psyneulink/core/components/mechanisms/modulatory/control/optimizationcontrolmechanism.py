@@ -3741,7 +3741,7 @@ class OptimizationControlMechanism(ControlMechanism):
         )
         model.parameters.extend([simulation_count, is_simulating, best_result])
 
-        context_port = mdf.OutputPort(id='is_simulating_output_port', value='is_simulating')
+        context_port = mdf.OutputPort(id=parse_valid_identifier(f'{self.name}_is_simulating_output_port'), value='is_simulating')
         model.output_ports.append(context_port)
 
         return model

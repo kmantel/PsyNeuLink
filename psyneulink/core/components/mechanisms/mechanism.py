@@ -4141,8 +4141,13 @@ class Mechanism_Base(Mechanism):
     def as_mdf_model(self):
         import modeci_mdf.mdf as mdf
 
+        def get_input_name_with_simulation(non_simulation_input_value, simulation_input_value):
+            simulation_port_name = parse_valid_identifier(f'{self.name}_is_simulating_input_port')
+            return f'{non_simulation_input_value} if not {simulation_port_name} else {simulation_input_value}'
+
+        self_id = parse_valid_identifier(self.name)
         model = mdf.Node(
-            id=parse_valid_identifier(self.name),
+            id=self_id,
             **self._mdf_metadata,
         )
 
@@ -4163,7 +4168,7 @@ class Mechanism_Base(Mechanism):
                 model.parameters.append(
                     mdf.Parameter(
                         id='combination_function_input_data',
-                        value=f"[{', '.join(f'{mip.id}' for mip in model.input_ports)}]"
+                        value=f"[{', '.join(f'{mip.id}' for mip in model.input_ports)}]",
                     )
                 )
                 combination_function_id = f'{parse_valid_identifier(self.name)}_{MODEL_SPEC_ID_INPUT_PORT_COMBINATION_FUNCTION}'
@@ -4171,7 +4176,8 @@ class Mechanism_Base(Mechanism):
                     'data': "combination_function_input_data",
                     'axes': 0
                 }
-                model.functions.append(
+                model.functions.insert(
+                    0,
                     mdf.Function(
                         id=combination_function_id,
                         function='onnx::ReduceSum',
@@ -4179,7 +4185,8 @@ class Mechanism_Base(Mechanism):
                     )
                 )
                 combination_function_dimreduce_id = f'{combination_function_id}_dimreduce'
-                model.functions.append(
+                model.functions.insert(
+                    0,
                     mdf.Function(
                         id=combination_function_dimreduce_id,
                         value=f'{MODEL_SPEC_ID_MDF_VARIABLE}[0][0]',
@@ -4216,8 +4223,15 @@ class Mechanism_Base(Mechanism):
                         id=self._mdf_parameter_controlled_parameter_name(pp.source),
                         default_initial_value=pp.source.default_value,
                         conditions=[
-                            mdf.ParameterCondition(id='simulation_on', test='is_simulating_input_port', value=self._mdf_parameter_controlled_input_port_name(pp.source)),
-                            mdf.ParameterCondition(id='simulation_off', test='not is_simulating_input_port', value=pp.source.default_value),
+                            mdf.ParameterCondition(
+                                id='simulation_on',
+                                test=f'{self_id}_is_simulating_input_port',
+                                value=self._mdf_parameter_controlled_input_port_name(pp.source)
+                            ),
+                            mdf.ParameterCondition(
+                                id='simulation_off',
+                                test=f'not {self_id}_is_simulating_input_port',
+                                value=pp.source.default_value),
                         ]
                     )
                 )

@@ -2781,7 +2781,7 @@ from psyneulink.core.globals.keywords import \
     PROCESSING_PATHWAY, PROJECTION, PROJECTION_TYPE, PROJECTION_PARAMS, PULSE_CLAMP, RECEIVER, \
     SAMPLE, SENDER, SHADOW_INPUTS, SOFT_CLAMP, SSE, \
     TARGET, TARGET_MECHANISM, TEXT, VARIABLE, WEIGHT, OWNER_MECH
-from psyneulink.core.globals.json import _get_variable_parameter_name
+from psyneulink.core.globals.json import MODEL_SPEC_ID_MDF_VARIABLE, _get_variable_parameter_name
 from psyneulink.core.globals.log import CompositionLog, LogCondition
 from psyneulink.core.globals.parameters import Parameter, ParametersBase, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import BasePreferenceSet
@@ -11792,6 +11792,22 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 and not isinstance(proj.receiver.owner, included_types)
                 and not isinstance(proj, (AutoAssociativeProjection, ControlProjection))
             )
+
+        def get_is_simulating_edge(receiver):
+            controller_id = parse_valid_identifier(self.controller.name)
+            return mdf.Edge(
+                id=f'{controller_id}_simulating_edge_to_{receiver.id}',
+                sender=controller_id,
+                sender_port=parse_valid_identifier(f'{controller_id}_is_simulating_output_port'),
+                receiver=receiver.id,
+                receiver_port=parse_valid_identifier(f'{receiver.id}_is_simulating_input_port'),
+                parameters={'weight': 1}
+            )
+
+        def get_input_name_with_simulation(node_id, non_simulation_input_value, simulation_input_value):
+            simulation_port_name = f'{node_id}_is_simulating_input_port'
+            return f'{non_simulation_input_value} if not {simulation_port_name} else {simulation_input_value}'
+
         nodes_dict = {}
         projections_dict = {}
         self_identifier = parse_valid_identifier(self.name)
@@ -11854,20 +11870,34 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             pass
         else:
             for agent_rep_input_port in self.controller.agent_rep_input_ports:
-                graph.edges.append(
-                    mdf.Edge(
-                        id=f'{self.controller._mdf_state_feature_id(agent_rep_input_port)}_mapping',
-                        sender=parse_valid_identifier(self.controller.name),
-                        sender_port=self.controller._mdf_state_feature_id(agent_rep_input_port),
-                        receiver=parse_valid_identifier(agent_rep_input_port.owner.name),
-                        receiver_port=parse_valid_identifier(f'{agent_rep_input_port.owner.name}_{agent_rep_input_port.name}'),
-                        parameters={'weight': 1}
-                    )
+                state_feature_receiver_port_id = parse_valid_identifier(f'{agent_rep_input_port.owner.name}_state_feature_input_port')
+                state_feature_edge = mdf.Edge(
+                    id=f'{self.controller._mdf_state_feature_id(agent_rep_input_port)}_mapping',
+                    sender=parse_valid_identifier(self.controller.name),
+                    sender_port=self.controller._mdf_state_feature_id(agent_rep_input_port),
+                    receiver=parse_valid_identifier(agent_rep_input_port.owner.name),
+                    receiver_port=state_feature_receiver_port_id,
+                    parameters={'weight': 1}
+                )
+                receiver_node = [n for n in graph.nodes if n.id == parse_valid_identifier(agent_rep_input_port.owner.name)][0]
+                receiver_node.input_ports.extend([
+                    mdf.InputPort(id=parse_valid_identifier(f'{receiver_node.id}_is_simulating_input_port'), shape=np.array(True).shape, type='bool'),
+                    mdf.InputPort(id=state_feature_receiver_port_id, shape=np.array(True).shape, type='bool'),
+                ])
+
+                graph.edges.extend([state_feature_edge, get_is_simulating_edge(receiver_node)])
+
+                # get name of current first function variable0 from receiver_node function
+                # (assume it's the first in list, though this is a very brittle assumption)
+                function_model = receiver_node.functions[0]
+                function_model.args[MODEL_SPEC_ID_MDF_VARIABLE] = get_input_name_with_simulation(
+                    receiver_node.id,
+                    function_model.args[MODEL_SPEC_ID_MDF_VARIABLE],
+                    state_feature_receiver_port_id
                 )
 
-        if self.controller is not None:
-            controller_id = parse_valid_identifier(self.controller.name)
 
+        if self.controller is not None:
             for proj in self.projections:
                 if isinstance(proj, ControlProjection):
                     receiver_node = [
@@ -11875,24 +11905,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         if n.id == parse_valid_identifier(proj.receiver.owner.name)
                     ][0]
                     receiver_node.input_ports.extend([
-                        mdf.InputPort(id='is_simulating_input_port', shape=np.array(True).shape, type='bool'),
-                        mdf.InputPort(id='input_port2'),  # state feature input from OCM and must go
+                        mdf.InputPort(id=parse_valid_identifier(f'{receiver_node.id}_is_simulating_input_port'), shape=np.array(True).shape, type='bool'),
                     ])
-                    graph.edges.append(
-                        mdf.Edge(
-                            id=f'{controller_id}_context_edge_to_{receiver_node.id}',
-                            sender=controller_id,
-                            sender_port='is_simulating_output_port',
-                            receiver=receiver_node.id,
-                            receiver_port='is_simulating_input_port',
-                            parameters={'weight': 1}
-                        )
-                    )
-                    # get name of current primary variable0 from receiver_node function
-                    function_model = [
-                        f for f in receiver_node.functions
-                        if f.id == parse_valid_identifier(proj.receiver.owner.function.name)
-                    ][0]
+                    graph.edges.append(get_is_simulating_edge(receiver_node))
 
         return graph
 
