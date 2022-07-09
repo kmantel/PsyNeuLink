@@ -11896,7 +11896,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     state_feature_receiver_port_id
                 )
 
-
         if self.controller is not None:
             for proj in self.projections:
                 if isinstance(proj, ControlProjection):
@@ -11908,6 +11907,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         mdf.InputPort(id=parse_valid_identifier(f'{receiver_node.id}_is_simulating_input_port'), shape=np.array(True).shape, type='bool'),
                     ])
                     graph.edges.append(get_is_simulating_edge(receiver_node))
+                    controlled_param = proj.receiver.source
+                    graph.edges.append(
+                        mdf.Edge(
+                            sender=parse_valid_identifier(self.controller.name),
+                            sender_port=parse_valid_identifier(f'{self.controller.name}_{receiver_node.id}_{controlled_param.name}__ControlSignal'),
+                            receiver=receiver_node.id,
+                            receiver_port=proj.receiver.owner._mdf_parameter_controlled_input_port_name(controlled_param)
+                        )
+                    )
 
         return graph
 
