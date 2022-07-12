@@ -3727,6 +3727,8 @@ class OptimizationControlMechanism(ControlMechanism):
 
         simulation_count = mdf.Parameter(id='simulation_count', default_initial_value=0, value='simulation_count + 1')
         is_simulating = mdf.Parameter(id='is_simulating', value='(simulation_count % (num_iterations + 1)) != 0')
+        model.parameters.extend([simulation_count, is_simulating])
+
         try:
             num_iterations = mdf.Parameter(id='num_iterations', value=self.function.num_iterations)
         except AttributeError:
@@ -3734,12 +3736,21 @@ class OptimizationControlMechanism(ControlMechanism):
         else:
             model.parameters.append(num_iterations)
 
-        best_result = mdf.Parameter(
-            id='best_result',
-            default_initial_value=np.full(len(self.output_ports), np.inf),
-            value=', '.join([f'min(best_result[{i}], {parse_valid_identifier(self.function.name)}[{i}])' for i in range(len(self.output_ports))])
-        )
-        model.parameters.extend([simulation_count, is_simulating, best_result])
+        if 'OUTCOME' in self.input_ports.names:
+            outcome_port_name = f'{parse_valid_identifier(self.name)}_OUTCOME'
+
+            best_result_value = mdf.Parameter(
+                id='best_result_value',
+                default_initial_value=np.inf,
+                value=f'min(best_result_value, {outcome_port_name})',
+            )
+            assign_new_inputs_str = ', '.join([f'{parse_valid_identifier(self.function.name)}[{i}]' for i in range(len(self.output_ports))])
+            best_result_inputs = mdf.Parameter(
+                id='best_result_inputs',
+                default_initial_value=[None for i in range(len(self.output_ports))],
+                value=f'best_result_inputs if best_result_value != {outcome_port_name} else ({assign_new_inputs_str})'
+            )
+            model.parameters.extend([best_result_value, best_result_inputs])
 
         context_port = mdf.OutputPort(id=parse_valid_identifier(f'{self.name}_is_simulating_output_port'), value='is_simulating')
         model.output_ports.append(context_port)

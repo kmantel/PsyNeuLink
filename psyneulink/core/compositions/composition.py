@@ -11785,7 +11785,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             included_types = (
                 CompositionInterfaceMechanism,
                 LearningMechanism,
-                OptimizationControlMechanism,
             )
             return (
                 not isinstance(proj.sender.owner, included_types)
@@ -11910,6 +11909,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     controlled_param = proj.receiver.source
                     graph.edges.append(
                         mdf.Edge(
+                            id=parse_valid_identifier(f'{type(proj).__name__}_{self.controller.name}_to_{receiver_node.id}_{controlled_param.name}'),
                             sender=parse_valid_identifier(self.controller.name),
                             sender_port=parse_valid_identifier(f'{self.controller.name}_{receiver_node.id}_{controlled_param.name}__ControlSignal'),
                             receiver=receiver_node.id,
