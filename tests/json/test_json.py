@@ -192,7 +192,7 @@ for func_type in onnx_noise_data:
         )
 
 # high precision printing needed because script will be executed from string
-with np.printoptions(precision=16):
+with np.printoptions(precision=18):
     integrators_runtime_params = (
         'runtime_params={'
         + ','.join([f'{k}: {{ "noise": {v} }}' for k, v in onnx_integrators_fixed_seeded_noise.items()])
