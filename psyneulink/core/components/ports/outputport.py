@@ -901,7 +901,7 @@ class OutputPort(Port_Base):
                     :type: ``numpy.ndarray``
                     :read only: True
         """
-        variable = Parameter(np.array([0]), read_only=True, getter=_output_port_variable_getter, pnl_internal=True, constructor_argument='default_variable')
+        variable = Parameter(read_only=True, getter=_output_port_variable_getter, pnl_internal=True, constructor_argument='default_variable')
 
     #endregion
 
@@ -911,7 +911,7 @@ class OutputPort(Port_Base):
     def __init__(self,
                  owner=None,
                  reference_value=None,
-                 variable=None,
+                 variable=np.array([0]),
                  size=None,
                  function=None,
                  projections=None,
