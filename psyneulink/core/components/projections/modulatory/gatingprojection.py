@@ -224,7 +224,7 @@ class GatingProjection(ModulatoryProjection_Base):
                     :type:
                     :read only: True
         """
-        function = Parameter(Linear(params={FUNCTION_OUTPUT_TYPE: FunctionOutputType.RAW_NUMBER}), stateful=False, loggable=False)
+        function = Parameter(stateful=False, loggable=False)
         gating_signal = Parameter(None, read_only=True, getter=_gating_signal_getter, setter=_gating_signal_setter, pnl_internal=True)
 
         gating_signal_params = Parameter(
@@ -243,7 +243,7 @@ class GatingProjection(ModulatoryProjection_Base):
     def __init__(self,
                  sender=None,
                  receiver=None,
-                 function=None,
+                 function=Linear(params={FUNCTION_OUTPUT_TYPE: FunctionOutputType.RAW_NUMBER}),
                  weight=None,
                  exponent=None,
                  gating_signal_params:tc.optional(dict)=None,
