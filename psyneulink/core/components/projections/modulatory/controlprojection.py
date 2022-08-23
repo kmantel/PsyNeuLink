@@ -222,7 +222,7 @@ class ControlProjection(ModulatoryProjection_Base):
                     :default value: `Linear`
                     :type: `Function`
         """
-        function = Parameter(Linear, stateful=False, loggable=False)
+        function = Parameter(stateful=False, loggable=False)
         control_signal = SharedParameter(None, attribute_name='sender', shared_parameter_name='value')
 
         control_signal_params = Parameter(
@@ -244,7 +244,7 @@ class ControlProjection(ModulatoryProjection_Base):
                  receiver=None,
                  weight=None,
                  exponent=None,
-                 function=None,
+                 function=Linear,
                  control_signal_params:tc.optional(dict)=None,
                  params=None,
                  name=None,
