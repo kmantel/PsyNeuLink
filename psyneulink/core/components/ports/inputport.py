@@ -860,11 +860,11 @@ class InputPort(Port_Base):
         """
         default_input = Parameter(None, stateful=False, loggable=True, read_only=True, structural=True,
                                   constructor_argument='default_input')
-        function = Parameter(LinearCombination(operation=SUM), stateful=False, loggable=False)
+        function = Parameter(stateful=False, loggable=False)
         weight = Parameter(None, modulable=True)
         exponent = Parameter(None, modulable=True)
         combine = None
-        internal_only = Parameter(False, stateful=False, loggable=False, pnl_internal=True)
+        internal_only = Parameter(stateful=False, loggable=False, pnl_internal=True)
         shadow_inputs = Parameter(None, stateful=False, loggable=False, read_only=True, pnl_internal=True, structural=True)
 
         def _validate_default_input(self, default_input):
@@ -882,12 +882,12 @@ class InputPort(Port_Base):
                  variable=None,
                  size=None,
                  default_input=None,
-                 function=None,
+                 function=LinearCombination(operation=SUM),
                  projections=None,
                  combine:tc.optional(tc.enum(SUM,PRODUCT))=None,
                  weight=None,
                  exponent=None,
-                 internal_only: tc.optional(bool) = None,
+                 internal_only: tc.optional(bool) = False,
                  params=None,
                  name=None,
                  prefs:is_pref_set=None,
