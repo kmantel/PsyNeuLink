@@ -990,7 +990,7 @@ class Port_Base(Port):
                     :read only: True
         """
         variable = Parameter(read_only=True, pnl_internal=True)
-        function = Parameter(Linear, stateful=False, loggable=False)
+        function = Parameter(stateful=False, loggable=False)
         projections = Parameter(
             None,
             structural=True,
@@ -1013,7 +1013,7 @@ class Port_Base(Port):
                  variable=np.array([0]),
                  size=None,
                  projections=None,
-                 function=None,
+                 function=Linear,
                  params=None,
                  name=None,
                  prefs=None,
