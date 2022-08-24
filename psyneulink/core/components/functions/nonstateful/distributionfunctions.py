@@ -24,6 +24,8 @@ Functions that return one or more samples from a distribution.
 
 """
 
+import numbers
+
 import numpy as np
 import typecheck as tc
 
@@ -36,7 +38,7 @@ from psyneulink.core.globals.keywords import \
     ADDITIVE_PARAM, DIST_FUNCTION_TYPE, BETA, DIST_MEAN, DIST_SHAPE, DRIFT_DIFFUSION_ANALYTICAL_FUNCTION, \
     EXPONENTIAL_DIST_FUNCTION, GAMMA_DIST_FUNCTION, HIGH, LOW, MULTIPLICATIVE_PARAM, NOISE, NORMAL_DIST_FUNCTION, \
     SCALE, STANDARD_DEVIATION, THRESHOLD, UNIFORM_DIST_FUNCTION, WALD_DIST_FUNCTION
-from psyneulink.core.globals.utilities import convert_to_np_array, parameter_spec
+from psyneulink.core.globals.utilities import convert_to_np_array, parameter_spec, object_has_single_value
 from psyneulink.core.globals.preferences.basepreferenceset import is_pref_set
 
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
@@ -1222,22 +1224,68 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
 
         """
 
-        attentional_drift_rate = float(self._get_current_parameter_value(DRIFT_RATE, context))
-        stimulus_drift_rate = float(variable)
+        attentional_drift_rate = np.array(self._get_current_parameter_value(DRIFT_RATE, context), dtype=float)
+        stimulus_drift_rate = np.array(variable, dtype=float)
         drift_rate = attentional_drift_rate * stimulus_drift_rate
-        threshold = self._get_current_parameter_value(THRESHOLD, context)
-        starting_value = float(self._get_current_parameter_value(STARTING_VALUE, context))
-        noise = float(self._get_current_parameter_value(NOISE, context))
-        non_decision_time = float(self._get_current_parameter_value(NON_DECISION_TIME, context))
-
-        # drift_rate = float(self.drift_rate) * float(variable)
-        # threshold = float(self.threshold)
-        # starting_value = float(self.starting_value)
-        # noise = float(self.noise)
-        # non_decision_time = float(self.non_decision_time)
+        threshold = np.array(self._get_current_parameter_value(THRESHOLD, context), dtype=float)
+        starting_value = np.array(self._get_current_parameter_value(STARTING_VALUE, context), dtype=float)
+        noise = np.array(self._get_current_parameter_value(NOISE, context), dtype=float)
+        non_decision_time = np.array(self._get_current_parameter_value(NON_DECISION_TIME, context), dtype=float)
 
         bias = (starting_value + threshold) / (2 * threshold)
 
+        def elem(arr, i):
+            if isinstance(arr, numbers.Number):
+                return arr
+
+            try:
+                return arr[i]
+            except TypeError:
+                return arr
+            except IndexError:
+                if object_has_single_value(arr):
+                    return arr.item()
+                else:
+                    raise
+
+        # we need to do the computation element-by-element because of
+        # the different calculation when drift rate is close to 0 or
+        # for moments, with abs value < 0.01
+        rt_er_res = []
+        moments_res = []
+
+        for i in range(len(variable)):
+            dr = elem(drift_rate, i)
+            t = elem(threshold, i)
+            n = elem(noise, i)
+            ndt = elem(non_decision_time, i)
+            b = elem(bias, i)
+
+            rt_er_res.append(self._compute_elementwise_dda(dr, t, n, ndt, b))
+            # Compute moments (mean, variance, skew) of conditional response time distributions
+            moments_res.append(DriftDiffusionAnalytical._compute_conditional_rt_moments(dr, n, t, b, ndt))
+
+        # avoid extra tuple wrapping from zip so broadcast_to works
+        if len(rt_er_res) == 1:
+            rt, er = rt_er_res[0]
+        else:
+            rt, er = zip(*rt_er_res)
+
+        moments = moments_res[0]
+        for i in range(1, len(variable)):
+            for k in moments:
+                moments[k] = np.append(moments[k], moments_res[i][k])
+
+        rt = np.array(rt).reshape(moments['mean_rt_plus'].shape)
+        er = np.array(er).reshape(moments['mean_rt_plus'].shape)
+
+        return np.array([
+            rt, er,
+            moments['mean_rt_plus'], moments['var_rt_plus'], moments['skew_rt_plus'],
+            moments['mean_rt_minus'], moments['var_rt_minus'], moments['skew_rt_minus']
+        ])
+
+    def _compute_elementwise_dda(self, drift_rate, threshold, noise, non_decision_time, bias):
         # Prevents div by 0 issue below:
         if bias <= 0:
             bias = 1e-8
@@ -1320,12 +1368,7 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
             #    (i.e., reports p(upper) if drift is positive, and p(lower if drift is negative)
             er = (is_neg_drift == 1) * (1 - er) + (is_neg_drift == 0) * (er)
 
-        # Compute moments (mean, variance, skew) of condiational response time distributions
-        moments = DriftDiffusionAnalytical._compute_conditional_rt_moments(drift_rate, noise, threshold, bias, non_decision_time)
-
-        return rt, er, \
-               moments['mean_rt_plus'], moments['var_rt_plus'], moments['skew_rt_plus'], \
-               moments['mean_rt_minus'], moments['var_rt_minus'], moments['skew_rt_minus']
+        return rt, er
 
     @staticmethod
     def _compute_conditional_rt_moments(drift_rate, noise, threshold, starting_value, non_decision_time):
@@ -1350,18 +1393,23 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
         #  transform starting point to be centered at 0
         starting_value = (starting_value - 0.5) * 2.0 * threshold
 
-        if abs(drift_rate) < 0.01:
-            drift_rate = 0.01
+        try:
+            drift_rate = np.array([d if abs(d) >= 0.01 else 0.01 for d in drift_rate])
+        except TypeError:
+            if abs(drift_rate) < 0.01:
+                drift_rate = 0.01
 
         X = drift_rate * starting_value / noise**2
         Z = drift_rate * threshold / noise**2
 
-        X = max(-100, min(100, X))
+        X = np.clip(X, -100, 100)
+        Z = np.clip(Z, -100, 100)
 
-        Z = max(-100, min(100, Z))
-
-        if abs(Z) < 0.0001:
-            Z = 0.0001
+        try:
+            Z = np.array([z if abs(z) >= 0.0001 else 0.0001 for z in Z])
+        except TypeError:
+            if abs(Z) < 0.0001:
+                Z = 0.0001
 
         def coth(x):
             return 1 / np.tanh(x)
