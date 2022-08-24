@@ -78,6 +78,9 @@ test_data = [
                  {"drift_rate": -1e-5, "threshold": RAND2, "starting_value": RAND3,
                   "non_decision_time":RAND4, "noise": RAND5}, None, "Rounding Errors",
                  dda_expected_small, id="DriftDiffusionAnalytical-SmallNegDriftRate"),
+    pytest.param(Functions.DriftDiffusionAnalytical, np.full(5, test_var), {}, None, None,
+                 tuple((dda_expected_default[i],) * 5 for i in range(len(dda_expected_default))),
+                 id="DriftDiffusionAnalytical-DefaultParameters"),
     # Two tests with different inputs to show that input is ignored.
     pytest.param(Functions.NormalDist, 1e14, {"mean": RAND1, "standard_deviation": RAND2},
                  None, None, normal_expected_mt, id="NormalDist"),
