@@ -1048,7 +1048,7 @@ class DDM(ProcessingMechanism):
         :rtype self.outputPort.value: (number)
         """
 
-        if variable is None or any(np.isnan(i) for i in variable):
+        if variable is None or np.isnan(np.sum(0 * variable)):
             # IMPLEMENT: MULTIPROCESS DDM:  ??NEED TO DEAL WITH PARTIAL NANS
             variable = self.defaults.variable
 
