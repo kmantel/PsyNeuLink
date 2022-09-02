@@ -1229,19 +1229,22 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # Used by run to store return value of execute
         self.results = []
 
-        if function is None:
-            if (
-                param_defaults is not None
-                and FUNCTION in param_defaults
-                and param_defaults[FUNCTION] is not None
-            ):
-                function = param_defaults[FUNCTION]
-            else:
-                try:
-                    function = self.class_defaults.function
-                except AttributeError:
-                    # assume function is a method on self
-                    pass
+        try:
+            function = self.parameters.function.get(context)
+        except AttributeError:
+            if function is None:
+                if (
+                    param_defaults is not None
+                    and FUNCTION in param_defaults
+                    and param_defaults[FUNCTION] is not None
+                ):
+                    function = param_defaults[FUNCTION]
+                else:
+                    try:
+                        function = self.class_defaults.function
+                    except AttributeError:
+                        # assume function is a method on self
+                        pass
 
         self._runtime_params_reset = {}
 
