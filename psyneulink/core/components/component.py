@@ -2953,27 +2953,27 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             kwargs_to_instantiate = {}
             if function_params is not None:
                 kwargs_to_instantiate.update(**function_params)
-                # default_variable should not be in any function_params but sometimes it is
-                kwargs_to_remove = ['default_variable']
+            # default_variable should not be in any function_params but sometimes it is
+            kwargs_to_remove = ['default_variable']
 
-                for arg in kwargs_to_remove:
-                    try:
-                        del kwargs_to_instantiate[arg]
-                    except KeyError:
-                        pass
-
+            for arg in kwargs_to_remove:
                 try:
-                    kwargs_to_instantiate.update(self.initial_shared_parameters[FUNCTION])
+                    del kwargs_to_instantiate[arg]
                 except KeyError:
                     pass
 
-                # matrix is determined from ParameterPort based on string value in function_params
-                # update it here if needed
-                if MATRIX in kwargs_to_instantiate:
-                    try:
-                        kwargs_to_instantiate[MATRIX] = self.parameter_ports[MATRIX].defaults.value
-                    except (AttributeError, KeyError, TypeError):
-                        pass
+            try:
+                kwargs_to_instantiate.update(self.initial_shared_parameters[FUNCTION])
+            except KeyError:
+                pass
+
+            # matrix is determined from ParameterPort based on string value in function_params
+            # update it here if needed
+            if MATRIX in kwargs_to_instantiate:
+                try:
+                    kwargs_to_instantiate[MATRIX] = self.parameter_ports[MATRIX].defaults.value
+                except (AttributeError, KeyError, TypeError):
+                    pass
 
             _, kwargs = prune_unused_args(function.__init__, args=[], kwargs=kwargs_to_instantiate)
             function = function(default_variable=function_variable, owner=self, **kwargs)
