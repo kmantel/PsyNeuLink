@@ -1031,7 +1031,7 @@ class InputPort(Port_Base):
         if hasattr(self, 'combine_function_args'):
             function = LinearCombination(operation=self.combine_function_args[0])
             del self.combine_function_args
-        super()._instantiate_function(function=function, context=context)
+        super()._instantiate_function(function=function, function_params=function_params, context=context)
         self._use_1d_variable = False
         if not isinstance(self.function, CombinationFunction):
             self._use_1d_variable = True
