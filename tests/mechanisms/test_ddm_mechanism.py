@@ -365,27 +365,6 @@ def test_DDM_input(stim):
 # INVALID INPUTS:
 
 # ------------------------------------------------------------------------------------------------
-# TEST 1
-# input = List len 2
-
-
-def test_DDM_input_list_len_2():
-    with pytest.raises(DDMError) as error_text:
-        stim = [10, 10]
-        T = DDM(
-            name='DDM',
-            default_variable=[0, 0],
-            function=DriftDiffusionIntegrator(
-
-                noise=0.0,
-                rate=1.0,
-                time_step_size=1.0
-            ),
-            execute_until_finished=False,
-        )
-        float(T.execute(stim)[0])
-    assert "single numeric item" in str(error_text.value)
-
 # ------------------------------------------------------------------------------------------------
 # TEST 2
 # input = Fn
@@ -521,6 +500,26 @@ def test_DDM_size_int_inputs():
     assert decision_variable == -2.0
     assert time == 1.0
 
+
+def test_DDM_extended_size():
+    T = DDM(size=3)
+    assert T.defaults.variable.shape == np.array([[0], [0], [0]]).shape
+
+
+def test_DDM_extended_size_size_list():
+    T = DDM(size=[1, 1])
+    assert T.defaults.variable.shape == np.array([[0], [0]]).shape
+
+
+@pytest.mark.parametrize('array_kw', [pnl.ARRAY, pnl.VECTOR])
+def test_DDM_extended_size_input_format_array(array_kw):
+    T = DDM(size=3, input_format=array_kw)
+    assert T.defaults.variable.shape == np.array([[0], [0], [0]]).shape
+    for ip in T.input_ports:
+        assert ip.defaults.variable.shape == np.array([0, 0]).shape
+        assert ip.defaults.value.shape == np.array([0]).shape
+        assert isinstance(ip.function, pnl.Reduce)
+
 # ------------------------------------------------------------------------------------------------
 
 # INVALID INPUTS
@@ -562,44 +561,6 @@ def test_DDM_mech_size_negative_one():
             execute_until_finished=False,
         )
     assert "is not a positive number" in str(error_text.value)
-
-# ------------------------------------------------------------------------------------------------
-# TEST 3
-# size = 3.0, check size-too-large error
-
-
-def test_DDM_size_too_large():
-    with pytest.raises(DDMError) as error_text:
-        T = DDM(
-            name='DDM',
-            size=3.0,
-            function=DriftDiffusionIntegrator(
-                noise=0.0,
-                rate=-5.0,
-                time_step_size=1.0
-            ),
-            execute_until_finished=False,
-        )
-    assert "single numeric item" in str(error_text.value)
-
-# ------------------------------------------------------------------------------------------------
-# TEST 4
-# size = [1,1], check too-many-input-ports error
-
-
-def test_DDM_size_too_long():
-    with pytest.raises(DDMError) as error_text:
-        T = DDM(
-            name='DDM',
-            size=[1, 1],
-            function=DriftDiffusionIntegrator(
-                noise=0.0,
-                rate=-5.0,
-                time_step_size=1.0
-            ),
-            execute_until_finished=False,
-        )
-    assert "is greater than 1, implying there are" in str(error_text.value)
 
 
 def test_DDM_time():
@@ -809,3 +770,43 @@ def test_DDMMechanism_LCA_equivalent(comp_mode):
     result2 = comp2.run(inputs={ddm:[1]}, execution_mode=comp_mode)
     assert np.allclose(np.asfarray(result2[0]), [0.1])
     assert np.allclose(np.asfarray(result2[1]), [0.1])
+
+
+@pytest.mark.ddm_mechanism
+@pytest.mark.parametrize('function', [DriftDiffusionAnalytical, DriftDiffusionIntegrator])
+@pytest.mark.parametrize(
+    'ddm_array_args, execute_variable',
+    [
+        ({'default_variable': [[0], [0], [0]]}, [[1], [2], [3]]),
+        ({'size': 3, 'input_format': pnl.ARRAY}, [[2, 1], [3, 1], [4, 1]]),
+    ]
+)
+@pytest.mark.parametrize(
+    'drift_rate',
+    [
+        1,
+        [[1], [2], [3]],
+    ]
+)
+def test_DDMMechanism_1d_array_types(function, ddm_array_args, execute_variable, drift_rate):
+    def elem(t, i):
+        try:
+            return t[i]
+        except TypeError:
+            return t
+
+    ddm_array = DDM(function=function(drift_rate=drift_rate), when_finished_trigger=pnl.ALL, **ddm_array_args)
+    ddm_single1 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 0)))
+    ddm_single2 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 1)))
+    ddm_single3 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 2)))
+
+    array_res = ddm_array.execute(execute_variable)
+    sr1 = ddm_single1.execute([[1]])
+    sr2 = ddm_single2.execute([[2]])
+    sr3 = ddm_single3.execute([[3]])
+
+    single_res = np.array([
+        [sr1[i], sr2[i], sr3[i]]
+        for i in range(len(sr1))
+    ])
+    assert np.allclose(array_res, single_res)

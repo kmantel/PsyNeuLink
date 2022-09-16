@@ -379,7 +379,7 @@ from psyneulink.core.components.ports.outputport import SEQUENTIAL, StandardOutp
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
 from psyneulink.core.globals.keywords import \
     ALLOCATION_SAMPLES, FUNCTION, FUNCTION_PARAMS, INPUT_PORT_VARIABLES, NAME, OWNER_VALUE, \
-    THRESHOLD, VARIABLE, PREFERENCE_SET_NAME
+    THRESHOLD, VARIABLE, PREFERENCE_SET_NAME, ANY, ALL
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import is_pref_set, REPORT_OUTPUT_PREF
 from psyneulink.core.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
@@ -739,6 +739,21 @@ class DDM(ProcessingMechanism):
             read_only=True,
             structural=True,
         )
+        when_finished_trigger = Parameter(ANY, stateful=False, loggable=False)
+
+        def _validate_variable(self, variable):
+            if variable.ndim > 2:
+                return 'variable must be max 2-dimensional'
+
+            if variable.dtype == object:
+                return 'variable must be a non-ragged numpy.ndarray'
+
+            if variable.shape[-1] > 2:
+                return 'each individual DDM calculation must have at most 2 items'
+
+        def _validate_when_finished_trigger(self, when_finished_trigger):
+            if when_finished_trigger not in {ANY, ALL}:
+                return 'must be either ANY or ALL'
 
     standard_output_ports =[{NAME: DECISION_VARIABLE,},           # Upper or lower threshold for Analtyic function
                             {NAME: RESPONSE_TIME},                # TIME_STEP within TRIAL for Integrator function
@@ -772,55 +787,47 @@ class DDM(ProcessingMechanism):
         #    in order to use SEQUENTIAL indices
         self.standard_output_ports = StandardOutputPorts(self, self.standard_output_ports, indices=SEQUENTIAL)
 
-        if input_format is not None and input_ports is not None:
-            raise DDMError(
-                'Only one of input_format and input_ports should be specified.'
-            )
-        elif input_format is None:
-            input_format = SCALAR
+        if input_ports is not None:
+            for ip in input_ports:
+                try:
+                    if ip.defaults.variable.shape[-1] == 2:
+                        input_format = ARRAY
+                except AttributeError:
+                    pass
 
-        # If input_format is specified to be ARRAY or VECTOR, instantiate:
-        #    InputPort with:
-        #        2-item array as its variable
-        #        Reduce as its function, which will generate an array of len 1
+                try:
+                    if np.array(ip[VARIABLE]).shape[-1] == 2:
+                        input_format = ARRAY
+                except KeyError:
+                    pass
+        elif input_format in {ARRAY, VECTOR}:
+            if size is None:
+                size = 1
+
+            # If input_format is specified to be ARRAY or VECTOR, instantiate:
+            #    InputPort with:
+            #        2-item array as its variable
+            #        Reduce as its function, which will generate an array of len 1
+            input_ports = [
+                {
+                    NAME: 'ARRAY',
+                    VARIABLE: np.array([0.0, 0.0]),
+                    FUNCTION: Reduce(weights=[1, -1])
+                }
+                for i in range(size)
+            ]
+            size = None
+        # elif len(dv) > 1:
+        #     if input_format in {ARRAY, VECTOR}:
+        #         input_ports = [{
+        #             NAME: f'ARRAY_{i}',
+        #             VARIABLE: np.array([[0.0, 0.0]]),
+        #             FUNCTION: Reduce(weights=[1, -1])
+        #         } for i in range(len(dv))]
+
         #        and therefore specify size of Mechanism's variable as 1
         #    OutputPorts that report the decision variable and selected input in array format
-        #        IMPLEMENTATION NOTE:
-        #            These are created here rather than as StandardOutputPorts
-        #            since they require input_format==ARRAY to be meaningful
-        if input_format in {ARRAY, VECTOR}:
-            size=1 # size of variable for DDM Mechanism
-            input_ports = [
-                {NAME:'ARRAY',
-                 VARIABLE: np.array([[0.0, 0.0]]),
-                 FUNCTION: Reduce(weights=[1,-1])}
-            ]
-            self.standard_output_ports.add_port_dicts([
-                # Provides a 1d 2-item array with:
-                #    decision variable in position corresponding to threshold crossed, and 0 in the other position
-                {NAME: DECISION_VARIABLE_ARRAY, # 1d len 2, DECISION_VARIABLE as element 0 or 1
-                 VARIABLE:[(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD],
-                           # per VARIABLE assignment above, items of v of lambda function below are:
-                           #    v[0]=self.value[self.DECISION_VARIABLE_INDEX]
-                           #    v[1]=self.parameter_ports[THRESHOLD]
-                 FUNCTION: lambda v: [float(v[0]), 0] if (v[1] - v[0]) < (v[1] + v[0]) else [0, float(v[0])]},
-                # Provides a 1d 2-item array with:
-                #    input value in position corresponding to threshold crossed by decision variable, and 0 in the other
-                {NAME: SELECTED_INPUT_ARRAY, # 1d len 2, DECISION_VARIABLE as element 0 or 1
-                 VARIABLE:[(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD, (INPUT_PORT_VARIABLES, 0)],
-                 # per VARIABLE assignment above, items of v of lambda function below are:
-                 #    v[0]=self.value[self.DECISION_VARIABLE_INDEX]
-                 #    v[1]=self.parameter_ports[THRESHOLD]
-                 #    v[2]=self.input_ports[0].variable
-                 FUNCTION: lambda v: [float(v[2][0][0]), 0] \
-                                      if (v[1] - v[0]) < (v[1] + v[0]) \
-                                      else [0, float(v[2][0][1])]
-                 }
-            ])
 
-        # Add StandardOutputPorts for Mechanism (after ones for DDM, so that their indices are not messed up)
-        # FIX 11/9/19:  ADD BACK ONCE Mechanism_Base.standard_output_ports ONLY HAS RESULTS IN ITS
-        # self.standard_output_ports.add_port_dicts(Mechanism_Base.standard_output_ports)
 
         # Default output_ports is specified in constructor as a tuple rather than a list
         # to avoid "gotcha" associated with mutable default arguments
@@ -864,6 +871,7 @@ class DDM(ProcessingMechanism):
                                   name=name,
                                   prefs=prefs,
                                   size=size,
+                                  input_format=input_format,
                                   **kwargs),
 
         self._instantiate_plotting_functions()
@@ -934,24 +942,6 @@ class DDM(ProcessingMechanism):
             # number of seconds to wait before next point is plotted
             time.sleep(.1)
 
-    def _validate_variable(self, variable, context=None):
-        """Ensures that input to DDM is a single value.
-        Remove when MULTIPROCESS DDM is implemented.
-        """
-
-        # this test may become obsolete when size is moved to Component.py
-        # if len(variable) > 1 and not self.input_format in {ARRAY, VECTOR}:
-        if not object_has_single_value(variable) and not object_has_single_value(np.array(variable)):
-            raise DDMError("Length of input to DDM ({}) is greater than 1, implying there are multiple "
-                           "input ports, which is currently not supported in DDM, but may be supported"
-                           " in the future under a multi-process DDM. Please use a single numeric "
-                           "item as the default_variable, or use size = 1.".format(variable))
-        # # MODIFIED 6/28/17 (CW): changed len(variable) > 1 to len(variable[0]) > 1
-        # # if not isinstance(variable, numbers.Number) and len(variable[0]) > 1:
-        # if not is_numeric(variable) and len(variable[0]) > 1:
-        #     raise DDMError("Input to DDM ({}) must have only a single numeric item".format(variable))
-        return super()._validate_variable(variable=variable, context=context)
-
     def _validate_params(self, request_set, target_set=None, context=None):
 
         super()._validate_params(request_set=request_set, target_set=target_set, context=context)
@@ -996,6 +986,13 @@ class DDM(ProcessingMechanism):
                 raise DDMError("PROGRAM ERROR: unrecognized specification for {} of {} ({})".
                                format(THRESHOLD, self.name, threshold))
 
+    def _handle_size(self, size, variable):
+        if size is not NotImplemented:
+            if isinstance(size, int) and size > 0:
+                size = [1] * size  # interpret as multiple individual DDMs
+
+        return super()._handle_size(size, variable)
+
     def _instantiate_plotting_functions(self, context=None):
         if "DriftDiffusionIntegrator" in str(self.function):
             self.get_axes_function = DriftDiffusionIntegrator(
@@ -1006,6 +1003,90 @@ class DDM(ProcessingMechanism):
                 rate=self.function.defaults.rate,
                 noise=self.function.defaults.noise
             ).function
+
+    def _instantiate_output_ports(self, context=None):
+        if (
+            self.input_format in {ARRAY, VECTOR}
+            or not object_has_single_value(self.defaults.variable)
+        ):
+            def decision_variable_array_function(value):
+                # items of value are:
+                #    decision_variable=self.value[self.DECISION_VARIABLE_INDEX]
+                #    threshold=self.parameter_ports[THRESHOLD]
+                decision_variable, threshold = value
+                # handles float specification of threshold
+                threshold = np.broadcast_to(threshold, decision_variable.shape)
+
+                res = np.array([
+                    np.array([float(decision_variable[i]), 0])
+                    if (threshold[i] - decision_variable[i]) < (threshold[i] + decision_variable[i])
+                    else np.array([0, float(decision_variable[i])])
+                    for i in range(len(decision_variable))
+                ])
+                # matches prior result where there can only be one ARRAY
+                # result (from two incoming projections to primary input
+                # port)
+                if len(res) == 1:
+                    res = res[0]
+                return res
+
+            def selected_input_array_function(value):
+                # items of value are
+                #    decision_variable=self.value[self.DECISION_VARIABLE_INDEX]
+                #    threshold=self.parameter_ports[THRESHOLD]
+                #    ip_variable=self.input_ports[0].variable
+                decision_variable, threshold, ip_variables = value
+                threshold = np.broadcast_to(threshold, decision_variable.shape)
+
+                res = []
+                for i in range(len(decision_variable)):
+                    if ip_variables[i].ndim == 2 and ip_variables[i].shape[0] == 1:
+                        ip_elem = ip_variables[i][0]
+                    else:
+                        ip_elem = ip_variables[i]
+
+                    if (threshold[i] - decision_variable[i]) < (threshold[i] + decision_variable[i]):
+                        selected_index_list = [ip_elem[0], 0]
+                    else:
+                        selected_index_list = [ip_elem[1], 0]
+
+                    res.append(np.array(selected_index_list))
+
+                if len(res) == 1:
+                    res = res[0]
+                return res
+
+            #        IMPLEMENTATION NOTE:
+            #            These are created here rather than as StandardOutputPorts
+            #            since they require input_format==ARRAY to be meaningful
+            self.standard_output_ports.add_port_dicts([
+                # Provides a 1d 2-item array with:
+                # decision variable in first slot and 0 in second if it
+                # is closer to the positive threshold, or 0 in first
+                # slot and decision variable in second if it is closer
+                # to the negative threshold.
+                # per meeting on 2022-09-16, this is intended, it is
+                # explicitly not required to mean that decision variable
+                # has reached threshold
+                {
+                    NAME: DECISION_VARIABLE_ARRAY,  # 1d len 2, DECISION_VARIABLE as element 0 or 1
+                    VARIABLE: [(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD],
+                    FUNCTION: decision_variable_array_function,
+                },
+                # Provides a 1d 2-item array with:
+                #    input value in position just as decision variable above
+                {
+                    NAME: SELECTED_INPUT_ARRAY,  # 1d len 2, DECISION_VARIABLE as element 0 or 1
+                    VARIABLE: [(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD, INPUT_PORT_VARIABLES],
+                    FUNCTION: selected_input_array_function
+                }
+            ])
+
+            # Add StandardOutputPorts for Mechanism (after ones for DDM, so that their indices are not messed up)
+            # FIX 11/9/19:  ADD BACK ONCE Mechanism_Base.standard_output_ports ONLY HAS RESULTS IN ITS
+            # self.standard_output_ports.add_port_dicts(Mechanism_Base.standard_output_ports)
+
+        return super()._instantiate_output_ports(context=context)
 
     def _execute(
         self,
@@ -1056,8 +1137,18 @@ class DDM(ProcessingMechanism):
 
         # EXECUTE INTEGRATOR SOLUTION (TIME_STEP TIME SCALE) -----------------------------------------------------
         if isinstance(self.function, IntegratorFunction):
+            if self.when_finished_trigger == ALL:
+                finished_mask = self._is_finished_value_mask(context)
 
             result = super()._execute(variable, context=context)
+
+            # mimics stopping calculation of integrator in each cell when it finishes
+            # (calculation is actually done in a vector at once)
+            if self.when_finished_trigger == ALL:
+                result = (
+                    finished_mask * self.parameters.value._get(context)
+                    + ((1 - finished_mask) * result)
+                )
 
             if self.initialization_status != ContextFlags.INITIALIZING:
                 logger.info('{0} {1} is at {2}'.format(type(self).__name__, self.name, result))
@@ -1075,7 +1166,7 @@ class DDM(ProcessingMechanism):
             )
 
             if isinstance(self.function, DriftDiffusionAnalytical):
-                return_value = np.zeros(shape=(10,1))
+                return_value = np.zeros(shape=(10, *np.array(result).shape[1:]))
                 return_value[self.RESPONSE_TIME_INDEX] = result[0]
                 return_value[self.PROBABILITY_LOWER_THRESHOLD_INDEX] = result[1]
                 return_value[self.PROBABILITY_UPPER_THRESHOLD_INDEX] = \
@@ -1094,10 +1185,11 @@ class DDM(ProcessingMechanism):
             # Convert ER to decision variable:
             threshold = float(self.function._get_current_parameter_value(THRESHOLD, context))
             random_state = self._get_current_parameter_value(self.parameters.random_state, context)
-            if random_state.uniform() < return_value[self.PROBABILITY_LOWER_THRESHOLD_INDEX]:
-                return_value[self.DECISION_VARIABLE_INDEX] = np.atleast_1d(-1 * threshold)
-            else:
-                return_value[self.DECISION_VARIABLE_INDEX] = threshold
+            for i in range(len(return_value[self.DECISION_VARIABLE_INDEX])):
+                if random_state.uniform() < return_value[self.PROBABILITY_LOWER_THRESHOLD_INDEX][i]:
+                    return_value[self.DECISION_VARIABLE_INDEX][i] = np.atleast_1d(-1 * threshold)
+                else:
+                    return_value[self.DECISION_VARIABLE_INDEX][i] = threshold
             return return_value
 
     def _gen_llvm_invoke_function(self, ctx, builder, function, params, state,
@@ -1196,36 +1288,40 @@ class DDM(ProcessingMechanism):
             self.parameters.value._set(convert_all_elements_to_np_array(new_values), context)
             self._update_output_ports(context=context)
 
+    def _is_finished_value_mask(self, context=None):
+        try:
+            previous_value = self.function.parameters.previous_value._get(context)
+        except AttributeError:
+            return None
+
+        return np.array([
+            1 if abs(v) >= self.function._get_current_parameter_value(THRESHOLD, context)
+            else 0 for v in previous_value
+        ]).reshape(previous_value.shape)
+
     @handle_external_context()
     def is_finished(self, context=None):
         # find the single numeric entry in previous_value
         try:
-            single_value = self.function.parameters.previous_value._get(context)
+            previous_value = self.function.parameters.previous_value._get(context)
         except AttributeError:
             # Analytical function so it is always finished after it is called
             return True
 
-        # indexing into a matrix doesn't reduce dimensionality
-        if not isinstance(single_value, (np.matrix, str)):
-            while True:
-                try:
-                    single_value = single_value[0]
-                except (IndexError, TypeError):
-                    break
+        if self.when_finished_trigger == ANY:
+            threshold = self.function._get_current_parameter_value(THRESHOLD, context)
 
-        if (
-            abs(single_value) >= self.function._get_current_parameter_value(THRESHOLD, context)
-            and isinstance(self.function, IntegratorFunction)
-        ):
-            logger.info(
-                '{0} {1} has reached threshold {2}'.format(
-                    type(self).__name__,
-                    self.name,
-                    self.function._get_current_parameter_value(THRESHOLD, context)
-                )
-            )
+            for v in previous_value:
+                if abs(v) >= threshold:
+                    return True
+            return False
+        elif self.when_finished_trigger == ALL:
+            for v in self._is_finished_value_mask(context):
+                if v == 0:
+                    return False
             return True
-        return False
+        else:
+            assert False, 'when_finished_trigger should have been validated to ANY or ALL'
 
     def _gen_llvm_is_finished_cond(self, ctx, builder, m_base_params, m_state, m_in):
         # Setup pointers to internal function

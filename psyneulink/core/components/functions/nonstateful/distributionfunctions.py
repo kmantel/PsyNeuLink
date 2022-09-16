@@ -1265,16 +1265,18 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
             # Compute moments (mean, variance, skew) of conditional response time distributions
             moments_res.append(DriftDiffusionAnalytical._compute_conditional_rt_moments(dr, n, t, b, ndt))
 
-        # avoid extra tuple wrapping from zip so broadcast_to works
         if len(rt_er_res) == 1:
+            # avoid extra tuple wrapping from zip
             rt, er = rt_er_res[0]
         else:
             rt, er = zip(*rt_er_res)
 
-        moments = moments_res[0]
-        for i in range(1, len(variable)):
-            for k in moments:
-                moments[k] = np.append(moments[k], moments_res[i][k])
+        moments = {k: [] for k in moments_res[0]}
+        for i in range(len(moments_res)):
+            for k in moments_res[i]:
+                moments[k].append(moments_res[i][k])
+
+        moments = {k: np.array(moments[k]) if len(moments[k]) > 1 else np.array(moments[k][0]) for k in moments}
 
         rt = np.array(rt).reshape(moments['mean_rt_plus'].shape)
         er = np.array(er).reshape(moments['mean_rt_plus'].shape)
