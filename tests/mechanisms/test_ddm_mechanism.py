@@ -797,3 +797,26 @@ def test_DDMMechanism_LCA_equivalent(comp_mode):
     result2 = comp2.run(inputs={ddm:[1]}, execution_mode=comp_mode)
     assert np.allclose(np.asfarray(result2[0]), [0.1])
     assert np.allclose(np.asfarray(result2[1]), [0.1])
+
+
+@pytest.mark.ddm_mechanism
+@pytest.mark.parametrize('function', [DriftDiffusionIntegrator(threshold=10), DriftDiffusionAnalytical(threshold=10)])
+def test_DDMMechanism_single_1d_array(function):
+    ddm_array = DDM(default_variable=[[0], [0], [0]], function=function)
+    ddm_single = DDM(default_variable=[[0]], function=function)
+
+    array_res = ddm_array.execute([[1], [2], [3]])
+    single_res = np.array([[
+        ddm_single.execute([[1]])[0][0],
+        ddm_single.execute([[2]])[0][0],
+        ddm_single.execute([[3]])[0][0],
+    ]])
+    assert array_res == single_res
+
+
+
+@pytest.mark.ddm_mechanism
+@pytest.mark.parametrize('function', [DriftDiffusionIntegrator, DriftDiffusionAnalytical])
+def test_DDMMechanism_multiple_1d_array(function):
+    ddm = DDM(default_variable=[[0, 0], [0, 0], [0, 0]], function=function)
+    ddm.execute([[2, 1], [3, 1], [4, 1]])

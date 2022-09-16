@@ -740,6 +740,16 @@ class DDM(ProcessingMechanism):
             structural=True,
         )
 
+        def _validate_variable(self, variable):
+            if variable.ndim > 2:
+                return 'variable must be max 2-dimensional'
+
+            if variable.dtype == object:
+                return 'variable must be a non-ragged numpy.ndarray'
+
+            if variable.shape[-1] > 2:
+                return 'each individual DDM calculation must have at most 2 items'
+
     standard_output_ports =[{NAME: DECISION_VARIABLE,},           # Upper or lower threshold for Analtyic function
                             {NAME: RESPONSE_TIME},                # TIME_STEP within TRIAL for Integrator function
                             {NAME: PROBABILITY_UPPER_THRESHOLD},  # Accuracy (TRIAL mode only)
@@ -778,6 +788,21 @@ class DDM(ProcessingMechanism):
             )
         elif input_format is None:
             input_format = SCALAR
+
+        dv = self._handle_default_variable(default_variable, size, input_ports, function, params)
+        if default_variable is None:
+            if input_format in {ARRAY, VECTOR}:
+                size = 1  # size of variable for DDM Mechanism
+                input_ports = [
+                    {
+                        NAME: 'ARRAY',
+                        VARIABLE: np.array([[0.0, 0.0]]),
+                        FUNCTION: Reduce(weights=[1, -1])
+                    }
+                ]
+
+        if default_variable is not None and len(default_variable) > 1:
+            pass
 
         # If input_format is specified to be ARRAY or VECTOR, instantiate:
         #    InputPort with:
@@ -864,6 +889,7 @@ class DDM(ProcessingMechanism):
                                   name=name,
                                   prefs=prefs,
                                   size=size,
+                                  input_format=input_format,
                                   **kwargs),
 
         self._instantiate_plotting_functions()
@@ -933,24 +959,6 @@ class DDM(ProcessingMechanism):
             figure.canvas.draw()
             # number of seconds to wait before next point is plotted
             time.sleep(.1)
-
-    def _validate_variable(self, variable, context=None):
-        """Ensures that input to DDM is a single value.
-        Remove when MULTIPROCESS DDM is implemented.
-        """
-
-        # this test may become obsolete when size is moved to Component.py
-        # if len(variable) > 1 and not self.input_format in {ARRAY, VECTOR}:
-        if not object_has_single_value(variable) and not object_has_single_value(np.array(variable)):
-            raise DDMError("Length of input to DDM ({}) is greater than 1, implying there are multiple "
-                           "input ports, which is currently not supported in DDM, but may be supported"
-                           " in the future under a multi-process DDM. Please use a single numeric "
-                           "item as the default_variable, or use size = 1.".format(variable))
-        # # MODIFIED 6/28/17 (CW): changed len(variable) > 1 to len(variable[0]) > 1
-        # # if not isinstance(variable, numbers.Number) and len(variable[0]) > 1:
-        # if not is_numeric(variable) and len(variable[0]) > 1:
-        #     raise DDMError("Input to DDM ({}) must have only a single numeric item".format(variable))
-        return super()._validate_variable(variable=variable, context=context)
 
     def _validate_params(self, request_set, target_set=None, context=None):
 
