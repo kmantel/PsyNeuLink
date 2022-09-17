@@ -820,28 +820,6 @@ class DDM(ProcessingMechanism):
                  VARIABLE: np.array([[0.0, 0.0]]),
                  FUNCTION: Reduce(weights=[1,-1])}
             ]
-            self.standard_output_ports.add_port_dicts([
-                # Provides a 1d 2-item array with:
-                #    decision variable in position corresponding to threshold crossed, and 0 in the other position
-                {NAME: DECISION_VARIABLE_ARRAY, # 1d len 2, DECISION_VARIABLE as element 0 or 1
-                 VARIABLE:[(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD],
-                           # per VARIABLE assignment above, items of v of lambda function below are:
-                           #    v[0]=self.value[self.DECISION_VARIABLE_INDEX]
-                           #    v[1]=self.parameter_ports[THRESHOLD]
-                 FUNCTION: lambda v: [float(v[0]), 0] if (v[1] - v[0]) < (v[1] + v[0]) else [0, float(v[0])]},
-                # Provides a 1d 2-item array with:
-                #    input value in position corresponding to threshold crossed by decision variable, and 0 in the other
-                {NAME: SELECTED_INPUT_ARRAY, # 1d len 2, DECISION_VARIABLE as element 0 or 1
-                 VARIABLE:[(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD, (INPUT_PORT_VARIABLES, 0)],
-                 # per VARIABLE assignment above, items of v of lambda function below are:
-                 #    v[0]=self.value[self.DECISION_VARIABLE_INDEX]
-                 #    v[1]=self.parameter_ports[THRESHOLD]
-                 #    v[2]=self.input_ports[0].variable
-                 FUNCTION: lambda v: [float(v[2][0][0]), 0] \
-                                      if (v[1] - v[0]) < (v[1] + v[0]) \
-                                      else [0, float(v[2][0][1])]
-                 }
-            ])
 
         # Add StandardOutputPorts for Mechanism (after ones for DDM, so that their indices are not messed up)
         # FIX 11/9/19:  ADD BACK ONCE Mechanism_Base.standard_output_ports ONLY HAS RESULTS IN ITS
@@ -1014,6 +992,62 @@ class DDM(ProcessingMechanism):
                 rate=self.function.defaults.rate,
                 noise=self.function.defaults.noise
             ).function
+
+    def _instantiate_output_ports(self, context=None):
+        if (
+            self.input_format in {ARRAY, VECTOR}
+            or not object_has_single_value(self.defaults.variable)
+        ):
+            def decision_variable_array_function(value):
+                # items of value are:
+                #    decision_variable=self.value[self.DECISION_VARIABLE_INDEX]
+                #    threshold=self.parameter_ports[THRESHOLD]
+                decision_variable, threshold = value
+                # handles float specification of threshold
+                threshold = np.broadcast_to(threshold, decision_variable.shape)
+
+                res = np.array([
+                    np.array([float(decision_variable[i]), 0])
+                    if (threshold[i] - decision_variable[i]) < (threshold[i] + decision_variable[i])
+                    else np.array([0, float(decision_variable[i])])
+                    for i in range(len(decision_variable))
+                ])
+                # matches prior result where there can only be one ARRAY
+                # result (from two incoming projections to primary input
+                # port)
+                if len(res) == 1:
+                    res = res[0]
+                return res
+
+            self.standard_output_ports.add_port_dicts([
+                # Provides a 1d 2-item array with:
+                # decision variable in first slot and 0 in second if it
+                # is closer to the positive threshold, or 0 in first
+                # slot and decision variable in second if it is closer
+                # to the negative threshold.
+                # per meeting on 2022-09-16, this is intended, it is
+                # explicitly not required to mean that decision variable
+                # has reached threshold
+                {
+                    NAME: DECISION_VARIABLE_ARRAY,  # 1d len 2, DECISION_VARIABLE as element 0 or 1
+                    VARIABLE: [(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD],
+                    FUNCTION: decision_variable_array_function,
+                },
+                # Provides a 1d 2-item array with:
+                #    input value in position corresponding to threshold crossed by decision variable, and 0 in the other
+                {NAME: SELECTED_INPUT_ARRAY, # 1d len 2, DECISION_VARIABLE as element 0 or 1
+                 VARIABLE:[(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD, (INPUT_PORT_VARIABLES, 0)],
+                 # per VARIABLE assignment above, items of v of lambda function below are:
+                 #    v[0]=self.value[self.DECISION_VARIABLE_INDEX]
+                 #    v[1]=self.parameter_ports[THRESHOLD]
+                 #    v[2]=self.input_ports[0].variable
+                 FUNCTION: lambda v: [float(v[2][0][0]), 0] \
+                                      if (v[1] - v[0]) < (v[1] + v[0]) \
+                                      else [0, float(v[2][0][1])]
+                 }
+            ])
+
+        return super()._instantiate_output_ports(context=context)
 
     def _execute(
         self,
