@@ -1019,6 +1019,25 @@ class DDM(ProcessingMechanism):
                     res = res[0]
                 return res
 
+            def selected_input_array_function(value):
+                # items of value are
+                #    decision_variable=self.value[self.DECISION_VARIABLE_INDEX]
+                #    threshold=self.parameter_ports[THRESHOLD]
+                #    ip_variable=self.input_ports[0].variable
+                decision_variable, threshold, ip_variables = value
+                threshold = np.broadcast_to(threshold, decision_variable.shape)
+
+                res = np.array([
+                    np.array([float(ip_variables[i][0][0]), 0])
+                    if (threshold[i] - decision_variable[i]) < (threshold[i] + decision_variable[i])
+                    else np.array([0, float(ip_variables[i][0][1])])
+                    for i in range(len(decision_variable))
+                ])
+
+                if len(res) == 1:
+                    res = res[0]
+                return res
+
             self.standard_output_ports.add_port_dicts([
                 # Provides a 1d 2-item array with:
                 # decision variable in first slot and 0 in second if it
@@ -1034,17 +1053,12 @@ class DDM(ProcessingMechanism):
                     FUNCTION: decision_variable_array_function,
                 },
                 # Provides a 1d 2-item array with:
-                #    input value in position corresponding to threshold crossed by decision variable, and 0 in the other
-                {NAME: SELECTED_INPUT_ARRAY, # 1d len 2, DECISION_VARIABLE as element 0 or 1
-                 VARIABLE:[(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD, (INPUT_PORT_VARIABLES, 0)],
-                 # per VARIABLE assignment above, items of v of lambda function below are:
-                 #    v[0]=self.value[self.DECISION_VARIABLE_INDEX]
-                 #    v[1]=self.parameter_ports[THRESHOLD]
-                 #    v[2]=self.input_ports[0].variable
-                 FUNCTION: lambda v: [float(v[2][0][0]), 0] \
-                                      if (v[1] - v[0]) < (v[1] + v[0]) \
-                                      else [0, float(v[2][0][1])]
-                 }
+                #    input value in position just as decision variable above
+                {
+                    NAME: SELECTED_INPUT_ARRAY,  # 1d len 2, DECISION_VARIABLE as element 0 or 1
+                    VARIABLE: [(OWNER_VALUE, self.DECISION_VARIABLE_INDEX), THRESHOLD, INPUT_PORT_VARIABLES],
+                    FUNCTION: selected_input_array_function
+                }
             ])
 
         return super()._instantiate_output_ports(context=context)
