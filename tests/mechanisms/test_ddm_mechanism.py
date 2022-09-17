@@ -818,5 +818,5 @@ def test_DDMMechanism_single_1d_array(function):
 @pytest.mark.ddm_mechanism
 @pytest.mark.parametrize('function', [DriftDiffusionIntegrator, DriftDiffusionAnalytical])
 def test_DDMMechanism_multiple_1d_array(function):
-    ddm = DDM(default_variable=[[0, 0], [0, 0], [0, 0]], function=function)
+    ddm = DDM(input_ports=[[0, 0], [0, 0], [0, 0]], function=function)
     ddm.execute([[2, 1], [3, 1], [4, 1]])
