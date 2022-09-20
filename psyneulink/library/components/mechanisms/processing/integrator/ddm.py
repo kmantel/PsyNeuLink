@@ -786,24 +786,29 @@ class DDM(ProcessingMechanism):
             raise DDMError(
                 'Only one of input_format and input_ports should be specified.'
             )
-        elif input_format is None:
-            input_format = SCALAR
 
-        dv = self._handle_default_variable(default_variable, size, input_ports, function, params)
-        if default_variable is None:
-            if input_format in {ARRAY, VECTOR}:
-                size = 1  # size of variable for DDM Mechanism
-                input_ports = [
-                    {
-                        NAME: 'ARRAY',
-                        VARIABLE: np.array([[0.0, 0.0]]),
-                        FUNCTION: Reduce(weights=[1, -1])
-                    }
-                ]
+        if input_format in {ARRAY, VECTOR}:
+            if size is None:
+                sz = 1
+            else:
+                sz = size
+                size = None
 
-        if default_variable is not None and len(default_variable) > 1:
-            pass
-
+            input_ports = [
+                {
+                    NAME: 'ARRAY',
+                    VARIABLE: np.array([[0.0, 0.0]]),
+                    FUNCTION: Reduce(weights=[1, -1])
+                }
+                for i in range(sz)
+            ]
+        # elif len(dv) > 1:
+        #     if input_format in {ARRAY, VECTOR}:
+        #         input_ports = [{
+        #             NAME: f'ARRAY_{i}',
+        #             VARIABLE: np.array([[0.0, 0.0]]),
+        #             FUNCTION: Reduce(weights=[1, -1])
+        #         } for i in range(len(dv))]
         # If input_format is specified to be ARRAY or VECTOR, instantiate:
         #    InputPort with:
         #        2-item array as its variable
@@ -813,13 +818,6 @@ class DDM(ProcessingMechanism):
         #        IMPLEMENTATION NOTE:
         #            These are created here rather than as StandardOutputPorts
         #            since they require input_format==ARRAY to be meaningful
-        if input_format in {ARRAY, VECTOR}:
-            size=1 # size of variable for DDM Mechanism
-            input_ports = [
-                {NAME:'ARRAY',
-                 VARIABLE: np.array([[0.0, 0.0]]),
-                 FUNCTION: Reduce(weights=[1,-1])}
-            ]
 
         # Add StandardOutputPorts for Mechanism (after ones for DDM, so that their indices are not messed up)
         # FIX 11/9/19:  ADD BACK ONCE Mechanism_Base.standard_output_ports ONLY HAS RESULTS IN ITS
