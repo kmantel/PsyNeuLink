@@ -1276,8 +1276,8 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
             for k in moments:
                 moments[k] = np.append(moments[k], moments_res[i][k])
 
-        rt = np.broadcast_to(rt, moments['mean_rt_plus'].shape)
-        er = np.broadcast_to(er, moments['mean_rt_plus'].shape)
+        rt = np.array(rt).reshape(moments['mean_rt_plus'].shape)
+        er = np.array(er).reshape(moments['mean_rt_plus'].shape)
 
         return np.array([
             rt, er,
