@@ -37,6 +37,18 @@ from psyneulink.core.globals.utilities import iscompatible, convert_to_np_array,
 __all__ = ['StatefulFunction']
 
 
+def _match_stateful_attribute_shape(attr_value, variable):
+    try:
+        reshaped = np.broadcast_to(
+            attr_value,
+            variable.shape
+        ).copy()
+    except ValueError:
+        reshaped = attr_value.reshape(variable.shape).copy()
+
+    return reshaped
+
+
 class StatefulFunction(Function_Base): #  ---------------------------------------------------------------------
     """
     StatefulFunction(           \
@@ -384,13 +396,10 @@ class StatefulFunction(Function_Base): #  --------------------------------------
         if not np.isscalar(self.defaults.variable):
             for attr in initializers:
                 param = getattr(self.parameters, attr)
-                param._set(
-                    np.broadcast_to(
-                        param._get(context),
-                        self.defaults.variable.shape
-                    ).copy(),
-                    context
-                )
+                param_value = param._get(context)
+                reshaped = _match_stateful_attribute_shape(param_value, self.defaults.variable)
+                param.default_value = reshaped
+                param._set(reshaped, context)
 
         # create all stateful attributes and initialize their values to the current values of their
         # corresponding initializer attributes
