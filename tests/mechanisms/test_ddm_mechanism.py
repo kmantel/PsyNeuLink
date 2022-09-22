@@ -767,17 +767,30 @@ def test_DDMMechanism_single_1d_array(function):
     ddm_single = DDM(default_variable=[[0]], function=function)
 
     array_res = ddm_array.execute([[1], [2], [3]])
-    single_res = np.array([[
-        ddm_single.execute([[1]])[0][0],
-        ddm_single.execute([[2]])[0][0],
-        ddm_single.execute([[3]])[0][0],
-    ]])
+    sr1 = ddm_single.execute([1])
+    sr2 = ddm_single.execute([2])
+    sr3 = ddm_single.execute([3])
+
+    single_res = np.array([
+        list(zip(sr1[i], sr2[i], sr3[i]))[0]
+        for i in range(len(sr1))
+    ])
     assert np.allclose(array_res, single_res)
 
 
-
 @pytest.mark.ddm_mechanism
-@pytest.mark.parametrize('function', [DriftDiffusionIntegrator, DriftDiffusionAnalytical])
+@pytest.mark.parametrize('function', [DriftDiffusionIntegrator(threshold=10), DriftDiffusionAnalytical(threshold=10)])
 def test_DDMMechanism_multiple_1d_array(function):
-    ddm = DDM(size=3, function=function, input_format=pnl.ARRAY)
-    ddm.execute([[2, 1], [3, 1], [4, 1]])
+    ddm_array = DDM(size=3, function=function, input_format=pnl.ARRAY)
+    ddm_single = DDM(default_variable=[[0]], function=function)
+
+    array_res = ddm_array.execute([[2, 1], [3, 1], [4, 1]])
+    sr1 = ddm_single.execute([1])
+    sr2 = ddm_single.execute([2])
+    sr3 = ddm_single.execute([3])
+
+    single_res = np.array([
+        list(zip(sr1[i], sr2[i], sr3[i]))[0]
+        for i in range(len(sr1))
+    ])
+    assert np.allclose(array_res, single_res)
