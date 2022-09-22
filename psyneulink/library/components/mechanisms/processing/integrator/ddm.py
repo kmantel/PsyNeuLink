@@ -789,10 +789,7 @@ class DDM(ProcessingMechanism):
 
         if input_format in {ARRAY, VECTOR}:
             if size is None:
-                sz = 1
-            else:
-                sz = size
-                size = None
+                size = 1
 
             input_ports = [
                 {
@@ -800,8 +797,9 @@ class DDM(ProcessingMechanism):
                     VARIABLE: np.array([[0.0, 0.0]]),
                     FUNCTION: Reduce(weights=[1, -1])
                 }
-                for i in range(sz)
+                for i in range(size)
             ]
+            size = None
         # elif len(dv) > 1:
         #     if input_format in {ARRAY, VECTOR}:
         #         input_ports = [{
@@ -979,6 +977,13 @@ class DDM(ProcessingMechanism):
             else:
                 raise DDMError("PROGRAM ERROR: unrecognized specification for {} of {} ({})".
                                format(THRESHOLD, self.name, threshold))
+
+    def _handle_size(self, size, variable):
+        if size is not NotImplemented:
+            if isinstance(size, int) and size > 0:
+                size = [1] * size  # interpret as multiple individual DDMs
+
+        return super()._handle_size(size, variable)
 
     def _instantiate_plotting_functions(self, context=None):
         if "DriftDiffusionIntegrator" in str(self.function):

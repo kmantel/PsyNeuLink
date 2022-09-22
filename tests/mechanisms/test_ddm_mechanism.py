@@ -365,27 +365,6 @@ def test_DDM_input(stim):
 # INVALID INPUTS:
 
 # ------------------------------------------------------------------------------------------------
-# TEST 1
-# input = List len 2
-
-
-def test_DDM_input_list_len_2():
-    with pytest.raises(DDMError) as error_text:
-        stim = [10, 10]
-        T = DDM(
-            name='DDM',
-            default_variable=[0, 0],
-            function=DriftDiffusionIntegrator(
-
-                noise=0.0,
-                rate=1.0,
-                time_step_size=1.0
-            ),
-            execute_until_finished=False,
-        )
-        float(T.execute(stim)[0])
-    assert "single numeric item" in str(error_text.value)
-
 # ------------------------------------------------------------------------------------------------
 # TEST 2
 # input = Fn
@@ -521,6 +500,22 @@ def test_DDM_size_int_inputs():
     assert decision_variable == -2.0
     assert time == 1.0
 
+
+def test_DDM_extended_size():
+    T = DDM(size=3)
+    assert T.defaults.variable == np.array([[0], [0]])
+
+
+def test_DDM_extended_size_size_list():
+    T = DDM(size=[1, 1])
+    assert T.defaults.variable == np.array([[0], [0]])
+
+
+@pytest.mark.parametrize('array_kw', [pnl.ARRAY, pnl.VECTOR])
+def test_DDM_extended_size_input_format_array(array_kw):
+    T = DDM(size=3, input_format=array_kw)
+    assert T.defaults.variable == np.array([[0, 0], [0, 0], [0, 0]])
+
 # ------------------------------------------------------------------------------------------------
 
 # INVALID INPUTS
@@ -562,44 +557,6 @@ def test_DDM_mech_size_negative_one():
             execute_until_finished=False,
         )
     assert "is not a positive number" in str(error_text.value)
-
-# ------------------------------------------------------------------------------------------------
-# TEST 3
-# size = 3.0, check size-too-large error
-
-
-def test_DDM_size_too_large():
-    with pytest.raises(DDMError) as error_text:
-        T = DDM(
-            name='DDM',
-            size=3.0,
-            function=DriftDiffusionIntegrator(
-                noise=0.0,
-                rate=-5.0,
-                time_step_size=1.0
-            ),
-            execute_until_finished=False,
-        )
-    assert "single numeric item" in str(error_text.value)
-
-# ------------------------------------------------------------------------------------------------
-# TEST 4
-# size = [1,1], check too-many-input-ports error
-
-
-def test_DDM_size_too_long():
-    with pytest.raises(DDMError) as error_text:
-        T = DDM(
-            name='DDM',
-            size=[1, 1],
-            function=DriftDiffusionIntegrator(
-                noise=0.0,
-                rate=-5.0,
-                time_step_size=1.0
-            ),
-            execute_until_finished=False,
-        )
-    assert "is greater than 1, implying there are" in str(error_text.value)
 
 
 def test_DDM_time():
