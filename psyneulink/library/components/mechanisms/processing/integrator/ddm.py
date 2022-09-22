@@ -791,6 +791,10 @@ class DDM(ProcessingMechanism):
             if size is None:
                 size = 1
 
+            # If input_format is specified to be ARRAY or VECTOR, instantiate:
+            #    InputPort with:
+            #        2-item array as its variable
+            #        Reduce as its function, which will generate an array of len 1
             input_ports = [
                 {
                     NAME: 'ARRAY',
@@ -807,19 +811,10 @@ class DDM(ProcessingMechanism):
         #             VARIABLE: np.array([[0.0, 0.0]]),
         #             FUNCTION: Reduce(weights=[1, -1])
         #         } for i in range(len(dv))]
-        # If input_format is specified to be ARRAY or VECTOR, instantiate:
-        #    InputPort with:
-        #        2-item array as its variable
-        #        Reduce as its function, which will generate an array of len 1
+
         #        and therefore specify size of Mechanism's variable as 1
         #    OutputPorts that report the decision variable and selected input in array format
-        #        IMPLEMENTATION NOTE:
-        #            These are created here rather than as StandardOutputPorts
-        #            since they require input_format==ARRAY to be meaningful
 
-        # Add StandardOutputPorts for Mechanism (after ones for DDM, so that their indices are not messed up)
-        # FIX 11/9/19:  ADD BACK ONCE Mechanism_Base.standard_output_ports ONLY HAS RESULTS IN ITS
-        # self.standard_output_ports.add_port_dicts(Mechanism_Base.standard_output_ports)
 
         # Default output_ports is specified in constructor as a tuple rather than a list
         # to avoid "gotcha" associated with mutable default arguments
@@ -1041,6 +1036,9 @@ class DDM(ProcessingMechanism):
                     res = res[0]
                 return res
 
+            #        IMPLEMENTATION NOTE:
+            #            These are created here rather than as StandardOutputPorts
+            #            since they require input_format==ARRAY to be meaningful
             self.standard_output_ports.add_port_dicts([
                 # Provides a 1d 2-item array with:
                 # decision variable in first slot and 0 in second if it
@@ -1063,6 +1061,10 @@ class DDM(ProcessingMechanism):
                     FUNCTION: selected_input_array_function
                 }
             ])
+
+            # Add StandardOutputPorts for Mechanism (after ones for DDM, so that their indices are not messed up)
+            # FIX 11/9/19:  ADD BACK ONCE Mechanism_Base.standard_output_ports ONLY HAS RESULTS IN ITS
+            # self.standard_output_ports.add_port_dicts(Mechanism_Base.standard_output_ports)
 
         return super()._instantiate_output_ports(context=context)
 

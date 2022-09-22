@@ -503,18 +503,22 @@ def test_DDM_size_int_inputs():
 
 def test_DDM_extended_size():
     T = DDM(size=3)
-    assert T.defaults.variable == np.array([[0], [0]])
+    assert T.defaults.variable.shape == np.array([[0], [0], [0]]).shape
 
 
 def test_DDM_extended_size_size_list():
     T = DDM(size=[1, 1])
-    assert T.defaults.variable == np.array([[0], [0]])
+    assert T.defaults.variable.shape == np.array([[0], [0]]).shape
 
 
 @pytest.mark.parametrize('array_kw', [pnl.ARRAY, pnl.VECTOR])
 def test_DDM_extended_size_input_format_array(array_kw):
     T = DDM(size=3, input_format=array_kw)
-    assert T.defaults.variable == np.array([[0, 0], [0, 0], [0, 0]])
+    assert T.defaults.variable.shape == np.array([[0], [0], [0]]).shape
+    for ip in T.input_ports:
+        assert ip.defaults.variable.shape == np.array([[0, 0]]).shape
+        assert ip.defaults.value.shape == np.array([0]).shape
+        assert isinstance(ip.function, pnl.Reduce)
 
 # ------------------------------------------------------------------------------------------------
 
@@ -768,7 +772,7 @@ def test_DDMMechanism_single_1d_array(function):
         ddm_single.execute([[2]])[0][0],
         ddm_single.execute([[3]])[0][0],
     ]])
-    assert array_res == single_res
+    assert np.allclose(array_res, single_res)
 
 
 
