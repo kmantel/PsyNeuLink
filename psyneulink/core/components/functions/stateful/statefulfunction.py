@@ -384,13 +384,16 @@ class StatefulFunction(Function_Base): #  --------------------------------------
         if not np.isscalar(self.defaults.variable):
             for attr in initializers:
                 param = getattr(self.parameters, attr)
-                param._set(
-                    np.broadcast_to(
-                        param._get(context),
+                param_value = param._get(context)
+                try:
+                    reshaped = np.broadcast_to(
+                        param_value,
                         self.defaults.variable.shape
-                    ).copy(),
-                    context
-                )
+                    ).copy()
+                except ValueError:
+                    reshaped = param_value.reshape(self.defaults.variable.shape).copy()
+
+                param._set(reshaped, context)
 
         # create all stateful attributes and initialize their values to the current values of their
         # corresponding initializer attributes
