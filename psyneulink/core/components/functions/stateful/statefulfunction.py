@@ -385,14 +385,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
             for attr in initializers:
                 param = getattr(self.parameters, attr)
                 param_value = param._get(context)
-                try:
-                    reshaped = np.broadcast_to(
-                        param_value,
-                        self.defaults.variable.shape
-                    ).copy()
-                except ValueError:
-                    reshaped = param_value.reshape(self.defaults.variable.shape).copy()
-
+                reshaped = param_value.reshape(self.defaults.variable.shape).copy()
                 param._set(reshaped, context)
 
         # create all stateful attributes and initialize their values to the current values of their
