@@ -1134,7 +1134,7 @@ class DDM(ProcessingMechanism):
             )
 
             if isinstance(self.function, DriftDiffusionAnalytical):
-                return_value = np.zeros(shape=(10,1))
+                return_value = np.zeros(shape=(10, *np.array(result).shape[1:]))
                 return_value[self.RESPONSE_TIME_INDEX] = result[0]
                 return_value[self.PROBABILITY_LOWER_THRESHOLD_INDEX] = result[1]
                 return_value[self.PROBABILITY_UPPER_THRESHOLD_INDEX] = \
@@ -1153,10 +1153,11 @@ class DDM(ProcessingMechanism):
             # Convert ER to decision variable:
             threshold = float(self.function._get_current_parameter_value(THRESHOLD, context))
             random_state = self._get_current_parameter_value(self.parameters.random_state, context)
-            if random_state.uniform() < return_value[self.PROBABILITY_LOWER_THRESHOLD_INDEX]:
-                return_value[self.DECISION_VARIABLE_INDEX] = np.atleast_1d(-1 * threshold)
-            else:
-                return_value[self.DECISION_VARIABLE_INDEX] = threshold
+            for i in range(len(return_value[self.DECISION_VARIABLE_INDEX])):
+                if random_state.uniform() < return_value[self.PROBABILITY_LOWER_THRESHOLD_INDEX][i]:
+                    return_value[self.DECISION_VARIABLE_INDEX][i] = np.atleast_1d(-1 * threshold)
+                else:
+                    return_value[self.DECISION_VARIABLE_INDEX][i] = threshold
             return return_value
 
     def _gen_llvm_invoke_function(self, ctx, builder, function, params, state,
