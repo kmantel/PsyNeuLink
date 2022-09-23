@@ -283,8 +283,8 @@ class IntegratorFunction(StatefulFunction):  # ---------------------------------
         # If default_variable was specified by user, check that all function_arg params have same length
         #    as the length of items in the inner-most dimension (axis) of default_variable
         if self.parameters.variable._user_specified:
-            default_variable_len = self.parameters.variable.default_value.shape[-1]
-            violators = [k for k,v in params_to_check.items() if np.array(v).shape[-1]!=default_variable_len]
+            default_variable_len = self.parameters.variable.default_value.shape[0]
+            violators = [k for k, v in params_to_check.items() if np.array(v).shape[0] != default_variable_len]
             if violators:
                 raise FunctionError(f"The following parameters with len>1 specified for {self.name} "
                                     f"don't have the same length as its {repr(DEFAULT_VARIABLE)} "
