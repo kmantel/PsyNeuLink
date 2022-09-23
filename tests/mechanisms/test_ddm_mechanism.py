@@ -763,13 +763,15 @@ def test_DDMMechanism_LCA_equivalent(comp_mode):
 @pytest.mark.ddm_mechanism
 @pytest.mark.parametrize('function', [DriftDiffusionIntegrator(threshold=10), DriftDiffusionAnalytical(threshold=10)])
 def test_DDMMechanism_single_1d_array(function):
-    ddm_array = DDM(default_variable=[[0], [0], [0]], function=function)
-    ddm_single = DDM(default_variable=[[0]], function=function)
+    ddm_array = DDM(default_variable=[[0], [0], [0]], function=function, when_finished_trigger=pnl.ALL)
+    ddm_single1 = DDM(default_variable=[[0]], function=function)
+    ddm_single2 = DDM(default_variable=[[0]], function=function)
+    ddm_single3 = DDM(default_variable=[[0]], function=function)
 
     array_res = ddm_array.execute([[1], [2], [3]])
-    sr1 = ddm_single.execute([1])
-    sr2 = ddm_single.execute([2])
-    sr3 = ddm_single.execute([3])
+    sr1 = ddm_single1.execute([1])
+    sr2 = ddm_single2.execute([2])
+    sr3 = ddm_single3.execute([3])
 
     single_res = np.array([
         list(zip(sr1[i], sr2[i], sr3[i]))[0]
@@ -781,13 +783,15 @@ def test_DDMMechanism_single_1d_array(function):
 @pytest.mark.ddm_mechanism
 @pytest.mark.parametrize('function', [DriftDiffusionIntegrator(threshold=10), DriftDiffusionAnalytical(threshold=10)])
 def test_DDMMechanism_multiple_1d_array(function):
-    ddm_array = DDM(size=3, function=function, input_format=pnl.ARRAY)
-    ddm_single = DDM(default_variable=[[0]], function=function)
+    ddm_array = DDM(size=3, function=function, input_format=pnl.ARRAY, when_finished_trigger=pnl.ALL)
+    ddm_single1 = DDM(default_variable=[[0]], function=function)
+    ddm_single2 = DDM(default_variable=[[0]], function=function)
+    ddm_single3 = DDM(default_variable=[[0]], function=function)
 
     array_res = ddm_array.execute([[2, 1], [3, 1], [4, 1]])
-    sr1 = ddm_single.execute([1])
-    sr2 = ddm_single.execute([2])
-    sr3 = ddm_single.execute([3])
+    sr1 = ddm_single1.execute([1])
+    sr2 = ddm_single2.execute([2])
+    sr3 = ddm_single3.execute([3])
 
     single_res = np.array([
         list(zip(sr1[i], sr2[i], sr3[i]))[0]
