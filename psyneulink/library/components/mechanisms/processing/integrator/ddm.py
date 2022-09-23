@@ -1293,9 +1293,9 @@ class DDM(ProcessingMechanism):
             # Analytical function so it is always finished after it is called
             return True
 
-        threshold = self.function._get_current_parameter_value(THRESHOLD, context)
-
         if self.when_finished_trigger == ANY:
+            threshold = self.function._get_current_parameter_value(THRESHOLD, context)
+
             for v in previous_value:
                 if abs(v) >= threshold:
                     return True
