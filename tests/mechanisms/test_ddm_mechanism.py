@@ -781,12 +781,23 @@ def test_DDMMechanism_single_1d_array(function):
 
 
 @pytest.mark.ddm_mechanism
-@pytest.mark.parametrize('function', [DriftDiffusionIntegrator(threshold=10), DriftDiffusionAnalytical(threshold=10)])
-def test_DDMMechanism_multiple_1d_array(function):
-    ddm_array = DDM(size=3, function=function, input_format=pnl.ARRAY, when_finished_trigger=pnl.ALL)
-    ddm_single1 = DDM(default_variable=[[0]], function=function)
-    ddm_single2 = DDM(default_variable=[[0]], function=function)
-    ddm_single3 = DDM(default_variable=[[0]], function=function)
+@pytest.mark.parametrize('function', [DriftDiffusionIntegrator, DriftDiffusionAnalytical])
+@pytest.mark.parametrize(
+    'thresholds',
+    (
+        10,
+        [10, 20, 30]
+    )
+)
+def test_DDMMechanism_multiple_1d_array(function, thresholds):
+    if isinstance(thresholds, int):
+        thresholds = [thresholds] * 3
+        print(thresholds)
+
+    ddm_array = DDM(size=3, function=function(threshold=thresholds), input_format=pnl.ARRAY, when_finished_trigger=pnl.ALL)
+    ddm_single1 = DDM(default_variable=[[0]], function=function(threshold=thresholds[0]))
+    ddm_single2 = DDM(default_variable=[[0]], function=function(threshold=thresholds[1]))
+    ddm_single3 = DDM(default_variable=[[0]], function=function(threshold=thresholds[2]))
 
     array_res = ddm_array.execute([[2, 1], [3, 1], [4, 1]])
     sr1 = ddm_single1.execute([1])
@@ -798,3 +809,12 @@ def test_DDMMechanism_multiple_1d_array(function):
         for i in range(len(sr1))
     ])
     assert np.allclose(array_res, single_res)
+
+
+# def test_DDMMechanism_multiple_thresholds():
+
+
+# # @pytest.mark.ddm_mechanism
+# # @pytest.mark.parametrize('name', [parameters])
+# # def test_DDMMechanism_parameter_variations(function, args):
+# #     ddm_baseline = DDM()

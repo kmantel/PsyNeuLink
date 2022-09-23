@@ -1168,13 +1168,13 @@ class DDM(ProcessingMechanism):
                                format(self.function.name, self.name))
 
             # Convert ER to decision variable:
-            threshold = float(self.function._get_current_parameter_value(THRESHOLD, context))
+            threshold = np.array(self.function._get_current_parameter_value(THRESHOLD, context), dtype=float)
             random_state = self._get_current_parameter_value(self.parameters.random_state, context)
             for i in range(len(return_value[self.DECISION_VARIABLE_INDEX])):
                 if random_state.uniform() < return_value[self.PROBABILITY_LOWER_THRESHOLD_INDEX][i]:
-                    return_value[self.DECISION_VARIABLE_INDEX][i] = np.atleast_1d(-1 * threshold)
+                    return_value[self.DECISION_VARIABLE_INDEX][i] = np.atleast_1d(-1 * threshold[i])
                 else:
-                    return_value[self.DECISION_VARIABLE_INDEX][i] = threshold
+                    return_value[self.DECISION_VARIABLE_INDEX][i] = threshold[i]
             return return_value
 
     def _gen_llvm_invoke_function(self, ctx, builder, function, params, state,
@@ -1279,9 +1279,13 @@ class DDM(ProcessingMechanism):
         except AttributeError:
             return None
 
+        threshold = np.array(
+            self.function._get_current_parameter_value(THRESHOLD, context)
+        ).reshape(previous_value.shape)
+
         return np.array([
-            1 if abs(v) >= self.function._get_current_parameter_value(THRESHOLD, context)
-            else 0 for v in previous_value
+            1 if abs(previous_value[i]) >= threshold[i]
+            else 0 for i in range(len(previous_value))
         ])
 
     @handle_external_context()
