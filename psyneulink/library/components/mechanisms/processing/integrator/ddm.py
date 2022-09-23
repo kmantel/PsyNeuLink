@@ -379,7 +379,7 @@ from psyneulink.core.components.ports.outputport import SEQUENTIAL, StandardOutp
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
 from psyneulink.core.globals.keywords import \
     ALLOCATION_SAMPLES, FUNCTION, FUNCTION_PARAMS, INPUT_PORT_VARIABLES, NAME, OWNER_VALUE, \
-    THRESHOLD, VARIABLE, PREFERENCE_SET_NAME
+    THRESHOLD, VARIABLE, PREFERENCE_SET_NAME, ANY, ALL
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import is_pref_set, REPORT_OUTPUT_PREF
 from psyneulink.core.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
@@ -739,6 +739,7 @@ class DDM(ProcessingMechanism):
             read_only=True,
             structural=True,
         )
+        when_finished_trigger = Parameter(ANY, stateful=False, loggable=False)
 
         def _validate_variable(self, variable):
             if variable.ndim > 2:
@@ -749,6 +750,10 @@ class DDM(ProcessingMechanism):
 
             if variable.shape[-1] > 2:
                 return 'each individual DDM calculation must have at most 2 items'
+
+        def _validate_when_finished_trigger(self, when_finished_trigger):
+            if when_finished_trigger not in {ANY, ALL}:
+                return 'must be either ANY or ALL'
 
     standard_output_ports =[{NAME: DECISION_VARIABLE,},           # Upper or lower threshold for Analtyic function
                             {NAME: RESPONSE_TIME},                # TIME_STEP within TRIAL for Integrator function
@@ -1117,8 +1122,18 @@ class DDM(ProcessingMechanism):
 
         # EXECUTE INTEGRATOR SOLUTION (TIME_STEP TIME SCALE) -----------------------------------------------------
         if isinstance(self.function, IntegratorFunction):
+            if self.when_finished_trigger == ALL:
+                finished_mask = self._is_finished_value_mask(context)
 
             result = super()._execute(variable, context=context)
+
+            # mimics stopping calculation of integrator in each cell when it finishes
+            # (calculation is actually done in a vector at once)
+            if self.when_finished_trigger == ALL:
+                result = (
+                    finished_mask * self.parameters.value._get(context)
+                    + ((1 - finished_mask) * result)
+                )
 
             if self.initialization_status != ContextFlags.INITIALIZING:
                 logger.info('{0} {1} is at {2}'.format(type(self).__name__, self.name, result))
@@ -1258,36 +1273,40 @@ class DDM(ProcessingMechanism):
             self.parameters.value._set(convert_all_elements_to_np_array(new_values), context)
             self._update_output_ports(context=context)
 
+    def _is_finished_value_mask(self, context=None):
+        try:
+            previous_value = self.function.parameters.previous_value._get(context)
+        except AttributeError:
+            return None
+
+        return np.array([
+            1 if abs(v) >= self.function._get_current_parameter_value(THRESHOLD, context)
+            else 0 for v in previous_value
+        ])
+
     @handle_external_context()
     def is_finished(self, context=None):
         # find the single numeric entry in previous_value
         try:
-            single_value = self.function.parameters.previous_value._get(context)
+            previous_value = self.function.parameters.previous_value._get(context)
         except AttributeError:
             # Analytical function so it is always finished after it is called
             return True
 
-        # indexing into a matrix doesn't reduce dimensionality
-        if not isinstance(single_value, (np.matrix, str)):
-            while True:
-                try:
-                    single_value = single_value[0]
-                except (IndexError, TypeError):
-                    break
+        threshold = self.function._get_current_parameter_value(THRESHOLD, context)
 
-        if (
-            abs(single_value) >= self.function._get_current_parameter_value(THRESHOLD, context)
-            and isinstance(self.function, IntegratorFunction)
-        ):
-            logger.info(
-                '{0} {1} has reached threshold {2}'.format(
-                    type(self).__name__,
-                    self.name,
-                    self.function._get_current_parameter_value(THRESHOLD, context)
-                )
-            )
+        if self.when_finished_trigger == ANY:
+            for v in previous_value:
+                if abs(v) >= threshold:
+                    return True
+            return False
+        elif self.when_finished_trigger == ALL:
+            for v in self._is_finished_value_mask(context):
+                if v == 0:
+                    return False
             return True
-        return False
+        else:
+            assert False, 'when_finished_trigger should have been validated to ANY or ALL'
 
     def _gen_llvm_is_finished_cond(self, ctx, builder, params, state):
         # Setup pointers to internal function
