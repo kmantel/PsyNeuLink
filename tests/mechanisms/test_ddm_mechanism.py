@@ -788,17 +788,24 @@ def test_DDMMechanism_LCA_equivalent(comp_mode):
         [[1], [2], [3]],
     ]
 )
-def test_DDMMechanism_1d_array_types(function, ddm_array_args, execute_variable, drift_rate):
+@pytest.mark.parametrize(
+    'threshold',
+    [
+        10,
+        [[10], [20], [30]]
+    ]
+)
+def test_DDMMechanism_1d_array_types(function, ddm_array_args, execute_variable, drift_rate, threshold):
     def elem(t, i):
         try:
             return t[i]
         except TypeError:
             return t
 
-    ddm_array = DDM(function=function(drift_rate=drift_rate), when_finished_trigger=pnl.ALL, **ddm_array_args)
-    ddm_single1 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 0)))
-    ddm_single2 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 1)))
-    ddm_single3 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 2)))
+    ddm_array = DDM(function=function(drift_rate=drift_rate, threshold=threshold), when_finished_trigger=pnl.ALL, **ddm_array_args)
+    ddm_single1 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 0), threshold=elem(threshold, 0)))
+    ddm_single2 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 1), threshold=elem(threshold, 1)))
+    ddm_single3 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 2), threshold=elem(threshold, 2)))
 
     array_res = ddm_array.execute(execute_variable)
     sr1 = ddm_single1.execute([[1]])
