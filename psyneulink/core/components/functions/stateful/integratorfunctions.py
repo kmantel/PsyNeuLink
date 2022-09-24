@@ -2510,10 +2510,17 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         variable = self.parameters._parse_initializer(variable)
         previous_value = self.parameters.previous_value._get(context)
 
+        # reshape to same as variable if not a float, because otherwise
+        # np.clip will expand dimensions (eg: from (x, 1) to (x, x))
+        try:
+            threshold = self.parameters._parse_initializer(threshold)
+        except AttributeError:
+            pass
+
         try:
             random_draw = params['random_draw']
         except (KeyError, TypeError):
-            random_draw = np.array([random_state.normal() for _ in list(variable)])
+            random_draw = np.array([random_state.normal() for _ in list(variable)]).reshape(variable.shape)
 
         value = previous_value + rate * variable * time_step_size \
                 + noise * np.sqrt(time_step_size) * random_draw

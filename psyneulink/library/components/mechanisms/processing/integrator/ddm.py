@@ -1168,7 +1168,10 @@ class DDM(ProcessingMechanism):
                                format(self.function.name, self.name))
 
             # Convert ER to decision variable:
-            threshold = np.array(self.function._get_current_parameter_value(THRESHOLD, context), dtype=float)
+            threshold = self.function._get_current_parameter_value(THRESHOLD, context)
+            if object_has_single_value(threshold):
+                threshold = np.broadcast_to(float(threshold), return_value[self.DECISION_VARIABLE_INDEX].shape)
+
             random_state = self._get_current_parameter_value(self.parameters.random_state, context)
             for i in range(len(return_value[self.DECISION_VARIABLE_INDEX])):
                 if random_state.uniform() < return_value[self.PROBABILITY_LOWER_THRESHOLD_INDEX][i]:
@@ -1279,9 +1282,9 @@ class DDM(ProcessingMechanism):
         except AttributeError:
             return None
 
-        threshold = np.array(
-            self.function._get_current_parameter_value(THRESHOLD, context)
-        ).reshape(previous_value.shape)
+        threshold = self.function._get_current_parameter_value(THRESHOLD, context)
+        if object_has_single_value(threshold):
+            threshold = np.broadcast_to(float(threshold), previous_value.shape)
 
         return np.array([
             1 if abs(previous_value[i]) >= threshold[i]
@@ -1299,6 +1302,8 @@ class DDM(ProcessingMechanism):
 
         if self.when_finished_trigger == ANY:
             threshold = self.function._get_current_parameter_value(THRESHOLD, context)
+            if object_has_single_value(threshold):
+                threshold = np.broadcast_to(float(threshold), previous_value.shape)
 
             for v in previous_value:
                 if abs(v) >= threshold:
