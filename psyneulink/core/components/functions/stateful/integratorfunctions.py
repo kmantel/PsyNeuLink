@@ -2524,7 +2524,7 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         previous_time = self._get_current_parameter_value('previous_time', context)
-        previous_time = np.broadcast_to(previous_time, variable.shape)
+        previous_time = np.broadcast_to(previous_time, previous_value.shape)
         if not self.is_initializing:
             previous_value = adjusted_value
             previous_time = previous_time + time_step_size
