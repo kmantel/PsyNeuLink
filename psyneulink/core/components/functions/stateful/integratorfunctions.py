@@ -2405,7 +2405,7 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
                     :default value: 1.0
                     :type: ``float``
         """
-        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        rate = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM, 'drift_rate'])
         offset = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         initializer = Parameter(np.array([0]), aliases=['starting_value'])
         non_decision_time = Parameter(0.0, modulable=True)
