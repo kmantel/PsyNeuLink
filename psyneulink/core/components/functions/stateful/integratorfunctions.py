@@ -2425,8 +2425,8 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         random_draw = Parameter()
 
         def _parse_initializer(self, initializer):
-            if initializer.ndim > 1:
-                return np.atleast_1d(initializer.squeeze())
+            if initializer.shape == (1, 1):
+                return initializer[0]
             else:
                 return initializer
 
@@ -2507,7 +2507,6 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         time_step_size = self._get_current_parameter_value(TIME_STEP_SIZE, context)
         random_state = self._get_current_parameter_value("random_state", context)
 
-        variable = self.parameters._parse_initializer(variable)
         previous_value = self.parameters.previous_value._get(context)
 
         try:
@@ -2529,6 +2528,9 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
             previous_time = previous_time + time_step_size
 
             self.parameters.previous_time._set(previous_time, context)
+
+        if previous_value.shape == (1, 1):
+            previous_value = previous_value[0]
 
         self.parameters.previous_value._set(previous_value, context)
         return convert_all_elements_to_np_array([previous_value, previous_time])
