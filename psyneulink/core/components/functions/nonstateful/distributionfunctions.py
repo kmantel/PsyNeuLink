@@ -1452,24 +1452,12 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
 
         return moments
 
-    def _gen_llvm_function_body(self, ctx, builder, params, state, arg_in, arg_out, *, tags:frozenset):
-
-        def load_scalar_param(name):
-            param_ptr = pnlvm.helpers.get_param_ptr(builder, self, params, name)
-            return pnlvm.helpers.load_extract_scalar_array_one(builder, param_ptr)
-
-        attentional_drift_rate = load_scalar_param(DRIFT_RATE)
-        threshold = load_scalar_param(THRESHOLD)
-        starting_value = load_scalar_param(STARTING_VALUE)
-        noise = load_scalar_param(NOISE)
-        non_decision_time = load_scalar_param(NON_DECISION_TIME)
-
+    def __gen_llvm_analytical_single_element(
+        self, ctx, builder, elem_idx, arg_out, attentional_drift_rate,
+        threshold, starting_value, noise, non_decision_time, stimulus_drift_rate
+    ):
         noise_sqr = builder.fmul(noise, noise)
 
-        # Arguments used in mechanisms are 2D
-        arg_in = pnlvm.helpers.unwrap_2d_array(builder, arg_in)
-
-        stimulus_drift_rate = pnlvm.helpers.load_extract_scalar_array_one(builder, arg_in)
         drift_rate = builder.fmul(attentional_drift_rate, stimulus_drift_rate)
 
         threshold_2 = builder.fmul(threshold, threshold.type(2))
@@ -1481,8 +1469,8 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
         def _get_arg_out_ptr(idx):
             ptr = builder.gep(arg_out, [ctx.int32_ty(0), ctx.int32_ty(idx)])
             if isinstance(ptr.type.pointee, pnlvm.ir.ArrayType):
-                assert len(ptr.type.pointee) == 1
-                ptr = builder.gep(ptr, [ctx.int32_ty(0), ctx.int32_ty(0)])
+                ptr = builder.gep(ptr, [ctx.int32_ty(0), elem_idx])
+
             return ptr
 
         rt_ptr = _get_arg_out_ptr(0)
@@ -1722,6 +1710,39 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
         s_rt_m = builder.fmul(srt_tmp0, s_rt_m)
         s_rt_m = builder.fdiv(s_rt_m, v_rt_m_1_5)
         builder.store(s_rt_m, skew_rt_minus_ptr)
+
+        return builder
+
+    def _gen_llvm_function_body(self, ctx, builder, params, state, arg_in, arg_out, *, tags:frozenset):
+        def load_scalar_param(name, idx):
+            param_ptr = pnlvm.helpers.get_param_ptr(builder, self, params, name)
+
+            if isinstance(param_ptr.type.pointee, pnlvm.ir.ArrayType) and param_ptr.type.pointee.count > 1:
+                param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), idx])
+
+            return pnlvm.helpers.load_extract_scalar_array_one(builder, param_ptr)
+
+        # Arguments used in mechanisms are 2D
+        arg_in = pnlvm.helpers.unwrap_2d_array(builder, arg_in)
+
+        with pnlvm.helpers.array_ptr_loop(builder, arg_in, "dd_analytical") as (b, i):
+            attentional_drift_rate = load_scalar_param(DRIFT_RATE, i)
+            threshold = load_scalar_param(THRESHOLD, i)
+            starting_value = load_scalar_param(STARTING_VALUE, i)
+            noise = load_scalar_param(NOISE, i)
+            non_decision_time = load_scalar_param(NON_DECISION_TIME, i)
+
+            if isinstance(arg_in.type.pointee, pnlvm.ir.ArrayType) and arg_in.type.pointee.count > 1:
+                sdr_ptr = b.gep(arg_in, [ctx.int32_ty(0), i])
+            else:
+                sdr_ptr = arg_in
+
+            stimulus_drift_rate = pnlvm.helpers.load_extract_scalar_array_one(builder, sdr_ptr)
+
+            self.__gen_llvm_analytical_single_element(
+                ctx, b, i, arg_out, attentional_drift_rate,
+                threshold, starting_value, noise, non_decision_time, stimulus_drift_rate
+            )
 
         return builder
 
