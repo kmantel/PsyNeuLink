@@ -143,8 +143,9 @@ GROUP_PREFIX="IntegratorFunction "
 @pytest.mark.integrator_function
 @pytest.mark.parametrize("variable, params", [
     (test_var, {'rate':RAND0_1, 'offset':RAND3}),
+    (test_var, {'rate': [RAND0_1] * len(test_var), 'offset': RAND3}),
     (test_var, {'initializer':test_initializer, 'rate':RAND0_1, 'offset':RAND3}),
-    ], ids=["Default", "Initializer"])
+    ], ids=["Default", "DefaultArray", "Initializer"])
 @pytest.mark.parametrize("noise", [RAND2, test_noise_arr, pnl.NormalDist],
                          ids=["SNOISE", "VNOISE", "FNOISE"])
 @pytest.mark.parametrize("func", [
