@@ -532,7 +532,8 @@ class MappingProjection(PathwayProjection_Base):
         # Get sender and receiver lengths
         # Note: if either is a scalar, manually set length to 1 to avoid TypeError in call to len()
         try:
-            mapping_input_len = len(self.defaults.variable)
+            # shape[-1] mimics socket_width calculation
+            mapping_input_len = self.defaults.variable.shape[-1]
         except TypeError:
             mapping_input_len = 1
         try:
@@ -542,7 +543,7 @@ class MappingProjection(PathwayProjection_Base):
 
         # Compare length of MappingProjection output and receiver's variable to be sure matrix has proper dimensions
         try:
-            mapping_output_len = len(self.defaults.value)
+            mapping_output_len = self.defaults.value.shape[-1]
         except TypeError:
             mapping_output_len = 1
 
