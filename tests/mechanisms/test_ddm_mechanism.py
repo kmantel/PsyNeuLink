@@ -817,3 +817,12 @@ def test_DDMMechanism_1d_array_types(function, ddm_array_args, execute_variable,
         for i in range(len(sr1))
     ])
     assert np.allclose(array_res, single_res)
+
+    comp = pnl.Composition(nodes=[ddm_array])
+    comp2 = pnl.Composition(nodes=[ddm_single1, ddm_single2, ddm_single3])
+
+    array_res = comp.run({ddm_array: execute_variable})
+    single_res = comp2.run({ddm_single1: [[1]], ddm_single2: [[2]], ddm_single3: [[3]]})
+
+    assert np.array_equal(array_res[0], single_res[0::2])  # decision results
+    assert np.array_equal(array_res[1], single_res[1::2])  # time results
