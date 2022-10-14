@@ -32,7 +32,7 @@ from psyneulink.core.globals.context import handle_external_context
 from psyneulink.core.globals.keywords import STATEFUL_FUNCTION_TYPE, STATEFUL_FUNCTION, NOISE, RATE
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import is_pref_set
-from psyneulink.core.globals.utilities import iscompatible, convert_to_np_array, contains_type
+from psyneulink.core.globals.utilities import iscompatible, convert_to_np_array, contains_type, object_has_single_value
 
 __all__ = ['StatefulFunction']
 
@@ -420,6 +420,7 @@ class StatefulFunction(Function_Base): #  --------------------------------------
         if not self.parameters.initializer._user_specified:
             self._initialize_previous_value(np.zeros_like(new_default_variable), context)
 
+        self._instantiate_stateful_attributes(self.stateful_attributes, self.initializers, context, new_default_variable)
         super()._update_default_variable(new_default_variable, context=context)
 
     def _parse_value_order(self, **kwargs):
