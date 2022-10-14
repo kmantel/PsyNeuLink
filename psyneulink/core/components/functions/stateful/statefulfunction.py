@@ -393,6 +393,9 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                 except ValueError:
                     reshaped = param_value.reshape(self.defaults.variable.shape).copy()
 
+                if np.asarray(param_value).shape == (1,) and reshaped.shape == (1, 1):
+                    reshaped = reshaped[0]
+
                 param._set(reshaped, context)
 
         # create all stateful attributes and initialize their values to the current values of their
