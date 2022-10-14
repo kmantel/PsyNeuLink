@@ -46,6 +46,9 @@ def _match_stateful_attribute_shape(attr_value, variable):
     except ValueError:
         reshaped = attr_value.reshape(variable.shape).copy()
 
+    if np.asarray(attr_value).shape == (1,) and reshaped.shape == (1, 1):
+        reshaped = reshaped[0]
+
     return reshaped
 
 
