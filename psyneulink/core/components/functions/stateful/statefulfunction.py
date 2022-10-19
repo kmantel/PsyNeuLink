@@ -379,23 +379,27 @@ class StatefulFunction(Function_Base): #  --------------------------------------
         self._instantiate_stateful_attributes(self.stateful_attributes, self.initializers, context)
         super()._instantiate_attributes_before_function(function=function, context=context)
 
-    def _instantiate_stateful_attributes(self, stateful_attributes:list, initializers:list, context) -> None:
+    def _instantiate_stateful_attributes(self, stateful_attributes:list, initializers:list, context, new_default_variable=None) -> None:
+        if new_default_variable is None:
+            new_default_variable = self.defaults.variable
+
         # use np.broadcast_to to guarantee that all initializer type attributes take on the same shape as variable
-        if not np.isscalar(self.defaults.variable):
+        if not np.isscalar(new_default_variable):
             for attr in initializers:
                 param = getattr(self.parameters, attr)
                 param_value = param._get(context)
                 try:
                     reshaped = np.broadcast_to(
                         param_value,
-                        self.defaults.variable.shape
+                        new_default_variable.shape
                     ).copy()
                 except ValueError:
-                    reshaped = param_value.reshape(self.defaults.variable.shape).copy()
+                    reshaped = param_value.reshape(new_default_variable.shape).copy()
 
                 if np.asarray(param_value).shape == (1,) and reshaped.shape == (1, 1):
                     reshaped = reshaped[0]
 
+                param.default_value = reshaped
                 param._set(reshaped, context)
 
         # create all stateful attributes and initialize their values to the current values of their
