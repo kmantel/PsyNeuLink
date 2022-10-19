@@ -3005,6 +3005,15 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     setattr(self.__class__, "mod_" + property_name, make_property_mod(property_name, param_port.name))
                     setattr(self.__class__, "get_mod_" + property_name, make_stateful_getter_mod(property_name, param_port.name))
 
+                try:
+                    source_shape = param_port.source.default_value.shape
+                except AttributeError:
+                    # scalar source shape expects 1d param port shape
+                    source_shape = (1,)
+
+                if source_shape != param_port.defaults.variable.shape:
+                    param_port._update_default_variable(np.atleast_1d(param_port.source.default_value), context)
+
     def _instantiate_value(self, context=None):
         #  - call self.execute to get value, since the value of a Component is defined as what is returned by its
         #    execute method, not its function
