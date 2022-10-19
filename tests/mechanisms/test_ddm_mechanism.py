@@ -795,7 +795,7 @@ def test_DDMMechanism_LCA_equivalent(comp_mode):
         [[10], [20], [30]]
     ]
 )
-def test_DDMMechanism_1d_array_types(function, ddm_array_args, execute_variable, drift_rate, threshold):
+def test_DDMMechanism_1d_array_types_comp_exec(comp_mode, function, ddm_array_args, execute_variable, drift_rate, threshold):
     def elem(t, i):
         try:
             return t[i]
@@ -807,22 +807,63 @@ def test_DDMMechanism_1d_array_types(function, ddm_array_args, execute_variable,
     ddm_single2 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 1), threshold=elem(threshold, 1)))
     ddm_single3 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 2), threshold=elem(threshold, 2)))
 
-    array_res = ddm_array.execute(execute_variable)
-    sr1 = ddm_single1.execute([[1]])
-    sr2 = ddm_single2.execute([[2]])
-    sr3 = ddm_single3.execute([[3]])
-
-    single_res = np.array([
-        [sr1[i], sr2[i], sr3[i]]
-        for i in range(len(sr1))
-    ])
-    assert np.allclose(array_res, single_res)
-
-    comp = pnl.Composition(nodes=[ddm_array])
-    comp2 = pnl.Composition(nodes=[ddm_single1, ddm_single2, ddm_single3])
+    comp = pnl.Composition(nodes=[ddm_array], execution_mode=comp_mode)
+    comp2 = pnl.Composition(nodes=[ddm_single1, ddm_single2, ddm_single3], execution_mode=comp_mode)
 
     array_res = comp.run({ddm_array: execute_variable})
     single_res = comp2.run({ddm_single1: [[1]], ddm_single2: [[2]], ddm_single3: [[3]]})
 
     assert np.array_equal(array_res[0], single_res[0::2])  # decision results
     assert np.array_equal(array_res[1], single_res[1::2])  # time results
+
+
+@pytest.mark.ddm_mechanism
+@pytest.mark.parametrize('function', [DriftDiffusionAnalytical, DriftDiffusionIntegrator])
+@pytest.mark.parametrize(
+    'ddm_array_args, execute_variable',
+    [
+        ({'default_variable': [[0], [0], [0]]}, [[1], [2], [3]]),
+        ({'size': 3, 'input_format': pnl.ARRAY}, [[2, 1], [3, 1], [4, 1]]),
+    ]
+)
+@pytest.mark.parametrize(
+    'drift_rate',
+    [
+        1,
+        [[1], [2], [3]],
+    ]
+)
+@pytest.mark.parametrize(
+    'threshold',
+    [
+        10,
+        [[10], [20], [30]]
+    ]
+)
+def test_DDMMechanism_1d_array_types_mech_exec(mech_mode, function, ddm_array_args, execute_variable, drift_rate, threshold):
+    def elem(t, i):
+        try:
+            return t[i]
+        except TypeError:
+            return t
+
+    ddm_array = DDM(function=function(drift_rate=drift_rate, threshold=threshold), when_finished_trigger=pnl.ALL, **ddm_array_args)
+    ddm_single1 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 0), threshold=elem(threshold, 0)))
+    ddm_single2 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 1), threshold=elem(threshold, 1)))
+    ddm_single3 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 2), threshold=elem(threshold, 2)))
+
+    array_EX = pytest.helpers.get_mech_execution(ddm_array, mech_mode)
+    single1_EX = pytest.helpers.get_mech_execution(ddm_single1, mech_mode)
+    single2_EX = pytest.helpers.get_mech_execution(ddm_single2, mech_mode)
+    single3_EX = pytest.helpers.get_mech_execution(ddm_single3, mech_mode)
+
+    array_res = array_EX(execute_variable)
+    sr1 = single1_EX([[1]])
+    sr2 = single2_EX([[2]])
+    sr3 = single3_EX([[3]])
+
+    single_res = np.array([
+        [sr1[i], sr2[i], sr3[i]]
+        for i in range(len(sr1))
+    ])
+    assert np.allclose(array_res, single_res)
