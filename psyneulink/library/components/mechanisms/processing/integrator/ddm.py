@@ -1236,10 +1236,9 @@ class DDM(ProcessingMechanism):
             # this will be used by the mechanism to return the right decision
             threshold_ptr = pnlvm.helpers.get_param_ptr(builder, self.function,
                                                         params, THRESHOLD)
-            threshold = pnlvm.helpers.load_extract_scalar_array_one(builder, threshold_ptr)
+            threshold = builder.load(threshold_ptr)
             decision_ptr = builder.gep(m_val, [ctx.int32_ty(0),
-                                               ctx.int32_ty(self.DECISION_VARIABLE_INDEX),
-                                               ctx.int32_ty(0)])
+                                               ctx.int32_ty(self.DECISION_VARIABLE_INDEX)])
             builder.store(threshold, decision_ptr)
         else:
             assert False, "Unknown mode in compiled DDM!"

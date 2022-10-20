@@ -1472,6 +1472,8 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
             ptr = builder.gep(arg_out, [ctx.int32_ty(0), ctx.int32_ty(idx)])
             if isinstance(ptr.type.pointee, pnlvm.ir.ArrayType):
                 ptr = builder.gep(ptr, [ctx.int32_ty(0), elem_idx])
+            if isinstance(ptr.type.pointee, pnlvm.ir.ArrayType) and ptr.type.pointee.count == 1:
+                ptr = builder.gep(ptr, [ctx.int32_ty(0), ctx.int32_ty(0)])
 
             return ptr
 
@@ -1725,7 +1727,13 @@ class DriftDiffusionAnalytical(DistributionFunction):  # -----------------------
             return pnlvm.helpers.load_extract_scalar_array_one(builder, param_ptr)
 
         # Arguments used in mechanisms are 2D
-        arg_in = pnlvm.helpers.unwrap_2d_array(builder, arg_in)
+        if (
+            isinstance(arg_in.type.pointee, pnlvm.ir.ArrayType)
+            and isinstance(arg_in.type.pointee.element, pnlvm.ir.ArrayType)
+            and arg_in.type.pointee.count == 1
+        ):
+            arg_in = builder.gep(arg_in, [ctx.int32_ty(0), ctx.int32_ty(0)])
+        # arg_in = pnlvm.helpers.unwrap_2d_array(builder, arg_in)
 
         with pnlvm.helpers.array_ptr_loop(builder, arg_in, "dd_analytical") as (b, i):
             attentional_drift_rate = load_scalar_param(DRIFT_RATE, i)

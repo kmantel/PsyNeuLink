@@ -424,8 +424,8 @@ class StatefulFunction(Function_Base): #  --------------------------------------
         if not self.parameters.initializer._user_specified:
             self._initialize_previous_value(np.zeros_like(new_default_variable), context)
 
-        self._instantiate_stateful_attributes(self.stateful_attributes, self.initializers, context, new_default_variable)
         super()._update_default_variable(new_default_variable, context=context)
+        self._instantiate_stateful_attributes([], self.initializers, context, new_default_variable)
 
     def _parse_value_order(self, **kwargs):
         """

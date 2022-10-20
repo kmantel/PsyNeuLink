@@ -836,7 +836,7 @@ def test_DDMMechanism_1d_array_types_comp_exec(comp_mode, function, ddm_array_ar
 @pytest.mark.parametrize(
     'threshold',
     [
-        10,
+        # 10,
         [[10], [20], [30]]
     ]
 )
@@ -846,6 +846,9 @@ def test_DDMMechanism_1d_array_types_mech_exec(mech_mode, function, ddm_array_ar
             return t[i]
         except TypeError:
             return t
+
+    if mech_mode == 'Python':
+        pytest.skip()
 
     ddm_array = DDM(function=function(drift_rate=drift_rate, threshold=threshold), when_finished_trigger=pnl.ALL, **ddm_array_args)
     ddm_single1 = DDM(default_variable=[[0]], function=function(drift_rate=elem(drift_rate, 0), threshold=elem(threshold, 0)))
