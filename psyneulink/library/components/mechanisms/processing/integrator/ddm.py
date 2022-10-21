@@ -1205,6 +1205,12 @@ class DDM(ProcessingMechanism):
                                                      m_val, tags=tags)
 
         elif isinstance(self.function, DriftDiffusionAnalytical):
+            def load_scalar(ptr, idx):
+                if isinstance(ptr.type.pointee, pnlvm.ir.ArrayType) and ptr.type.pointee.count > 1:
+                    ptr = builder.gep(ptr, [ctx.int32_ty(0), idx])
+
+                return pnlvm.helpers.load_extract_scalar_array_one(builder, ptr)
+
             mf_out, builder = super()._gen_llvm_invoke_function(ctx, builder, function,
                                                                 params, state, variable,
                                                                 None, tags=tags)
@@ -1221,25 +1227,44 @@ class DDM(ProcessingMechanism):
                 dst = builder.gep(m_val, [ctx.int32_ty(0), ctx.int32_ty(idx)])
                 builder.store(builder.load(src), dst)
 
-            # Handle upper threshold probability (1 - Lower Threshold)
-            src = builder.gep(m_val, [ctx.int32_ty(0),
-                                      ctx.int32_ty(self.PROBABILITY_LOWER_THRESHOLD_INDEX),
-                                      ctx.int32_ty(0)])
-            dst = builder.gep(m_val, [ctx.int32_ty(0),
-                                      ctx.int32_ty(self.PROBABILITY_UPPER_THRESHOLD_INDEX),
-                                      ctx.int32_ty(0)])
-            prob_lower_thr = builder.load(src)
-            prob_upper_thr = builder.fsub(prob_lower_thr.type(1), prob_lower_thr)
-            builder.store(prob_upper_thr, dst)
+            with pnlvm.helpers.array_ptr_loop(builder, mf_out, "ddm_res_analytical") as (b, i):
+                # Handle upper threshold probability (1 - Lower Threshold)
+                src = b.gep(m_val, [ctx.int32_ty(0),
+                                    ctx.int32_ty(self.PROBABILITY_LOWER_THRESHOLD_INDEX),
+                                    i])
+                dst = b.gep(m_val, [ctx.int32_ty(0),
+                                    ctx.int32_ty(self.PROBABILITY_UPPER_THRESHOLD_INDEX),
+                                    i])
 
-            # Store threshold as decision variable output
-            # this will be used by the mechanism to return the right decision
-            threshold_ptr = pnlvm.helpers.get_param_ptr(builder, self.function,
-                                                        params, THRESHOLD)
-            threshold = builder.load(threshold_ptr)
-            decision_ptr = builder.gep(m_val, [ctx.int32_ty(0),
-                                               ctx.int32_ty(self.DECISION_VARIABLE_INDEX)])
-            builder.store(threshold, decision_ptr)
+                if isinstance(src.type.pointee, pnlvm.ir.ArrayType):
+                    assert src.type.pointee.count == 1
+                    assert isinstance(dst.type.pointee, pnlvm.ir.ArrayType) and dst.type.pointee.count == 1
+                    src = b.gep(src, [ctx.int32_ty(0), ctx.int32_ty(0)])
+                    dst = b.gep(dst, [ctx.int32_ty(0), ctx.int32_ty(0)])
+
+                prob_lower_thr = b.load(src)
+                prob_upper_thr = b.fsub(prob_lower_thr.type(1), prob_lower_thr)
+                b.store(prob_upper_thr, dst)
+
+                # Store threshold as decision variable output
+                # this will be used by the mechanism to return the right decision
+                threshold_ptr = pnlvm.helpers.get_param_ptr(b, self.function,
+                                                            params, THRESHOLD)
+                threshold_ptr = b.gep(threshold_ptr, [ctx.int32_ty(0), i])
+                decision_ptr = b.gep(m_val, [ctx.int32_ty(0),
+                                             ctx.int32_ty(self.DECISION_VARIABLE_INDEX),
+                                             i])
+                if isinstance(threshold_ptr.type.pointee, pnlvm.ir.ArrayType):
+                    assert threshold_ptr.type.pointee.count == 1
+                    threshold_ptr = b.gep(threshold_ptr, [ctx.int32_ty(0), ctx.int32_ty(0)])
+
+                if isinstance(decision_ptr.type.pointee, pnlvm.ir.ArrayType):
+                    assert decision_ptr.type.pointee.count == 1
+                    decision_ptr = b.gep(decision_ptr, [ctx.int32_ty(0), ctx.int32_ty(0)])
+
+                threshold = b.load(threshold_ptr)
+
+                b.store(threshold, decision_ptr)
         else:
             assert False, "Unknown mode in compiled DDM!"
 

@@ -168,6 +168,12 @@ def load_extract_scalar_array_one(builder, ptr):
     return val
 
 
+def load_extract_scalar_array_multiple(builder, ptr, idx):
+    if isinstance(ptr.type.pointee, ir.ArrayType) and ptr.type.pointee.count > 1:
+        ptr = builder.gep(ptr, [0, idx])
+    return load_extract_scalar_array_one(builder, ptr)
+
+
 def umul_lo_hi(builder, a, b):
     assert a.type.width == b.type.width
 
