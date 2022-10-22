@@ -221,6 +221,9 @@ class LLVMBuilderContext:
         # Create entry block
         block = llvm_func.append_basic_block(name="entry")
         builder = ir.IRBuilder(block)
+        print('p88')
+        pnlvm.helpers.printf(builder, "\n==%lf==\n\n", ir.FloatType()(88.88), override_debug=True)
+
         builder.debug_metadata = metadata
 
         return builder

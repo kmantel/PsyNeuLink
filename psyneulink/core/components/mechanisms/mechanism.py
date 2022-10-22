@@ -3176,6 +3176,7 @@ class Mechanism_Base(Mechanism):
 
         builder = ctx.create_llvm_function(args, self, return_type=ctx.bool_ty,
                                            tags=tags)
+        pnlvm.helpers.printf(builder, "\n==%lf==\n\n", ctx.float_ty(66.66), override_debug=True)
         params, state, inputs = builder.function.args[:3]
         finished = self._gen_llvm_is_finished_cond(ctx, builder, params, state, inputs)
         builder.ret(finished)

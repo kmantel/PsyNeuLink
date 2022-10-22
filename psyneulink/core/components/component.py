@@ -1522,18 +1522,25 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 ctx.get_input_struct_type(self).as_pointer(),
                 ctx.get_output_struct_type(self).as_pointer()]
         builder = ctx.create_llvm_function(args + extra_args, self, tags=tags)
+        pnlvm.helpers.printf(builder, "\n==%lf==\n\n", ctx.float_ty(44.44), override_debug=True)
 
         params, state, arg_in, arg_out = builder.function.args[:len(args)]
         if len(extra_args) == 0:
             for p in params, state, arg_in, arg_out:
                 p.attributes.add('noalias')
 
+        pnlvm.helpers.printf_float_array(builder, arg_in, override_debug=True)
         if "reset" in tags:
             builder = self._gen_llvm_function_reset(ctx, builder, params, state,
                                                     arg_in, arg_out, tags=tags)
         else:
             builder = self._gen_llvm_function_body(ctx, builder, params, state,
                                                    arg_in, arg_out, tags=tags)
+        # pnlvm.helpers.printf(builder, "\n==%lf==\n\n", ctx.float_ty(55.55), override_debug=True)
+        try:
+            pnlvm.helpers.printf_float_array(builder, arg_out, override_debug=True)
+        except AttributeError:
+            pass
         builder.ret_void()
         return builder.function
 

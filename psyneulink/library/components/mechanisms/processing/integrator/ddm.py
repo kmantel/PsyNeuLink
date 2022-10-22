@@ -1210,10 +1210,13 @@ class DDM(ProcessingMechanism):
                     ptr = builder.gep(ptr, [ctx.int32_ty(0), idx])
 
                 return pnlvm.helpers.load_extract_scalar_array_one(builder, ptr)
-
+            pnlvm.helpers.printf_float_array(builder, m_val, override_debug=True)
             mf_out, builder = super()._gen_llvm_invoke_function(ctx, builder, function,
                                                                 params, state, variable,
                                                                 None, tags=tags)
+            # pnlvm.helpers.printf(builder, '%s', 'hi')
+            # pnlvm.helpers.printf(builder, "%lf ", pnlvm.ir.IntType(32)(1), override_debug=True)
+            pnlvm.helpers.printf_float_array(builder, mf_out, override_debug=True)
             # The order and number of returned values is different for DDA
             for res_idx, idx in enumerate((self.RESPONSE_TIME_INDEX,
                                            self.PROBABILITY_LOWER_THRESHOLD_INDEX,
@@ -1227,7 +1230,9 @@ class DDM(ProcessingMechanism):
                 dst = builder.gep(m_val, [ctx.int32_ty(0), ctx.int32_ty(idx)])
                 builder.store(builder.load(src), dst)
 
-            with pnlvm.helpers.array_ptr_loop(builder, mf_out, "ddm_res_analytical") as (b, i):
+            pnlvm.helpers.printf_float_array(builder, mf_out, override_debug=True)
+
+            with pnlvm.helpers.array_ptr_loop(builder, m_val, "ddm_res_analytical") as (b, i):
                 # Handle upper threshold probability (1 - Lower Threshold)
                 src = b.gep(m_val, [ctx.int32_ty(0),
                                     ctx.int32_ty(self.PROBABILITY_LOWER_THRESHOLD_INDEX),
@@ -1250,6 +1255,7 @@ class DDM(ProcessingMechanism):
                 # this will be used by the mechanism to return the right decision
                 threshold_ptr = pnlvm.helpers.get_param_ptr(b, self.function,
                                                             params, THRESHOLD)
+
                 threshold_ptr = b.gep(threshold_ptr, [ctx.int32_ty(0), i])
                 decision_ptr = b.gep(m_val, [ctx.int32_ty(0),
                                              ctx.int32_ty(self.DECISION_VARIABLE_INDEX),
@@ -1272,6 +1278,7 @@ class DDM(ProcessingMechanism):
 
     def _gen_llvm_mechanism_functions(self, ctx, builder, m_base_params, m_params, m_state, m_in,
                                       m_val, ip_output, *, tags:frozenset):
+        pnlvm.helpers.printf(builder, "\n==%lf==\n\n", ctx.float_ty(22.22), override_debug=True)
 
         mf_out, builder = super()._gen_llvm_mechanism_functions(ctx, builder, m_base_params,
                                                                 m_params, m_state, m_in, m_val,
@@ -1281,27 +1288,29 @@ class DDM(ProcessingMechanism):
         if isinstance(self.function, DriftDiffusionAnalytical):
             random_state = ctx.get_random_state_ptr(builder, self, m_state, m_params)
             random_f = ctx.get_uniform_dist_function_by_state(random_state)
-            random_val_ptr = builder.alloca(random_f.args[1].type.pointee, name="random_out")
-            builder.call(random_f, [random_state, random_val_ptr])
-            random_val = builder.load(random_val_ptr)
 
-            # Convert ER to decision variable:
-            prob_lthr_ptr = builder.gep(m_val, [ctx.int32_ty(0),
-                                                ctx.int32_ty(self.PROBABILITY_LOWER_THRESHOLD_INDEX),
-                                                ctx.int32_ty(0)])
-            prob_lower_thr = builder.load(prob_lthr_ptr)
-            thr_cmp = builder.fcmp_ordered("<", random_val, prob_lower_thr)
+            with pnlvm.helpers.array_ptr_loop(builder, m_val, "ddm_threshold_direction") as (b, i):
+                random_val_ptr = b.alloca(random_f.args[1].type.pointee, name="random_out")
+                b.call(random_f, [random_state, random_val_ptr])
+                random_val = b.load(random_val_ptr)
 
-            # The correct (modulated) threshold value is passed as
-            # decision variable output
-            decision_ptr = builder.gep(m_val, [ctx.int32_ty(0),
-                                               ctx.int32_ty(self.DECISION_VARIABLE_INDEX),
-                                               ctx.int32_ty(0)])
-            threshold = builder.load(decision_ptr)
-            neg_threshold = pnlvm.helpers.fneg(builder, threshold)
-            res = builder.select(thr_cmp, neg_threshold, threshold)
+                # Convert ER to decision variable:
+                prob_lthr_ptr = b.gep(m_val, [ctx.int32_ty(0),
+                                              ctx.int32_ty(self.PROBABILITY_LOWER_THRESHOLD_INDEX),
+                                              i])
+                prob_lower_thr = b.load(prob_lthr_ptr)
+                thr_cmp = b.fcmp_ordered("<", random_val, prob_lower_thr)
 
-            builder.store(res, decision_ptr)
+                # The correct (modulated) threshold value is passed as
+                # decision variable output
+                decision_ptr = b.gep(m_val, [ctx.int32_ty(0),
+                                             ctx.int32_ty(self.DECISION_VARIABLE_INDEX),
+                                             i])
+                threshold = b.load(decision_ptr)
+                neg_threshold = pnlvm.helpers.fneg(b, threshold)
+                res = b.select(thr_cmp, neg_threshold, threshold)
+
+                b.store(res, decision_ptr)
 
         return m_val, builder
 

@@ -136,12 +136,12 @@ def _try_parse_module(module):
     # "assembly" in this case is LLVM IR assembly.
     # This is intentional design decision to ease
     # compatibility between LLVM versions.
-    try:
-        mod = binding.parse_assembly(str(module))
-        mod.verify()
-    except Exception as e:
-        print("ERROR: llvm parsing failed: {}".format(e))
-        mod = None
+    # try:
+    mod = binding.parse_assembly(str(module))
+    mod.verify()
+    # except Exception as e:
+    #     print("ERROR: llvm parsing failed: {}".format(e))
+    #     mod = None
 
     return mod
 
