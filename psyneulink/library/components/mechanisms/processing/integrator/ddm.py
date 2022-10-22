@@ -1235,11 +1235,13 @@ class DDM(ProcessingMechanism):
             with pnlvm.helpers.array_ptr_loop(builder, m_val, "ddm_res_analytical") as (b, i):
                 # Handle upper threshold probability (1 - Lower Threshold)
                 src = b.gep(m_val, [ctx.int32_ty(0),
+                                    i,
                                     ctx.int32_ty(self.PROBABILITY_LOWER_THRESHOLD_INDEX),
-                                    i])
+                                    ])
                 dst = b.gep(m_val, [ctx.int32_ty(0),
+                                    i,
                                     ctx.int32_ty(self.PROBABILITY_UPPER_THRESHOLD_INDEX),
-                                    i])
+                                    ])
 
                 if isinstance(src.type.pointee, pnlvm.ir.ArrayType):
                     assert src.type.pointee.count == 1
@@ -1258,8 +1260,9 @@ class DDM(ProcessingMechanism):
 
                 threshold_ptr = b.gep(threshold_ptr, [ctx.int32_ty(0), i])
                 decision_ptr = b.gep(m_val, [ctx.int32_ty(0),
+                                             i,
                                              ctx.int32_ty(self.DECISION_VARIABLE_INDEX),
-                                             i])
+                                             ])
                 if isinstance(threshold_ptr.type.pointee, pnlvm.ir.ArrayType):
                     assert threshold_ptr.type.pointee.count == 1
                     threshold_ptr = b.gep(threshold_ptr, [ctx.int32_ty(0), ctx.int32_ty(0)])
@@ -1296,16 +1299,26 @@ class DDM(ProcessingMechanism):
 
                 # Convert ER to decision variable:
                 prob_lthr_ptr = b.gep(m_val, [ctx.int32_ty(0),
+                                              i,
                                               ctx.int32_ty(self.PROBABILITY_LOWER_THRESHOLD_INDEX),
-                                              i])
+                                              ])
+                if isinstance(prob_lthr_ptr.type.pointee, pnlvm.ir.ArrayType):
+                    assert prob_lthr_ptr.type.pointee.count == 1
+                    prob_lthr_ptr = b.gep(prob_lthr_ptr, [ctx.int32_ty(0), ctx.int32_ty(0)])
+
                 prob_lower_thr = b.load(prob_lthr_ptr)
                 thr_cmp = b.fcmp_ordered("<", random_val, prob_lower_thr)
 
                 # The correct (modulated) threshold value is passed as
                 # decision variable output
                 decision_ptr = b.gep(m_val, [ctx.int32_ty(0),
+                                             i,
                                              ctx.int32_ty(self.DECISION_VARIABLE_INDEX),
-                                             i])
+                                             ])
+                if isinstance(decision_ptr.type.pointee, pnlvm.ir.ArrayType):
+                    assert decision_ptr.type.pointee.count == 1
+                    decision_ptr = b.gep(decision_ptr, [ctx.int32_ty(0), ctx.int32_ty(0)])
+
                 threshold = b.load(decision_ptr)
                 neg_threshold = pnlvm.helpers.fneg(b, threshold)
                 res = b.select(thr_cmp, neg_threshold, threshold)
