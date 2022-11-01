@@ -1022,6 +1022,13 @@ class InputPort(Port_Base):
                                  f"({self.defaults.value}) is not compatible with its expected format "
                                  f"({reference_value}).")
 
+    def _handle_default_variable(self, default_variable=None, size=None):
+        default_variable = super()._handle_default_variable(default_variable, size)
+        if default_variable is None:
+            return None
+        else:
+            return convert_to_np_array(default_variable, dimension=2)
+
     def _instantiate_function(self, function, function_params=None, context=None):
         """If combine option was specified in constructor, assign as operation argument of LinearCombination function"""
         if hasattr(self, 'combine_function_args'):

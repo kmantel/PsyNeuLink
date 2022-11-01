@@ -3369,7 +3369,7 @@ class OptimizationControlMechanism(ControlMechanism):
         if "const_input" in debug_env:
             comp_input = builder.alloca(sim_f.args[3].type.pointee, name="sim_input")
             if not debug_env["const_input"]:
-                input_init = [[os.defaults.variable.tolist()] for os in self.agent_rep.input_CIM.input_ports]
+                input_init = [os.defaults.variable.tolist() for os in self.agent_rep.input_CIM.input_ports]
                 print("Setting default input: ", input_init)
             else:
                 input_init = ast.literal_eval(debug_env["const_input"])
