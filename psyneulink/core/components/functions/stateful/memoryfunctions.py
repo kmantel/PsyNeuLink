@@ -297,7 +297,7 @@ class Buffer(MemoryFunction):  # -----------------------------------------------
         if previous_value is None:
             previous_value = self._get_current_parameter_value("initializer", context)
 
-        if previous_value is None or previous_value == []:
+        if previous_value is None or len(previous_value) == 0:
             self.parameters.previous_value._get(context).clear()
             value = deque([], maxlen=self.parameters.history.get(context))
 
