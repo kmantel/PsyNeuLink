@@ -1649,10 +1649,10 @@ class GridSearch(OptimizationFunction):
             #                                            ))
 
     @handle_external_context(fallback_most_recent=True)
-    def reset(self, search_space, context=None, **kwargs):
+    def reset(self, search_space=None, context=None, **kwargs):
         """Assign size of `search_space <GridSearch.search_space>"""
         super(GridSearch, self).reset(search_space=search_space, context=context, **kwargs)
-        sample_iterators = search_space
+        sample_iterators = search_space if search_space is not None else self.defaults.search_space
         owner_str = ''
         if self.owner:
             owner_str = f' of {self.owner.name}'
