@@ -1361,7 +1361,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
                 value = self._initialize_previous_value(initializer, context=context)
             else:
                 # no initializer, so clear previous_value and set value to None
-                self.parameters.previous_value._get(context).clear()
+                self.parameters.previous_value._set(None, context)
                 value = None
 
         self.parameters.value.set(value, context, override=True)
