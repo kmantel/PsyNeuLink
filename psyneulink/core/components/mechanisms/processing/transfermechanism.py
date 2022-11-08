@@ -815,7 +815,6 @@ Class Reference
 ---------------
 
 """
-import copy
 import inspect
 import logging
 import numbers
@@ -1481,13 +1480,6 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         super()._instantiate_parameter_ports(function=function, context=context)
 
-    def _instantiate_attributes_before_function(self, function=None, context=None):
-        super()._instantiate_attributes_before_function(function=function, context=context)
-
-        if self.parameters.initial_value._get(context) is None:
-            self.defaults.initial_value = copy.deepcopy(self.defaults.variable)
-            self.parameters.initial_value._set(copy.deepcopy(self.defaults.variable), context)
-
     def _instantiate_output_ports(self, context=None):
         # If user specified more than one item for variable, but did not specify any custom OutputPorts,
         # then assign one OutputPort (with the default name, indexed by the number of the item) per item of variable
@@ -1796,19 +1788,6 @@ class TransferMechanism(ProcessingMechanism_Base):
             logger.info(f'{type(self).__name__} {self.name} has reached threshold ({threshold})')
             return True
         return False
-
-    @handle_external_context()
-    def _update_default_variable(self, new_default_variable, context=None):
-        if not self.parameters.initial_value._user_specified:
-            integrator_function_variable = self._get_parsed_variable(
-                self.parameters.integrator_function,
-                new_default_variable,
-                context=context
-            )
-            self.defaults.initial_value = copy.deepcopy(integrator_function_variable)
-            self.parameters.initial_value._set(copy.deepcopy(integrator_function_variable), context)
-
-        super()._update_default_variable(new_default_variable, context=context)
 
     def as_mdf_model(self):
         model = super().as_mdf_model()
