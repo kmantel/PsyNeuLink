@@ -1560,16 +1560,6 @@ class TestIntegratorMode:
         # linear fn: 0.595*1.0 = 0.595
         np.testing.assert_allclose(T.integrator_function.parameters.previous_value.get(C), [[0.595, 0.595, 0.595]])
 
-    def test_reset_not_integrator(self):
-
-        with pytest.raises(MechanismError) as err_txt:
-            T_not_integrator = TransferMechanism()
-            T_not_integrator.execute(1.0)
-            T_not_integrator.reset(0.0)
-
-        assert "not allowed because its `integrator_mode` parameter" in str(err_txt.value)
-        assert "is currently set to \'False\'; try setting it to \'True\'" in str(err_txt.value)
-
     @pytest.mark.composition
     def test_switch_mode(self):
         T = TransferMechanism(integrator_mode=True,

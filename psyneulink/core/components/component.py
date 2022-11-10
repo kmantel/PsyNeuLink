@@ -1283,6 +1283,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         self._update_parameter_components(context)
 
+        self._reset_all_dependent(context=context)
+
     def __repr__(self):
         return '({0} {1})'.format(type(self).__name__, self.name)
         #return '{1}'.format(type(self).__name__, self.name)
@@ -3073,6 +3075,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
                 # TODO: is it necessary to call _validate_value here?
 
+        self._reset_all_dependent(context=context)
+
     def initialize(self, context=None):
         raise ComponentError("{} class does not support initialize() method".format(self.__class__.__name__))
 
@@ -3097,6 +3101,27 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         else:
             raise ComponentError(f"Resetting {self.name} is not allowed because this Component is not stateful. "
                                  "(It does not have an accumulator to reset).")
+
+    def _reset_all_dependent(self, *args, context=None, visited=None, **kwargs):
+        if visited is None:
+            visited = set([self])
+
+        try:
+            self.reset(*args, **kwargs, context=context)
+        except ComponentError:
+            pass
+
+        for obj in self._dependent_components:
+            if obj not in visited:
+                visited.add(obj)
+                try:
+                    obj._reset_all_dependent(*args, **kwargs, context=context, visited=visited)
+                except ComponentError:
+                    pass
+                except AttributeError:
+                    # TODO: identify these cases and fix - items in
+                    # _dependent_components should all be Components
+                    pass
 
     @handle_external_context()
     def execute(self, variable=None, context=None, runtime_params=None):

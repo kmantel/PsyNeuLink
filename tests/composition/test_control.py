@@ -314,7 +314,7 @@ class TestControlSpecification:
             assert comp.controller.state_input_ports.names == [deferred_numeric_input_port_0,
                                                                deferred_numeric_input_port_1]
             assert comp.controller.state_features == {deferred_node_0: [1.1], deferred_node_1: [2.2]}
-            np.testing.assert_allclose(list(comp.controller.state_feature_values.values()), [[0.9625],[1.925]])
+            np.testing.assert_allclose(list(comp.controller.state_feature_values.values()), [[0.55], [1.1]])
             assert list(comp.controller.state_feature_values.keys()) == [deferred_node_0, deferred_node_1]
         elif state_features_arg == 'dict':
             assert comp.controller.state_input_ports.names == [deferred_shadowed_0, deferred_shadowed_1]
@@ -358,7 +358,7 @@ class TestControlSpecification:
             assert comp.controller.state_input_ports.names == [numeric_reward_node, numeric_Input_node]
             assert comp.controller.state_features == {'reward[InputPort-0]': [1.1],
                                                       'Input[InputPort-0]': [2.2]}
-            np.testing.assert_allclose(list(comp.controller.state_feature_values.values()), [[1.065625],[2.13125]])
+            np.testing.assert_allclose(list(comp.controller.state_feature_values.values()), [[0.9625], [1.925]])
             assert list(comp.controller.state_feature_values.keys()) == [reward.input_port, Input.input_port]
         elif state_features_arg in {'list_reversed', 'dict_reversed'}:
             assert all(p.path_afferents for p in comp.controller.state_input_ports)
@@ -418,17 +418,17 @@ class TestControlSpecification:
                 [[0.], [0.], [0.], [4.45], [0.5]]]
         elif state_features_arg == 'list_numeric':
             expected_sim_results_array = [
-                [[1.09785156], [1.09785156], [0.], [0.48989747], [0.5438015]],
-                [[1.09946289], [1.09946289], [0.], [1.06483807], [0.66899791]],
-                [[1.09986572], [1.09986572], [0.], [2.19475384], [0.77414214]],
-                [[1.09996643], [1.09996643], [0.], [3.66103375], [0.85320293]],
-                [[1.09999161], [1.09999161], [0.], [0.48842594], [0.66907284]],
-                [[1.0999979], [1.0999979], [0.], [0.85321354], [0.94353405]],
-                [[1.09999948], [1.09999948], [0.], [1.23401798], [0.99281107]],
-                [[1.09999987], [1.09999987], [0.], [1.58437432], [0.99912464]],
-                [[1.09999997], [1.09999997], [0.], [0.48560629], [0.77416842]],
-                [[1.09999999], [1.09999999], [0.], [0.70600576], [0.99281108]],
-                [[1.1], [1.1], [0.], [0.90438208], [0.99982029]],
+                [[1.09140625], [1.09140625], [0.], [0.48989866], [0.54354565]],
+                [[1.09785156], [1.09785156], [0.], [1.06490831], [0.66876951]],
+                [[1.09946289], [1.09946289], [0.], [2.1948908], [0.77406324]],
+                [[1.09986572], [1.09986572], [0.], [3.66114426], [0.85318275]],
+                [[1.09996643], [1.09996643], [0.], [0.48842601], [0.66906927]],
+                [[1.09999161], [1.09999161], [0.], [0.85321507], [0.94353319]],
+                [[1.0999979], [1.0999979], [0.], [1.23401902], [0.99281102]],
+                [[1.09999948], [1.09999948], [0.], [1.58437472], [0.99912464]],
+                [[1.09999987], [1.09999987], [0.], [0.48560629], [0.7741684]],
+                [[1.09999997], [1.09999997], [0.], [0.70600576], [0.99281108]],
+                [[1.09999999], [1.09999999], [0.], [0.90438209], [0.99982029]],
                 [[1.1], [1.1], [0.], [1.09934486], [0.99999554]],
                 [[1.1], [1.1], [0.], [0.48210997], [0.85320966]],
                 [[1.1], [1.1], [0.], [0.63149987], [0.99912464]],
@@ -449,7 +449,8 @@ class TestControlSpecification:
                 [[1.1], [1.1], [0.], [0.48210997], [0.85320966]],
                 [[1.1], [1.1], [0.], [0.63149987], [0.99912464]],
                 [[1.1], [1.1], [0.], [0.76817898], [0.99999554]],
-                [[1.1], [1.1], [0.], [0.90454543], [0.99999998]]]
+                [[1.1], [1.1], [0.], [0.90454543], [0.99999998]]
+            ]
         elif state_features_arg in {'list_reversed', 'dict_reversed'}:
             expected_sim_results_array = [
                 [[0.25], [0.25], [0.], [0.4879949], [0.68997448]],
@@ -2399,7 +2400,7 @@ class TestControlMechanisms:
         (pnl.CostFunctions.INTENSITY, 3, [0.2817181715409549, -3.3890560989306495, -15.085536923187664, -48.59815003314423, -141.41315910257657]),
         (pnl.CostFunctions.ADJUSTMENT, 3, [3, 3, 3, 3, 3] ),
         (pnl.CostFunctions.INTENSITY | pnl.CostFunctions.ADJUSTMENT, 3, [0.2817181715409549, -4.389056098930649, -17.085536923187664, -51.59815003314423, -145.41315910257657]),
-        (pnl.CostFunctions.DURATION, 3, [-17, -20, -23, -26, -29]),
+        (pnl.CostFunctions.DURATION, 3, [-1, -4, -7, -10, -13]),
         # FIXME: combinations with DURATION are broken
         # (pnl.CostFunctions.DURATION | pnl.CostFunctions.ADJUSTMENT, ,),
         # (pnl.CostFunctions.ALL, ,),
@@ -2673,6 +2674,30 @@ class TestControlMechanisms:
         # Check that we select the maximum of generated values
         np.testing.assert_allclose(best_first, comp.results[0])
         np.testing.assert_allclose(best_second, comp.results[1])
+
+    def test_control_signal_initial_state(self):
+        obj = pnl.ObjectiveMechanism()
+        mech = pnl.ProcessingMechanism()
+
+        comp = pnl.Composition()
+        comp.add_node(mech)
+        comp.add_linear_processing_pathway([mech, obj])
+
+        comp.add_controller(
+            pnl.OptimizationControlMechanism(
+                objective_mechanism=obj,
+                state_features=[mech.input_port],
+                control_signals=pnl.ControlSignal(
+                    modulates=('intercept', mech),
+                    modulation=pnl.OVERRIDE,
+                    allocation_samples=pnl.SampleSpec(start=1, stop=5, step=1),
+                    cost_options=pnl.CostFunctions.DURATION,
+                ),
+            )
+        )
+
+        duration_cost_fct = comp.controller.control_signals[0].function.duration_cost_fct
+        assert duration_cost_fct.parameters.previous_value.get() == [[0]]
 
 
 @pytest.mark.composition
@@ -4127,7 +4152,7 @@ class TestControlTimeScales:
         #
         assert c.value == [2]
         assert c.execution_count == 2
-        assert comp.results == [[1], [1]]
+        assert comp.results == [[0], [1]]
 
     def test_run_before(self):
         a = pnl.ProcessingMechanism()
@@ -4197,4 +4222,4 @@ class TestControlTimeScales:
         #      a  b
         assert c.value == [2]
         assert c.execution_count == 2
-        assert comp.results == [[1], [1], [1], [1]]
+        assert comp.results == [[0], [0], [1], [1]]
