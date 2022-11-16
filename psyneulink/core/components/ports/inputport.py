@@ -1032,6 +1032,19 @@ class InputPort(Port_Base):
         if not isinstance(self.function, CombinationFunction):
             self._use_1d_variable = True
             self.function._variable_shape_flexibility = DefaultsFlexibility.RIGID
+            try:
+                self.function.defaults.previous_value = self.function.defaults.previous_value[0]
+                self.function.defaults.initializer = self.function.defaults.initializer[0]
+                self.function.parameters.previous_value._set(
+                    self.function.parameters.previous_value._get(context)[0],
+                    context
+                )
+                self.function.parameters.initializer._set(
+                    self.function.parameters.initializer._get(context)[0],
+                    context
+                )
+            except (AttributeError, IndexError, TypeError):
+                pass
         else:
             self.function._variable_shape_flexibility = DefaultsFlexibility.FLEXIBLE
 
