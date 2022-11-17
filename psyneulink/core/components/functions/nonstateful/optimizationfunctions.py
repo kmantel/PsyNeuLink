@@ -1579,19 +1579,20 @@ class GridSearch(OptimizationFunction):
     def reset(self, search_space=None, context=None, **kwargs):
         """Assign size of `search_space <GridSearch.search_space>"""
         super(GridSearch, self).reset(search_space=search_space, context=context, **kwargs)
-        sample_iterators = search_space if search_space is not None else self.defaults.search_space
-        owner_str = ''
-        if self.owner:
-            owner_str = f' of {self.owner.name}'
-        for i in sample_iterators:
-            if i is None:
-                raise OptimizationFunctionError(f"Invalid {repr(SEARCH_SPACE)} arg for {self.name}{owner_str}; "
-                                                f"every dimension must be assigned a {SampleIterator.__name__}.")
-            if i.num is None:
-                raise OptimizationFunctionError(f"Invalid {repr(SEARCH_SPACE)} arg for {self.name}{owner_str}; each "
-                                                f"{SampleIterator.__name__} must have a value for its 'num' attribute.")
+        if search_space is not None:
+            sample_iterators = search_space
+            owner_str = ''
+            if self.owner:
+                owner_str = f' of {self.owner.name}'
+            for i in sample_iterators:
+                if i is None:
+                    raise OptimizationFunctionError(f"Invalid {repr(SEARCH_SPACE)} arg for {self.name}{owner_str}; "
+                                                    f"every dimension must be assigned a {SampleIterator.__name__}.")
+                if i.num is None:
+                    raise OptimizationFunctionError(f"Invalid {repr(SEARCH_SPACE)} arg for {self.name}{owner_str}; each "
+                                                    f"{SampleIterator.__name__} must have a value for its 'num' attribute.")
 
-        self.num_iterations = np.product([i.num for i in sample_iterators])
+            self.num_iterations = np.product([i.num for i in sample_iterators])
 
     def reset_grid(self):
         """Reset iterators in `search_space <GridSearch.search_space>"""
