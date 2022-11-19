@@ -82,6 +82,7 @@ either form.
 import ast
 import base64
 import binascii
+import copy
 import dill
 import enum
 import functools
@@ -123,6 +124,9 @@ supported_formats = {
     'yml': 'yaml',
     'yaml': 'yaml',
 }
+
+SCRIPT_INPUT_VARS_COMMENT_START = '# Input Ports exposed to user, with default values'
+SCRIPT_INPUT_VARS_COMMENT_END = '# End Input Ports'
 
 
 class MDFError(Exception):
@@ -561,6 +565,34 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
         value = value.tolist()
 
     return value
+
+
+def _preprocess_detect_model_user_inputs(graph):
+    """
+    Detect model user inputs (nodes that have inputs with no incoming
+    edge)
+    """
+    ivars = {}
+    for n in graph.nodes:
+        for ip in n.input_ports:
+            for e in graph.edges:
+                if e.receiver == n.id and e.receiver_port == ip.id:
+                    break
+            else:
+                ivars[ip.id] = numpy.zeros(ip.shape, dtype=ip.type)
+    return graph, ivars
+
+
+def _preprocess_graph(graph):
+    graph = copy.deepcopy(graph)
+    ivars = {}
+
+    # TODO: add a processing level/specification on what types of
+    # preprocessing to do
+
+    graph, ivars = _preprocess_detect_model_user_inputs(graph)
+
+    return graph, ivars
 
 
 def _generate_component_string(
@@ -1457,9 +1489,25 @@ def generate_script_from_mdf(model_input, outfile=None):
         i: False
         for i in get_declared_identifiers(model)
     }
+    input_vars = {}
+    processed_graphs = []
 
     for graph in model.graphs:
+        graph, ivars = _preprocess_graph(graph)
+        input_vars.update(ivars)
+        processed_graphs.append(graph)
+
+    component_identifiers.update(input_vars)
+
+    for graph in processed_graphs:
         comp_strs.append(_generate_composition_string(graph, component_identifiers))
+
+    input_vars_str = [f'{k} = numpy.zeros({v.shape}, dtype="{v.dtype}")' for k, v in input_vars.items()]
+    if len(input_vars_str) > 0:
+        input_vars_str.insert(0, SCRIPT_INPUT_VARS_COMMENT_START)
+        input_vars_str.append(SCRIPT_INPUT_VARS_COMMENT_END)
+        input_vars_str.append('')
+    comp_strs.insert(0, input_vars_str)
 
     module_friendly_name_mapping = {
         'psyneulink': 'pnl',
