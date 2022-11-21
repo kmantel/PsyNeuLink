@@ -234,11 +234,17 @@ def _parse_component_type(model_obj):
         try:
             return getattr(psyneulink, s)
         except AttributeError:
-            for o in dir(psyneulink):
-                if s.lower() == o.lower():
-                    o = getattr(psyneulink, o)
-                    if isinstance(o, ComponentsMeta):
-                        return o
+            for pnl_obj_name in dir(psyneulink):
+                pnl_obj = getattr(psyneulink, pnl_obj_name)
+                if s.lower() == pnl_obj_name.lower():
+                    if isinstance(pnl_obj, ComponentsMeta):
+                        return pnl_obj
+                else:
+                    try:
+                        if pnl_obj._model_spec_generic_type_name.lower() == s.lower():
+                            return pnl_obj
+                    except AttributeError:
+                        pass
             # if matching component not found, raise original exception
             raise
 
