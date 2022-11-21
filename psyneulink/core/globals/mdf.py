@@ -1423,24 +1423,23 @@ def generate_script_from_mdf(model_input, outfile=None):
                 if m is not n and m in n:
                     module_names.remove(m)
 
-        for module in sorted(module_names):
-            try:
-                friendly_name = module_friendly_name_mapping[module]
-            except KeyError:
-                friendly_name = module
-
-            imports_str += 'import {0}{1}\n'.format(
-                module,
-                f' as {friendly_name}' if friendly_name != module else ''
-            )
-
         comp_strs[i] = '\n'.join(comp_strs[i])
 
-    model_output = '{0}{1}{2}'.format(
-        imports_str,
-        '\n' if len(imports_str) > 0 else '',
-        '\n'.join(comp_strs)
-    )
+    for module in sorted(module_names):
+        try:
+            friendly_name = module_friendly_name_mapping[module]
+        except KeyError:
+            friendly_name = module
+
+        imports_str += 'import {0}{1}\n'.format(
+            module,
+            f' as {friendly_name}' if friendly_name != module else ''
+        )
+
+    outstr_elems = [imports_str, '\n'.join(comp_strs)]
+    outstr_elems = list(filter(lambda e: e != '', outstr_elems))
+
+    model_output = '\n'.join(outstr_elems)
 
     if outfile is not None:
         # pass through any file exceptions
