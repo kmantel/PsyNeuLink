@@ -1387,7 +1387,7 @@ def generate_script_from_mdf(model_input, outfile=None):
         'numpy': 'np'
     }
 
-    potential_module_names = set(['modeci_mdf.functions.standard'])
+    potential_module_names = set()
     module_names = set()
     model_output = []
 
@@ -1398,6 +1398,8 @@ def generate_script_from_mdf(model_input, outfile=None):
                 *re.findall(r'([A-Za-z_\.]+)\.', cs),
                 *re.findall(r'([A-Za-z_\.]+?)\.', cs)
             ]))
+            if 'modeci_mdf.functions.standard' in cs:
+                potential_module_names.add('modeci_mdf.functions.standard')
 
         for module in potential_module_names:
             if module not in component_identifiers:
