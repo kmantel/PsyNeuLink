@@ -84,6 +84,7 @@ import base64
 import binascii
 import dill
 import enum
+import functools
 import graph_scheduler
 import inspect
 import json
@@ -227,27 +228,29 @@ def _mdf_obj_from_dict(d):
     return None
 
 
-def _parse_component_type(model_obj):
-    def get_pnl_component_type(s):
-        from psyneulink.core.components.component import ComponentsMeta
+@functools.lru_cache()
+def _get_pnl_component_type(s):
+    from psyneulink.core.components.component import ComponentsMeta
 
-        try:
-            return getattr(psyneulink, s)
-        except AttributeError:
-            for pnl_obj_name in dir(psyneulink):
-                pnl_obj = getattr(psyneulink, pnl_obj_name)
-                if s.lower() == pnl_obj_name.lower():
-                    if isinstance(pnl_obj, ComponentsMeta):
+    try:
+        return getattr(psyneulink, s)
+    except AttributeError:
+        for pnl_obj_name in dir(psyneulink):
+            pnl_obj = getattr(psyneulink, pnl_obj_name)
+            if s.lower() == pnl_obj_name.lower():
+                if isinstance(pnl_obj, ComponentsMeta):
+                    return pnl_obj
+            else:
+                try:
+                    if pnl_obj._model_spec_generic_type_name.lower() == s.lower():
                         return pnl_obj
-                else:
-                    try:
-                        if pnl_obj._model_spec_generic_type_name.lower() == s.lower():
-                            return pnl_obj
-                    except AttributeError:
-                        pass
-            # if matching component not found, raise original exception
-            raise
+                except AttributeError:
+                    pass
 
+    return None
+
+
+def _parse_component_type(model_obj):
     type_str = None
     try:
         try:
@@ -279,11 +282,10 @@ def _parse_component_type(model_obj):
             else:
                 type_str = elem
 
-    try:
-        # gets the actual psyneulink type (Component, etc..) from the module
-        return get_pnl_component_type(type_str)
-    except (AttributeError, TypeError):
-        pass
+    # gets the actual psyneulink type (Component, etc..) from the module
+    pctres = _get_pnl_component_type(type_str)
+    if pctres is not None:
+        return pctres
 
     try:
         from modeci_mdf.functions.standard import mdf_functions
