@@ -583,16 +583,269 @@ def _preprocess_detect_model_user_inputs(graph):
     return graph, ivars
 
 
+def _preprocess_matrix_multiply_nodes_into_projections(
+    graph,
+    input_vars,
+    origin_node_as_projection=True,
+    terminal_node_as_projection=True,
+):
+    """
+    Detect nodes that can be rewritten as psyneulink projections.
+    That is, nodes with:
+        1. exactly one output port
+        2. a single matrix multiply as function
+        3. exactly one outgoing edge
+        4.a either exactly one incoming edge
+        4.b or two incoming edges, one of which leads to the matrix
+            (onnx::MatMul 'B') parameter and maps to an input
+            variable with optional onnx::Transpose operation
+
+    Args:
+        graph: mdf.Graph
+        input_vars: dict: dictionary of model user inputs
+        origin_node_as_projection: bool: if True, this function rewrites
+            origin nodes as projections by adding a new passthrough
+            origin node; if False, origin nodes that would otherwise be
+            converted to projections are skipped
+        terminal_node_as_projection: bool: if True, this function
+            rewrites terminal nodes as projections by adding a new
+            passthrough terminal node; if False, terminal nodes that
+            would otherwise be converted to projections are skipped
+    """
+    import modeci_mdf.mdf as mdf
+
+    def _get_matrix_arg(func_name):
+        # referencing names through objects in case future refactoring
+        if func_name == psyneulink.LinearMatrix.__name__:
+            return psyneulink.LinearMatrix.parameters.matrix.name
+        else:
+            return psyneulink.LinearMatrix.parameters.matrix.mdf_name
+
+    def _create_passthrough_node(origin: bool):
+        if origin:
+            new_term_id = f'{node.id}_passthrough_origin'
+            shape = node.input_ports[0].shape
+            typ = node.input_ports[0].type
+        else:
+            new_term_id = f'{node.id}_passthrough_terminal'
+            shape = node.output_ports[0].shape
+            typ = node.output_ports[0].type
+
+        new_term_ip_id = f'{new_term_id}_input'
+        new_term_func_id = f'{new_term_id}_function'
+        return mdf.Node(
+            id=new_term_id,
+            input_ports=[
+                mdf.InputPort(id=new_term_ip_id, shape=shape, type=typ),
+            ],
+            functions=[
+                mdf.Function(
+                    id=f'{new_term_func_id}',
+                    value=new_term_ip_id,
+                    args={},
+                    metadata={
+                        'type': psyneulink.Identity.__name__
+                    }
+                )
+            ],
+            output_ports=[
+                mdf.OutputPort(
+                    id=f'{new_term_id}_output',
+                    shape=shape,
+                    type=typ,
+                    value=new_term_func_id,
+                )
+            ],
+        )
+
+    def _node_is_input_transpose(node):
+        return (
+            len(node.input_ports) == 1
+            and len(node.functions) == 1
+            and node.functions[0].function == 'onnx::Transpose'
+            and node.input_ports[0].id in input_vars
+        )
+
+    # store {node: tuple} with elements:
+    #   sender pathway edge
+    #   receiver
+    #   matrix input name
+    nodes_to_replace_as_psyneulink_edges = {}
+    for n in graph.nodes:
+        # cond 1
+        if len(n.output_ports) != 1:
+            continue
+
+        # cond 2
+        if len(n.functions) != 1:
+            continue
+
+        function = n.functions[0]
+        try:
+            func_name = function.function
+        except AttributeError:
+            continue
+
+        if func_name is None or _get_pnl_component_type(func_name) != psyneulink.LinearMatrix:
+            continue
+
+        incoming_edges = []
+        outgoing_edge = None
+        for e in graph.edges:
+            if e.sender == n.id:
+                assert e.sender_port == n.output_ports[0].id
+                # cond 3
+                if outgoing_edge is not None:
+                    continue
+                else:
+                    outgoing_edge = e
+            if e.receiver == n.id:
+                incoming_edges.append(e)
+
+        matrix_param_name = _get_matrix_arg(func_name)
+        matrix_arg = function.args[matrix_param_name]
+        # cond 4
+        if len(incoming_edges) == 1:
+            # search for psyneulink-generated node-as-edge
+            if matrix_arg == incoming_edges[0].receiver_port:
+                # only incoming projection is to the matrix
+                sender_edge = None
+                matrix_value_edge = incoming_edges[0]
+            else:
+                sender_edge = incoming_edges[0]
+                matrix_value_edge = None
+
+            # identify when only edge (to matrix) is an input-transpose
+            try:
+                sender = [x for x in graph.nodes if x.id == matrix_value_edge.sender][0]
+            except (AttributeError, IndexError):
+                pass
+            else:
+                if _node_is_input_transpose(sender):
+                    matrix_arg = sender.input_ports[0].id
+
+            nodes_to_replace_as_psyneulink_edges[n] = (sender_edge, matrix_value_edge, outgoing_edge, matrix_arg)
+        elif len(incoming_edges) == 2:
+            if incoming_edges[0].receiver_port == matrix_arg:
+                matrix_value_edge = incoming_edges[0]
+                sender_edge = incoming_edges[1]
+            else:
+                matrix_value_edge = incoming_edges[1]
+                sender_edge = incoming_edges[0]
+
+            if matrix_arg in input_vars:
+                # matrix directly maps to an input variable, so can
+                # transform this node
+                nodes_to_replace_as_psyneulink_edges[n] = (sender_edge, matrix_value_edge, outgoing_edge, matrix_arg)
+            else:
+                # check that sender is a simple Transpose op leading to
+                # an input variable
+                try:
+                    sender = [x for x in graph.nodes if x.id == matrix_value_edge.sender][0]
+                except IndexError:
+                    continue
+
+                if _node_is_input_transpose(sender):
+                    nodes_to_replace_as_psyneulink_edges[n] = (sender_edge, matrix_value_edge, outgoing_edge, sender.input_ports[0].id)
+
+    for node, (incoming_edge, matrix_edge, outgoing_edge, matrix_arg) in nodes_to_replace_as_psyneulink_edges.items():
+        if incoming_edge is None:
+            if not origin_node_as_projection:
+                continue
+            else:
+                new_origin_node = _create_passthrough_node(origin=True)
+                incoming_edge = types.SimpleNamespace(
+                    sender=new_origin_node.id,
+                    sender_port=new_origin_node.output_ports[0].id
+                )
+                graph.nodes.append(new_origin_node)
+        else:
+            graph.edges.remove(incoming_edge)
+
+        if outgoing_edge is None:
+            if not terminal_node_as_projection:
+                continue
+            else:
+                new_terminal_node = _create_passthrough_node(origin=False)
+                outgoing_edge = types.SimpleNamespace(
+                    receiver=new_terminal_node.id,
+                    receiver_port=new_terminal_node.input_ports[0].id
+                )
+                graph.nodes.append(new_terminal_node)
+        else:
+            graph.edges.remove(outgoing_edge)
+
+        edge_func_name = f'{node.id}_{psyneulink.LinearMatrix.__name__}'
+        edge_func_metadata = {}
+        if node.functions[0].args is not None:
+            edge_func_metadata.update(node.functions[0].args)
+        if node.functions[0].metadata is not None:
+            edge_func_metadata.update(node.functions[0].metadata)
+        try:
+            # this would override matrix_arg specified in args/parameters
+            del edge_func_metadata[psyneulink.LinearMatrix.parameters.matrix.mdf_name]
+        except KeyError:
+            pass
+
+        # replace default variable referencing input port to array with its shape
+        variable_key = psyneulink.LinearMatrix.parameters.variable.mdf_name
+        try:
+            ip = [x for x in node.input_ports if x.id == edge_func_metadata[variable_key]][0]
+            edge_func_metadata[variable_key] = f"numpy.zeros({ip.shape}, dtype='{ip.type}')"
+        except (IndexError, KeyError):
+            pass
+
+        if matrix_edge is not None:
+            graph.edges.remove(matrix_edge)
+            sender_node = [n for n in graph.nodes if n.id == matrix_edge.sender][0]
+            if _node_is_input_transpose(sender_node):
+                # do the transpose the node would have done manually
+                ivar = input_vars[matrix_arg]
+                del input_vars[matrix_arg]
+                matrix_arg = f'{matrix_arg}_transpose'
+                input_vars[matrix_arg] = ivar.transpose()
+                graph.nodes.remove(sender_node)
+
+        edge_metadata = {
+            'functions': {
+                edge_func_name: {
+                    'metadata': edge_func_metadata,
+                    'function': psyneulink.LinearMatrix._model_spec_generic_type_name,
+                    psyneulink.LinearMatrix._model_spec_id_parameters: {
+                        psyneulink.LinearMatrix.parameters.matrix.mdf_name: matrix_arg
+                    }
+                }
+            }
+        }
+
+        new_edge = mdf.Edge(
+            id=f'{node.id}_as_edge',
+            sender=incoming_edge.sender,
+            sender_port=incoming_edge.sender_port,
+            receiver=outgoing_edge.receiver,
+            receiver_port=outgoing_edge.receiver_port,
+            metadata=edge_metadata
+        )
+        if node.metadata is not None:
+            new_edge.metadata = {**node.metadata, **new_edge.metadata}
+
+        graph.edges.append(new_edge)
+        graph.nodes.remove(node)
+
+    return graph, input_vars
+
+
 def _preprocess_graph(graph):
     graph = copy.deepcopy(graph)
-    ivars = {}
+    input_vars = {}
 
     # TODO: add a processing level/specification on what types of
     # preprocessing to do
 
-    graph, ivars = _preprocess_detect_model_user_inputs(graph)
+    graph, input_vars = _preprocess_detect_model_user_inputs(graph)
+    graph, input_vars = _preprocess_matrix_multiply_nodes_into_projections(graph, input_vars)
 
-    return graph, ivars
+    return graph, input_vars
 
 
 def _generate_component_string(
