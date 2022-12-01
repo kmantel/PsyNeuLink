@@ -1262,10 +1262,10 @@ def _generate_composition_string(graph, component_identifiers):
         output.append('')
 
     if len(excluded_node_roles) > 0:
-        for node, roles in excluded_node_roles.items():
-            if name not in implicit_names and name != controller_name:
+        for node_name, roles in excluded_node_roles.items():
+            if node_name not in implicit_names and node_name != controller_name and node_name in [n.id for n in graph.nodes]:
                 output.append(
-                    f'{comp_identifer}.exclude_node_roles({node}, {_parse_parameter_value(roles, component_identifiers)})'
+                    f'{comp_identifer}.exclude_node_roles({node_name}, {_parse_parameter_value(roles, component_identifiers)})'
                 )
         output.append('')
 
