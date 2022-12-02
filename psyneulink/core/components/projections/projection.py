@@ -1124,6 +1124,7 @@ class Projection_Base(Projection):
             )
             edge_function = edge_node.function
             edge_node = edge_node.as_mdf_model()
+            del edge_node.metadata['variable']  # variable isn't specified for projections
 
             func_model = [f for f in edge_node.functions if f.id == parse_valid_identifier(f'{edge_node.id}_{edge_function.name}')][0]
             var_name = _get_variable_parameter_name(edge_function)

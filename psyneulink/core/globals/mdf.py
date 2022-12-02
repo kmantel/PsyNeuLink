@@ -1091,8 +1091,7 @@ def _generate_composition_string(graph, component_identifiers):
                     sender_port=sender_port,
                     receiver_port=receiver_port,
                     metadata={
-                        # variable isn't specified for projections
-                        **{k: v for k, v in node.metadata.items() if k != 'variable'},
+                        **node.metadata,
                         'functions': node.functions
                     }
                 )
