@@ -438,7 +438,7 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
                         ', '.join([
                             '{0}: {1}'.format(
                                 str(_parse_parameter_value(k, component_identifiers, name)),
-                                str(_parse_parameter_value(v, component_identifiers, name))
+                                str(_parse_parameter_value(v, component_identifiers, k))
                             )
                             for k, v in value.items()
                         ])
@@ -805,11 +805,11 @@ def _generate_component_string(
             try:
                 val = _parse_parameter_value(
                     val, component_identifiers,
-                    name=parameter_names[arg],
+                    name=parameter_names[constructor_arg],
                     parent_parameters=parent_parameters,
                 )
             except KeyError:
-                val = _parse_parameter_value(val, component_identifiers, parent_parameters=parent_parameters)
+                val = _parse_parameter_value(val, component_identifiers, name=constructor_arg, parent_parameters=parent_parameters)
 
             if (
                 (arg in component_type.parameters or constructor_arg in component_type.parameters)
@@ -828,7 +828,7 @@ def _generate_component_string(
 
             if arg != MODEL_SPEC_ID_MDF_VARIABLE:
                 val = _parse_parameter_value(
-                    val, component_identifiers, parent_parameters=parent_parameters
+                    val, component_identifiers, name=arg, parent_parameters=parent_parameters
                 )
 
                 try:
