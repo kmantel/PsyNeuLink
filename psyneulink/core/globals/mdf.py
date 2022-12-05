@@ -507,7 +507,7 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
 
         # handle generic string
         if (
-            value not in component_identifiers
+            (value not in component_identifiers or name == 'name')
             # assume a string that contains a dot is a command, not a raw
             # string, this is definitely imperfect and can't handle the
             # legitimate case, but don't know how to distinguish..
