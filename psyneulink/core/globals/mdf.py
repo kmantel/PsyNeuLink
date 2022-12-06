@@ -858,6 +858,72 @@ def _preprocess_matrix_multiply_nodes_into_projections(
     return graph, input_vars
 
 
+def _preprocess_add_into_linear_combination(graph):
+    """
+    Transform single-function nodes using onnx::Add to combine two
+    incoming edges into a LinearCombination-based add node
+    """
+    import modeci_mdf.mdf as mdf
+
+    for n in graph.nodes:
+        if (
+            len(n.functions) == 1
+            and n.functions[0].function == 'onnx::Add'
+            and len(n.input_ports) == 2
+        ):
+            try:
+                a = n.functions[0].args['A']
+                b = n.functions[0].args['B']
+            except (KeyError, TypeError):
+                continue
+
+            if n.input_ports[0].id == a and n.input_ports[1].id == b:
+                a_port = n.input_ports[0]
+                b_port = n.input_ports[1]
+            elif n.input_ports[0].id == b and n.input_ports[1].id == a:
+                a_port = n.input_ports[1]
+                b_port = n.input_ports[0]
+            else:
+                continue
+
+            if (
+                a_port.shape != b_port.shape
+                or a_port.type != b_port.type
+            ):
+                continue
+
+            a_edge = None
+            b_edge = None
+            for e in graph.edges:
+                if e.receiver == n.id:
+                    if e.receiver_port == a_port.id:
+                        a_edge = e
+                    elif e.receiver_port == b_port.id:
+                        b_edge = e
+
+            if a_edge is None or b_edge is None:
+                continue
+
+            new_port = mdf.InputPort(
+                id='onnx_add_input_port',
+                shape=(2, *a_port.shape),
+                type=a_port.type
+            )
+            n.input_ports = [new_port]
+            a_edge.receiver_port = new_port.id
+            b_edge.receiver_port = new_port.id
+            n.functions[0] = mdf.Function(
+                id=n.functions[0].id,
+                value=new_port.id,
+                args={},
+                metadata={
+                    'type': psyneulink.Identity.__name__
+                },
+            )
+
+    return graph
+
+
 def _preprocess_graph(graph):
     graph = copy.deepcopy(graph)
     input_vars = {}
@@ -868,6 +934,7 @@ def _preprocess_graph(graph):
     graph = _preprocess_substitute_function_args(graph)  # should not be turned off
     graph, input_vars = _preprocess_detect_model_user_inputs(graph)
     graph, input_vars = _preprocess_matrix_multiply_nodes_into_projections(graph, input_vars)
+    graph = _preprocess_add_into_linear_combination(graph)
 
     return graph, input_vars
 
