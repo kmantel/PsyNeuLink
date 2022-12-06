@@ -567,6 +567,29 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
     return value
 
 
+def _preprocess_substitute_function_args(graph):
+    """
+    Substitute the value of function args that reference a basic MDF
+    parameter by name
+    """
+    for n in graph.nodes:
+        for f in n.functions:
+            if f.args is None:
+                continue
+
+            for arg_name, arg_value in f.args.items():
+                for p in n.parameters:
+                    # only handle non-stateful parameters here
+                    if (
+                        p.value is not None
+                        and p.default_initial_value is None
+                        and p.id == arg_value
+                    ):
+                        f.args[arg_name] = p.value
+
+    return graph
+
+
 def _preprocess_detect_model_user_inputs(graph):
     """
     Detect model user inputs (nodes that have inputs with no incoming
@@ -842,6 +865,7 @@ def _preprocess_graph(graph):
     # TODO: add a processing level/specification on what types of
     # preprocessing to do
 
+    graph = _preprocess_substitute_function_args(graph)  # should not be turned off
     graph, input_vars = _preprocess_detect_model_user_inputs(graph)
     graph, input_vars = _preprocess_matrix_multiply_nodes_into_projections(graph, input_vars)
 
