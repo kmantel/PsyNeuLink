@@ -522,6 +522,24 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
             parent_parameters=parent_parameters
         )
 
+    elif isinstance(value, numpy.ndarray):
+        # arbitrarily choose 5 as max elements in array before
+        # condensing uniform numpy arrays
+        if value.size > 5:
+            if (value == 0).all():
+                return f"numpy.zeros({value.shape}, dtype='{value.dtype}')"
+            elif (value == 1).all():
+                return f"numpy.ones({value.shape}, dtype={value.dtype}')"
+            else:
+                try:
+                    if all([dim == value.shape[0] for dim in value.shape]):
+                        if (value == numpy.identity(value.shape[0])).all():
+                            return f"numpy.identity({value.shape[0]}, dtype='{value.dtype}')"
+                except IndexError:
+                    pass
+
+        value = value.tolist()
+
     return value
 
 
