@@ -702,10 +702,18 @@ def _generate_component_string(
         additional_arguments.append(f"name='{name}'")
 
     if parent_parameters is None:
-        parent_parameters = parameters
+        parent_parameters = {}
+        try:
+            if len(component_model.input_ports) == 1:
+                parent_parameters['variable'] = numpy.zeros(
+                    component_model.input_ports[0].shape,
+                    dtype=component_model.input_ports[0].type
+                )
+        except (AttributeError, TypeError):
+            pass
 
     parameters = {
-        **{k: v for k, v in parent_parameters.items() if isinstance(v, dict) and MODEL_SPEC_ID_PARAMETER_INITIAL_VALUE in v},
+        **parent_parameters,
         **parameters,
         **(component_model.metadata if component_model.metadata is not None else {})
     }
@@ -783,7 +791,11 @@ def _generate_component_string(
 
     mdf_names_to_pnl = {
         p.mdf_name: p.name for p in component_type.parameters
-        if p.mdf_name is not None and not isinstance(p, ParameterAlias)
+        if (
+            p.mdf_name is not None and not isinstance(p, ParameterAlias)
+            # use 'variable' from parent parameters if present
+            and (p.name != 'variable' or 'variable' not in parameters)
+        )
     }
 
     # sort on arg name
