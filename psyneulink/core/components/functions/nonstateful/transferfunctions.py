@@ -1499,6 +1499,8 @@ class ReLU(TransferFunction):  # -----------------------------------------------
     componentName = RELU_FUNCTION
     parameter_keywords.update({GAIN, BIAS, LEAK})
 
+    _model_spec_generic_type_name = 'onnx::Relu'
+
     class Parameters(TransferFunction.Parameters):
         """
             Attributes
@@ -1522,6 +1524,10 @@ class ReLU(TransferFunction):  # -----------------------------------------------
                     :default value: 0.0
                     :type: ``float``
         """
+        variable = Parameter(
+            np.array([0]), read_only=True, pnl_internal=True,
+            constructor_argument='default_variable', mdf_name='X'
+        )
         gain = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
         bias = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
         leak = Parameter(0.0, modulable=True)
