@@ -251,7 +251,10 @@ def _get_pnl_component_type(s):
 
 
 def _parse_component_type(model_obj):
+    import modeci_mdf.mdf as mdf
+
     type_str = None
+    type_dict = None
     try:
         try:
             type_dict = model_obj.metadata[MODEL_SPEC_ID_TYPE]
@@ -271,6 +274,15 @@ def _parse_component_type(model_obj):
         except TypeError:
             # actually a str
             type_str = type_dict
+
+        if type_dict is None:
+            if (
+                isinstance(model_obj, mdf.Function)
+                and model_obj.function is None
+                and model_obj.value is not None
+            ):
+                return model_obj.value
+
     elif isinstance(type_str, dict):
         if len(type_str) != 1:
             raise MDFError
