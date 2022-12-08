@@ -924,6 +924,51 @@ def _preprocess_add_into_linear_combination(graph):
     return graph
 
 
+def _preprocess_input_gathers(graph, input_vars):
+    """
+    Modify Gather nodes that simply index a user input into simple
+    passthrough identity nodes
+    """
+    import modeci_mdf.mdf as mdf
+
+    for n in graph.nodes:
+        if (
+            len(n.input_ports) == 1
+            and len(n.functions) == 1
+            and n.functions[0].function == 'onnx::Gather'
+            and 'data' in n.functions[0].args
+            and n.functions[0].args['data'] in input_vars
+        ):
+            input_var_name = n.functions[0].args['data']
+
+            try:
+                indices = n.functions[0].args['indices']
+            except KeyError:
+                variable = input_var_name
+            else:
+                if isinstance(indices, int):
+                    ip_shape = input_vars[input_var_name][indices].shape
+                    variable = f'{input_var_name}[{indices}]'
+                else:
+                    ip_shape = input_vars[input_var_name][indices, ].shape
+                    variable = f'{input_var_name}[{indices}, ]'
+
+            n.functions[0] = mdf.Function(
+                id=n.functions[0].id,
+                function='identity',
+                args={
+                    'variable': variable
+                }
+            )
+            ivar_input_port = [ip for ip in n.input_ports if ip.id == input_var_name]
+            assert len(ivar_input_port) == 1
+            ivar_input_port = ivar_input_port[0]
+
+            ivar_input_port.shape = ip_shape
+
+    return graph
+
+
 def _preprocess_graph(graph):
     graph = copy.deepcopy(graph)
     input_vars = {}
@@ -935,6 +980,7 @@ def _preprocess_graph(graph):
     graph, input_vars = _preprocess_detect_model_user_inputs(graph)
     graph, input_vars = _preprocess_matrix_multiply_nodes_into_projections(graph, input_vars)
     graph = _preprocess_add_into_linear_combination(graph)
+    graph = _preprocess_input_gathers(graph, input_vars)
 
     return graph, input_vars
 
