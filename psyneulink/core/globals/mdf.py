@@ -327,6 +327,16 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
         pnl_type = None
 
     if isinstance(value, list):
+        with warnings.catch_warnings():
+            warnings.simplefilter(action='error', category=numpy.VisibleDeprecationWarning)
+            try:
+                as_np_array = numpy.array(value)
+            except numpy.VisibleDeprecationWarning:
+                pass
+            else:
+                if as_np_array.dtype == float or as_np_array.dtype == int:
+                    return _parse_parameter_value(as_np_array, component_identifiers, name, parent_parameters)
+
         new_val = [_parse_parameter_value(x, component_identifiers, name, parent_parameters) for x in value]
 
         # check for ParameterPort spec
