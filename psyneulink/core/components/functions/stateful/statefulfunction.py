@@ -548,6 +548,9 @@ class StatefulFunction(Function_Base): #  --------------------------------------
                                                    context, override=True)
                 value.append(getattr(self.parameters, attr)._get(context))
 
+        if len(value) == 1:
+            value = value[0]
+
         self.parameters.value.set(value, context, override=True)
         return value
 
