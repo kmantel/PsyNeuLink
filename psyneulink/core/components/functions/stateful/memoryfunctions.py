@@ -2548,6 +2548,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
 
         else:
             value = self._initialize_previous_value(previous_value, context=context)
+            self.parameters.previous_value._set(value, context)
 
         self.parameters.value.set(value, context, override=True)
         return value
