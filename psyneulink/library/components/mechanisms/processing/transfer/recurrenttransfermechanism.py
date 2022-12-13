@@ -683,6 +683,7 @@ class RecurrentTransferMechanism(TransferMechanism):
             matrix = HOLLOW_MATRIX
 
         self.learning_mechanism = None
+        self.recurrent_projection = None
         self._learning_enabled = enable_learning
 
         super().__init__(
