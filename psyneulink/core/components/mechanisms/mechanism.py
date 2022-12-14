@@ -2293,13 +2293,23 @@ class Mechanism_Base(Mechanism):
         """
         from psyneulink.core.components.functions.stateful.statefulfunction import StatefulFunction
         from psyneulink.core.components.functions.stateful.integratorfunctions import IntegratorFunction
+        from psyneulink.core.components.functions.stateful.memoryfunctions import MemoryFunction
 
         # If the primary function of the mechanism is stateful:
         # (1) reset it, (2) update value, (3) update output ports
         if isinstance(self.function, StatefulFunction):
             new_value = self.function.reset(*args, **kwargs, context=context)
-            self.parameters.value._set(convert_to_np_array(new_value, dimension=2), context=context)
-            self._update_output_ports(context=context)
+            # memory functions may be emptied by reset, do not change mechanism value in this case
+            if (
+                new_value is not None
+                and (
+                    not isinstance(self.function, MemoryFunction)
+                    or (isinstance(new_value, np.ndarray) and new_value.size > 0)
+                    or (not isinstance(new_value, np.ndarray) and len(new_value) > 0)
+                )
+            ):
+                self.parameters.value._set(convert_to_np_array(new_value, dimension=2), context=context)
+                self._update_output_ports(context=context)
 
         # FIX: SHOULD MOVE ALL OF THIS TO TransferMechanism SINCE NO OTHER MECH TYPES HAVE integrator_funtions/modes
         # If the mechanism has an auxiliary integrator function:
