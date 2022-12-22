@@ -35,7 +35,7 @@ class TestLCControlMechanism:
         C.add_controller(LC)
 
         for output_port in LC.output_ports:
-            output_port.parameters.value.set(output_port.value * starting_value_LC, C, override=True)
+            output_port.parameters.value.set(starting_value_LC, C, override=True)
 
         LC.reset_stateful_function_when = pnl.Never()
 
