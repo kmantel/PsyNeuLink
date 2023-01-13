@@ -3085,11 +3085,11 @@ class OptimizationControlMechanism(ControlMechanism):
         return optimal_control_allocation
 
     def _get_frozen_context(self, context=None):
-        return Context(execution_id=f'{context.execution_id}{EID_FROZEN}')
+        return Context(execution_id=f'{context.execution_id}{EID_FROZEN}', source=ContextFlags.METHOD)
 
     def _set_up_simulation(
         self,
-        base_context=Context(execution_id=None),
+        base_context=Context(execution_id=None, source=ContextFlags.METHOD),
         control_allocation=None,
         alt_controller=None
     ):

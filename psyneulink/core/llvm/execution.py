@@ -8,7 +8,7 @@
 
 # ********************************************* Binary Execution Wrappers **************************************************************
 
-from psyneulink.core.globals.context import Context
+from psyneulink.core.globals.context import Context, ContextFlags
 
 from collections import Counter
 import concurrent.futures
@@ -212,7 +212,7 @@ class FuncExecution(CUDAExecution):
         super().__init__()
         self._bin_func = pnlvm.LLVMBinaryFunction.from_obj(component, tags=tags)
         self._execution_contexts = [
-            Context(execution_id=eid) for eid in execution_ids
+            Context(execution_id=eid, source=ContextFlags.CONSTRUCTOR) for eid in execution_ids
         ]
         self._component = component
 
@@ -283,7 +283,7 @@ class CompExecution(CUDAExecution):
         super().__init__(buffers=['state_struct', 'param_struct', 'data_struct', 'conditions'])
         self._composition = composition
         self._execution_contexts = [
-            Context(execution_id=eid) for eid in execution_ids
+            Context(execution_id=eid, source=ContextFlags.CONSTRUCTOR) for eid in execution_ids
         ]
         self.__bin_exec_func = None
         self.__bin_exec_multi_func = None

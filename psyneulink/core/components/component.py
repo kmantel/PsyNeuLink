@@ -2344,7 +2344,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     skip_log=True,
                 )
 
-    def _initialize_from_context(self, context, base_context=Context(execution_id=None), override=True, visited=None):
+    def _initialize_from_context(self, context, base_context=Context(execution_id=None, source=ContextFlags.METHOD), override=True, visited=None):
         if context.execution_id is base_context.execution_id:
             return
 

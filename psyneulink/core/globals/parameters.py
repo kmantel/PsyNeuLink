@@ -1687,7 +1687,7 @@ class Parameter(ParameterBase):
             except KeyError:
                 pass
 
-    def _initialize_from_context(self, context=None, base_context=Context(execution_id=None), override=True):
+    def _initialize_from_context(self, context=None, base_context=Context(execution_id=None, source=ContextFlags.METHOD), override=True):
         from psyneulink.core.components.component import Component, ComponentsMeta
 
         try:

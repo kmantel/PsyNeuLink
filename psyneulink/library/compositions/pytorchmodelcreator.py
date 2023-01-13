@@ -63,7 +63,7 @@ class PytorchModelCreator(torch.nn.Module):
 
         self._regenerate_paramlist()
 
-        c = Context()
+        c = Context(source=ContextFlags.CONSTRUCTOR)
         try:
             composition.scheduler._init_counts(execution_id=c.execution_id, base_execution_id=context.execution_id)
         except graph_scheduler.SchedulerError:

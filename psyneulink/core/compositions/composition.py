@@ -4484,7 +4484,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # Ensure correct number of InputPorts have been identified
                 #    (i.e., number of InputPorts on comp's input_CIM)
                 if _update_cim:
-                    context = Context()
+                    context = Context(source=ContextFlags.METHOD)
                     self._determine_pathway_roles(context=context)
                     self._determine_pathway_roles(context)
                     self._create_CIM_ports(context)

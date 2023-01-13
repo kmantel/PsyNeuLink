@@ -2,7 +2,7 @@ from fastkde import fastKDE
 from scipy.interpolate import interpn
 from scipy.optimize import differential_evolution
 
-from psyneulink.core.globals.context import Context
+from psyneulink.core.globals.context import Context, ContextFlags
 from psyneulink.core.globals.parameters import Parameter
 from psyneulink.core.scheduling.condition import AtTrialStart
 from psyneulink.core.globals.parameters import Parameter
@@ -307,7 +307,7 @@ def make_likelihood_function(
         raise ValueError("data_to_fit must be a 2D numpy array or a Pandas DataFrame")
 
     def log_likelihood(**kwargs):
-        context = Context()
+        context = Context(source=ContextFlags.METHOD)
 
         # Assign parameter values to composition, eventually this should be done
         # via the OptimizationControlMechanism and its control allocations stuff.
