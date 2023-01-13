@@ -335,7 +335,7 @@ class Context():
                  composition=None,
                  flags=None,
                  execution_phase=ContextFlags.IDLE,
-                 source=ContextFlags.NONE,
+                 source=ContextFlags.COMMAND_LINE,
                  runmode=ContextFlags.DEFAULT_MODE,
                  execution_id=NotImplemented,
                  string:str='',
