@@ -2842,7 +2842,29 @@ class OptimizationControlMechanism(ControlMechanism):
         # #  END DEBUGGING ---------------------------------------------------------------------
 
         # Ensure state_features are compatible with input format for agent_rep Composition
-        self.agent_rep._parse_input_dict(self.parameters.state_feature_values._get(context))
+        try:
+            # Call this to check for errors in constructing inputs dict
+            self.agent_rep._parse_input_dict(self.parameters.state_feature_values._get(context))
+        except (RunError, CompositionError) as error:
+            raise OptimizationControlMechanismError(
+                f"The '{STATE_FEATURES}' argument has been specified for '{self.name}' that is using a "
+                f"{Composition.componentType} ('{self.agent_rep.name}') as its agent_rep, but some of the "
+                f"specifications are not compatible with the inputs required by its 'agent_rep': '{error.error_value}' "
+                f"Use the get_inputs_format() method of '{self.agent_rep.name}' to see the required format, or "
+                f"remove the specification of '{STATE_FEATURES}' from the constructor for {self.name} "
+                f"to have them automatically assigned.")
+        except KeyError as error:   # This occurs if a Node is illegal for a reason other than above,
+            pass                    # and will issue the corresponding error message.
+        except:  # Legal Node specifications, but incorrect for input to agent_rep
+            specs = [f.full_name if hasattr(f, 'full_name') else (f.name if isinstance(f, Component) else f)
+                     for f in state_features]
+            raise OptimizationControlMechanismError(
+                f"The '{STATE_FEATURES}' argument has been specified for '{self.name}' that is using a "
+                f"{Composition.componentType} ('{self.agent_rep.name}') as its agent_rep, but the "
+                f"'{STATE_FEATURES}' ({specs}) specified are not compatible with the inputs required by 'agent_rep' "
+                f"when it is executed. Use its get_inputs_format() method to see the required format, "
+                f"or remove the specification of '{STATE_FEATURES}' from the constructor for {self.name} "
+                f"to have them automatically assigned.")
 
     def _validate_monitor_for_control(self, nodes):
         # Ensure all of the Components being monitored for control are in the agent_rep if it is Composition
