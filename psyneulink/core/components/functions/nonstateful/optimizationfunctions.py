@@ -1174,6 +1174,9 @@ class GradientOptimization(OptimizationFunction):
             **kwargs
         )
 
+        if default_variable is None:
+            default_variable = self.defaults.variable
+
         # Differentiate objective_function using autograd.grad()
         if objective_function is not None and not self.gradient_function:
             try:
