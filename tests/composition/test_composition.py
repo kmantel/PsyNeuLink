@@ -6155,9 +6155,9 @@ class TestInputSpecifications:
                                     # Test specification of labels for all InputPorts of Mechanism:
                                     input_labels={'red':[0,0,0], 'green':[1,1,1]},
                                     name='Y')
-        assert len(Y.input_ports[0].variable) == 3
+        assert Y.input_ports[0].variable.shape == (1, 3)
         assert len(Y.input_ports[0].value) == 1
-        assert len(Y.input_ports[1].variable) == 3
+        assert Y.input_ports[1].variable.shape == (1, 3)
         assert len(Y.input_ports[1].value) == 3
         icomp = Composition(pathways=[[A,B],[C]], name='ICOMP')
         ocomp = Composition(nodes=[X, icomp, Y], name='OCOMP')

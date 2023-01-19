@@ -70,7 +70,7 @@ class TestInputPorts:
 
         pnl.MappingProjection(sender=a, receiver=b)
 
-        assert b.input_port.defaults.variable.shape == np.array([0]).shape
+        assert b.input_port.defaults.variable.shape == np.array([[0]]).shape
         assert b.input_port.function.defaults.variable.shape == np.array([0]).shape
 
     @pytest.mark.parametrize('num_incoming_projections', [2, 3, 4])

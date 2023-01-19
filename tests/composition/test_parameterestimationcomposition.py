@@ -107,7 +107,7 @@ def test_parameter_estimation_composition(objective_function_arg, expected_input
         # pec.show_graph(show_cim=True)
         # pec.show_graph(show_node_structure=pnl.ALL)
         assert not ctlr.objective_mechanism                         # For objective_function specified
-    assert len(ctlr.input_ports[pnl.OUTCOME].variable) == expected_input_len
+    assert ctlr.input_ports[pnl.OUTCOME].variable.shape == (1, expected_input_len)
     assert len(ctlr.control_signals) == 3
     assert ctlr.function.num_estimates == 3
     assert pnl.RANDOMIZATION_CONTROL_SIGNAL in ctlr.control_signals.names

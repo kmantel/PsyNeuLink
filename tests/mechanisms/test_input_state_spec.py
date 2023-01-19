@@ -349,7 +349,7 @@ class TestInputPortSpec:
         np.testing.assert_array_equal(T.defaults.variable, np.array([[0, 0]]))
         assert len(T.input_ports) == 1
         assert len(T.input_port.path_afferents[0].sender.defaults.variable) == 3
-        assert len(T.input_port.defaults.variable) == 2
+        assert T.input_port.defaults.variable.shape == (1, 2)
         T.execute()
 
     # ------------------------------------------------------------------------------------------------
@@ -366,7 +366,7 @@ class TestInputPortSpec:
         np.testing.assert_array_equal(T.defaults.variable, np.array([[0, 0]]))
         assert len(T.input_ports) == 1
         assert len(T.input_port.path_afferents[0].sender.defaults.variable) == 3
-        assert len(T.input_port.defaults.variable) == 2
+        assert T.input_port.defaults.variable.shape == (1, 2)
         T.execute()
 
     # ------------------------------------------------------------------------------------------------
