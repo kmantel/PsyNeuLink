@@ -569,6 +569,7 @@ Class Reference
 ---------------
 
 """
+import copy
 import collections
 import inspect
 import numbers
@@ -1446,11 +1447,14 @@ class InputPort(Port_Base):
 
     @property
     def default_input_shape(self):
-        if self._input_shape_template == VARIABLE:
-            return self.defaults.variable
-        elif self._input_shape_template == VALUE:
-            return self.defaults.value
-        assert False, f"PROGRAM ERROR: bad _input_shape_template assignment for '{self.name}'."
+        # this should probably be zeros, but CIM default values
+        # get updated to the result of this property
+        # (b9f40e58f44e68f026600332d139e8fdc66a28a4) and used when no
+        # inputs provided
+        first_elem = copy.deepcopy(self.defaults.variable[0])
+        for s in self.defaults.variable[1:]:
+            assert first_elem.shape == s.shape
+        return first_elem
 
     def get_input_shape(self, context=None):
         if self._input_shape_template == VARIABLE:

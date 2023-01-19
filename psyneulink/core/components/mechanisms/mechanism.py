@@ -3975,18 +3975,11 @@ class Mechanism_Base(Mechanism):
     @property
     def _default_external_input_shape(self):
         try:
-            shape = []
-            for input_port in self.input_ports:
-                if input_port.internal_only or input_port.default_input:
-                    continue
-                if input_port._input_shape_template == VARIABLE:
-                    shape.append(input_port.defaults.variable)
-                elif input_port._input_shape_template == VALUE:
-                    shape.append(input_port.defaults.value)
-                else:
-                    assert False, f"PROGRAM ERROR: bad changes_shape in attempt to assign " \
-                                  f"default_external_input_shape for '{input_port.name}' of '{self.name}."
-            return shape
+            return [
+                input_port.default_input_shape
+                for input_port in self.input_ports
+                if not (input_port.internal_only or input_port.default_input)
+            ]
         except (TypeError, AttributeError):
             return None
 

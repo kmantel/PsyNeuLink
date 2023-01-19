@@ -6881,13 +6881,13 @@ class TestNodeRoles:
         assert len(result)==4
 
         input_format = ocomp.get_input_format(form=pnl.TEXT)
-        assert repr(input_format) == '\'{\\n\\tMIDDLE COMP: [[0.0],[0.0]],\\n\\tQ: [[0.0]]\\n}\''
+        assert repr(input_format) == '\'{\\n\\tMIDDLE COMP: [[0],[0]],\\n\\tQ: [[0]]\\n}\''
         input_format = ocomp.get_input_format(form=pnl.TEXT, num_trials=3, use_labels=True)
-        assert repr(input_format) == '"{\\n\\tMIDDLE COMP: [ [[0.0],[\'red\']], [[0.0],[\'green\']], [[0.0],[\'red\']] ],\\n\\tQ: [ [\'red\'], [\'green\'], [\'red\'] ]\\n}"'
+        assert repr(input_format) == '"{\\n\\tMIDDLE COMP: [ [[0],[\'red\']], [[0],[\'green\']], [[0],[\'red\']] ],\\n\\tQ: [ [\'red\'], [\'green\'], [\'red\'] ]\\n}"'
         input_format = ocomp.get_input_format(form=pnl.TEXT, num_trials=2, show_nested_input_nodes=True)
-        assert input_format == '\nInputs to (nested) INPUT Nodes of OUTER COMP for 2 trials:\n\tMIDDLE COMP: \n\t\tX: [ [[0.0]], [[0.0]] ]\n\t\tINNER COMP: \n\t\t\tA: [ [[0.0]], [[0.0]] ]\n\tQ: [ [[0.0]], [[0.0]] \n\nFormat as follows for inputs to run():\n{\n\tMIDDLE COMP: [ [[0.0],[0.0]], [[0.0],[0.0]] ],\n\tQ: [ [[0.0]], [[0.0]] ]\n}'
+        assert input_format == '\nInputs to (nested) INPUT Nodes of OUTER COMP for 2 trials:\n\tMIDDLE COMP: \n\t\tX: [ [[0]], [[0]] ]\n\t\tINNER COMP: \n\t\t\tA: [ [[0]], [[0]] ]\n\tQ: [ [[0]], [[0]] \n\nFormat as follows for inputs to run():\n{\n\tMIDDLE COMP: [ [[0],[0]], [[0],[0]] ],\n\tQ: [ [[0]], [[0]] ]\n}'
         input_format = ocomp.get_input_format(form=pnl.TEXT, num_trials=2, show_nested_input_nodes=True, use_labels=True)
-        assert input_format == "\nInputs to (nested) INPUT Nodes of OUTER COMP for 2 trials:\n\tMIDDLE COMP: \n\t\tX: [ [[0.0]], [[0.0]] ]\n\t\tINNER COMP: \n\t\t\tA: [ ['red'], ['green'] ]\n\tQ: [ ['red'], ['green'] \n\nFormat as follows for inputs to run():\n{\n\tMIDDLE COMP: [ [[0.0],[0.0]], [[0.0],[0.0]] ],\n\tQ: [ [[0.0]], [[0.0]] ]\n}"
+        assert input_format == "\nInputs to (nested) INPUT Nodes of OUTER COMP for 2 trials:\n\tMIDDLE COMP: \n\t\tX: [ [[0]], [[0]] ]\n\t\tINNER COMP: \n\t\t\tA: [ ['red'], ['green'] ]\n\tQ: [ ['red'], ['green'] \n\nFormat as follows for inputs to run():\n{\n\tMIDDLE COMP: [ [[0],[0]], [[0],[0]] ],\n\tQ: [ [[0]], [[0]] ]\n}"
 
         result = ocomp.run(inputs={mcomp:[[.2],['green']], Q:[4.6]})
         assert result == [[0.2], [0.2], [1.],[4.6]]
