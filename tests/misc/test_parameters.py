@@ -395,6 +395,29 @@ class TestSharedParameters:
         assert t.integrator_function.defaults.rate == expected_rate
         assert t.integration_rate.modulated == t.integration_rate.base == expected_rate
 
+    @pytest.mark.parametrize(
+        'integrator_function, expected_rate',
+        [
+            (pnl.AdaptiveIntegrator, pnl.AdaptiveIntegrator.defaults.rate),
+            (pnl.AdaptiveIntegrator(), pnl.AdaptiveIntegrator.defaults.rate),
+            (pnl.AdaptiveIntegrator(rate=.75), .75)
+        ]
+    )
+    def test_override_nonprimary(self, integrator_function, expected_rate):
+        class DummyMechanism(pnl.TransferMechanism):
+            class Parameters(pnl.TransferMechanism.Parameters):
+                integration_rate = pnl.FunctionParameter(
+                    0.5,
+                    function_name='integrator_function',
+                    function_parameter_name='rate',
+                    primary=False
+                )
+
+        t = DummyMechanism(integrator_function=integrator_function)
+        assert t.integrator_function.defaults.rate == expected_rate
+        assert t.integration_rate.modulated == t.integration_rate.base
+        assert t.integration_rate.modulated == expected_rate
+
     def test_conflict_warning(self):
         with pytest.warns(
             UserWarning,

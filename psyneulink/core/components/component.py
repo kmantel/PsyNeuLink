@@ -1194,12 +1194,21 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 isinstance(param, SharedParameter)
                 and not isinstance(param.source, ParameterAlias)
             ):
+                isp_val = None
                 try:
                     if parameter_values[param_name] is not None:
                         isp_val = parameter_values[param_name]
-                    else:
-                        isp_val = copy.deepcopy(param.default_value)
                 except KeyError:
+                    pass
+
+                if (
+                    isp_val is None
+                    and (
+                        param.primary
+                        or param.source is None
+                        or param.source.default_value is None
+                    )
+                ):
                     isp_val = copy.deepcopy(param.default_value)
 
                 if isp_val is not None:
@@ -2251,62 +2260,74 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                                 context
                             )
 
-        self._override_unspecified_shared_parameters(context)
+        self._override_shared_parameters(context)
 
-    def _override_unspecified_shared_parameters(self, context):
+    def _override_shared_parameters(self, context):
+        def warn_on_conflict(param, shared_obj_param, used_param):
+            try:
+                isp_arg = self.initial_shared_parameters[param.attribute_name][param.shared_parameter_name]
+                # TODO: handle passed component but copied?
+                throw_warning = (
+                    # arg passed directly into shared_obj, no parsing
+                    not safe_equals(shared_obj_param._get(context), isp_arg)
+                    # arg passed but was parsed
+                    and not safe_equals(shared_obj_param.spec, isp_arg)
+                )
+            except KeyError:
+                throw_warning = True
+
+            if throw_warning:
+                warnings.warn(
+                    f'Specification of the "{param.name}" parameter ({param.default_value})'
+                    f' for {self} conflicts with specification of its shared parameter'
+                    f' "{shared_obj_param.name}" ({shared_obj_param.default_value}) for its'
+                    f' {param.attribute_name} ({param.source._owner._owner}). The value'
+                    f' specified on {used_param._owner._owner} will be used.'
+                )
+
+        def set_parameter_from_other(a, b, context):
+            a.default_value = copy.deepcopy(b.default_value)
+            a._set(copy.deepcopy(b.default_value), context)
+            a._user_specified = b._user_specified
+
         for param in self.parameters._in_dependency_order:
             if (
-                isinstance(param, SharedParameter)
-                and not isinstance(param.source, ParameterAlias)
+                not isinstance(param, SharedParameter)
+                or isinstance(param.source, ParameterAlias)
             ):
+                continue
+
+            try:
+                obj = getattr(self.parameters, param.attribute_name)
+                shared_objs = [obj.default_value, obj._get(context)]
+            except AttributeError:
+                obj = getattr(self, param.attribute_name)
+                shared_objs = [obj]
+
+            for c in shared_objs:
+                if not isinstance(c, Component):
+                    continue
+
                 try:
-                    obj = getattr(self.parameters, param.attribute_name)
-                    shared_objs = [obj.default_value, obj._get(context)]
+                    shared_obj_param = getattr(c.parameters, param.shared_parameter_name)
                 except AttributeError:
-                    obj = getattr(self, param.attribute_name)
-                    shared_objs = [obj]
+                    continue
 
-                for c in shared_objs:
-                    if isinstance(c, Component):
-                        try:
-                            shared_obj_param = getattr(c.parameters, param.shared_parameter_name)
-                        except AttributeError:
-                            continue
-
-                        if not shared_obj_param._user_specified:
-                            if (
-                                param.primary
-                                and param.default_value is not None
-                            ):
-                                shared_obj_param.default_value = copy.deepcopy(param.default_value)
-                                shared_obj_param._set(copy.deepcopy(param.default_value), context)
-                                shared_obj_param._user_specified = param._user_specified
-                        elif (
-                            param._user_specified
-                            and not safe_equals(param.default_value, shared_obj_param.default_value)
+                if shared_obj_param._user_specified:
+                    if (
+                        param._user_specified
+                        and not safe_equals(param.default_value, shared_obj_param.default_value)
+                    ):
+                        if c is shared_objs[-1]:
+                            used_param = param if param.primary else shared_obj_param
                             # only show warning one time, for the non-default value if possible
-                            and c is shared_objs[-1]
-                        ):
-                            try:
-                                isp_arg = self.initial_shared_parameters[param.attribute_name][param.shared_parameter_name]
-                                # TODO: handle passed component but copied?
-                                throw_warning = (
-                                    # arg passed directly into shared_obj, no parsing
-                                    not safe_equals(shared_obj_param._get(context), isp_arg)
-                                    # arg passed but was parsed
-                                    and not safe_equals(shared_obj_param.spec, isp_arg)
-                                )
-                            except KeyError:
-                                throw_warning = True
+                            warn_on_conflict(param, shared_obj_param, used_param)
 
-                            if throw_warning:
-                                warnings.warn(
-                                    f'Specification of the "{param.name}" parameter ({param.default_value})'
-                                    f' for {self} conflicts with specification of its shared parameter'
-                                    f' "{shared_obj_param.name}" ({shared_obj_param.default_value}) for its'
-                                    f' {param.attribute_name} ({param.source._owner._owner}). The value'
-                                    f' specified on {param.source._owner._owner} will be used.'
-                                )
+                        if param.primary:
+                            set_parameter_from_other(shared_obj_param, param, context)
+                else:
+                    if param._user_specified or (param.primary and param.default_value is not None):
+                        set_parameter_from_other(shared_obj_param, param, context)
 
 
     @handle_external_context()

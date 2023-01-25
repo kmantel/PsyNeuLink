@@ -512,7 +512,7 @@ class EpisodicMemoryMechanism(ProcessingMechanism_Base):
         """
         variable = Parameter([[0,0]], pnl_internal=True, constructor_argument='default_variable')
         function = Parameter(ContentAddressableMemory, stateful=False, loggable=False)
-        memory = FunctionParameter(None, function_parameter_name='initializer', primary=True)
+        memory = FunctionParameter(None, function_parameter_name='initializer')
 
         def _parse_memory(self, memory):
             if memory is None:

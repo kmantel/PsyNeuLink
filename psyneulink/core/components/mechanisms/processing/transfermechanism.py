@@ -1206,7 +1206,6 @@ class TransferMechanism(ProcessingMechanism_Base):
             0.5,
             function_name='integrator_function',
             function_parameter_name='rate',
-            primary=True,
         )
         initial_value = FunctionParameter(
             None,

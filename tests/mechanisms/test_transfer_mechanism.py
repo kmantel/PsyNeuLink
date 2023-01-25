@@ -642,9 +642,10 @@ class TestTransferMechanismIntegratorFunctionParams:
                 integrator_mode=True,
                 integrator_function=AdaptiveIntegrator(
                         default_variable=[0 for i in range(VECTOR_SIZE)],
-                        initializer=[i / 20 for i in range(VECTOR_SIZE)]
+                        initializer=[i / 20 for i in range(VECTOR_SIZE)],
                 ),
-                initial_value=[i / 10 for i in range(VECTOR_SIZE)]
+                initial_value=[i / 10 for i in range(VECTOR_SIZE)],
+                integration_rate=0.5
             )
             assert any(str(w.message).startswith('Specification of the "initial_value" parameter')
                        for w in warnings), "Warnings: {}".format([str(w.message) for w in warnings])
@@ -738,7 +739,8 @@ class TestTransferMechanismIntegratorFunctionParams:
             default_variable=[0 for i in range(VECTOR_SIZE)],
             integrator_mode=True,
             integrator_function=AdaptiveIntegrator,
-            noise=[i / 10 for i in range(VECTOR_SIZE)]
+            noise=[i / 10 for i in range(VECTOR_SIZE)],
+            integration_rate=0.5,
         )
         EX = pytest.helpers.get_mech_execution(T, mech_mode)
 
@@ -758,7 +760,8 @@ class TestTransferMechanismIntegratorFunctionParams:
             name='T',
             default_variable=[0 for i in range(VECTOR_SIZE)],
             integrator_mode=True,
-            integrator_function=AdaptiveIntegrator(noise=[i / 10 for i in range(VECTOR_SIZE)])
+            integrator_function=AdaptiveIntegrator(noise=[i / 10 for i in range(VECTOR_SIZE)]),
+            integration_rate=0.5,
         )
         EX = pytest.helpers.get_mech_execution(T, mech_mode)
 
