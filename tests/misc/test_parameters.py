@@ -433,9 +433,10 @@ class TestSharedParameters:
                     raise
 
     def test_conflict_no_warning_parser(self):
-        # replace with different class/parameter if _parse_noise ever implemented
-        assert not hasattr(pnl.AdaptiveIntegrator.Parameters, '_parse_noise')
-        pnl.AdaptiveIntegrator.Parameters._parse_noise = lambda self, noise: 2 * noise
+        class DummyIntegrator(pnl.AdaptiveIntegrator):
+            class Parameters(pnl.AdaptiveIntegrator.Parameters):
+                def _parse_noise(self, noise):
+                    return 2 * noise
 
         # pytest doesn't support inverse warning assertion for specific
         # warning only
@@ -444,13 +445,11 @@ class TestSharedParameters:
             try:
                 pnl.TransferMechanism(
                     noise=2,
-                    integrator_function=pnl.AdaptiveIntegrator(noise=1)
+                    integrator_function=DummyIntegrator(noise=1)
                 )
             except UserWarning as w:
                 if re.match(shared_parameter_warning_regex('noise'), str(w)):
                     raise
-
-        delattr(pnl.AdaptiveIntegrator.Parameters, '_parse_noise')
 
 
 class TestSpecificationType:
