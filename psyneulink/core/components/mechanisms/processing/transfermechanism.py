@@ -1211,7 +1211,8 @@ class TransferMechanism(ProcessingMechanism_Base):
         initial_value = FunctionParameter(
             None,
             function_name='integrator_function',
-            function_parameter_name='initializer'
+            function_parameter_name='initializer',
+            primary=False
         )
         integrator_function = Parameter(AdaptiveIntegrator, stateful=False, loggable=False)
         function = Parameter(Linear, stateful=False, loggable=False, dependencies='integrator_function')
