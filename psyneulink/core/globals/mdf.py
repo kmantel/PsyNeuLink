@@ -567,6 +567,32 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
     return value
 
 
+def _preprocess_functions_from_parameters(graph):
+    """
+    Create mdf.Functions for functions that are present in mdf.Node
+    parameters list
+    """
+    import modeci_mdf.mdf as mdf
+
+    for n in graph.nodes:
+        for p in copy.copy(n.parameters):
+            if (
+                p.default_initial_value is None
+                and (p.function is not None or p.args is not None)
+            ):
+                n.functions.append(
+                    mdf.Function(
+                        id=p.id,
+                        function=p.function,
+                        value=p.value,
+                        args=p.args
+                    )
+                )
+                n.parameters.remove(p)
+
+    return graph
+
+
 def _preprocess_substitute_function_args(graph):
     """
     Substitute the value of function args that reference a basic MDF
@@ -976,6 +1002,7 @@ def _preprocess_graph(graph):
     # TODO: add a processing level/specification on what types of
     # preprocessing to do
 
+    graph = _preprocess_functions_from_parameters(graph)
     graph = _preprocess_substitute_function_args(graph)  # should not be turned off
     graph, input_vars = _preprocess_detect_model_user_inputs(graph)
     graph, input_vars = _preprocess_matrix_multiply_nodes_into_projections(graph, input_vars)
