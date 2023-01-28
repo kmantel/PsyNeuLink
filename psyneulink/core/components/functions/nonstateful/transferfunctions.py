@@ -2741,6 +2741,8 @@ class Dropout(TransferFunction):  #
         REPORT_OUTPUT_PREF: PreferenceEntry(False, PreferenceLevel.INSTANCE),
     }
 
+    _model_spec_generic_type_name = 'onnx::Dropout'
+
     class Parameters(TransferFunction.Parameters):
         """
             Attributes
@@ -2758,7 +2760,7 @@ class Dropout(TransferFunction):  #
                     :default value: None
                     :type: ``numpy.random.RandomState``
         """
-        p = Parameter(0.5, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
+        p = Parameter(0.5, modulable=True, aliases=[MULTIPLICATIVE_PARAM], mdf_name='ratio')
         random_state = Parameter(None, loggable=False, getter=_random_state_getter, dependencies='seed')
         seed = Parameter(DEFAULT_SEED, modulable=True, fallback_default=True, setter=_seed_setter)
 
