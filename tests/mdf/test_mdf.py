@@ -1,9 +1,14 @@
 import copy
 import numpy as np
 import os
+import re
+import runpy
+
 import psyneulink as pnl
 import pytest
-
+from psyneulink.core.globals.mdf import (
+    SCRIPT_INPUT_VARS_COMMENT_END, SCRIPT_INPUT_VARS_COMMENT_START,
+)
 
 pytest.importorskip(
     'modeci_mdf',
@@ -247,6 +252,86 @@ def test_mdf_equivalence(filename, composition_name, input_dict, simple_edge_for
     eg.evaluate(initializer={f'{node}_InputPort_0': i for node, i in input_dict.items()})
 
     assert pnl.safe_equals(orig_results, _get_mdf_model_results(eg))
+
+
+@pytest.mark.pytorch
+@pytest.mark.parametrize(
+    'pytorch_filename, pytorch_net_name, pytorch_input_str, pnl_input_dict_str',
+    [
+        pytest.param(
+            'model_pytorch_nback.py',
+            'torch_ffwm_net',
+            'torch.tensor(90 * [1], dtype=torch.float)',
+            (
+                '{MatMul_6_passthrough_origin: np.ones_like(MatMul_6_passthrough_origin.defaults.variable),'
+                + 'Gather_9: embed_bias_weight[0]}'
+            ),
+            id='nback_ones'
+        )
+    ]
+)
+def test_mdf_equivalence_incoming_pytorch(
+    pytorch_filename, pytorch_net_name, pytorch_input_str, pnl_input_dict_str
+):
+    import torch
+    from modeci_mdf.interfaces.pytorch import pytorch_to_mdf
+
+    base_dir = os.path.dirname(__file__)
+    pytorch_filename = os.path.join(base_dir, pytorch_filename)
+    pytorch_globals = runpy.run_path(pytorch_filename)
+    pytorch_net = pytorch_globals[pytorch_net_name]
+
+    pytorch_input = eval(pytorch_input_str)
+
+    mdf_model, state_dict = pytorch_to_mdf(
+        model=pytorch_net,
+        args=(pytorch_input),
+        trace=True
+    )
+
+    torch_state_filename = os.path.join(base_dir, 'torch_state.json')
+    torch.save(state_dict, torch_state_filename)
+    pytorch_output = pytorch_net(pytorch_input).detach().numpy()
+
+    torch_weights_var = 'torch_weights'
+    pnl_script = pnl.generate_script_from_mdf(mdf_model).split('\n')
+    i = 0
+    assert pnl_script[0].startswith('import ')
+    added_torch_import = False
+
+    while i < len(pnl_script) - 1:
+        i += 1
+        # import torch so weights can be loaded into input variables
+        if not pnl_script[i].startswith('import ') and not added_torch_import:
+            pnl_script.insert(i, 'import torch')
+            added_torch_import = True
+            i += 1
+
+        # load torch weights and replace default inputs with them
+        if pnl_script[i] == SCRIPT_INPUT_VARS_COMMENT_START:
+            pnl_script.insert(i, f"{torch_weights_var} = torch.load(r'{torch_state_filename}')")
+            i += 1
+
+            while pnl_script[i] != SCRIPT_INPUT_VARS_COMMENT_END:
+                # inputs that don't contain '_weight' are not in torch
+                # weights dict so do not substitute
+                pnl_script[i] = re.sub(
+                    r'^(\w+)_weight(_transpose)? = .*$',
+                    f"\\1_weight\\2 = np.array({torch_weights_var}['\\1_weight'])",
+                    pnl_script[i]
+                )
+                if '_transpose' in pnl_script[i]:
+                    pnl_script[i] += '.transpose()'
+                i += 1
+
+    model_pnl_composition_name = pnl.parse_valid_identifier(mdf_model.graphs[0].id)
+    pnl_script.append(f'{model_pnl_composition_name}.run(inputs={pnl_input_dict_str})')
+    pnl_script = '\n'.join(pnl_script)
+    exec(pnl_script)
+    pnl_results = eval(f'{model_pnl_composition_name}.results')
+
+    # pytorch results only give 7 digit precision
+    np.testing.assert_allclose(pnl_results[0][0], pytorch_output, atol=1e-7)
 
 
 ddi_termination_conds = [
