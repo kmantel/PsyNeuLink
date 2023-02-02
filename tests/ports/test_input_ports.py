@@ -138,3 +138,14 @@ class TestInputPorts:
             A.efferents = ['test']
         assert 'InputPorts are not allowed to have \'efferents\' ' \
                '(assignment attempted for Deferred Init InputPort).' in str(error.value)
+
+    def test_irregular_concatenate(self):
+        a = pnl.TransferMechanism(size=1)
+        b = pnl.TransferMechanism(size=2)
+        c = pnl.TransferMechanism(input_ports=[{pnl.NAME: 'myconcat', pnl.FUNCTION: pnl.Concatenate}])
+        comp = pnl.Composition(nodes=[a, b, c])
+
+        comp.add_projection(pnl.MappingProjection(sender=a, receiver=c, matrix=pnl.IDENTITY_MATRIX))
+        comp.add_projection(pnl.MappingProjection(sender=b, receiver=c, matrix=pnl.IDENTITY_MATRIX))
+
+        comp.run(inputs={a: [1], b: [1, 1]})
