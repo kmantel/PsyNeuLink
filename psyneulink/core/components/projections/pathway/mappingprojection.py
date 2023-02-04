@@ -293,6 +293,7 @@ from psyneulink.core.components.functions.function import get_matrix
 from psyneulink.core.components.projections.pathway.pathwayprojection import PathwayProjection_Base
 from psyneulink.core.components.projections.projection import ProjectionError, projection_keywords
 from psyneulink.core.components.ports.outputport import OutputPort
+from psyneulink.core.components.functions.nonstateful.combinationfunctions import Concatenate
 from psyneulink.core.globals.keywords import \
     AUTO_ASSIGN_MATRIX, DEFAULT_MATRIX, FULL_CONNECTIVITY_MATRIX, HOLLOW_MATRIX, IDENTITY_MATRIX, INPUT_PORT, \
     MAPPING_PROJECTION, MATRIX, \
@@ -556,7 +557,7 @@ class MappingProjection(PathwayProjection_Base):
 
         # Length of the output of the Projection doesn't match the length of the receiving InputPort
         #    so consider reshaping the matrix
-        if mapping_output_len != receiver_len:
+        if mapping_output_len != receiver_len and not isinstance(self.receiver.function, Concatenate):
 
             if 'projection' in self.name or 'Projection' in self.name:
                 projection_string = ''

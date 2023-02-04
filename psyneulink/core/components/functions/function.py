@@ -249,7 +249,7 @@ def get_param_value_for_keyword(owner, keyword):
             print("{} of {}".format(e, owner.name))
         # return None
         else:
-            raise FunctionError(e)
+            raise FunctionError(e) from e
     except AttributeError:
         # prefs is not always created when this is called, so check
         try:
