@@ -1486,7 +1486,7 @@ class Port_Base(Port):
                     # creates a projection with value length 2, so variable becomes [0, 0, 0, 0]
                     if variable.ndim == 1:
                         variable = np.atleast_2d(variable)
-                    self.defaults.variable = np.append(variable, np.atleast_2d(projection.defaults.value), axis=0)
+                    self.defaults.variable = np.array(variable + projection.defaults.value)
 
                 # assign identical default variable to function if it can be modified
                 if self.function._variable_shape_flexibility is DefaultsFlexibility.FLEXIBLE:
