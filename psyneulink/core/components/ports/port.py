@@ -805,7 +805,7 @@ from psyneulink.core.globals.registry import register_category
 from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
     ContentAddressableList, convert_to_np_array, get_args, is_value_spec, iscompatible, \
-    MODULATION_OVERRIDE, type_match
+    MODULATION_OVERRIDE, type_match, convert_all_elements_to_np_array
 
 __all__ = [
     'Port_Base', 'port_keywords', 'port_type_keywords', 'PortError', 'PortRegistry', 'PORT_SPEC'
@@ -1486,7 +1486,7 @@ class Port_Base(Port):
                     # creates a projection with value length 2, so variable becomes [0, 0, 0, 0]
                     if variable.ndim == 1:
                         variable = np.atleast_2d(variable)
-                    self.defaults.variable = np.array(variable + projection.defaults.value)
+                    self.defaults.variable = convert_all_elements_to_np_array([x for x in variable] + [projection.defaults.value[0]])
 
                 # assign identical default variable to function if it can be modified
                 if self.function._variable_shape_flexibility is DefaultsFlexibility.FLEXIBLE:
