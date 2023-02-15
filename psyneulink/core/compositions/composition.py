@@ -2825,7 +2825,7 @@ from psyneulink.core.globals.preferences.basepreferenceset import BasePreference
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel, _assign_prefs
 from psyneulink.core.globals.registry import register_category
 from psyneulink.core.globals.utilities import ContentAddressableList, call_with_pruned_args, convert_to_list, \
-    nesting_depth, convert_to_np_array, is_numeric, is_matrix, parse_valid_identifier
+    nesting_depth, convert_to_np_array, is_numeric, is_matrix, parse_valid_identifier, safe_equals
 from psyneulink.core.scheduling.condition import All, AllHaveRun, Always, Any, Condition, Never
 from psyneulink.core.scheduling.scheduler import Scheduler, SchedulingMode
 from psyneulink.core.scheduling.time import Time, TimeScale
@@ -5249,6 +5249,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             del self.input_CIM_ports[input_port]
 
         # OUTPUT CIM
+        # remove CIM referencing a changed output port from the
+        # composition, so it can be remade above
+        for comp_output_port, (cim_input_port, cim_output_port) in copy(self.output_CIM_ports).items():
+            if not safe_equals(np.atleast_2d(comp_output_port.defaults.value), cim_input_port.defaults.variable):
+                for proj in cim_input_port.path_afferents:
+                    self.remove_projection(proj)
+                self.output_CIM.remove_ports(cim_input_port)
+                self.output_CIM.remove_ports(cim_output_port)
+                del self.output_CIM_ports[comp_output_port]
+
         # loop over all OUTPUT nodes
         # Set up ports on the output CIM for all output nodes in the Composition
         current_output_node_output_ports = set()
