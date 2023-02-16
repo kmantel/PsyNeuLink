@@ -1609,6 +1609,7 @@ class Mechanism_Base(Mechanism):
             read_only=True,
             structural=True,
         )
+        size = Parameter(None, stateful=False)
 
         def _parse_input_ports(self, input_ports):
             if input_ports is None:
@@ -1853,7 +1854,7 @@ class Mechanism_Base(Mechanism):
         default_variable_from_input_ports = []
         input_port_variable_was_specified = None
 
-        if not isinstance(input_ports, list):
+        if not isinstance(input_ports, (list, UserList)):
             input_ports = [input_ports]
 
         for i, s in enumerate(input_ports):

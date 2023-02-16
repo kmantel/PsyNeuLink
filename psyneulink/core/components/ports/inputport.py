@@ -580,7 +580,8 @@ import typecheck as tc
 
 from psyneulink.core.components.component import DefaultsFlexibility
 from psyneulink.core.components.functions.function import Function
-from psyneulink.core.components.functions.nonstateful.combinationfunctions import CombinationFunction, LinearCombination
+from psyneulink.core.components.functions.nonstateful.combinationfunctions import CombinationFunction, \
+    LinearCombination, Concatenate
 from psyneulink.core.components.ports.outputport import OutputPort
 from psyneulink.core.components.ports.port import PortError, Port_Base, _instantiate_port_list, port_type_keywords
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
@@ -1451,10 +1452,13 @@ class InputPort(Port_Base):
         # get updated to the result of this property
         # (b9f40e58f44e68f026600332d139e8fdc66a28a4) and used when no
         # inputs provided
-        first_elem = copy.deepcopy(self.defaults.variable[0])
-        for s in self.defaults.variable[1:]:
-            assert first_elem.shape == s.shape
-        return first_elem
+        if isinstance(self.function, Concatenate):
+            return self.defaults.variable
+        else:
+            first_elem = copy.deepcopy(self.defaults.variable[0])
+            for s in self.defaults.variable[1:]:
+                assert first_elem.shape == s.shape
+            return first_elem
 
     def get_input_shape(self, context=None):
         if self._input_shape_template == VARIABLE:
