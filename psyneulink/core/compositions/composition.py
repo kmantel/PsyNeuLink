@@ -5872,7 +5872,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if (sender_mechanism != self.input_CIM
                 and sender_mechanism != self.parameter_CIM
                 and sender_mechanism != self.controller
-                and receiver_mechanism != self.output_CIM
+                # projections to parameter CIMs of nested Compositions
+                # are MappingProjections and should not be added to this
+                # graph
+                and (
+                    not isinstance(receiver_mechanism, CompositionInterfaceMechanism)
+                    or receiver_mechanism is not receiver_mechanism.composition.parameter_CIM
+                )
                 and receiver_mechanism != self.controller
                 and projection not in [vertex.component for vertex in self.graph.vertices]
                 and not learning_projection):
