@@ -556,12 +556,15 @@ class TestConnectCompositionsViaCIMS:
         cm = ControlMechanism(name='control_mechanism',
                               control_signals= ControlSignal(projections=[(SLOPE, ib)]))
         icomp.add_linear_processing_pathway([ia, ib])
-        ocomp.add_linear_processing_pathway([cm, icomp])
+        # ocomp.add_linear_processing_pathway([cm, icomp])
         # REPLACING PRECEDING LINE WITH THIS DOESN'T HELP:
-        # ocomp.add_node(cm)
+        ocomp.add_node(cm)
+        ocomp.add_node(icomp)
         # THIS WORKS:
         # ocomp.add_linear_processing_pathway([cm, (icomp, NodeRole.INPUT)])
         roles = ocomp.get_nodes_by_role(NodeRole.INPUT)
+        assert cm in roles
+        assert icomp in roles
         # res = ocomp.run([[2], [2], [2]])
         res = ocomp.run(inputs={cm:[[2], [2], [2]],
                                 icomp:[[2], [2], [2]]})
