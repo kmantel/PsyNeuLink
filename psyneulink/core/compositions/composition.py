@@ -4115,7 +4115,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self.needs_update_scheduler = True
             self.needs_update_controller = True
 
-        invalid_aux_components = self._add_node_aux_components(node)
+        invalid_aux_components = self._add_node_aux_components(node, context=context)
 
         # Implement required_roles
         if required_roles:
@@ -4707,11 +4707,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if sender_node in self._all_nodes and \
                         receiver_node in self._all_nodes:
                     self.add_projection(projection=proj_spec[0],
-                                        feedback=proj_spec[1])
+                                        feedback=proj_spec[1],
+                                        context=context,
+                    )
                 else:
                     self.add_projection(sender=proj_spec[0].sender,
                                         receiver=proj_spec[0].receiver,
-                                        feedback=proj_spec[1])
+                                        feedback=proj_spec[1],
+                                        context=context,
+                    )
                 del node.aux_components[node.aux_components.index(proj_spec)]
 
             # MODIFIED 12/29/21 NEW:
@@ -5627,7 +5631,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                    "Composition requires a list of Projections, each of which must have a "
                                    "sender and a receiver.".format(self.name))
 
-    @handle_external_context(source=ContextFlags.METHOD)
+    @handle_external_context(source=ContextFlags.COMMAND_LINE)
     def add_projection(self,
                        projection=None,
                        sender=None,
@@ -6198,7 +6202,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         # TBI - Shadow projection type? Matrix value?
                         new_projection = MappingProjection(sender=correct_sender,
                                                            receiver=input_port)
-                        self.add_projection(new_projection, sender=correct_sender, receiver=input_port)
+                        self.add_projection(new_projection, sender=correct_sender, receiver=input_port, context=context)
                 else:
                     raise CompositionError(f"Unable to find port specified to be shadowed by '{input_port.owner.name}' "
                                            f"({shadowed_projection.receiver.owner.name}"
@@ -8435,7 +8439,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self.node_ordering.append(controller)
         self.enable_controller = True
         # FIX: 11/15/21 - SHOULD THIS METHOD BE MOVED HERE (TO COMPOSITION) FROM ControlMechanism
-        controller._activate_projections_for_compositions(self)
+        controller._activate_projections_for_compositions(self, context=context)
         self._analyze_graph(context=context)
         if not invalid_aux_components:
             self._controller_initialization_status = ContextFlags.INITIALIZED
@@ -8605,7 +8609,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # add sender and receiver to self.parameter_CIM_ports dict
         for p in control_signal.projections:
             # self.add_projection(p)
-            graph_receiver.add_projection(p, receiver=p.receiver, sender=control_signal)
+            graph_receiver.add_projection(p, receiver=p.receiver, sender=control_signal, context=context)
         try:
             sender._remove_projection_to_port(projection)
         except (ValueError, PortError):
