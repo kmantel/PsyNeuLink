@@ -597,11 +597,9 @@ class TestPathway:
         assert p.learning_components is None
 
     def test_pathway_assign_composition_arg_error(self):
-        c = Composition()
-        with pytest.raises(pnl.CompositionError) as error_text:
+        error_text = "'composition' arg of constructor for Pathway must be a Composition"
+        with pytest.raises(pnl.CompositionError, match=error_text):
             p = Pathway(pathway=[], composition='c')
-        assert "\'composition\' can not be specified as an arg in the constructor for a Pathway" in str(
-                error_text.value)
 
     def test_pathway_assign_roles_error(self):
         A = ProcessingMechanism()
@@ -792,7 +790,7 @@ class TestCompositionPathwayArgsAndAdditionMethods:
         p = Pathway(pathway=([A,B], Reinforcement), name='P')
         c = Composition()
 
-        regexp = "LearningFunction found in specification of 'pathway' arg for "\
+        regexp = "LearningFunction found in 'pathway' arg for "\
                  "add_linear_procesing_pathway method .*"\
                 r"Reinforcement'>; it will be ignored"
         with pytest.warns(UserWarning, match=regexp):
