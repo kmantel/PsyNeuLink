@@ -4147,6 +4147,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         #     self._analyze_graph(context=Context(source=ContextFlags.METHOD))
         # MODIFIED 1/27/22 END
         self.needs_determine_node_roles = True
+        self._analyze_graph()
 
     def add_nodes(self, nodes, required_roles=None, context=None):
         """
