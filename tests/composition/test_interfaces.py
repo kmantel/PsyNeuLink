@@ -13,7 +13,7 @@ from psyneulink.core.components.ports.modulatorysignals.controlsignal import Con
 from psyneulink.core.components.ports.inputport import InputPort
 from psyneulink.core.components.ports.outputport import OutputPort
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
-from psyneulink.core.compositions.composition import Composition, CompositionError
+from psyneulink.core.compositions.composition import Composition, CompositionError, NodeRole
 from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.globals.utilities import convert_all_elements_to_np_array
 from psyneulink.core.globals.keywords import INTERCEPT, NOISE, SLOPE
@@ -541,39 +541,73 @@ class TestConnectCompositionsViaCIMS:
         assert NOISE in icomp.parameter_CIM.output_ports.names[1]
         assert SLOPE in icomp.parameter_CIM.output_ports.names[2]
 
-    def test_parameter_CIM_routing_from_ControlMechanism(self):
-        from psyneulink.core.compositions.composition import NodeRole
+    @pytest.fixture
+    def parameter_CIM_routing_composition(self):
         # Inner Composition
         ia = TransferMechanism(name='ia')
         ib = TransferMechanism(name='ib')
-        icomp = Composition(name='icomp', pathways=[ia])
+        icomp = Composition(name='icomp', pathways=[ia, ib])
         # Outer Composition
-        # ocomp = Composition(name='ocomp', pathways=[icomp])
         ocomp = Composition(name='ocomp', pathways=[icomp])
-        # USING EXPLICIT INPUT NODE IN ocomp WORKS:
-        # oa = TransferMechanism(name='oa')
-        # ocomp = Composition(name='ocomp', pathways=[oa,icomp])
-        cm = ControlMechanism(name='control_mechanism',
-                              control_signals= ControlSignal(projections=[(SLOPE, ib)]))
-        icomp.add_linear_processing_pathway([ia, ib])
-        # ocomp.add_linear_processing_pathway([cm, icomp])
-        # REPLACING PRECEDING LINE WITH THIS DOESN'T HELP:
-        ocomp.add_node(cm)
-        ocomp.add_node(icomp)
-        # THIS WORKS:
-        # ocomp.add_linear_processing_pathway([cm, (icomp, NodeRole.INPUT)])
-        roles = ocomp.get_nodes_by_role(NodeRole.INPUT)
-        assert cm in roles
-        assert icomp in roles
-        # res = ocomp.run([[2], [2], [2]])
-        res = ocomp.run(inputs={cm:[[2], [2], [2]],
-                                icomp:[[2], [2], [2]]})
-        # VERSION THAT USES EXPLICIT INPUT NODE IN ocomp
-                                # oa:[[2], [2], [2]]})
+        cm = ControlMechanism(
+            name='control_mechanism',
+            control_signals=ControlSignal(projections=[(SLOPE, ib)])
+        )
+        return ia, ib, cm, icomp, ocomp
+
+    def test_parameter_CIM_routing_from_ControlMechanism_pathway_explicit(
+        self, parameter_CIM_routing_composition
+    ):
+        ia, ib, cm, icomp, ocomp = parameter_CIM_routing_composition
+        ocomp.add_linear_processing_pathway([cm, icomp])
+
+        input_nodes = ocomp.get_nodes_by_role(NodeRole.INPUT)
+        assert cm in input_nodes
+        assert icomp not in input_nodes
+
+        res = ocomp.run(
+            inputs={
+                cm: [[2], [2], [2]],
+            }
+        )
         assert np.allclose(res, [[4], [4], [4]])
         assert len(ib.mod_afferents) == 1
         assert ib.mod_afferents[0].sender == icomp.parameter_CIM.output_port
         assert icomp.parameter_CIM_ports[ib.parameter_ports['slope']][0].path_afferents[0].sender == cm.output_port
+
+        cm_icomp_projs = [
+            a for a in cm.path_afferents if a.receiver.owner is icomp
+        ]
+        assert len(cm_icomp_projs) == 1
+        assert cm_icomp_projs in ocomp.graph_processing.dependency_dict
+
+    def test_parameter_CIM_routing_from_ControlMechanism_pathway_implicit(
+        self, parameter_CIM_routing_composition
+    ):
+        ia, ib, cm, icomp, ocomp = parameter_CIM_routing_composition
+        ocomp.add_node(cm)
+        ocomp.add_node(icomp)
+
+        input_nodes = ocomp.get_nodes_by_role(NodeRole.INPUT)
+        assert cm in input_nodes
+        assert icomp in input_nodes
+
+        res = ocomp.run(
+            inputs={
+                cm: [[2], [2], [2]],
+                icomp: [[2], [2], [2]],
+            }
+        )
+        assert np.allclose(res, [[4], [4], [4]])
+        assert len(ib.mod_afferents) == 1
+        assert ib.mod_afferents[0].sender == icomp.parameter_CIM.output_port
+        assert icomp.parameter_CIM_ports[ib.parameter_ports['slope']][0].path_afferents[0].sender == cm.output_port
+
+        cm_icomp_projs = [
+            a for a in cm.path_afferents if a.receiver.owner is icomp
+        ]
+        assert len(cm_icomp_projs) == 1
+        assert cm_icomp_projs not in ocomp.graph_processing.dependency_dict
 
     def test_nested_control_projection_count_controller(self):
         # Inner Composition

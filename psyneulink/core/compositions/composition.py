@@ -5839,7 +5839,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                                                        sender_mechanism, receiver,
                                                                                        graph_receiver, context)
                 receiver = projection.receiver
-                projection._creates_scheduling_dependency = False
+                if context.source is not ContextFlags.COMMAND_LINE:
+                    projection._creates_scheduling_dependency = False
 
         if sender_mechanism is self.parameter_CIM:
             idx = self.parameter_CIM.output_ports.index(sender)
