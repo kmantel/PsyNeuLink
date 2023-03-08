@@ -512,6 +512,12 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
 
         evaluates = False
         try:
+            eval(value, component_identifiers)
+            evaluates = True
+        except (TypeError, NameError, SyntaxError):
+            pass
+
+        try:
             eval(value)
             evaluates = True
         except (TypeError, NameError, SyntaxError):
@@ -1445,8 +1451,8 @@ def generate_script_from_mdf(model_input, outfile=None):
     # maps declared names to whether they are accessible in the script
     # locals. that is, each of these will be names specified in the
     # composition and subcomposition nodes, and their value in this dict
-    # will correspond to True if they can be referenced by this name in the
-    # script
+    # will be their actual value or True if they can be referenced by
+    # this name in the script, and False otherwise
     component_identifiers = {
         i: False
         for i in get_declared_identifiers(model)
