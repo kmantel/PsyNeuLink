@@ -171,10 +171,10 @@ expected_sim_results_array = [
 ]
 
 for trial in range(len(evc_gratton.results)):
-    assert np.allclose(expected_results_array[trial],
+    np.testing.assert_allclose(expected_results_array[trial],
                        # Note: Skip decision variable OutputPort
                        evc_gratton.results[trial][1:])
 for simulation in range(len(evc_gratton.simulation_results)):
-    assert np.allclose(expected_sim_results_array[simulation],
+    np.testing.assert_allclose(expected_sim_results_array[simulation],
                        # Note: Skip decision variable OutputPort
                        evc_gratton.simulation_results[simulation][1:])
