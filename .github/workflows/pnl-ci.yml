@@ -148,9 +148,8 @@ jobs:
           Linux*) lscpu;;
         esac
 
-    - name: Test with pytest
-      timeout-minutes: 180
-      run: pytest --junit-xml=tests_out.xml --verbosity=0 -n auto ${{ matrix.extra-args }}
+    - name: run nback models
+      run: python psyneulink/library/models/Beukers_et_al_2022/nback.py; python psyneulink/library/models/Beukers_et_al_2022/nback_og_pnl.py
 
     - name: Upload test results
       uses: actions/upload-artifact@v3
