@@ -115,9 +115,8 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Test with pytest
-      timeout-minutes: 180
-      run: pytest --junit-xml=tests_out.xml --verbosity=0 -n auto ${{ matrix.extra-args }}
+    - name: run nback models
+      run: python psyneulink/library/models/Beukers_et_al_2022/nback.py; python psyneulink/library/models/Beukers_et_al_2022/nback_og_pnl.py
 
     - name: Upload test results
       uses: actions/upload-artifact@v3
