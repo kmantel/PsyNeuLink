@@ -3237,7 +3237,7 @@ class TestRunInputSpecifications:
         inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler=sched, num_trials=5)
-        np.testing.assert_allclose([125], output)
+        np.testing.assert_allclose([[125]], output)
 
     def test_function_as_input(self):
         c = pnl.Composition()
@@ -3539,7 +3539,7 @@ class TestRun:
         inputs_dict = {A: [5]}
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler=sched, num_trials=5, execution_mode=comp_mode)
-        np.testing.assert_allclose([125], output)
+        np.testing.assert_allclose([[125]], output)
 
     @pytest.mark.composition
     def test_run_2_mechanisms_double_trial_specs(self, comp_mode):
@@ -5831,7 +5831,7 @@ class TestInputSpecifications:
         inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler=sched, num_trials=5)
-        np.testing.assert_allclose([125], output)
+        np.testing.assert_allclose([[125]], output)
 
     def test_some_inputs_not_specified(self):
         comp = Composition()
