@@ -229,6 +229,8 @@ EM = "EPISODIC MEMORY (dict)"
 DECISION = "DECISION"
 CONTROLLER = "READ/WRITE CONTROLLER"
 
+data_save_dir = os.path.join(os.path.dirname(__file__), "results")
+
 
 class TrialTypes(Enum):
     """Trial types explicitly assigned and counter-balanced in _get_run_inputs()
@@ -835,7 +837,7 @@ def train_network(network:AutodiffComposition,
     else:
         training_time_str = f'{int(training_time/60)} minutes {int(training_time%60)} seconds'
     print(f'training time: {training_time_str} for {num_epochs} epochs')
-    path = network.save(filename=save_weights_to, directory="results")
+    path = network.save(path=save_weights_to)
     print(f'saved weights to: {save_weights_to}')
     return path
     # print(f'saved weights sample: {network.nodes[FFN_HIDDEN].path_afferents[0].matrix.base[0][:3]}...')
@@ -1137,22 +1139,16 @@ if __name__ == '__main__':
         nback_model = construct_model()
 
     context = Context(source=ContextFlags.COMMAND_LINE)
+    weights_filename = f'ffn.wts_nep_{NUM_EPOCHS}_lr_{str(LEARNING_RATE).split(".")[1]}.pnl'
+    weights_path = os.path.join(data_save_dir, weights_filename)
 
     if TRAIN_FFN:
-        weights_filename = f'results/ffn.wts_nep_{NUM_EPOCHS}_lr_{str(LEARNING_RATE).split(".")[1]}.pnl'
-        weights_path = Path('/'.join([os.getcwd(), weights_filename]))
         saved_weights = train_network(nback_model.nodes[FFN_COMPOSITION],
                                       context=context,
-                                      save_weights_to=weights_path
+                                      save_weights_to=weights_path,
                                       )
 
     if TEST_FFN:
-        try:
-            weights_path
-        except:
-            weights_filename = f'results/ffn.wts_nep_{NUM_EPOCHS}_lr_{str(LEARNING_RATE).split(".")[1]}.pnl'
-            weights_path = Path('/'.join([os.getcwd(), weights_filename]))
-
         context = 'TEST'
         inputs, cxt_distances, targets, conditions, results, coded_responses, ce_loss, \
         trial_type_stats, stats = \
@@ -1199,13 +1195,8 @@ if __name__ == '__main__':
         file.close()
 
     if RUN_MODEL:
-        results_path = Path('/'.join([os.getcwd(), f'results/nback.results_nep_{NUM_EPOCHS}_lr'
-                                                   f'_{str(LEARNING_RATE).split(".")[1]}.pnl']))
-        try:
-            weights_path
-        except:
-            weights_filename = f'results/ffn.wts_nep_{NUM_EPOCHS}_lr_{str(LEARNING_RATE).split(".")[1]}.pnl'
-            weights_path = Path('/'.join([os.getcwd(), weights_filename]))
+        results_filename = f'nback.results_nep_{NUM_EPOCHS}_lr_{str(LEARNING_RATE).split(".")[1]}.pnl'
+        results_path = os.path.join(data_save_dir, results_filename)
         results = run_model(nback_model,
                             load_weights_from = weights_path,
                             save_results_to= results_path
