@@ -1419,21 +1419,26 @@ def generate_script_from_mdf(model_input, outfile=None):
 
         return names
 
-    # accept either json string or filename
-    try:
-        model = load_mdf(model_input)
-    except (FileNotFoundError, OSError, ValueError) as e:
+    if isinstance(model_input, mdf.Model):
+        model = model_input
+    else:
+        # accept either json string or filename
         try:
-            model = mdf.Model.from_json(model_input)
-        except json.decoder.JSONDecodeError:
-            # assume yaml
-            # delete=False because of problems with reading file on windows
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
-                try:
-                    f.write(model_input)
-                    model = load_mdf(f.name)
-                except Exception:
-                    raise e
+            model = load_mdf(model_input)
+        except (FileNotFoundError, OSError, ValueError) as e:
+            try:
+                model = mdf.Model.from_json(model_input)
+            except json.decoder.JSONDecodeError:
+                # assume yaml
+                # delete=False because of problems with reading file on windows
+                with tempfile.NamedTemporaryFile(
+                    mode='w', suffix='.yml', delete=False
+                ) as f:
+                    try:
+                        f.write(model_input)
+                        model = load_mdf(f.name)
+                    except Exception:
+                        raise e
 
     imports_str = ''
     comp_strs = []
