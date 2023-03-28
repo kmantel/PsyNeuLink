@@ -1501,12 +1501,12 @@ class TestIntegratorMode:
         T.integrator_function.reset([0.9, 0.9, 0.9], context=C)
 
         np.testing.assert_allclose(T.integrator_function.parameters.previous_value.get(C), [0.9, 0.9, 0.9])
-        np.testing.assert_allclose(T.parameters.value.get(C), [0.595, 0.595, 0.595])
+        np.testing.assert_allclose(T.parameters.value.get(C), [[0.595, 0.595, 0.595]])
 
         T.reset([0.5, 0.5, 0.5], context=C)
 
         np.testing.assert_allclose(T.integrator_function.parameters.previous_value.get(C), [0.5, 0.5, 0.5])
-        np.testing.assert_allclose(T.parameters.value.get(C), [0.5, 0.5, 0.5])
+        np.testing.assert_allclose(T.parameters.value.get(C), [[0.5, 0.5, 0.5]])
 
         C.run(inputs={T: [1.0, 1.0, 1.0]}, num_trials=2)
         # Trial 3
