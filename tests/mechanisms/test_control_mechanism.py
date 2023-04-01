@@ -194,8 +194,8 @@ class TestControlMechanism:
 
         stim_list[Control_Mechanism]=[2.0]
         results = comp.learn(num_trials=1, inputs=stim_list)
-        expected_results = [[0.96941429, 0.9837254 , 0.99217549]]
-        assert np.allclose(results, expected_results)
+        expected_results = [[[0.96941429, 0.9837254, 0.99217549]]]
+        np.testing.assert_allclose(results, expected_results)
 
     def test_control_of_all_input_ports(self, comp_mode):
         mech = pnl.ProcessingMechanism(input_ports=['A','B','C'])
