@@ -680,6 +680,8 @@ def make_parameter_property(param):
                     f"Parameter '{p.name}' is read-only. Set at your own risk."
                     f' Use .parameters.{p.name}.set with override=True to force set.'
                 ) from None
+            else:
+                raise
 
     return property(getter).setter(setter)
 
