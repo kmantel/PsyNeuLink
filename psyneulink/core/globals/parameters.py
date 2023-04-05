@@ -1449,7 +1449,9 @@ class Parameter(ParameterBase):
         if not override and self.read_only:
             raise ParameterError('Parameter \'{0}\' is read-only. Set at your own risk. Pass override=True to force set.'.format(self.name))
 
-        value = self._set(self._parse(value), context, skip_history, skip_log, **kwargs)
+        value = self._parse(value)
+        self._validate(value)
+        value = self._set(value, context, skip_history, skip_log, **kwargs)
 
         try:
             if isinstance(value.__self__, Component):
