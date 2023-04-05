@@ -1106,7 +1106,7 @@ class Kohonen(LearningFunction):  # --------------------------------------------
 
         def _validate_distance_function(self, distance_function):
             options = {GAUSSIAN, LINEAR, EXPONENTIAL}
-            if distance_function in options:
+            if distance_function in options or isinstance(distance_function, Callable):
                 # returns None indicating no error message (this is a valid assignment)
                 return None
             else:
