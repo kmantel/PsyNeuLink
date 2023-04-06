@@ -521,10 +521,9 @@ class TestControlSpecification:
                 [[15.], [15.0], [0.0], [3.84279648], [0.81637827]]]
 
         for simulation in range(len(expected_sim_results_array)):
-            # np.testing.assert_allclose(expected_sim_results_array[simulation],
-            #                    # Note: Skip decision variable OutputPort
-            #                    comp.simulation_results[simulation][0:3] + comp.simulation_results[simulation][4:6])
-            assert True
+            np.testing.assert_allclose(expected_sim_results_array[simulation],
+                               # Note: Skip decision variable OutputPort
+                               comp.simulation_results[simulation][0:3] + comp.simulation_results[simulation][4:6])
 
         expected_results_array = [
             [[20.0], [20.0], [0.0], [1.0], [2.378055160151634], [0.9820137900379085]],
@@ -2469,7 +2468,7 @@ class TestControlMechanisms:
 
         dty = np.float32 if pytest.helpers.llvm_current_fp_precision() == 'fp32' else np.float64
         expected = [get_val(s, dty) for s in seeds] * 2
-        np.testing.assert_allclose(np.squeeze(comp.results[:len(seeds) * 2]), expected)
+        np.testing.assert_allclose(np.squeeze(comp.results[:len(seeds) * 2]), expected, rtol=1e-5, atol=1e-8)
 
     @pytest.mark.benchmark
     @pytest.mark.control

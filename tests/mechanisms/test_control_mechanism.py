@@ -168,7 +168,7 @@ class TestControlMechanism:
         comp = pnl.Composition()
         backprop_pathway = comp.add_backpropagation_learning_pathway(
             pathway=pathway,
-            loss_function=None,
+            loss_spec=None,
         )
         # c.add_linear_processing_pathway(pathway=z)
         comp.add_node(Control_Mechanism)
@@ -189,14 +189,12 @@ class TestControlMechanism:
 
         stim_list[Control_Mechanism]=[0.0]
         results = comp.learn(num_trials=1, inputs=stim_list)
-        # FIX: ??WHY IS THE FOLLOWING 3D:
         expected_results = [[[0.5, 0.5, 0.5]]]
         np.testing.assert_allclose(results, expected_results)
 
         stim_list[Control_Mechanism]=[2.0]
         results = comp.learn(num_trials=1, inputs=stim_list)
-        # FIX: ??WHEREAS THIS IS 2D:
-        expected_results = [[0.96941429, 0.9837254 , 0.99217549]]
+        expected_results = [[[0.96941429, 0.9837254, 0.99217549]]]
         np.testing.assert_allclose(results, expected_results)
 
     def test_control_of_all_input_ports(self, comp_mode):
