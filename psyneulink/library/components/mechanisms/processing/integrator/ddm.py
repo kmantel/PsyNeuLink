@@ -1068,6 +1068,7 @@ class DDM(ProcessingMechanism):
                 variable=variable,
                 context=context,
                 runtime_params=runtime_params,
+
             )
 
             if isinstance(self.function, DriftDiffusionAnalytical):
