@@ -89,7 +89,7 @@ class TestLCControlMechanism:
         # (the 1st item of its function's value).
         # FIX: 6/6/19 - Python returns 3d array but LLVM returns 2d array
         #               (np.allclose bizarrely passes for LLVM because all the values are the same)
-        np.testing.assert_allclose(val, [[[3.00139776]], [[3.00139776]], [[3.00139776]], [[3.00139776]]])
+        np.testing.assert_allclose(val, [[3.00139776]], [[3.00139776]], [[3.00139776]], [[3.00139776]])
 
     @pytest.mark.composition
     def test_lc_control_modulated_mechanisms_all(self):
@@ -219,8 +219,8 @@ class TestControlMechanism:
         comp.add_nodes([(mech, pnl.NodeRole.INPUT), (control_mech, pnl.NodeRole.INPUT)])
         results = comp.run(inputs={mech:[[2]], control_mech:[3]}, num_trials=2, execution_mode=comp_mode)
 
-        np.testing.assert_allclose(control_mech.parameters.control_allocation.get(), [[1]])
-        np.allclose(results, [[6],[6],[6]])
+        np.testing.assert_allclose(control_mech.parameters.control_allocation.get(), [[1], [1], [1]])
+        np.testing.assert_allclose(results, [[6], [6], [6]])
 
     def test_control_signal_default_allocation_specification(self):
 
