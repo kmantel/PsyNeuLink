@@ -820,6 +820,9 @@ def _generate_scheduler_string(
     component_identifiers,
     blacklist=[]
 ):
+    if scheduler_model is None:
+        return ''
+
     output = []
 
     for node, condition in scheduler_model.node_specific.items():
