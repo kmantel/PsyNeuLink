@@ -725,6 +725,13 @@ def _generate_component_string(
         except KeyError:
             pass
 
+    if 'variable' not in parameters and 'input_ports' not in parameters:
+        if hasattr(component_model, 'input_ports'):
+            parameters['input_ports'] = [
+                {'name': ip.id, 'variable': f"numpy.zeros({ip.shape}, dtype='{ip.type}')"}
+                for ip in component_model.input_ports
+            ]
+
     def parameter_value_matches_default(component_type, param, value):
         default_val = getattr(component_type.defaults, param)
         evaled_val = NotImplemented
