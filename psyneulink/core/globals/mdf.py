@@ -249,7 +249,7 @@ def _parse_component_type(model_obj):
         except AttributeError:
             # could be a dict specification
             type_str = model_obj[MODEL_SPEC_ID_METADATA][MODEL_SPEC_ID_TYPE]
-    except (KeyError, TypeError):
+    except (IndexError, KeyError, TypeError):
         # specifically for functions the keyword is not 'type'
         type_str = model_obj.function
 
@@ -559,7 +559,7 @@ def _generate_component_string(
         parameters['custom_function'] = f'{custom_func}'
         try:
             del component_model.metadata['custom_function']
-        except KeyError:
+        except (KeyError, TypeError):
             pass
 
     try:
@@ -592,7 +592,7 @@ def _generate_component_string(
     except AttributeError:
         try:
             functions = [_mdf_obj_from_dict(v) for k, v in component_model.metadata['functions'].items()]
-        except KeyError:
+        except (KeyError, TypeError):
             functions = None
         except AttributeError:
             functions = component_model.metadata['functions']
@@ -1172,7 +1172,7 @@ def _generate_composition_string(graph, component_identifiers):
             parse_valid_identifier(node): role for (node, role) in
             graph.metadata['required_node_roles']
         }
-    except KeyError:
+    except (KeyError, TypeError):
         node_roles = []
 
     try:
@@ -1180,7 +1180,7 @@ def _generate_composition_string(graph, component_identifiers):
             parse_valid_identifier(node): role for (node, role) in
             graph.metadata['excluded_node_roles']
         }
-    except KeyError:
+    except (KeyError, TypeError):
         excluded_node_roles = []
 
     # do not add the controller as a normal node
