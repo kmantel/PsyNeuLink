@@ -641,7 +641,15 @@ def _generate_component_string(
                 if not f.id.endswith(MODEL_SPEC_ID_INPUT_PORT_COMBINATION_FUNCTION)
             ][0]
 
-        parameters['function'] = [f for f in functions if f.id == parameter_names['function']][0]
+        for f in functions + list(parameters.values()):
+            try:
+                if f.id == parameter_names['function']:
+                    parameters['function'] = f
+                    break
+            except AttributeError:
+                pass
+        else:
+            raise MDFError(f"Function {parameter_names['function']} expected for {name} but not found")
 
     assignment_str = f'{parse_valid_identifier(name)} = ' if assignment else ''
 
