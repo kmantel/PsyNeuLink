@@ -631,6 +631,7 @@ class Projection_Base(Projection):
         weight = Parameter(None, modulable=True)
         exponent = Parameter(None, modulable=True)
         function = Parameter(LinearMatrix, stateful=False, loggable=False)
+        has_learning_projection = Parameter(False, stateful=False, loggable=False)
 
     registry = ProjectionRegistry
 

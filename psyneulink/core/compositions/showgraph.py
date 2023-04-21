@@ -2302,11 +2302,6 @@ class ShowGraph():
                 else:
                     proc_mech_rcvr_label = rcvr_label
 
-                try:
-                    has_learning = proj.has_learning_projection is not None
-                except AttributeError:
-                    has_learning = None
-
                 edge_label = self._get_graph_node_label(composition, proj, show_types, show_dimensions)
                 is_learning_component = (rcvr in composition.learning_components
                                          or sndr in composition.learning_components)
@@ -2341,7 +2336,7 @@ class ShowGraph():
 
                 # RENDER PROJECTION AS EDGE
 
-                if show_learning and has_learning:
+                if show_learning and proj.has_learning_projection:
                     # Render Projection as Node
                     #    (do it here rather than in _assign_learning_components,
                     #     as it needs afferent and efferent edges to other nodes)

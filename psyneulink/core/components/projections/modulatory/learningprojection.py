@@ -605,7 +605,7 @@ class LearningProjection(ModulatoryProjection_Base):
             self.learning_enabled = self.parameters.learning_enabled.default_value = learning_mechanism.learning_enabled
 
         learned_projection.learning_mechanism = learning_mechanism
-        learned_projection.has_learning_projection = self
+        learned_projection.has_learning_projection = True
 
     def _execute(self, variable, context=None, runtime_params=None):
         """

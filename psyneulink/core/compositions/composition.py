@@ -8264,8 +8264,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # First get all efferents of receiver_activity_mech with a LearningProjection that are in current Composition
         for efferent in [p for p in receiver_activity_mech.efferents
-                         if (hasattr(p, 'has_learning_projection')
-                             and p.has_learning_projection
+                         if (p.has_learning_projection
                              and p in self.projections)]:
             # Then get any LearningProjections to that efferent that are in current Composition
             for learning_projection in [mod_aff for mod_aff in efferent.parameter_ports[MATRIX].mod_afferents
@@ -8315,8 +8314,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # Add any LearningMechanisms associated with efferent projection from receiver_activity_mech
         # First get all efferents of receiver_activity_mech with a LearningProjection that are in current Composition
         for efferent in [p for p in receiver_activity_mech.efferents
-                         if (hasattr(p, 'has_learning_projection')
-                             and p.has_learning_projection
+                         if (p.has_learning_projection
                              and p in self.projections)]:
             # Then any LearningProjections to that efferent that are in current Composition
             for learning_projection in [mod_aff for mod_aff in efferent.parameter_ports[MATRIX].mod_afferents
@@ -8355,7 +8353,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # Get all afferents to receiver_activity_mech in Composition that have LearningProjections
         for afferent in [p for p in error_source.input_source.path_afferents
                          if (p in self.projections
-                             and hasattr(p, 'has_learning_projection')
                              and p.has_learning_projection)]:
             # For each LearningProjection to that afferent, if its LearningMechanism doesn't already receiver
             for learning_projection in [lp for lp in afferent.parameter_ports[MATRIX].mod_afferents
@@ -11393,7 +11390,7 @@ _
             if self._is_learning(context) and not isinstance(self, AutodiffComposition):
                 context.execution_phase = ContextFlags.LEARNING
                 for projection in [p for p in self.projections if
-                                   hasattr(p, 'has_learning_projection') and p.has_learning_projection]:
+                                   p.has_learning_projection]:
                     matrix_parameter_port = projection.parameter_ports[MATRIX]
                     if any([lp for lp in matrix_parameter_port.mod_afferents if lp.learning_enabled == AFTER]):
                         matrix_parameter_port._update(context=context)
@@ -12412,7 +12409,7 @@ _
     @property
     def learned_components(self):
         learned_projections = [proj for proj in self.projections
-                               if hasattr(proj, 'has_learning_projection') and proj.has_learning_projection]
+                               if proj.has_learning_projection]
         related_processing_mechanisms = [mech for mech in self.nodes
                                          if (isinstance(mech, Mechanism)
                                              and (any([mech in learned_projections for mech in mech.afferents])

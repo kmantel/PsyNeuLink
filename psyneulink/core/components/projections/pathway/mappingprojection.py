@@ -465,7 +465,6 @@ class MappingProjection(PathwayProjection_Base):
             matrix = np.array(matrix)
 
         self.learning_mechanism = None
-        self.has_learning_projection = None
         self.learnable = bool(learnable)
         if not self.learnable:
             assert True
