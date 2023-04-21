@@ -10520,6 +10520,7 @@ _
             raise CompositionError(f"ExecutionMode.{execution_mode.name} cannot be used in the learn() method of "
                                    f"'{self.name}' because it is not an {AutodiffComposition.componentCategory}")
 
+        self._assign_execution_ids(context)
         context.add_flag(ContextFlags.LEARNING_MODE)
         # # MODIFIED 3/28/22 NEW:
         # context.source = ContextFlags.COMPOSITION
