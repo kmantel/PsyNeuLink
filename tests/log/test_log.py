@@ -1265,9 +1265,10 @@ class TestFullModels:
         comp.learn(inputs=input_dictionary,
                  num_trials=10)
 
+        learning_execution_id = pnl.get_learning_execution_id(comp.default_execution_id)
         expected_log_val = np.array(
             [
-                ['multilayer'],
+                [learning_execution_id],
                 [[
                     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
                     [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]],
@@ -1346,11 +1347,13 @@ class TestFullModels:
         middle_weights.log.print_entries()
 
         # Test Programatic logging
-        hidden_layer_2.log.log_values(pnl.VALUE, comp)
+        # TODO: fix manual logging with a Context that won't have source=COMMAND_LINE
+        hidden_layer_2.log.log_values(pnl.VALUE, context=comp.most_recent_context.execution_id)
+
         log_val = hidden_layer_2.log.nparray(header=False)
         expected_log_val = np.array(
             [
-                ['multilayer'],
+                [learning_execution_id],
                 [[
                     [[1]],
                     [[0]],
@@ -1386,7 +1389,7 @@ class TestFullModels:
         log_val = middle_weights.log.nparray(entries='mod_matrix', header=False)
         expected_log_val = np.array(
             [
-                ['multilayer'],
+                [learning_execution_id],
                 [[
                         [[1], [1], [1], [1], [1]],  # RUN
                         # [[0], [1], [2], [3], [4]],  # TRIAL

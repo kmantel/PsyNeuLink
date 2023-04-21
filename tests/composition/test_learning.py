@@ -45,14 +45,17 @@ class TestTargetSpecs:
         comp.run(inputs={A: 1.0,
                          p.target:2.0})
         np.testing.assert_allclose(comp.results, [[[1.]]])
-        comp.learn(inputs={A: 1.0,
+        result = comp.learn(inputs={A: 1.0,
                            p.target:2.0})
-        comp.learn(inputs={A: 1.0,
-                           p.target:[2.0]})
-        comp.learn(inputs={A: 1.0,
-                           p.target:[[2.0]]})
+        np.testing.assert_allclose(result, [[1.]])
 
-        np.testing.assert_allclose(comp.results, [[[1.]], [[1.]], [[1.05]], [[1.0975]]])
+        result = comp.learn(inputs={A: 1.0,
+                           p.target:[2.0]})
+        np.testing.assert_allclose(result, [[1.05]])
+
+        result = comp.learn(inputs={A: 1.0,
+                           p.target:[[2.0]]})
+        np.testing.assert_allclose(result, [[1.0975]])
 
     def test_target_dict_spec_single_trial_scalar_and_lists_bp(self):
         A = TransferMechanism(name="learning-process-mech-A")
@@ -64,14 +67,18 @@ class TestTargetSpecs:
         comp.run(inputs={A: 1.0,
                          p.target:2.0})
         np.testing.assert_allclose(comp.results, [[[1.]]])
-        comp.learn(inputs={A: 1.0,
+        result = comp.learn(inputs={A: 1.0,
                            p.target:2.0})
-        comp.learn(inputs={A: 1.0,
-                           p.target:[2.0]})
-        comp.learn(inputs={A: 1.0,
-                           p.target:[[2.0]]})
+        np.testing.assert_allclose(result, [np.array([1.])])
 
-        np.testing.assert_allclose(comp.results, [[[1.]], [[1.]], [[1.21]], [[1.40873161]]])
+        result = comp.learn(inputs={A: 1.0,
+                           p.target:[2.0]})
+        np.testing.assert_allclose(result, [np.array([1.21])])
+
+        result = comp.learn(inputs={A: 1.0,
+                           p.target:[[2.0]]})
+        np.testing.assert_allclose(result, [np.array([1.40873161])])
+
 
     def test_target_dict_spec_multi_trial_lists_rl(self):
         A = TransferMechanism(name="learning-process-mech-A")
@@ -1470,7 +1477,8 @@ class TestReinforcement:
 
         comp.learn(inputs=inputs1)
 
-        delta_vals = comparator_mechanism.log.nparray_dictionary()['TD_Learning'][pnl.VALUE]
+        learning_execution_id = pnl.get_learning_execution_id(comp.default_execution_id)
+        delta_vals = comparator_mechanism.log.nparray_dictionary()[learning_execution_id][pnl.VALUE]
 
         trial_1_expected = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
                             0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  0., 0., 0., 0.,
@@ -1492,7 +1500,7 @@ class TestReinforcement:
 
         # Resume Learning
         comp.learn(inputs=inputs2)
-        delta_vals = comparator_mechanism.log.nparray_dictionary()['TD_Learning'][pnl.VALUE]
+        delta_vals = comparator_mechanism.log.nparray_dictionary()[learning_execution_id][pnl.VALUE]
 
         trial_50_expected = [0.] * 40
         trial_50_expected += [
@@ -1997,13 +2005,13 @@ class TestBackPropLearning:
         objective_output_layer = comp.nodes[5]
 
         expected_output = [
-            (output_layer.get_output_values(comp), expected_quantities[OUTPUT_LAYER_VAL]),
-            (objective_output_layer.output_ports[LOSS].parameters.value.get(comp),
+            (output_layer.get_output_values(comp.most_recent_context), expected_quantities[OUTPUT_LAYER_VAL]),
+            (objective_output_layer.output_ports[LOSS].value,
              expected_quantities[OBJECTIVE_MECH_VAL]),
-            (input_weights.get_mod_matrix(comp), expected_quantities[INPUT_WEIGHTS]),
-            (middle_weights.get_mod_matrix(comp), expected_quantities[MIDDLE_WEIGHTS]),
-            (output_weights.get_mod_matrix(comp), expected_quantities[OUTPUT_WEIGHTS]),
-            (comp.parameters.results.get(comp), expected_quantities[RESULTS])]
+            (input_weights.mod_matrix, expected_quantities[INPUT_WEIGHTS]),
+            (middle_weights.mod_matrix, expected_quantities[MIDDLE_WEIGHTS]),
+            (output_weights.mod_matrix, expected_quantities[OUTPUT_WEIGHTS]),
+            (comp.results, expected_quantities[RESULTS])]
 
         for i in range(len(expected_output)):
             val, expected = expected_output[i]
@@ -2503,24 +2511,24 @@ class TestBackPropLearning:
         # Note:  numbers based on test of System in tests/learning/test_stroop
 
         composition_and_expected_outputs = [
-            (color_comp.output_ports[0].parameters.value.get(comp), np.array([1., 1.])),
-            (word_comp.output_ports[0].parameters.value.get(comp), np.array([-2., -2.])),
-            (hidden_comp.output_ports[0].parameters.value.get(comp), np.array([0.13227553, 0.01990677])),
-            (response_comp.output_ports[0].parameters.value.get(comp), np.array([0.51044657, 0.5483048])),
-            (comp.nodes['Comparator'].output_ports[0].parameters.value.get(comp), np.array([0.48955343, 0.4516952])),
-            (comp.nodes['Comparator'].output_ports[pnl.Loss.MSE.name].parameters.value.get(comp), np.array(
+            (color_comp.output_ports[0].value, np.array([1., 1.])),
+            (word_comp.output_ports[0].value, np.array([-2., -2.])),
+            (hidden_comp.output_ports[0].value, np.array([0.13227553, 0.01990677])),
+            (response_comp.output_ports[0].value, np.array([0.51044657, 0.5483048])),
+            (comp.nodes['Comparator'].output_ports[0].value, np.array([0.48955343, 0.4516952])),
+            (comp.nodes['Comparator'].output_ports[pnl.Loss.MSE.name].value, np.array(
                     0.22184555903789838)),
-            (comp.projections['MappingProjection from Color[RESULT] to Hidden[InputPort-0]'].get_mod_matrix(comp),
+            (comp.projections['MappingProjection from Color[RESULT] to Hidden[InputPort-0]'].mod_matrix,
              np.array([
                  [ 0.02512045, 1.02167245],
                  [ 2.02512045, 3.02167245],
              ])),
-            (comp.projections['MappingProjection from Word[RESULT] to Hidden[InputPort-0]'].get_mod_matrix(comp),
+            (comp.projections['MappingProjection from Word[RESULT] to Hidden[InputPort-0]'].mod_matrix,
              np.array([
                  [-0.05024091, 0.9566551 ],
                  [ 1.94975909, 2.9566551 ],
              ])),
-            (comp.projections['MappingProjection from Hidden[RESULT] to Response[InputPort-0]'].get_mod_matrix(comp),
+            (comp.projections['MappingProjection from Hidden[RESULT] to Response[InputPort-0]'].mod_matrix,
              np.array([
                  [ 0.03080958, 1.02830959],
                  [ 2.00464242, 3.00426575],

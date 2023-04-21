@@ -2835,7 +2835,7 @@ from psyneulink.core.compositions.report import Report, \
     ReportOutput, ReportParams, ReportProgress, ReportSimulations, ReportDevices, \
     EXECUTE_REPORT, CONTROLLER_REPORT, RUN_REPORT, COMPILED_REPORT, PROGRESS_REPORT
 from psyneulink.core.compositions.showgraph import ShowGraph, INITIAL_FRAME, SHOW_CIM, EXECUTION_SET, SHOW_CONTROLLER
-from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
+from psyneulink.core.globals.context import Context, ContextFlags, get_learning_execution_id, handle_external_context
 from psyneulink.core.globals.keywords import \
     AFTER, ALL, ALLOW_PROBES, ANY, BEFORE, COMPONENT, COMPOSITION, CONTROL, CONTROL_SIGNAL, CONTROLLER, CROSS_ENTROPY, \
     DEFAULT, DICT, FEEDBACK, FULL, FUNCTION, HARD_CLAMP, IDENTITY_MATRIX, \
@@ -10528,6 +10528,12 @@ _
         # # FIX 5/28/20
         # context.add_flag(ContextFlags.PREPARING)
         # context.execution_phase=ContextFlags.PREPARING
+        learning_context = copy(context)
+        learning_context.execution_id = get_learning_execution_id(context.execution_id)
+        context.learning = learning_context
+        self._initialize_from_context(
+            learning_context, base_context=context
+        )
 
         self._analyze_graph()
 
@@ -10559,9 +10565,42 @@ _
             randomize_minibatches=randomize_minibatches,
             call_before_minibatch=call_before_minibatch,
             call_after_minibatch=call_after_minibatch,
-            context=context,
+            context=learning_context,
             execution_mode=execution_mode,
             *args, **kwargs)
+
+        # copy learned weights into original context (those projections
+        # with associated learning mechanisms):
+        # - projection: matrix
+        # - projection matrix ParameterPort: value
+        # - projection matrix ParameterPort function AccumulatorIntegrator: value, previous_value
+        #
+        # NOTE: AccumulatorIntegrator values must be stored because
+        # subsequent calls to learn are intended to continue the same
+        # iterative process, not start fresh
+
+        # should not auto-log context entries due to COMMAND_LINE source
+        context.source = ContextFlags.METHOD
+
+        for projection in self.learned_projections:
+            projection.parameters.matrix._set(
+                projection.parameters.matrix._get(learning_context), context=context
+            )
+
+            matrix_port = projection.parameter_ports['matrix']
+            matrix_port.parameters.value._set(
+                matrix_port.parameters.value._get(learning_context), context=context
+            )
+
+            matrix_function = matrix_port.function
+            matrix_function.parameters.value._set(
+                matrix_function.parameters.value._get(learning_context), context=context
+            )
+            matrix_function.parameters.previous_value._set(
+                matrix_function.parameters.previous_value._get(learning_context), context=context
+            )
+
+        self._copy_learning_state(context, learning_context)
 
         context.remove_flag(ContextFlags.LEARNING_MODE)
         return result
@@ -11762,6 +11801,10 @@ _
 
     def _update_learning_parameters(self, context):
         pass
+
+    def _copy_learning_state(self, context, base_context):
+        for c in self.learning_components:
+            c._initialize_from_context(context, base_context)
 
     @handle_external_context(fallback_most_recent=True)
     def reset(self, values=None, include_unspecified_nodes=True, context=NotImplemented):

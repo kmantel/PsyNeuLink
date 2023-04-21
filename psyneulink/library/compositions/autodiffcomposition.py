@@ -601,6 +601,7 @@ class AutodiffComposition(Composition):
             self.infer_backpropagation_learning_pathways()
             self._built_pathways = True
 
+        copy_pytorch_representation_for_compiled = False
         if 'execution_mode' in kwargs:
             execution_mode = kwargs['execution_mode']
             if execution_mode == pnlvm.ExecutionMode.Python:
@@ -612,7 +613,21 @@ class AutodiffComposition(Composition):
             if execution_mode == pnlvm.ExecutionMode.PyTorch:
                 kwargs['execution_mode'] = pnlvm.ExecutionMode.Python
 
-        return super().learn(*args, **kwargs)
+            if execution_mode in pnlvm.ExecutionMode.COMPILED:
+                copy_pytorch_representation_for_compiled = True
+
+        res = super().learn(*args, **kwargs)
+
+        if copy_pytorch_representation_for_compiled:
+            # For LLVM, pytorch_representation always gets created in
+            # default context. Set here to context used for
+            # learn for interface consistency
+            self.parameters.pytorch_representation._set(
+                self.parameters.pytorch_representation.get(self),
+                self.most_recent_context
+            )
+
+        return res
 
     @handle_external_context()
     def execute(self,

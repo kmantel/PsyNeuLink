@@ -104,6 +104,7 @@ __all__ = [
     'ContextFlags',
     '_get_context',
     'INITIALIZATION_STATUS_FLAGS',
+    'get_learning_execution_id',
     'handle_external_context',
 ]
 
@@ -378,6 +379,7 @@ class Context():
         self.execution_time = None
         self.string = string
         self.rpc_pipeline = rpc_pipeline
+        self.learning = None
 
     __deepcopy__ = get_deepcopy_with_shared(_deepcopy_shared_keys)
 
@@ -751,3 +753,11 @@ def handle_external_context(
 
         return wrapper
     return decorator
+
+
+def get_learning_execution_id(context: Union[Context, str]):
+    try:
+        context = context.execution_id
+    except AttributeError:
+        pass
+    return f'{context}_learning'

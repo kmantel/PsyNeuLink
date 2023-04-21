@@ -69,14 +69,15 @@ class TestContrastiveHebbian:
         #   and the behavior of the scheduler's time can be a bit odd - should hopefully fix that in future
         #   and test in its own module
         # assert S.scheduler.get_clock(S).previous_time.pass_ == 6
-        np.testing.assert_allclose(R.output_ports[pnl.ACTIVITY_DIFFERENCE].parameters.value.get(C),
+        learning_context_name = pnl.get_learning_execution_id(C.default_execution_id)
+        np.testing.assert_allclose(R.output_ports[pnl.ACTIVITY_DIFFERENCE].parameters.value.get(learning_context_name),
                                    [1.20074767, 0.0, 1.20074767, 0.0])
-        np.testing.assert_allclose(R.parameters.plus_phase_activity.get(C), [1.20074767, 0.0, 1.20074767, 0.0])
-        np.testing.assert_allclose(R.parameters.minus_phase_activity.get(C), [0.0, 0.0, 0.0, 0.0])
-        np.testing.assert_allclose(R.output_ports[pnl.CURRENT_ACTIVITY].parameters.value.get(C),
+        np.testing.assert_allclose(R.parameters.plus_phase_activity.get(learning_context_name), [1.20074767, 0.0, 1.20074767, 0.0])
+        np.testing.assert_allclose(R.parameters.minus_phase_activity.get(learning_context_name), [0.0, 0.0, 0.0, 0.0])
+        np.testing.assert_allclose(R.output_ports[pnl.CURRENT_ACTIVITY].parameters.value.get(learning_context_name),
                                    [1.20074767, 0.0, 1.20074767, 0.0])
         np.testing.assert_allclose(
-            R.recurrent_projection.get_mod_matrix(C),
+            R.recurrent_projection.get_mod_matrix(learning_context_name),
             [
                 [0.0,         0.0,         0.2399363,  0.0 ],
                 [0.0,         0.0,         0.0,       0.0  ],
@@ -91,7 +92,7 @@ class TestContrastiveHebbian:
         C.learn(num_trials=4,
               inputs=inputs_dict)
         np.testing.assert_allclose(
-            R.recurrent_projection.get_mod_matrix(C),
+            R.recurrent_projection.get_mod_matrix(learning_context_name),
             [
                 [0.0,        0.0,        0.2399363,   0.0      ],
                 [0.0,        0.0,        0.0,        0.2399363 ],
@@ -99,10 +100,10 @@ class TestContrastiveHebbian:
                 [0.0,        0.2399363,   0.0,        0.0      ]
             ]
         )
-        np.testing.assert_allclose(R.output_ports[pnl.ACTIVITY_DIFFERENCE].parameters.value.get(C),
+        np.testing.assert_allclose(R.output_ports[pnl.ACTIVITY_DIFFERENCE].parameters.value.get(learning_context_name),
                                    [0.0, 1.20074767, 0.0, 1.20074767])
-        np.testing.assert_allclose(R.parameters.plus_phase_activity.get(C), [0.0, 1.20074767, 0.0, 1.20074767])
-        np.testing.assert_allclose(R.parameters.minus_phase_activity.get(C), [0.0, 0.0, 0.0, 0.0])
+        np.testing.assert_allclose(R.parameters.plus_phase_activity.get(learning_context_name), [0.0, 1.20074767, 0.0, 1.20074767])
+        np.testing.assert_allclose(R.parameters.minus_phase_activity.get(learning_context_name), [0.0, 0.0, 0.0, 0.0])
 
     def test_additional_output_ports(self):
         CHL1 = pnl.ContrastiveHebbianMechanism(
@@ -139,8 +140,7 @@ class TestContrastiveHebbian:
         c.add_linear_processing_pathway([m,o])
         c.scheduler.add_condition(o, pnl.WhenFinished(m))
         c.learn(inputs={m:[2,2]}, num_trials=4)
-        results = c.parameters.results.get(c)
-        np.testing.assert_allclose(results, [[[2.671875]],
+        np.testing.assert_allclose(c.results, [[[2.671875]],
                                              [[2.84093837]],
                                              [[3.0510183]],
                                              [[3.35234623]]])

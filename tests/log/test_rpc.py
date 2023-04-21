@@ -501,9 +501,10 @@ class TestFullModels:
                    num_trials=10,
                    context=con_with_rpc_pipeline)
 
+        learning_execution_id = pnl.get_learning_execution_id(comp.default_execution_id)
         expected_log_val = np.array(
             [
-                ['multilayer'],
+                [learning_execution_id],
                 [[
                     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
                     [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]],
@@ -567,18 +568,18 @@ class TestFullModels:
         while not pipeline.empty():
             actual.append(pipeline.get())
         log_val = [np.ndarray(shape=np.array(i.value.shape), buffer=np.array(i.value.data)) for i in actual]
-        assert all([True if i.context == 'multilayer' else False for i in actual])
+        assert all([True if i.context == learning_execution_id else False for i in actual])
         np.testing.assert_allclose(log_val, expected_log_val[1][0][4])
 
         # Test Programatic logging
-        hidden_layer_2.log._deliver_values(pnl.VALUE, con_with_rpc_pipeline)
+        hidden_layer_2.log._deliver_values(pnl.VALUE, con_with_rpc_pipeline.learning)
         actual = []
         while not pipeline.empty():
             actual.append(pipeline.get())
         log_val = [np.ndarray(shape=np.array(actual[0].value.shape), buffer=np.array(actual[0].value.data))]
         expected_log_val = np.array(
             [
-                ['multilayer'],
+                [learning_execution_id],
                 [[
                     [[1]],
                     [[0]],
@@ -589,7 +590,7 @@ class TestFullModels:
             ],
             dtype=object
         )
-        assert actual[0].context == 'multilayer'
+        assert actual[0].context == learning_execution_id
         assert actual[0].time == '1:0:0:0'
         np.testing.assert_allclose(
             expected_log_val[1][0][4],
@@ -606,12 +607,12 @@ class TestFullModels:
         actual = []
         while not pipeline.empty():
             actual.append(pipeline.get())
-        assert all([True if i.context == 'multilayer' else False for i in actual])
+        assert all([True if i.context == learning_execution_id else False for i in actual])
         matrices = [i for i in actual if i.parameterName == 'matrix']
         log_val = [np.ndarray(shape=np.array(i.value.shape), buffer=np.array(i.value.data)) for i in matrices]
         expected_log_val = np.array(
             [
-                ['multilayer'],
+                [learning_execution_id],
                 [[
                     [[1], [1], [1], [1], [1]],  # RUN
                     # [[0], [1], [2], [3], [4]],  # TRIAL

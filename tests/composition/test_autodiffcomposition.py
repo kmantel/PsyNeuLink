@@ -1556,8 +1556,8 @@ class TestMiscTrainingFunctionality:
                                         execution_mode=autodiff_mode)
 
         # get weight parameters from pytorch
-        pt_weights_hid_bp = xor.parameters.pytorch_representation.get(xor).params[0].detach().numpy().copy()
-        pt_weights_out_bp = xor.parameters.pytorch_representation.get(xor).params[1].detach().numpy().copy()
+        pt_weights_hid_bp = xor.pytorch_representation.params[0].detach().numpy().copy()
+        pt_weights_out_bp = xor.pytorch_representation.params[1].detach().numpy().copy()
 
         #KAM temporarily removed -- will reimplement when pytorch weights can be used in pure PNL execution
         # do processing on a few inputs
@@ -2367,7 +2367,7 @@ class TestACLogging:
                         "targets": {xor_out: xor_targets},
                         "epochs": num_epochs})
 
-        exec_id = xor.default_execution_id
+        exec_id = xor.most_recent_context.execution_id
 
         in_np_dict_vals = xor_in.log.nparray_dictionary()[exec_id]['value']
         in_np_vals = xor_in.log.nparray()[1][1][4][1:]
@@ -3174,8 +3174,8 @@ class TestBatching:
                 minibatch_size=TRAINING_SET
             )
 
-        c1_results = xor.parameters.results._get(c1)
-        c2_results = xor.parameters.results._get(c2)
+        c1_results = xor.parameters.results._get(c1.learning)
+        c2_results = xor.parameters.results._get(c2.learning)
 
         np.testing.assert_allclose(c1_results[0][:2], c2_results[0][:2])
         np.testing.assert_allclose(c1_results[0][2:], c2_results[0][2:])

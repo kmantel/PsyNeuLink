@@ -110,7 +110,8 @@ def figure_5a():
 
     if args.enable_plot:
         # Get Delta Values from Log
-        delta_vals = prediction_error_mechanism.log.nparray_dictionary()[composition_name][pnl.VALUE]
+        learning_execution_id = pnl.get_learning_execution_id(comp.default_execution_id)
+        delta_vals = prediction_error_mechanism.log.nparray_dictionary()[learning_execution_id][pnl.VALUE]
 
         # Plot Delta Values form trials 1, 30, and 50
         with plt.style.context('seaborn'):
@@ -174,7 +175,8 @@ def figure_5b():
 
     if args.enable_plot:
         # Get Delta Values from Log
-        delta_vals = prediction_error_mechanism.log.nparray_dictionary()[composition_name][pnl.VALUE]
+        learning_execution_id = pnl.get_learning_execution_id(comp.default_execution_id)
+        delta_vals = prediction_error_mechanism.log.nparray_dictionary()[learning_execution_id][pnl.VALUE]
 
         with plt.style.context('seaborn'):
             fig = plt.figure()
@@ -238,7 +240,8 @@ def figure_5c():
 
     if args.enable_plot:
         # Get Delta Values from Log
-        delta_vals = prediction_error_mechanism.log.nparray_dictionary()[composition_name][pnl.VALUE]
+        learning_execution_id = pnl.get_learning_execution_id(comp.default_execution_id)
+        delta_vals = prediction_error_mechanism.log.nparray_dictionary()[learning_execution_id][pnl.VALUE]
 
         with plt.style.context('seaborn'):
             fig = plt.figure()

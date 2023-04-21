@@ -832,17 +832,17 @@ class TestRecurrentTransferMechanismInComposition:
         # Test that activity is properly computed prior to learning
         # p = Process(pathway=[R])
         c = Composition(pathways=[R])
-        R.learning_enabled = False
+        R.parameters.learning_enabled.set(False, c)
         c.learn(inputs={R:[1, 1, 0, 0]})
         c.learn(inputs={R:[1, 1, 0, 0]})
-        np.testing.assert_allclose(R.parameters.value.get(c), [[1.2, 1.2, 0.2, 0.2]])
+        np.testing.assert_allclose(R.value, [[1.2, 1.2, 0.2, 0.2]])
 
         # Test that activity and weight changes are properly computed with learning
-        R.learning_enabled = True
+        R.parameters.learning_enabled.set(True, c)
         c.learn(inputs={R:[1, 1, 0, 0]})
-        np.testing.assert_allclose(R.parameters.value.get(c), [[1.28, 1.28, 0.28, 0.28]])
+        np.testing.assert_allclose(R.value, [[1.28, 1.28, 0.28, 0.28]])
         np.testing.assert_allclose(
-            R.recurrent_projection.get_mod_matrix(c),
+            R.recurrent_projection.mod_matrix,
             [
                 [0.1, 0.18192000000000003, 0.11792000000000001, 0.11792000000000001],
                 [0.18192000000000003, 0.1, 0.11792000000000001, 0.11792000000000001],
@@ -851,9 +851,9 @@ class TestRecurrentTransferMechanismInComposition:
             ]
         )
         c.learn(inputs={R:[1, 1, 0, 0]})
-        np.testing.assert_allclose(R.parameters.value.get(c), [[1.4268928, 1.4268928, 0.3589728, 0.3589728]])
+        np.testing.assert_allclose(R.value, [[1.4268928, 1.4268928, 0.3589728, 0.3589728]])
         np.testing.assert_allclose(
-            R.recurrent_projection.get_mod_matrix(c),
+            R.recurrent_projection.mod_matrix,
             [
                 [0.1, 0.28372115, 0.14353079, 0.14353079],
                 [0.28372115, 0.1, 0.14353079, 0.14353079],
@@ -916,7 +916,7 @@ class TestRecurrentTransferMechanismInComposition:
                 [0.0,        0.0,  0.0,         0.0]
             ]
         )
-        np.testing.assert_allclose(R.output_port.parameters.value.get(C), [1.18518086, 0.0, 1.18518086, 0.0])
+        np.testing.assert_allclose(R.output_port.value, [1.18518086, 0.0, 1.18518086, 0.0])
 
         # Reset state so learning of new pattern is "uncontaminated" by activity from previous one
         R.output_port.parameters.value.set([0, 0, 0, 0], C, override=True)
@@ -932,7 +932,7 @@ class TestRecurrentTransferMechanismInComposition:
                     [0.0,        0.23700501, 0.0,        0.        ]
                 ]
         )
-        np.testing.assert_allclose(R.output_port.parameters.value.get(C),[0.0, 1.18518086, 0.0, 1.18518086])
+        np.testing.assert_allclose(R.output_port.value, [0.0, 1.18518086, 0.0, 1.18518086])
 
 
 @pytest.mark.composition
