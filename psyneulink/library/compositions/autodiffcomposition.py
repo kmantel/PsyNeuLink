@@ -757,15 +757,8 @@ class AutodiffComposition(Composition):
         proj_state = {
             p.name: p.parameters.matrix.get(context=context)
             # p.name: p.matrix.base
-            for p in self.projections
-            if not (isinstance(p, ModulatoryProjection_Base)
-                    or isinstance(p.sender.owner, CompositionInterfaceMechanism)
-                    or isinstance(p.receiver.owner, CompositionInterfaceMechanism)
-                    or isinstance(p.sender.owner, ModulatoryMechanism_Base)
-                    or isinstance(p.receiver.owner, ModulatoryMechanism_Base)
-                    or p.sender.owner in self.get_nodes_by_role(NodeRole.LEARNING)
-                    or p.receiver.owner in self.get_nodes_by_role(NodeRole.LEARNING)
-                )}
+            for p in self.learned_projections
+        }
         try:
             torch.save(proj_state, path)
         except IsADirectoryError:
@@ -814,15 +807,7 @@ class AutodiffComposition(Composition):
 
         self.last_loaded_weights = path
 
-        for projection in [p for p in self.projections
-                           if not (isinstance(p, ModulatoryProjection_Base)
-                                   or isinstance(p.sender.owner, CompositionInterfaceMechanism)
-                                   or isinstance(p.receiver.owner, CompositionInterfaceMechanism)
-                                   or isinstance(p.sender.owner, ModulatoryMechanism_Base)
-                                   or isinstance(p.receiver.owner, ModulatoryMechanism_Base)
-                                   or p.sender.owner in self.get_nodes_by_role(NodeRole.LEARNING)
-                                   or p.receiver.owner in self.get_nodes_by_role(NodeRole.LEARNING)
-            )]:
+        for projection in self.learned_projections:
             matrix = state[projection.name]
             if np.array(matrix).shape != projection.matrix.base.shape:
                 raise AutodiffCompositionError(f"Shape of matrix loaded for '{projection.name}' "
@@ -851,3 +836,20 @@ class AutodiffComposition(Composition):
         optimizer_states = tuple()
 
         return (*comp_states, optimizer_states)
+
+    @property
+    def learned_projections(self):
+        # must override this property because LearningProjections do not
+        # get created for AutodiffComposition as they do for Composition
+        return [
+            p for p in self.projections
+            if not (
+                isinstance(p, ModulatoryProjection_Base)
+                or isinstance(p.sender.owner, CompositionInterfaceMechanism)
+                or isinstance(p.receiver.owner, CompositionInterfaceMechanism)
+                or isinstance(p.sender.owner, ModulatoryMechanism_Base)
+                or isinstance(p.receiver.owner, ModulatoryMechanism_Base)
+                or p.sender.owner in self.get_nodes_by_role(NodeRole.LEARNING)
+                or p.receiver.owner in self.get_nodes_by_role(NodeRole.LEARNING)
+            )
+        ]
