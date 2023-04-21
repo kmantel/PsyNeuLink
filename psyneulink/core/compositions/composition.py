@@ -12408,13 +12408,16 @@ _
 
     @property
     def learned_components(self):
-        learned_projections = [proj for proj in self.projections
-                               if proj.has_learning_projection]
+        learned_projections = self.learned_projections
         related_processing_mechanisms = [mech for mech in self.nodes
                                          if (isinstance(mech, Mechanism)
                                              and (any([mech in learned_projections for mech in mech.afferents])
                                                   or any([mech in learned_projections for mech in mech.efferents])))]
         return related_processing_mechanisms + learned_projections
+
+    @property
+    def learned_projections(self):
+        return [proj for proj in self.projections if proj.has_learning_projection]
 
     @property
     def afferents(self):
