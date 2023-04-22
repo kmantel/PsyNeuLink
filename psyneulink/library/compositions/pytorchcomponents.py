@@ -1,3 +1,5 @@
+import copy
+
 from psyneulink.core.components.functions.nonstateful.transferfunctions import Linear, Logistic, ReLU, SoftMax, Dropout
 from psyneulink.library.compositions.pytorchllvmhelper import *
 from psyneulink.core.globals.log import LogCondition
@@ -149,6 +151,18 @@ class PytorchMechanismWrapper():
     def __repr__(self):
         return "PytorchWrapper for: " +self._mechanism.__repr__()
 
+    def __deepcopy__(self, memo):
+        result = copy.copy(self)
+        try:
+            result.value = copy.deepcopy(self.value.detach(), memo)
+        except AttributeError:
+            assert result.value is None
+            result.value = self.value
+        result.afferents = copy.deepcopy(self.afferents, memo)
+        result.efferents = copy.deepcopy(self.efferents, memo)
+        return result
+
+
 class PytorchProjectionWrapper():
     """
     An interpretation of a projection as an equivalent pytorch object
@@ -215,3 +229,8 @@ class PytorchProjectionWrapper():
 
     def __repr__(self):
         return "PytorchWrapper for: " +self._projection.__repr__()
+
+    def __deepcopy__(self, memo):
+        result = copy.copy(self)
+        result.matrix = copy.deepcopy(self.matrix, memo)
+        return result
