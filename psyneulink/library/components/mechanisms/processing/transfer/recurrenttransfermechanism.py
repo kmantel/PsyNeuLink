@@ -617,7 +617,6 @@ class RecurrentTransferMechanism(TransferMechanism):
         integrator_function = Parameter(AdaptiveIntegrator, stateful=False, loggable=False, dependencies='combination_function')
         combination_function = Parameter(LinearCombination, stateful=False, loggable=False)
         smoothing_factor = Parameter(0.5, modulable=True)
-        enable_learning = False
         # learning_function is a reference because it is used for
         # an auxiliary learning mechanism
         learning_function = SharedParameter(
@@ -636,6 +635,7 @@ class RecurrentTransferMechanism(TransferMechanism):
             read_only=True,
             structural=True,
         )
+        learning_enabled = SharedParameter(False, attribute_name='learning_mechanism')
 
     standard_output_ports = TransferMechanism.standard_output_ports.copy()
     standard_output_ports.extend([{NAME:ENERGY_OUTPUT_PORT_NAME}, {NAME:ENTROPY_OUTPUT_PORT_NAME}])
@@ -684,7 +684,7 @@ class RecurrentTransferMechanism(TransferMechanism):
             matrix = HOLLOW_MATRIX
 
         self.learning_mechanism = None
-        self._learning_enabled = enable_learning
+        self._enable_learning = enable_learning
 
         super().__init__(
             default_variable=default_variable,
@@ -971,7 +971,7 @@ class RecurrentTransferMechanism(TransferMechanism):
 
         self.aux_components.append(self.recurrent_projection)
 
-        if self.learning_enabled:
+        if self._enable_learning:
             self.configure_learning(context=context)
 
         if ENERGY_OUTPUT_PORT_NAME in self.output_ports.names:
@@ -1041,23 +1041,6 @@ class RecurrentTransferMechanism(TransferMechanism):
 
         if hasattr(self, "recurrent_projection") and 'auto' in self._parameter_ports:
             self.recurrent_projection.parameter_ports["matrix"].function.previous_value = self.matrix_param
-
-    @property
-    def learning_enabled(self):
-        return self._learning_enabled
-
-    @learning_enabled.setter
-    def learning_enabled(self, value:bool):
-
-        self._learning_enabled = value
-        # Enable learning for RecurrentTransferMechanism's learning_mechanism
-        if self.learning_mechanism is not None:
-            self.learning_mechanism.learning_enabled = value
-        # If RecurrentTransferMechanism has no LearningMechanism, warn and then ignore attempt to set learning_enabled
-        elif value is True:
-            warnings.warn("Learning cannot be enabled for {} because it has no {}".
-                  format(self.name, LearningMechanism.__name__))
-            return
 
     # IMPLEMENTATION NOTE:  THIS SHOULD BE MOVED TO COMPOSITION ONCE THAT IS IMPLEMENTED
     @beartype
@@ -1203,8 +1186,7 @@ class RecurrentTransferMechanism(TransferMechanism):
                                                                        )
 
         self.learning_projection = self.learning_mechanism.output_ports[LEARNING_SIGNAL].efferents[0]
-        if self.learning_mechanism is None:
-            self.learning_enabled = False
+        self.parameters.learning_enabled._set(True, context)
 
     def _execute(self, variable=None, context=None, runtime_params=None):
 
