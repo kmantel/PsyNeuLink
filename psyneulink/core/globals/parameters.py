@@ -311,6 +311,7 @@ import itertools
 import logging
 import types
 import typing
+import warnings
 import weakref
 
 import toposort
@@ -1913,6 +1914,11 @@ class SharedParameter(Parameter):
                 try:
                     return self.source._set(value, context)
                 except AttributeError:
+                    warnings.warn(
+                        "'{}' cannot be set currently because it is shared with {}.{} which is None".format(
+                            self.name, self._owner._owner, self.attribute_name
+                        )
+                    )
                     return None
 
             self.setter = setter

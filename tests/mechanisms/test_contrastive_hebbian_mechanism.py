@@ -128,7 +128,7 @@ class TestContrastiveHebbian:
                 matrix=[[0,-.5],[-.5,0]]
         )
 
-        regexp = r"Learning cannot be enabled for .* because it has no LearningMechanism"
+        regexp = r"'learning_enabled' cannot be set currently because it is shared with .* which is None"
         with pytest.warns(UserWarning, match=regexp):
             m.learning_enabled = True
 
