@@ -78,6 +78,20 @@ json_results_parametrization = [
         False
     ),
     ('model_backprop.py', 'comp', '{a: [1, 2, 3]}', False),
+    (
+        'model_nback_dropout.py',
+        'FFWMGraph',
+        '{MatMul_6_passthrough_origin: np.ones_like(MatMul_6_passthrough_origin.defaults.variable),'
+        + 'Gather_9: embed_bias_weight[0]}',
+        True,
+    ),
+    (
+        'model_nback_dropout.py',
+        'FFWMGraph',
+        '{MatMul_6_passthrough_origin: np.ones_like(MatMul_6_passthrough_origin.defaults.variable),'
+        + 'Gather_9: embed_bias_weight[0]}',
+        False,
+    )
 ]
 
 
