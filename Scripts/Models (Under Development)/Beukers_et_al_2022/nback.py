@@ -827,7 +827,6 @@ def train_network(network:AutodiffComposition,
                   # execution_mode=ExecutionMode.LLVMRun
                   # execution_mode=ExecutionMode.Python
                   execution_mode=ExecutionMode.PyTorch,
-                  context=context
                   )
     stop_time = timeit.default_timer()
     print(f"training of '{network.name}' done")
@@ -881,11 +880,10 @@ def network_test(network:AutodiffComposition,
     # # FIX: COMMENT OUT TO TEST TRAINING LOSS FROM WEIGHTS JUST TRAINED W/O LOADING FROM DISK
     if load_weights_from:
         print(f"Loading weights for '{FFN_COMPOSITION}' from {load_weights_from}...")
-        network.load(filename=load_weights_from, context=context)
+        network.load(filename=load_weights_from)
 
     network.run(inputs=test_set[INPUTS],
                 # report_progress=ReportProgress.ON,
-                context=context
                 )
 
     if ANALYZE_RESULTS:
@@ -1144,7 +1142,6 @@ if __name__ == '__main__':
 
     if TRAIN_FFN:
         saved_weights = train_network(nback_model.nodes[FFN_COMPOSITION],
-                                      context=context,
                                       save_weights_to=weights_path,
                                       )
 
