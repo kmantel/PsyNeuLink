@@ -247,6 +247,13 @@ def test_mdf_equivalence(filename, composition_name, input_dict, simple_edge_for
     json_filename = filename.replace('.py', '.json')
     pnl.write_json_file(eval(composition_name), json_filename, simple_edge_format=simple_edge_format)
 
+    # allow input_dict to be specified as full string for names only
+    # present in script file
+    try:
+        input_dict = eval(input_dict)
+    except TypeError:
+        pass
+
     m = load_mdf(json_filename)
     eg = ee.EvaluableGraph(m.graphs[0], verbose=True)
     eg.evaluate(initializer={f'{node}_InputPort_0': i for node, i in input_dict.items()})
