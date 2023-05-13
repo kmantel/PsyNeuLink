@@ -2353,6 +2353,39 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     skip_log=True,
                 )
 
+    def _traverse_dependent_components(
+        self, apply_function=print, *fargs, component_filter=None, **fkwargs
+    ):
+        """
+        traverses tree of component dependencies implied by
+        self._dependent_components, calling
+        *apply_function*(<component>, *fargs, **fkwargs) on each
+        component with *fargs* and *fkwargs*, optionally filtered by
+        *component_filter*
+
+        Args:
+            apply_function: function to apply to each traversed
+                component. Defaults to print.
+            component_filter: traversal does not proceed if
+                component_filter(<component>) is False. Argument is
+                passed to python filter builtin. Defaults to None.
+        Returns:
+            set of components visited
+        """
+        visited = set([self])
+
+        def _traverse(cur):
+            if component_filter is None or component_filter(cur):
+                apply_function(cur, *fargs, **fkwargs)
+
+            for next_comp in cur._dependent_components:
+                if next_comp not in visited:
+                    visited.add(next_comp)
+                    _traverse(next_comp)
+
+        _traverse(self)
+        return visited
+
     def _initialize_from_context(self, context, base_context=Context(execution_id=None), override=True, visited=None):
         if context.execution_id is base_context.execution_id:
             return
@@ -2379,6 +2412,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             if param.setter is not None:
                 param._initialize_from_context(context, base_context, override)
 
+    # NOTE: This method may be rewritten with _traverse_dependent_components
     def _delete_contexts(self, *contexts, check_simulation_storage=False, visited=None):
         if visited is None:
             visited = set()
@@ -2393,6 +2427,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 for context in contexts:
                     param.delete(context)
 
+    # NOTE: This method may be rewritten with _traverse_dependent_components
     def _set_all_parameter_properties_recursively(self, visited=None, **kwargs):
         if visited is None:
             visited = set()
