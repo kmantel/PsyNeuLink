@@ -12025,14 +12025,14 @@ _
     def _initialize_as_agent_rep(self, context, base_context, alt_controller=None):
         assert self.controller is None or alt_controller is None
 
-        _initialized = set()  # avoid reinitializing shared dependencies below
-        self._initialize_from_context(
-            context, base_context=base_context, override=True, visited=_initialized
+        # avoid reinitializing shared dependencies below
+        initialized = self._initialize_from_context(
+            context, base_context=base_context, override=True
         )
         if alt_controller is not None:
             # evaluation will be done with a controller from another composition
             alt_controller._initialize_from_context(
-                context, base_context=base_context, override=True, visited=_initialized
+                context, base_context=base_context, override=True, component_filter=lambda c: c not in initialized
             )
 
     def _clean_up_as_agent_rep(self, context, alt_controller=None):

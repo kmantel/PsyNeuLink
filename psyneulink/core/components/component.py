@@ -2386,31 +2386,32 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         _traverse(self)
         return visited
 
-    def _initialize_from_context(self, context, base_context=Context(execution_id=None), override=True, visited=None):
+    def _initialize_from_context(
+        self, context, base_context=Context(execution_id=None), override=True, component_filter=None
+    ):
+        def _copy_parameters(comp):
+            non_alias_params = [
+                p for p in comp.stateful_parameters
+                if not isinstance(p, (ParameterAlias, SharedParameter))
+            ]
+            for param in non_alias_params:
+                if param.setter is None:
+                    param._initialize_from_context(context, base_context, override)
+
+            # Attempt to initialize any params with setters (some params
+            # with setters may depend on the initialization of other params).
+            # This pushes the problem down one level so that if there
+            # are two such that they depend on each other, it will still
+            # fail. in this case, it is best to resolve the problem in
+            # the setter with a default initialization value
+            for param in non_alias_params:
+                if param.setter is not None:
+                    param._initialize_from_context(context, base_context, override)
+
         if context.execution_id is base_context.execution_id:
             return
 
-        if visited is None:
-            visited = set()
-
-        for comp in self._dependent_components:
-            if comp not in visited:
-                visited.add(comp)
-                comp._initialize_from_context(context, base_context, override, visited=visited)
-
-        non_alias_params = [p for p in self.stateful_parameters if not isinstance(p, (ParameterAlias, SharedParameter))]
-        for param in non_alias_params:
-            if param.setter is None:
-                param._initialize_from_context(context, base_context, override)
-
-        # attempt to initialize any params with setters (some params with setters may depend on the
-        # initialization of other params)
-        # this pushes the problem down one level so that if there are two such that they depend on each other,
-        # it will still fail. in this case, it is best to resolve the problem in the setter with a default
-        # initialization value
-        for param in non_alias_params:
-            if param.setter is not None:
-                param._initialize_from_context(context, base_context, override)
+        return self._traverse_dependent_components(_copy_parameters, component_filter=component_filter)
 
     # NOTE: This method may be rewritten with _traverse_dependent_components
     def _delete_contexts(self, *contexts, check_simulation_storage=False, visited=None):
