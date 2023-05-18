@@ -10119,6 +10119,7 @@ _
             self._initialize_from_context(context, base_context, override=False)
 
         context.composition = self
+        print(f'{self}.run in {context.execution_id}')
 
         if initialize_cycle_values is not None:
             self.initialize(values=initialize_cycle_values, include_unspecified_nodes=False, context=context)
@@ -10548,6 +10549,8 @@ _
                         f'A reference to {target.name}, with which you can create the needed projection, can be found '
                         f'as the target attribute of the relevant pathway in {comp.name}.pathways. '
                     )
+
+        print(f'{self}.learn (run_learning) in {context.execution_id}')
 
         result = runner.run_learning(
             inputs=inputs,

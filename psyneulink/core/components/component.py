@@ -4134,6 +4134,50 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         """
         return {'function', 'value', 'execution_count', 'is_finished_flag', 'num_executions', 'num_executions_before_finished'}
 
+    def print_all_values(self):
+        import pprint
+        from psyneulink.core.globals.mdf import _stringify_simple_np_array
+
+        try:
+            owner = self.owner
+        except AttributeError:
+            owner_str = ''
+        else:
+            if isinstance(owner, Parameter):
+                owner_str = f'owner: Parameter "{owner.name}" of {owner._owner._owner}'
+            else:
+                owner_str = f'owner: {self.owner}'
+
+        print(self, owner_str)
+
+        def _try_stringify_arr(obj):
+            if isinstance(obj, np.ndarray):
+                try:
+                    res = _stringify_simple_np_array(obj)
+                except AttributeError:
+                    pass
+                else:
+                    if res is not None:
+                        return res
+            return obj
+
+        for p in sorted(self.parameters, key=lambda o: o.name):
+            vals = copy.copy(p.values)
+            for k, v in vals.items():
+                if isinstance(v, list) and all(isinstance(i, np.ndarray) for i in v):
+                    new_v = []
+                    for i in range(len(v)):
+                        new_v.append(_try_stringify_arr(v[i]))
+                    vals[k] = new_v
+                else:
+                    vals[k] = _try_stringify_arr(v)
+
+            print('\t', p.name)
+            print('\t\t', pprint.pformat(vals))
+
+        for c in sorted(self._dependent_components, key=lambda o: o.name):
+            c.print_all_values()
+
 
 COMPONENT_BASE_CLASS = Component
 

@@ -495,22 +495,29 @@ class AutodiffComposition(Composition):
 
         curr_tensor_inputs = {}
         curr_tensor_targets = {}
-        for component in inputs.keys():
+        print('inputs')
+        for component in sorted(inputs.keys()):
             input = inputs[component][0]
             curr_tensor_inputs[component] = torch.tensor(input, device=self.device).double()
-        for component in targets.keys():
+            print(component, input, curr_tensor_inputs[component])
+        print('targets')
+        for component in sorted(targets.keys()):
             target = targets[component][0]
             curr_tensor_targets[component] = torch.tensor(target, device=self.device).double()
+            print(component, target, curr_tensor_targets[component])
 
         # do forward computation on current inputs
         curr_tensor_outputs = self.parameters.pytorch_representation._get(context).forward(curr_tensor_inputs,
                                                                                            context,
                                                                                            )
+        print('curr_tensor_outputs', curr_tensor_outputs)
+        print('curr_tensor_targets', curr_tensor_targets)
 
         for component in curr_tensor_outputs.keys():
             # possibly add custom loss option, which is a loss function that takes many args
             # (outputs, targets, weights, and more) and returns a scalar
             new_loss = self.loss(curr_tensor_outputs[component], curr_tensor_targets[component])
+            print('new loss', new_loss)
             tracked_loss += new_loss
 
         outputs = []
@@ -537,10 +544,13 @@ class AutodiffComposition(Composition):
         optimizer.zero_grad()
 
         tracked_loss = self.parameters.tracked_loss._get(context=context) / self.parameters.tracked_loss_count._get(context=context)
+        print('tracked loss pre', tracked_loss)
         if self.force_no_retain_graph:
             tracked_loss.backward(retain_graph=False)
         else:
             tracked_loss.backward(retain_graph=True)
+        print('tracked loss post', tracked_loss)
+
         self.parameters.losses._get(context=context).append(tracked_loss.detach().cpu().numpy()[0])
         self.parameters.tracked_loss._set(torch.zeros(1, device=self.device).double(), context=context, skip_history=True, skip_log=True)
         self.parameters.tracked_loss_count._set(0, context=context, skip_history=True, skip_log=True)
@@ -612,6 +622,17 @@ class AutodiffComposition(Composition):
             if execution_mode == pnlvm.ExecutionMode.PyTorch:
                 kwargs['execution_mode'] = pnlvm.ExecutionMode.Python
 
+        try:
+            ctx = kwargs['context']
+        except KeyError:
+            ctx = 'unspecified'
+        else:
+            try:
+                ctx = ctx.execution_id
+            except AttributeError:
+                pass
+
+        print(f'{self} autodiff.learn in {ctx}')
         return super().learn(*args, **kwargs)
 
     @handle_external_context()
@@ -737,6 +758,8 @@ class AutodiffComposition(Composition):
         """
         error_msg = f" (for saving weight matrices for '{self.name}') is not a legal path."
 
+        print(f'SAVING to {context.execution_id}')
+
         if path:
             try:
                 path = Path(path)
@@ -792,6 +815,8 @@ class AutodiffComposition(Composition):
            `PyTorch state_dict <https://pytorch.org/tutorials/beginner/saving_loading_models.html>`_ format.
         """
         error_msg = f" (for loading weight matrices for '{self.name}') is not a legal path."
+
+        print(f'LOADING to {context.execution_id}')
         if path:
             if not isinstance(path,Path):
                 raise AutodiffCompositionError(f"'{path}'{error_msg}")

@@ -188,6 +188,21 @@ class PNLJSONEncoder(json.JSONEncoder):
             return str(o)
 
 
+def _stringify_simple_np_array(arr):
+    if (arr == 0).all():
+        return f"numpy.zeros({arr.shape}, dtype='{arr.dtype}')"
+    elif (arr == 1).all():
+        return f"numpy.ones({arr.shape}, dtype={arr.dtype}')"
+    else:
+        try:
+            if all([dim == arr.shape[0] for dim in arr.shape]):
+                if (arr == numpy.identity(arr.shape[0])).all():
+                    return f"numpy.identity({arr.shape[0]}, dtype='{arr.dtype}')"
+        except IndexError:
+            pass
+    return None
+
+
 def _get_variable_parameter_name(obj):
     try:
         if obj.parameters.variable.mdf_name is not None:

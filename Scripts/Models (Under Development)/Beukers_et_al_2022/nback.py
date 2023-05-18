@@ -182,18 +182,18 @@ ANIMATE = False # {UNIT:EXECUTION_SET} # Specifies whether to generate animation
 
 # Fixed (structural) parameters:
 MAX_NBACK_LEVELS = 3
-NUM_STIM = 8 # number of different stimuli in stimulus set -  QUESTION: WHY ISN"T THIS EQUAL TO STIM_SIZE OR VICE VERSA?
+NUM_STIM = 2 # number of different stimuli in stimulus set -  QUESTION: WHY ISN"T THIS EQUAL TO STIM_SIZE OR VICE VERSA?
 FFN_TRANSFER_FUNCTION = ReLU
 
 # Constructor parameters:  (values are from nback-paper)
-STIM_SIZE = 8 # length of stimulus vector
-CONTEXT_SIZE = 25 # length of context vector
+STIM_SIZE = 2 # length of stimulus vector
+CONTEXT_SIZE = 5 # length of context vector
 HIDDEN_SIZE = STIM_SIZE * 4 # dimension of hidden units in ff
 NBACK_LEVELS = [2,3] # Currently restricted to these
 NUM_NBACK_LEVELS = len(NBACK_LEVELS)
 CONTEXT_DRIFT_NOISE = 0.0  # noise used by DriftOnASphereIntegrator (function of Context mech)
 RANDOM_WEIGHTS_INITIALIZATION=RandomMatrix(center=0.0, range=0.1)  # Matrix spec used to initialize all Projections
-DROPOUT_PROB = 0.05
+DROPOUT_PROB = 0.0
 RETRIEVAL_SOFTMAX_TEMP = 1 / 8 # express as gain # precision of retrieval process
 RETRIEVAL_HAZARD_RATE = 0.04 # rate of re=sampling of em following non-match determination in a pass through ffn
 RETRIEVAL_STIM_WEIGHT = .05 # weighting of stimulus field in retrieval from em
@@ -203,13 +203,13 @@ RETRIEVAL_CONTEXT_WEIGHT = 1 - RETRIEVAL_STIM_WEIGHT # weighting of context fiel
 # Training parameters:
 NUM_TRAINING_SETS_PER_EPOCH = 1
 MINIBATCH_SIZE=None
-NUM_EPOCHS= 500 # 6250 # 12500 # 20000  # nback-paper: 400,000 @ one trial per epoch = 6,250 @ 64 trials per epoch
+NUM_EPOCHS= 5 # 6250 # 12500 # 20000  # nback-paper: 400,000 @ one trial per epoch = 6,250 @ 64 trials per epoch
 FOILS_ALLOWED_BEFORE = False
 LEARNING_RATE=0.001  # nback-paper: .001
 
 # Execution parameters:
 CONTEXT_DRIFT_RATE=.1 # drift rate used for DriftOnASphereIntegrator (function of Context mech) on each trial
-NUM_TRIALS = 48 # number of stimuli presented in a trial sequence
+NUM_TRIALS = 4 # number of stimuli presented in a trial sequence
 
 # Names of Compositions and Mechanisms:
 NBACK_MODEL = "nback Model"
@@ -878,9 +878,11 @@ def network_test(network:AutodiffComposition,
                  distances_for_level[np.where(conditions_for_level==trial_type.name)].std()))
 
     # # FIX: COMMENT OUT TO TEST TRAINING LOSS FROM WEIGHTS JUST TRAINED W/O LOADING FROM DISK
-    if load_weights_from:
-        print(f"Loading weights for '{FFN_COMPOSITION}' from {load_weights_from}...")
-        network.load(filename=load_weights_from)
+    # if load_weights_from:
+    #     print(f"Loading weights for '{FFN_COMPOSITION}' from {load_weights_from}...")
+    #     network.load(filename=load_weights_from)
+
+    network.print_all_values()
 
     network.run(inputs=test_set[INPUTS],
                 # report_progress=ReportProgress.ON,
@@ -1133,23 +1135,37 @@ def _plot_results(response_and_trial_types, stats):
 
 # Only execute if called from command line (i.e., not on import)
 if __name__ == '__main__':
+    import torch
+    from psyneulink.core.globals.utilities import set_global_seed
+
+    seed = 0
+    np.random.seed(seed)
+    set_global_seed(seed)
+    torch.manual_seed(seed)
+    torch.use_deterministic_algorithms(True)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
     if CONSTRUCT_MODEL:
         nback_model = construct_model()
 
-    context = Context(source=ContextFlags.COMMAND_LINE)
+    context = Context(source=ContextFlags.COMMAND_LINE, execution_id=nback_model.nodes[FFN_COMPOSITION].default_execution_id)
     weights_filename = f'ffn.wts_nep_{NUM_EPOCHS}_lr_{str(LEARNING_RATE).split(".")[1]}.pnl'
     weights_path = os.path.join(data_save_dir, weights_filename)
 
     if TRAIN_FFN:
         saved_weights = train_network(nback_model.nodes[FFN_COMPOSITION],
                                       save_weights_to=weights_path,
+                                      context=context
                                       )
 
     if TEST_FFN:
         context = 'TEST'
         inputs, cxt_distances, targets, conditions, results, coded_responses, ce_loss, \
         trial_type_stats, stats = \
-            network_test(nback_model.nodes[FFN_COMPOSITION], load_weights_from = weights_path, context=context)
+            network_test(nback_model.nodes[FFN_COMPOSITION], load_weights_from = weights_path, context=None)
 
         headings = ['condition', 'inputs', 'target', 'context distance', 'results', 'coded response', 'ce loss']
         results = (headings,
@@ -1161,7 +1177,7 @@ if __name__ == '__main__':
         import csv
         threshold = .005
 
-        high_loss = [list(x) for x in [results[1][i] for i in range(64)] if x[6] > threshold]
+        high_loss = [list(x) for x in [results[1][i] for i in range(NUM_STIM * HIDDEN_SIZE)] if x[6] > threshold]
         for i in range(len(high_loss)):
             high_loss[i][6] = '{:.4f}'.format(high_loss[i][6])
         high_loss.insert(0,headings)
@@ -1171,7 +1187,7 @@ if __name__ == '__main__':
             write.writerows(high_loss)
         file.close()
 
-        low_loss = [list(x) for x in [results[1][i] for i in range(64)] if x[6] <= threshold]
+        low_loss = [list(x) for x in [results[1][i] for i in range(NUM_STIM * HIDDEN_SIZE)] if x[6] <= threshold]
         for i in range(len(low_loss)):
             low_loss[i][6] = '{:.4f}'.format(low_loss[i][6])
         low_loss.insert(0,headings)
@@ -1181,7 +1197,7 @@ if __name__ == '__main__':
             write.writerows(low_loss)
         file.close()
 
-        full_results = [list(x) for x in [results[1][i] for i in range(64)]]
+        full_results = [list(x) for x in [results[1][i] for i in range(NUM_STIM * HIDDEN_SIZE)]]
         for i in range(len(full_results)):
             full_results[i][6] = '{:.4f}'.format(full_results[i][6])
         full_results.insert(0,headings)
