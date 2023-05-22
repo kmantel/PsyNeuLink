@@ -11803,7 +11803,8 @@ _
         pass
 
     def _copy_learning_state(self, context, base_context):
-        for c in self.learning_components:
+        learning_projections = [p for p in self.projections if isinstance(p, LearningProjection)]
+        for c in self.learning_components + learning_projections:
             c._initialize_from_context(context, base_context)
 
     @handle_external_context(fallback_most_recent=True)
