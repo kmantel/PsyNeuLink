@@ -728,11 +728,11 @@ class Reduce(CombinationFunction):  # ------------------------------------------
         changes_shape = Parameter(True, stateful=False, loggable=False, pnl_internal=True)
 
         def _validate_scale(self, scale):
-            if scale is not None and not np.isscalar(scale):
+            if not is_numeric_scalar(scale):
                 return "scale must be a scalar"
 
         def _validate_offset(self, offset):
-            if offset is not None and not np.isscalar(offset):
+            if not is_numeric_scalar(offset):
                 return "vector offset is not supported"
 
 

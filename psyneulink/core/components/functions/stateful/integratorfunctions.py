@@ -53,7 +53,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.utilities import ValidParamSpecType, all_within_range, is_numeric_scalar, \
-    convert_all_elements_to_np_array, parse_valid_identifier, safe_len
+    convert_all_elements_to_np_array, extract_0d_array_item, parse_valid_identifier, safe_len
 
 __all__ = ['SimpleIntegrator', 'AdaptiveIntegrator', 'DriftDiffusionIntegrator', 'DriftOnASphereIntegrator',
            'OrnsteinUhlenbeckIntegrator', 'FitzHughNagumoIntegrator', 'AccumulatorIntegrator',
@@ -2985,6 +2985,11 @@ class DriftOnASphereIntegrator(IntegratorFunction):  # -------------------------
         )
 
         def _validate_dimension(self, dimension):
+            try:
+                dimension = extract_0d_array_item(dimension)
+            except ValueError:
+                pass
+
             if not isinstance(dimension, int) or dimension < 2:
                 return 'dimension must be an integer >= 2'
 
@@ -3071,7 +3076,7 @@ class DriftOnASphereIntegrator(IntegratorFunction):  # -------------------------
                     f"DriftOnASphereIntegrator requires noise parameter to be a float or float array.")
             if isinstance(noise, np.ndarray):
                 initializer_len = self.parameters.dimension.default_value - 1
-                if noise.ndim !=1 or len(noise) != initializer_len:
+                if noise.ndim > 1 or (noise.ndim == 1 and len(noise) != initializer_len):
                     owner_str = f"'of '{self.owner.name}" if self.owner else ""
                     raise FunctionError(f"'noise' parameter for {self.name}{owner_str} must be a list or 1d array of "
                                         f"length {initializer_len} (the value of the \'dimension\' parameter minus 1)")
