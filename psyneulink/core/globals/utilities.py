@@ -2070,19 +2070,19 @@ def get_function_sig_default_value(
 
 
 # np.isscalar returns true on non-numeric items
-def is_numeric_scalar(arr: np.ndarray) -> bool:
+def is_numeric_scalar(obj) -> bool:
     """
         Returns:
-            True if **arr** is a numpy ndarray containing a single
-            scalar value
+            True if **obj** is a numbers.Number or a numpy ndarray
+                containing a single numeric value
             False otherwise
     """
 
     try:
         # getting .item() and checking type is significantly slower
-        return arr.ndim == 0 and arr.dtype.kind in {'i', 'f'}
+        return obj.ndim == 0 and obj.dtype.kind in {'i', 'f'}
     except (AttributeError, ValueError):
-        return isinstance(arr, numbers.Number)
+        return isinstance(obj, numbers.Number)
 
 
 def extract_0d_array_item(arr: np.ndarray):
