@@ -3002,7 +3002,6 @@ class DriftOnASphereIntegrator(IntegratorFunction):  # -------------------------
             initializer_dim = self.dimension.default_value - 1
             if initializer.ndim != 1 or len(initializer) != initializer_dim:
                 initializer = np.random.random(initializer_dim)
-                self.initializer._set_default_value(initializer)
             return initializer
 
         def _parse_noise(self, noise):
