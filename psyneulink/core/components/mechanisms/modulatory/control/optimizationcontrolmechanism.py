@@ -2953,6 +2953,10 @@ class OptimizationControlMechanism(ControlMechanism):
 
     def _create_randomization_control_signal(self, context):
         num_estimates = self.parameters.num_estimates._get(context)
+        try:
+            num_estimates = extract_0d_array_item(num_estimates)
+        except ValueError:
+            pass
 
         if num_estimates:
             # must be SampleSpec in allocation_samples arg
