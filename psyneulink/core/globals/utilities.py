@@ -102,6 +102,7 @@ import collections
 import copy
 import inspect
 import logging
+import numbers
 import psyneulink
 import re
 import time
@@ -2068,6 +2069,7 @@ def get_function_sig_default_value(
         return inspect._empty
 
 
+# np.isscalar returns true on non-numeric items
 def is_numeric_scalar(arr: np.ndarray) -> bool:
     """
         Returns:
@@ -2080,7 +2082,7 @@ def is_numeric_scalar(arr: np.ndarray) -> bool:
         # getting .item() and checking type is significantly slower
         return arr.ndim == 0 and arr.dtype.kind in {'i', 'f'}
     except (AttributeError, ValueError):
-        return False
+        return isinstance(arr, numbers.Number)
 
 
 def extract_0d_array_item(arr: np.ndarray):
@@ -2089,11 +2091,14 @@ def extract_0d_array_item(arr: np.ndarray):
             the single item in **arr** if **arr** is a 0-dimensional
             numpy ndarray
     """
+    err_msg = f'{arr} is not a 0-dimensional numpy.ndarray'
     try:
         if arr.ndim == 0:
             return arr.item()
+        else:
+            raise ValueError(err_msg)
     except AttributeError as e:
-        raise ValueError(f'{arr} is not a 0-dimensional numpy.ndarray') from e
+        raise ValueError(err_msg) from e
 
 
 def extended_shape(arr: typing.Union[np.ndarray, list, tuple]) -> tuple:
