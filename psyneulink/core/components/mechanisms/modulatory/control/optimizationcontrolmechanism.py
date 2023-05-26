@@ -1966,7 +1966,7 @@ class OptimizationControlMechanism(ControlMechanism):
         # FIX: 11/3/21 :
         #    ADD CHECK IN _parse_state_feature_specs() THAT IF A NODE RATHER THAN InputPort IS SPECIFIED,
         #    ITS PRIMARY IS USED (SEE SCRATCH PAD FOR EXAMPLES)
-        if not self.state_feature_specs:
+        if self.state_feature_specs is None:
             # If agent_rep is CompositionFunctionApproximator, warn if no state_features specified.
             # Note: if agent rep is Composition, state_input_ports and any state_feature_function specified
             #       are assigned in _update_state_input_ports_for_controller.
