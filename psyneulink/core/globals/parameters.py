@@ -2360,5 +2360,7 @@ class ParametersBase(ParametersTemplate):
     def _parse(self, attr, value):
         try:
             return self._get_prefixed_method(parse=True, parameter_name=attr)(value)
-        except AttributeError:
+        except AttributeError as e:
+            if "No attribute '_parse_" not in str(e):
+                raise
             return value
