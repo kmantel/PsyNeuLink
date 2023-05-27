@@ -3009,11 +3009,6 @@ class DriftOnASphereIntegrator(IntegratorFunction):  # -------------------------
                 initializer = np.random.random(initializer_dim)
             return initializer
 
-        def _parse_noise(self, noise):
-            """Assign initial value as array of random values of length dimension-1"""
-            if isinstance(noise, list):
-                noise = np.array(noise)
-            return noise
 
     @check_user_specified
     @beartype
