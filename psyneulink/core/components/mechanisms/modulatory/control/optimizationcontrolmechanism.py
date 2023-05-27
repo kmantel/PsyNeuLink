@@ -1111,7 +1111,7 @@ from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import rename_instance_in_registry
 from psyneulink.core.globals.sampleiterator import SampleIterator, SampleSpec
-from psyneulink.core.globals.utilities import convert_to_list, ContentAddressableList, extract_0d_array_item, is_numeric
+from psyneulink.core.globals.utilities import convert_to_list, ContentAddressableList, extract_0d_array_item, is_numeric, object_has_single_value
 from psyneulink.core.llvm.debug import debug_env
 
 __all__ = [
@@ -2380,7 +2380,7 @@ class OptimizationControlMechanism(ControlMechanism):
         # SINGLE ITEM spec, SO APPLY TO ALL agent_rep_input_ports
         if (user_specs is None
                 or isinstance(user_specs, (str, tuple, InputPort, OutputPort, Mechanism, Composition))
-                or (is_numeric(user_specs) and (np.array(user_specs).ndim < 2))):
+                or (is_numeric(user_specs) and object_has_single_value(user_specs))):
             specs = [user_specs] * len(agent_rep_input_ports)
             # OK to assign here (rather than in _parse_secs()) since spec is intended for *all* state_input_ports
             self.parameters.state_feature_specs.set(specs, override=True)
@@ -2394,10 +2394,10 @@ class OptimizationControlMechanism(ControlMechanism):
         # - SHADOW_INPUTS dict (with list spec as its only entry): {SHADOW_INPUTS: {[spec, spec...]}}
         # Treat specs as sources of input to INPUT Nodes of agent_rep (in corresponding order):
         # Call _parse_specs to construct a regular dict using INPUT Nodes as keys and specs as values
-        elif isinstance(user_specs, list) or (isinstance(user_specs, dict) and SHADOW_INPUTS in user_specs):
-            if isinstance(user_specs, list):
+        elif isinstance(user_specs, (list, np.ndarray)) or (isinstance(user_specs, dict) and SHADOW_INPUTS in user_specs):
+            if isinstance(user_specs, (list, np.ndarray)):
                 num_missing_specs = len(agent_rep_input_ports) - len(self.state_feature_specs)
-                specs = user_specs + [self.state_feature_default] * num_missing_specs
+                specs = np.append(user_specs, [self.state_feature_default] * num_missing_specs)
                 spec_type = 'list'
             else:
                 # SHADOW_INPUTS spec:
