@@ -2990,17 +2990,14 @@ class DriftOnASphereIntegrator(IntegratorFunction):  # -------------------------
         # FIX: THIS SEEMS DUPLICATIVE OF DriftOnASphereIntegrator._validate_params() (THOUGH THAT GETS CAUGHT EARLIER)
         def _validate_initializer(self, initializer):
             initializer_len = self.dimension.default_value - 1
-            if (self.initializer._user_specified
-                    and (initializer.ndim != 1 or len(initializer) != initializer_len)):
+            if (initializer.ndim != 1 or len(initializer) != initializer_len):
                 return f"'initializer' must be a list or 1d array of length {initializer_len} " \
                        f"(the value of the \'dimension\' parameter minus 1)"
 
         def _parse_initializer(self, initializer):
             """Assign initial value as array of random values of length dimension-1"""
-            initializer_dim = self.dimension.default_value - 1
-            if initializer.ndim != 1 or len(initializer) != initializer_dim:
-                initializer = np.random.random(initializer_dim)
-                self.initializer._set_default_value(initializer)
+            if not self.initializer._user_specified and self.dimension._user_specified:
+                initializer = np.random.random(self.dimension.default_value - 1)
             return initializer
 
         def _parse_noise(self, noise):
@@ -3086,7 +3083,12 @@ class DriftOnASphereIntegrator(IntegratorFunction):  # -------------------------
         """Need to override this to manage mismatch in dimensionality of initializer vs. variable"""
 
         if not self.parameters.initializer._user_specified:
-            self._initialize_previous_value(self.parameters.initializer.get(context), context)
+            initializer_len = self.defaults.dimension - 1
+            assert len(self.parameters.initializer._get(context)) == initializer_len, f'{self.parameters.initializer._get(context)}     {initializer_len}'
+
+            initializer = np.random.random(self.defaults.dimension - 1)
+            self.parameters.initializer._set(initializer, context)
+            self._initialize_previous_value(initializer, context)
 
         # Remove initializer from self.initializers to manage mismatch in dimensionality of initializer vs. variable
         initializers = list(self.initializers)
