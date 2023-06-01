@@ -2427,7 +2427,6 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         random_draw = Parameter()
 
         def _parse_initializer(self, initializer):
-            initializer = np.array(initializer)
             if initializer.ndim > 1:
                 return np.atleast_1d(initializer.squeeze())
             else:
@@ -3003,7 +3002,6 @@ class DriftOnASphereIntegrator(IntegratorFunction):  # -------------------------
 
         def _parse_initializer(self, initializer):
             """Assign initial value as array of random values of length dimension-1"""
-            initializer = np.array(initializer)
             initializer_dim = self.dimension.default_value - 1
             if initializer.ndim != 1 or len(initializer) != initializer_dim:
                 initializer = np.random.random(initializer_dim)
@@ -3520,7 +3518,6 @@ class OrnsteinUhlenbeckIntegrator(IntegratorFunction):  # ----------------------
         )
 
         def _parse_initializer(self, initializer):
-            initializer = np.array(initializer)
             if initializer.ndim > 1:
                 return np.atleast_1d(initializer.squeeze())
             else:
