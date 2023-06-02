@@ -153,6 +153,8 @@ class PytorchMechanismWrapper():
 
     def __deepcopy__(self, memo):
         result = copy.copy(self)
+        assert result.value is None or isinstance(result.value, torch.Tensor), f'value {result.value}\tvalue type {type(result.value)}'
+
         try:
             result.value = copy.deepcopy(self.value.detach(), memo)
         except AttributeError:
