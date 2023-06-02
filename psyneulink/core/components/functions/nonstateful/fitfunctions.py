@@ -5,7 +5,8 @@ from scipy.interpolate import interpn
 from scipy.optimize import differential_evolution
 
 from psyneulink.core.globals import SampleIterator
-from psyneulink.core.globals.context import ContextFlags, handle_external_context
+from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
+from psyneulink.core.globals.parameters import SharedParameter
 from psyneulink.core.components.functions.nonstateful.optimizationfunctions import (
     OptimizationFunction,
     OptimizationFunctionError,
@@ -260,6 +261,8 @@ class PECOptimizationFunction(OptimizationFunction):
         **outcome_variable** over **num_estimates** and/or **num_trials** if either is greater than 1.
 
     """
+    class Parameters(OptimizationFunction.Parameters):
+        initial_seed = SharedParameter(attribute_name='owner')
 
     def __init__(
         self,
@@ -477,7 +480,7 @@ class PECOptimizationFunction(OptimizationFunction):
             f = self._make_objective_func(context=context)
 
             # Run the MLE optimization
-            results = self._fit(obj_func=f)
+            results = self._fit(obj_func=f, context=context)
 
             # Get the optimal function value and sample
             optimal_value = results["optimal_value"]
@@ -495,15 +498,16 @@ class PECOptimizationFunction(OptimizationFunction):
         self,
         obj_func: Callable,
         display_iter: bool = True,
+        context: Context = None,
     ):
         if self.method == "differential_evolution":
-            return self._fit_differential_evolution(obj_func, display_iter)
+            return self._fit_differential_evolution(obj_func, display_iter, context)
         elif self.method == "gridsearch":
             return self._fit_gridsearch(obj_func, display_iter)
         else:
             raise ValueError(f"Invalid optimization_function method: {self.method}")
 
-    def _fit_differential_evolution(self, obj_func: Callable, display_iter: bool = True,):
+    def _fit_differential_evolution(self, obj_func: Callable, display_iter: bool = True, context: Context = None):
         """
         Implementation of search using scipy's differential_evolution algorithm.
         """
@@ -512,7 +516,7 @@ class PECOptimizationFunction(OptimizationFunction):
 
         # Get a seed to pass to scipy for its search. Make this dependent on the seed of the
         # OCM
-        seed_for_scipy = self.owner.initial_seed
+        seed_for_scipy = self._get_current_parameter_value('initial_seed', context)
 
         direction = -1 if self.maximize else 1
         direction_str = "Maximizing" if self.maximize else "Minimizing"
