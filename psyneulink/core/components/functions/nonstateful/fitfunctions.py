@@ -516,7 +516,7 @@ class PECOptimizationFunction(OptimizationFunction):
 
         # Get a seed to pass to scipy for its search. Make this dependent on the seed of the
         # OCM
-        seed_for_scipy = self._get_current_parameter_value('initial_seed', context)
+        seed_for_scipy = self._get_current_parameter_value('initial_seed', context).item()
 
         direction = -1 if self.maximize else 1
         direction_str = "Maximizing" if self.maximize else "Minimizing"
