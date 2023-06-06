@@ -350,15 +350,7 @@ def _seed_setter(value, owning_component, context):
 def _random_state_getter(self, owning_component, context):
 
     seed_param = owning_component.parameters.seed
-    try:
-        is_modulated = seed_param.port.is_modulated(context)
-    except AttributeError:
-        is_modulated = False
-
-    if is_modulated:
-        seed_value = [int(owning_component._get_current_parameter_value(seed_param, context))]
-    else:
-        seed_value = [int(seed_param._get(context=context))]
+    seed_value = [int(seed_param._get(context=context))]
 
     if seed_value == [DEFAULT_SEED]:
         raise FunctionError(
