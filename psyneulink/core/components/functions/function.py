@@ -351,11 +351,11 @@ def _random_state_getter(self, owning_component, context):
 
     seed_param = owning_component.parameters.seed
     try:
-        is_modulated = seed_param.port.is_modulated(context)
+        has_modulation = seed_param.port.has_modulation(context)
     except AttributeError:
-        is_modulated = False
+        has_modulation = False
 
-    if is_modulated:
+    if has_modulation:
         seed_value = [int(owning_component._get_current_parameter_value(seed_param, context))]
     else:
         seed_value = [int(seed_param._get(context=context))]
