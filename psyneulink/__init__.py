@@ -35,6 +35,8 @@ _unit_registry.precision = 8  # TODO: remove when floating point issues resolved
 
 # set up python logging for modification by users or other packages
 # do before further imports so init messages are handled accordingly
+# NOTE: logging is currently not used much if at all, if plan to use it
+# more in the future, document for users how to enable/disable
 def _get_default_log_handler():
     default_formatter = _logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     stream_handler = _logging.StreamHandler()
@@ -67,8 +69,6 @@ def disable_python_logging(module: str = 'psyneulink', logger: _logging.Logger =
     set_python_log_level(_logging.CRITICAL + 1, module, logger)
 
 
-# NOTE: logging is currently not used much if at all, if plan to use it
-# more in the future, document for users how to enable/disable
 _logging_env = os.environ.get('PNL_LOGGING')
 if _logging_env:
     try:
