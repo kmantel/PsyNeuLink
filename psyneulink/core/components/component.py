@@ -1155,7 +1155,9 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # self.parameters here still references <class>.parameters, but
         # only flags are needed to add original parameter names
         for p in self.parameters:
-            if p.name not in parameter_values:
+            if p.constructor_argument is not None and p.constructor_argument != p.name:
+                if p.name in parameter_values and parameter_values[p.name] is not None:
+                    assert False
                 try:
                     parameter_values[p.name] = parameter_values[p.constructor_argument]
                 except KeyError:
