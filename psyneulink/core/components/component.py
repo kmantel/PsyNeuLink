@@ -1150,14 +1150,14 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 **function_params
             }
         else:
-            self._handle_illegal_kwargs(**parameter_values)
+            self._validate_arguments(parameter_values)
 
         # self.parameters here still references <class>.parameters, but
         # only flags are needed to add original parameter names
         for p in self.parameters:
             if p.constructor_argument is not None and p.constructor_argument != p.name:
                 if p.name in parameter_values and parameter_values[p.name] is not None:
-                    assert False
+                    assert False, p.name
                 try:
                     parameter_values[p.name] = parameter_values[p.constructor_argument]
                 except KeyError:
@@ -1713,7 +1713,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         return variable
 
-    def _handle_illegal_kwargs(self, **kwargs):
+    def _get_allowed_arguments(self):
         allowed_kwargs = self.standard_constructor_args.union(
             get_all_explicit_arguments(self.__class__, '__init__')
         )
@@ -1728,18 +1728,20 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             else:
                 allowed_kwargs.add(p.name)
 
-        illegal_args = [
+            if p.aliases is not None:
+                if isinstance(p.aliases, str):
+                    allowed_kwargs.add(p.aliases)
+                else:
+                    allowed_kwargs = allowed_kwargs.union(p.aliases)
+
+        return allowed_kwargs
+
+    def _get_illegal_arguments(self, **kwargs):
+        allowed_kwargs = self._get_allowed_arguments()
+        return {
             k for k in kwargs
             if k not in allowed_kwargs and k in self._user_specified_args
-        ]
-        if illegal_args:
-            plural = ''
-            if len(illegal_args) > 1:
-                plural = 's'
-            raise ComponentError(
-                f"Unrecognized argument{plural} in constructor for {self.name} "
-                f"(type: {self.__class__.__name__}): {repr(', '.join(illegal_args))}"
-            )
+        }
 
     # breaking self convention here because when storing the args,
     # "self" is often among them. To avoid needing to preprocess to
@@ -2023,6 +2025,32 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 self._validate_params(request_set=request_set,
                                       target_set=target_set,
                                       context=context)
+
+    def _validate_arguments(self, parameter_values):
+        def create_illegal_argument_error(illegal_arg_strs):
+            plural = 's' if len(illegal_arg_strs) > 1 else ''
+            base_err = f"Illegal argument{plural} in constructor (type: {type(self).__name__}):"
+            return ComponentError('\n\t'.join([base_err] + illegal_arg_strs), component=self)
+
+        illegal_passed_args = self._get_illegal_arguments(**parameter_values)
+
+        unused_constructor_args = {}
+        for p in self.parameters:
+            if p.name in illegal_passed_args:
+                assert p.constructor_argument is not None
+                unused_constructor_args[p.name] = p.constructor_argument
+
+        # raise constructor arg errors
+        if len(unused_constructor_args) > 0:
+            raise create_illegal_argument_error([
+                f"'{arg}': must use '{constr_arg}' instead"
+                for arg, constr_arg in unused_constructor_args.items()
+            ])
+
+        # raise generic illegal argument error
+        unknown_args = illegal_passed_args.difference(unused_constructor_args)
+        if len(unknown_args) > 0:
+            raise create_illegal_argument_error([f"'{a}'" for a in unknown_args])
 
     def _initialize_parameters(self, context=None, **param_defaults):
         from psyneulink.core.components.shellclasses import (

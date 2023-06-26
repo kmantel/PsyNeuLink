@@ -40,12 +40,15 @@ class TestComponent:
     def test_detection_of_illegal_arg_in_kwargs(self):
         with pytest.raises(pnl.ComponentError) as error_text:
             pnl.ProcessingMechanism(flim_flam=1)
-        assert "Unrecognized argument in constructor for ProcessingMechanism-0 (type: ProcessingMechanism): 'flim_flam'" in str(error_text)
+        assert "ProcessingMechanism-0: Illegal argument in constructor (type: ProcessingMechanism):" in str(error_text)
+        assert "'flim_flam'" in str(error_text)
 
     def test_detection_of_illegal_args_in_kwargs(self):
         with pytest.raises(pnl.ComponentError) as error_text:
             pnl.ProcessingMechanism(name='MY_MECH', flim_flam=1, grumblabble=2)
-        assert "Unrecognized arguments in constructor for MY_MECH (type: ProcessingMechanism): 'flim_flam, grumblabble'" in str(error_text)
+        assert "MY_MECH: Illegal arguments in constructor (type: ProcessingMechanism):" in str(error_text)
+        assert "'flim_flam'" in str(error_text)
+        assert "'grumblabble'" in str(error_text)
 
     def test_component_execution_counts_for_standalone_mechanism(self):
 
@@ -187,5 +190,6 @@ class TestConstructorArguments:
     def test_invalid_argument(self, cls_, argument_name, param_value, params_dict_entry):
         with pytest.raises(pnl.ComponentError) as err:
             cls_(**nest_dictionary({argument_name: param_value}, params_dict_entry))
-        assert 'Unrecognized argument in constructor' in str(err)
-        assert f"(type: {cls_.__name__}): '{argument_name}'" in str(err)
+        assert 'Illegal argument in constructor' in str(err)
+        assert cls_.__name__ in str(err)
+        assert f"'{argument_name}'" in str(err)
