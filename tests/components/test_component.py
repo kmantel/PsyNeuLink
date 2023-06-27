@@ -132,6 +132,7 @@ class TestConstructorArguments:
     class ComponentWithConstructorArg(pnl.Mechanism_Base):
         class Parameters(pnl.Mechanism_Base.Parameters):
             cca_param = pnl.Parameter('A', constructor_argument='cca_constr')
+            cca_param_with_alias = pnl.Parameter('A', constructor_argument='cca_constr_pwa', aliases=['a1'])
 
         def __init__(self, default_variable=None, **kwargs):
             super().__init__(default_variable=default_variable, **kwargs)
@@ -193,3 +194,26 @@ class TestConstructorArguments:
         assert 'Illegal argument in constructor' in str(err)
         assert cls_.__name__ in str(err)
         assert f"'{argument_name}'" in str(err)
+
+    @pytest.mark.parametrize(
+        'cls_, param_name, param_value, alias_name, alias_value',
+        [
+            (ComponentWithConstructorArg, 'cca_constr_pwa', 1, 'a1', 2),
+            (pnl.DriftDiffusionIntegrator, 'initializer', 1, 'starting_value', 2),
+        ]
+    )
+    @pytest.mark.parametrize('params_dict_entry', [NotImplemented, 'params'])
+    def test_conflicting_aliases(
+        self, cls_, param_name, param_value, alias_name, alias_value, params_dict_entry
+    ):
+        with pytest.raises(pnl.ComponentError) as err:
+            cls_(
+                **nest_dictionary(
+                    {param_name: param_value, alias_name: alias_value}, params_dict_entry
+                )
+            )
+
+        assert 'Multiple values' in str(err)
+        assert f'{param_name}: {param_value}' in str(err)
+        assert f'{alias_name}: {alias_value}' in str(err)
+        assert f'{alias_name} is an alias of' in str(err)

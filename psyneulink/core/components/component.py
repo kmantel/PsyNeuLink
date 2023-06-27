@@ -2032,13 +2032,31 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             base_err = f"Illegal argument{plural} in constructor (type: {type(self).__name__}):"
             return ComponentError('\n\t'.join([base_err] + illegal_arg_strs), component=self)
 
+        def alias_conflicts(alias, source_name):
+            try:
+                a_val = parameter_values[alias.name]
+                s_val = parameter_values[source_name]
+            except KeyError:
+                return False
+            return a_val is not s_val and a_val is not None and s_val is not None
+
         illegal_passed_args = self._get_illegal_arguments(**parameter_values)
 
+        conflicting_aliases = []
         unused_constructor_args = {}
         for p in self.parameters:
             if p.name in illegal_passed_args:
                 assert p.constructor_argument is not None
                 unused_constructor_args[p.name] = p.constructor_argument
+
+            if isinstance(p, ParameterAlias):
+                if p.source.constructor_argument is None:
+                    passed_name = p.source.name
+                else:
+                    passed_name = p.source.constructor_argument
+
+                if alias_conflicts(p, passed_name):
+                    conflicting_aliases.append((p.source.name, passed_name, p.name))
 
         # raise constructor arg errors
         if len(unused_constructor_args) > 0:
@@ -2051,6 +2069,19 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         unknown_args = illegal_passed_args.difference(unused_constructor_args)
         if len(unknown_args) > 0:
             raise create_illegal_argument_error([f"'{a}'" for a in unknown_args])
+
+        # raise alias conflict error
+        # can standardize these with above error, but leaving for now for consistency
+        if len(conflicting_aliases) > 0:
+            source, passed, alias = conflicting_aliases[0]
+            constr_arg_str = f' ({passed})' if source != passed else ''
+            raise ComponentError(
+                f"Multiple values ({alias}: {parameter_values[alias]}"
+                f"\t{passed}: {parameter_values[passed]}) "
+                f"assigned to identical Parameters. {alias} is an alias "
+                f"of {source}{constr_arg_str}",
+                component=self,
+            )
 
     def _initialize_parameters(self, context=None, **param_defaults):
         from psyneulink.core.components.shellclasses import (
@@ -2132,18 +2163,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             )
 
         for p in filter(lambda x: isinstance(x, ParameterAlias), self.parameters):
-            if _is_user_specified(p):
-                if _is_user_specified(p.source):
-                    if param_defaults[p.name] is not param_defaults[p.source.name]:
-                        raise ComponentError(
-                            f"Multiple values ({p.name}: {param_defaults[p.name]}"
-                            f"\t{p.source.name}: {param_defaults[p.source.name]}) "
-                            f"assigned to identical Parameters. {p.name} is an alias "
-                            f"of {p.source.name}",
-                            component=self,
-                        )
-                else:
-                    param_defaults[p.source.name] = param_defaults[p.name]
+            if _is_user_specified(p) and not _is_user_specified(p.source):
+                param_defaults[p.source.name] = param_defaults[p.name]
 
         for p in filter(lambda x: not isinstance(x, (ParameterAlias, SharedParameter)), self.parameters._in_dependency_order):
             # copy spec so it is not overwritten later
