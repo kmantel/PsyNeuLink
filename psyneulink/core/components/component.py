@@ -2094,13 +2094,14 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
             if isinstance(p, ParameterAlias):
                 assert p.source is not None
-                # if alias conflicts with source, error thrown in _validate_arguments
-                try:
-                    parameter_values[p.source.name] = parameter_values[p.name]
-                except KeyError:
-                    pass
-                else:
-                    self._user_specified_args[p.source.name] = f'FROM_{p.name}'
+                if p.source.name not in self._user_specified_args:
+                    # if alias conflicts with source, error thrown in _validate_arguments
+                    try:
+                        parameter_values[p.source.name] = parameter_values[p.name]
+                    except KeyError:
+                        pass
+                    else:
+                        self._user_specified_args[p.source.name] = f'FROM_{p.name}'
 
         return parameter_values, function_params
 
