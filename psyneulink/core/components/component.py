@@ -1996,27 +1996,29 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             return ComponentError('\n\t'.join([base_err] + illegal_arg_strs), component=self)
 
         def alias_conflicts(alias, source_name):
+            # some aliases share name with constructor_argument
+            if alias.name == source_name:
+                return False
+
             try:
                 a_val = parameter_values[alias.name]
                 s_val = parameter_values[source_name]
             except KeyError:
                 return False
 
-            if a_val is not None and s_val is not None:
-                return True
-
-            if alias.name not in self._user_specified_args or source_name not in self._user_specified_args:
+            if safe_equals(a_val, s_val):
                 return False
 
-            a_specify_none = getattr(self.parameters, alias.name).specify_none
-            s_specify_none = getattr(self.parameters, source_name).specify_none
-
-            # source not None and a is a specified-None
-            if a_val is None:
-                return a_specify_none
-            else:
-                assert s_val is None
-                return s_specify_none
+            # both specified, not equal -> conflict
+            alias_specified = (
+                alias.name in self._user_specified_args
+                and (a_val is not None or getattr(self.parameters, alias.name).specify_none)
+            )
+            source_specified = (
+                source_name in self._user_specified_args
+                and (s_val is not None or getattr(self.parameters, source_name).specify_none)
+            )
+            return alias_specified and source_specified
 
         illegal_passed_args = self._get_illegal_arguments(**parameter_values)
 
