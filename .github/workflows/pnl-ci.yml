@@ -173,13 +173,21 @@ jobs:
 
     - name: Test with pytest
       timeout-minutes: 180
-      run: pytest --durations=0 --junit-xml=tests_out.xml --verbosity=0 -n auto ${{ matrix.extra-args }}
+      run: pytest --durations=0 --junit-xml=tests_out.xml --verbosity=0 -n auto ${{ matrix.extra-args }} --profile
 
     - name: Upload test results
       uses: actions/upload-artifact@v3
       with:
         name: test-results-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}
         path: tests_out.xml
+        retention-days: 5
+      if: (success() || failure()) && ! contains(matrix.extra-args, 'forked')
+
+    - name: Upload profile
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-profile-combined-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}
+        path: prof/combined.prof
         retention-days: 5
       if: (success() || failure()) && ! contains(matrix.extra-args, 'forked')
 
