@@ -19,6 +19,7 @@ If you have trouble installing PsyNeuLink, run into any bugs, or have suggestion
 please contact psyneulinkhelp@princeton.edu.
 """
 
+import os
 import logging as _logging
 
 import numpy as _numpy
@@ -31,6 +32,66 @@ _unit_registry = _pint.get_application_registry()
 _pint.set_application_registry(_unit_registry)
 _unit_registry.precision = 8  # TODO: remove when floating point issues resolved
 
+
+# set up python logging for modification by users or other packages
+# do before further imports so init messages are handled accordingly
+def _get_default_log_handler():
+    default_formatter = _logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    stream_handler = _logging.StreamHandler()
+    stream_handler.setFormatter(default_formatter)
+    return stream_handler
+
+
+def set_python_log_level(
+    level: int = _logging.NOTSET, module: str = 'psyneulink', logger: _logging.Logger = None
+):
+    """
+    Set python log level of **logger** (or logger for **module**) and
+    all its handlers to **level**
+    """
+    if logger is None:
+        logger = _logging.getLogger(module)
+    logger.setLevel(level)
+
+    if len(logger.handlers) == 0:
+        logger.addHandler(_get_default_log_handler())
+
+    for h in logger.handlers:
+        h.setLevel(level)
+
+
+def disable_python_logging(module: str = 'psyneulink', logger: _logging.Logger = None):
+    """
+    Disable python logging of **logger** (or logger for **module**)
+    """
+    set_python_log_level(_logging.CRITICAL + 1, module, logger)
+
+
+# NOTE: logging is currently not used much if at all, if plan to use it
+# more in the future, document for users how to enable/disable
+_logging_env = os.environ.get('PNL_PY_LOGGING')
+if _logging_env:
+    try:
+        _logging_env = int(_logging_env)
+    except (TypeError, ValueError):
+        _logging_env = _logging_env.upper()
+
+    if _logging_env == 0:
+        disable_python_logging()
+    else:
+        if _logging_env == 1:
+            level = _logging.DEBUG
+        else:
+            try:
+                level = getattr(_logging, _logging_env)
+            except AttributeError as e:
+                raise ValueError(f'No logger level {_logging_env}') from e
+            except TypeError:
+                level = _logging_env
+
+        set_python_log_level(level)
+
+
 # starred imports to allow user imports from top level
 from . import core  # noqa: E402
 from . import library  # noqa: E402
@@ -41,7 +102,7 @@ from .library import *  # noqa: E402
 
 
 _pnl_global_names = [
-    'primary_registries', 'System', 'Process', '_unit_registry',
+    'primary_registries', 'System', 'Process', '_unit_registry', 'set_python_log_level', 'disable_python_logging',
 ]
 # flag when run from pytest (see conftest.py)
 _called_from_pytest = False
@@ -57,30 +118,6 @@ del get_versions
 # suppress numpy overflow and underflow errors
 _numpy.seterr(over='ignore', under='ignore')
 
-
-# https://stackoverflow.com/a/17276457/3131666
-class _Whitelist(_logging.Filter):
-    def __init__(self, *whitelist):
-        self.whitelist = [_logging.Filter(name) for name in whitelist]
-
-    def filter(self, record):
-        return any(f.filter(record) for f in self.whitelist)
-
-
-class _Blacklist(_Whitelist):
-    def filter(self, record):
-        return not _Whitelist.filter(self, record)
-
-
-_logging.basicConfig(
-    level=_logging.ERROR,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-for handler in _logging.root.handlers:
-    handler.addFilter(_Blacklist(
-        'psyneulink.core.scheduling.scheduler',
-        'psyneulink.core.scheduling.condition',
-    ))
 
 primary_registries = [
     CompositionRegistry,
@@ -109,3 +146,6 @@ def Process(*args, **kwars):
 def show_warning_sys_and_proc_warning():
     raise ComponentError(f"'System' and 'Process' are no longer supported in PsyNeuLink; "
                          f"use 'Composition' and/or 'Pathway' instead")
+
+
+del os
