@@ -10,7 +10,7 @@ import sys
 import psyneulink
 from psyneulink import clear_registry, primary_registries, torch_available
 from psyneulink.core import llvm as pnlvm
-from psyneulink.core.globals.utilities import set_global_seed
+from psyneulink.core.globals.utilities import is_numeric, set_global_seed
 
 try:
     import torch
