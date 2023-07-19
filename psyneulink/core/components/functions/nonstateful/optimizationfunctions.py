@@ -439,11 +439,10 @@ class OptimizationFunction(Function_Base):
         if search_termination_function is None:
             self._unspecified_args.append(SEARCH_TERMINATION_FUNCTION)
 
-        self.randomization_dimension = randomization_dimension
-        if self.search_space:
+        if search_space:
             # Make randomization dimension of search_space last for standardization of treatment
-            self.search_space.append(self.search_space.pop(self.search_space.index(self.randomization_dimension)))
-            self.randomization_dimension = len(self.search_space)
+            search_space.append(search_space.pop(search_space.index(randomization_dimension)))
+            randomization_dimension = len(search_space)
 
         super().__init__(
             default_variable=default_variable,
@@ -451,6 +450,7 @@ class OptimizationFunction(Function_Base):
             save_values=save_values,
             max_iterations=max_iterations,
             search_space=search_space,
+            randomization_dimension=randomization_dimension,
             objective_function=objective_function,
             aggregation_function=aggregation_function,
             search_function=search_function,
