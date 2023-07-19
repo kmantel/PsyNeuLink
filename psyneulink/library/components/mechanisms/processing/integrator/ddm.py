@@ -750,6 +750,9 @@ class DDM(ProcessingMechanism):
             structural=True,
         )
 
+        # Set maximum executions absurdly large to avoid early termination
+        max_executions_before_finished = Parameter(sys.maxsize, modulable=False, pnl_internal=True)
+
     standard_output_ports =[{NAME: DECISION_VARIABLE,},           # Upper or lower threshold for Analtyic function
                             {NAME: RESPONSE_TIME},                # TIME_STEP within TRIAL for Integrator function
                             {NAME: PROBABILITY_UPPER_THRESHOLD},  # Accuracy (TRIAL mode only)
@@ -869,9 +872,6 @@ class DDM(ProcessingMechanism):
         # on each new trial.
         if 'reset_stateful_function_when' not in kwargs:
             kwargs['reset_stateful_function_when'] = AtTrialStart()
-
-        # Set maximum executions absurdly large to avoid early termination
-        self.max_executions_before_finished = sys.maxsize
 
         super(DDM, self).__init__(default_variable=default_variable,
                                   seed=seed,

@@ -338,9 +338,6 @@ class PECOptimizationFunction(OptimizationFunction):
         # Set num_iterations to a default value of 1, this will be reset in reset() based on the search space
         self.num_iterations = 1
 
-        # Store max_iterations, this should be a common parameter for all optimization methods
-        self.max_iterations = max_iterations
-
         # A cached copy of our log-likelihood function. This can only be created after the function has been assigned
         # to a OptimizationControlMechanism under and ParameterEstimationComposition.
         self._ll_func = None
@@ -359,6 +356,7 @@ class PECOptimizationFunction(OptimizationFunction):
             search_space=search_space,
             save_samples=save_samples,
             save_values=save_values,
+            max_iterations=max_iterations,
             search_function=search_function,
             search_termination_function=search_termination_function,
             aggregation_function=None,
