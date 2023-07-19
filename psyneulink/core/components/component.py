@@ -653,7 +653,12 @@ def _get_parametervalue_attr(param):
 
 
 def make_parameter_property(param):
+    wrong_owner_err_msg = 'dot-notation called on {} but parameter belongs to {}'
+
     def getter(self):
+        owner = self.parameters._owner
+        assert owner is self, wrong_owner_err_msg.format(self, owner)
+
         p = getattr(self.parameters, param.name)
 
         if p.port is not None:
@@ -663,6 +668,9 @@ def make_parameter_property(param):
             return p._get(self.most_recent_context)
 
     def setter(self, value):
+        owner = self.parameters._owner
+        assert owner is self, wrong_owner_err_msg.format(self, owner)
+
         p = getattr(self.parameters, param.name)
         if p.port is not None:
             assert p.modulable
