@@ -265,7 +265,7 @@ ddi_termination_conds = [
 individual_functions_ddi_test_data = [
     (
         pnl.IntegratorMechanism,
-        pnl.DriftDiffusionIntegrator(rate=0.5, offset=1, non_decision_time=1, seed=0),
+        pnl.DriftDiffusionIntegrator(rate=0.5, offset=1, non_decision_time=2, seed=0),
         "{{A: {{'random_draw': {0} }} }}".format(get_onnx_fixed_noise_str('randomnormal', mean=0, scale=1, seed=0, shape=(1,)))
     ) + (x,)
     for x in ddi_termination_conds
