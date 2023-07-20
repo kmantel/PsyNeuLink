@@ -9,6 +9,8 @@ from psyneulink.core.components.functions.nonstateful.fitfunctions import (
     PECOptimizationFunction,
 )
 
+pytest.importorskip('fastkde', reason='fastkde not available')
+
 
 input_node_1 = pnl.ProcessingMechanism(size=1)
 input_node_2 = pnl.ProcessingMechanism(size=2)
