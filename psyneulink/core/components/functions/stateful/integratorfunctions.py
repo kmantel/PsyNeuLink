@@ -2659,7 +2659,7 @@ class DriftDiffusionIntegrator(IntegratorFunction):  # -------------------------
         return super()._assign_to_mdf_model(model, input_id)
 
     def as_expression(self):
-        return f'{parse_valid_identifier(self.name)}_value_result, previous_time'
+        return f'{parse_valid_identifier(self.name)}_value_result, previous_time + time_step_size'
 
 
 class DriftOnASphereIntegrator(IntegratorFunction):  # -----------------------------------------------------------------
