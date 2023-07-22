@@ -871,6 +871,10 @@ def copy_iterable_with_shared(obj, shared_types=None, memo=None):
     tuple_types = (tuple, set)
     all_types_using_recursion = dict_types + list_types + tuple_types
 
+    import functools
+    if isinstance(obj, (types.ModuleType, functools.partial)):
+        assert False, obj
+
     if isinstance(obj, dict_types):
         result = copy.copy(obj)
         del_keys = set()

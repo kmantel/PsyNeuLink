@@ -1707,6 +1707,9 @@ class Parameter(ParameterBase):
 
                 shared_types = (Component, ComponentsMeta, types.MethodType, types.ModuleType)
 
+                if isinstance(new_val, (types.ModuleType, functools.partial)):
+                    assert False, new_val
+
                 if isinstance(new_val, (dict, list)):
                     new_val = copy_iterable_with_shared(new_val, shared_types)
                 elif not isinstance(new_val, shared_types):
