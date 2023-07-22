@@ -537,7 +537,7 @@ from psyneulink.core.globals.preferences.preferenceset import \
 from psyneulink.core.globals.registry import register_category, _get_auto_name_prefix
 from psyneulink.core.globals.sampleiterator import SampleIterator
 from psyneulink.core.globals.utilities import \
-    ContentAddressableList, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
+    ContentAddressableList, UtilitiesError, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
     is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, \
     get_all_explicit_arguments, call_with_pruned_args, safe_equals, safe_len, parse_valid_identifier
 from psyneulink.core.scheduling.condition import Never
@@ -1090,6 +1090,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     name = None
 
     _deepcopy_shared_keys = frozenset([])
+    _deepcopy_in_parameter = False
 
     @check_user_specified
     def __init__(self,
@@ -2085,10 +2086,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     defaults[name] = value
 
         for k in defaults:
-            defaults[k] = copy_parameter_value(
-                defaults[k],
-                shared_types=shared_types
-            )
+            defaults[k] = copy_parameter_value(defaults[k])
 
         self.defaults = Defaults(owner=self, **defaults)
 
@@ -2115,7 +2113,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         for p in filter(lambda x: not isinstance(x, (ParameterAlias, SharedParameter)), self.parameters._in_dependency_order):
             # copy spec so it is not overwritten later
             # TODO: check if this is necessary
-            p.spec = copy_parameter_value(p.spec, shared_types=shared_types)
+            p.spec = copy_parameter_value(p.spec)
 
             # set default to None context to ensure it exists
             if (
@@ -2129,10 +2127,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                         if val.owner is not None:
                             val = copy.deepcopy(val)
                 else:
-                    val = copy_parameter_value(
-                        p.default_value,
-                        shared_types=shared_types
-                    )
+                    val = copy_parameter_value(p.default_value)
 
                 if isinstance(val, Function):
                     val.owner = self
@@ -4225,3 +4220,90 @@ class ParameterValue:
     @base.setter
     def base(self, value):
         self._parameter.set(value, self._owner.most_recent_context)
+
+
+_shared_component_types = {ComponentsMeta, types.MethodType}
+_dict_types = (dict, collections.UserDict)
+_list_types = (list, collections.UserList, collections.deque)
+_tuple_types = (tuple, set)
+_list_or_tuple_types = _list_types + _tuple_types
+_all_types_using_recursion = _dict_types + _list_types + _tuple_types
+
+
+def copy_iterable_with_shared_components(obj, is_shared_attr_name=None, memo=None):
+    if is_shared_attr_name is not None:
+        def is_shared(o):
+            return getattr(o, is_shared_attr_name, False)
+    else:
+        def is_shared(o):
+            return False
+
+    try:
+        return memo[id(obj)]
+    except KeyError:
+        pass
+    except TypeError:
+        memo = {}
+
+    def _copy_recurse(o, memo):
+        if isinstance(o, _dict_types):
+            result = copy.copy(o)
+            del_keys = set()
+            for (k, v) in o.items():
+                # key can never be unhashable dict or list
+                new_k = k if is_shared(k) else copy.deepcopy(k, memo)
+
+                if new_k is not k:
+                    del_keys.add(k)
+
+                if isinstance(v, _all_types_using_recursion):
+                    new_v = _copy_recurse(v, memo)
+                elif is_shared(v):
+                    new_v = v
+                else:
+                    new_v = copy.deepcopy(v, memo)
+
+                try:
+                    result[new_k] = new_v
+                except UtilitiesError:
+                    # handle ReadOnlyOrderedDict
+                    result.__additem__(new_k, new_v)
+            for k in del_keys:
+                del result[k]
+
+        elif isinstance(o, _list_or_tuple_types):
+            is_tuple = isinstance(o, _tuple_types)
+            if is_tuple:
+                result = list()
+
+            # If this is a deque, make sure we copy the maxlen parameter as well
+            elif isinstance(o, collections.deque):
+                # FIXME: Should have a better method for supporting properties like this in general
+                # We could do something like result = copy(o); result.clear() but that would be
+                # wasteful copying I guess.
+                result = o.__class__(maxlen=o.maxlen)
+            else:
+                result = o.__class__()
+
+            for item in o:
+                if isinstance(item, _all_types_using_recursion):
+                    new_item = _copy_recurse(item, memo)
+                elif is_shared(item):
+                    new_item = item
+                else:
+                    new_item = copy.deepcopy(item, memo)
+                result.append(new_item)
+
+            if is_tuple:
+                try:
+                    result = o.__class__(result)
+                except TypeError:
+                    # handle namedtuple
+                    result = o.__class__(*result)
+        else:
+            raise TypeError
+
+        memo[id(obj)] = result
+        return result
+
+    return _copy_recurse(obj, memo)

@@ -561,6 +561,7 @@ class Function_Base(Function):
     _mdf_stateful_parameter_indices = {}
 
     _specified_variable_shape_flexibility = DefaultsFlexibility.INCREASE_DIMENSION
+    _deepcopy_in_parameter = True
 
     class Parameters(Function.Parameters):
         """

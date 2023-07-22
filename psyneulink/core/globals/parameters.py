@@ -376,7 +376,7 @@ def parse_context(context):
         return context
 
 
-def copy_parameter_value(value, shared_types=None, memo=None):
+def copy_parameter_value(value, copy_functions=True, memo=None):
     """
         Returns a copy of **value** used as the value or spec of a
         Parameter, with exceptions.
@@ -388,24 +388,19 @@ def copy_parameter_value(value, shared_types=None, memo=None):
 
         e.g. in spec attribute or Parameter `Mechanism.input_ports`
     """
-    from psyneulink.core.components.component import Component, ComponentsMeta
+    from psyneulink.core.components.component import copy_iterable_with_shared_components
 
-    if shared_types is None:
-        shared_types = (Component, ComponentsMeta, types.MethodType, types.ModuleType)
-    else:
-        shared_types = tuple(shared_types)
+    shared_attr_name = '_deepcopy_in_parameter' if copy_functions else ''
 
     try:
-        return copy_iterable_with_shared(
-            value,
-            shared_types=shared_types,
-            memo=memo
+        return copy_iterable_with_shared_components(
+            value, shared_attr_name, memo=memo
         )
     except TypeError:
         # this will attempt to copy the current object if it
         # is referenced in a parameter, such as
         # ComparatorMechanism, which does this for input_ports
-        if not isinstance(value, shared_types):
+        if getattr(value, shared_attr_name, False):
             return copy.deepcopy(value, memo)
         else:
             return value
@@ -1078,14 +1073,11 @@ class Parameter(ParameterBase):
             return super().__str__()
 
     def __deepcopy__(self, memo):
-        if 'no_shared' in memo and memo['no_shared']:
-            shared_types = tuple()
-        else:
-            shared_types = None
+        copy_functions = 'no_shared' not in memo or memo['no_shared']
 
         result = type(self)(
             **{
-                k: copy_parameter_value(getattr(self, k), memo=memo, shared_types=shared_types)
+                k: copy_parameter_value(getattr(self, k), copy_functions=copy_functions, memo=memo)
                 for k in self._param_attrs
             },
             _owner=self._owner,
