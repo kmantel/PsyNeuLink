@@ -862,6 +862,13 @@ def get_deepcopy_with_shared(shared_keys=frozenset(), shared_types=()):
 
 def copy_iterable_with_shared(obj, shared_types=None, memo=None):
     try:
+        return memo[id(obj)]
+    except KeyError:
+        pass
+    except TypeError:
+        memo = {}
+
+    try:
         shared_types = tuple(shared_types)
     except TypeError:
         shared_types = (shared_types, )
@@ -932,6 +939,7 @@ def copy_iterable_with_shared(obj, shared_types=None, memo=None):
     else:
         raise TypeError
 
+    memo[id(obj)] = result
     return result
 
 
