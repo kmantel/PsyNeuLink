@@ -1073,7 +1073,7 @@ class Parameter(ParameterBase):
             return super().__str__()
 
     def __deepcopy__(self, memo):
-        copy_functions = 'no_shared' not in memo or memo['no_shared']
+        copy_functions = 'no_shared' in memo and memo['no_shared']
 
         result = type(self)(
             **{
