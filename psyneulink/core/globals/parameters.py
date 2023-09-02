@@ -319,7 +319,7 @@ from psyneulink.core.globals.context import Context, ContextError, ContextFlags,
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
 from psyneulink.core.globals.utilities import call_with_pruned_args, copy_iterable_with_shared, \
-    get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, unproxy_weakproxy, create_union_set, safe_equals, get_function_sig_default_value
+    get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, toposort_key, unproxy_weakproxy, create_union_set, safe_equals, get_function_sig_default_value
 from psyneulink.core.rpc.graph_pb2 import Entry, ndArray
 
 __all__ = [
@@ -620,27 +620,27 @@ class ParametersTemplate:
             types.FunctionType: a function that may be passed in as sort
             key so that any Parameter is placed before its dependencies
         """
-        parameter_function_ordering = list(toposort.toposort({
-            p.name: p.dependencies for p in self if p.dependencies is not None
-        }))
-        parameter_function_ordering = list(
-            itertools.chain.from_iterable(parameter_function_ordering)
-        )
+        def handle_names(param_or_name):
+            try:
+                param = getattr(self, param_or_name)
+            except (AttributeError, TypeError):
+                param = param_or_name
 
-        if names:
-            def ordering(p):
-                try:
-                    return parameter_function_ordering.index(p)
-                except ValueError:
-                    return -1
-        else:
-            def ordering(p):
-                try:
-                    return parameter_function_ordering.index(p.name)
-                except ValueError:
-                    return -1
+            if names:
+                return param.name
+            else:
+                return param
 
-        return ordering
+        dependency_dict = {}
+        for param in self:
+            try:
+                deps = {handle_names(dep) for dep in param.dependencies}
+            except TypeError:
+                deps = {}
+
+            dependency_dict[handle_names(param)] = deps
+
+        return toposort_key(dependency_dict)
 
     @property
     def _in_dependency_order(self):
