@@ -2892,6 +2892,7 @@ import graph_scheduler
 import networkx
 import numpy as np
 import pint
+import toposort
 from PIL import Image
 from beartype import beartype
 
@@ -3302,6 +3303,9 @@ class Graph(object):
                 self.cycle_vertices.add(child)
                 execution_dependencies[child] = acyclic_dependencies
 
+        # TODO: see if giving this data is still necessary now that
+        # graph-scheduler is separate (pnl Scheduler just uses the
+        # execution dependencies)
         return (
             execution_dependencies,
             {
@@ -4958,12 +4962,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
            controller may not be NodeRole.TERMINAL, so if the ObjectiveMechanism is the only node in the last entry
            of the consideration queue, then the second-to-last entry is NodeRole.TERMINAL instead.
         """
-        queue = self.scheduler.consideration_queue
+        processing_dependencies = self.graph_processing.prune_feedback_edges()[0]
+        queue = list(toposort.toposort(processing_dependencies))
 
-        for node in list(queue)[0]:
+        if len(queue) == 0:
+            return
+
+        for node in queue[0]:
             self._add_node_role(node, NodeRole.ORIGIN)
 
-        for node in list(queue)[-1]:
+        for node in queue[-1]:
             if NodeRole.CONTROLLER_OBJECTIVE not in self.get_roles_by_node(node):
                 self._add_node_role(node, NodeRole.TERMINAL)
             elif len(queue[-1]) < 2:
@@ -5170,7 +5178,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         Assignment criteria:
 
         ORIGIN:
-          - all Nodes that are in first consideration_set (i.e., self.scheduler.consideration_queue[0]).
+          - all Nodes that are in first consideration_set (i.e.,
+            self.graph_processing.consideration_queue[0]).
+
           .. _note::
              - this takes account of any Projections designated as feedback by graph_processing
                (i.e., self.graph.comp_to_vertex[efferent].feedback == EdgeType.FEEDBACK)
@@ -5275,9 +5285,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for node_role_pair in self.required_node_roles:
             self._add_node_role(node_role_pair[0], node_role_pair[1])
 
-        # Get ORIGIN and TERMINAL Nodes using self.scheduler.consideration_queue
-        if self.scheduler.consideration_queue:
-            self._determine_origin_and_terminal_nodes_from_consideration_queue()
+        # Get ORIGIN and TERMINAL Nodes using self.graph_processing.consideration_queue
+        self._determine_origin_and_terminal_nodes_from_consideration_queue()
 
         # INPUT
         origin_nodes = self.get_nodes_by_role(NodeRole.ORIGIN)
