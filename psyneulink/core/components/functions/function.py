@@ -698,12 +698,14 @@ class Function_Base(Function):
                         params.update({key: kwargs.pop(key)})
 
         # Validate variable and assign to variable, and validate params
+        print(self, 'variable', variable)
         variable = self._check_args(variable=variable,
                                     context=context,
                                     params=params,
                                     target_set=target_set,
                                     )
         # Execute function
+        print(self, 'variable post check args', variable)
         try:
             value = self._function(variable=variable,
                                    context=context,
@@ -712,6 +714,7 @@ class Function_Base(Function):
         except ValueError as err:
             err_msg = f"Problem with '{self}' in '{self.owner.name if self.owner else self.__class__.__name__}': {err}"
             raise FunctionError(err_msg) from err
+        print(self, 'value', value)
         self.most_recent_context = context
         self.parameters.value._set(value, context=context)
         self._reset_runtime_parameters(context)

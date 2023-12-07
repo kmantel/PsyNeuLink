@@ -759,6 +759,8 @@ class OptimizationFunction(Function_Base):
             current_sample = call_with_pruned_args(self.search_function, current_sample, iteration, context=context)
             # Get value of sample
             current_value = call_with_pruned_args(self.objective_function, current_sample, context=context)
+            print('current sample', current_sample)
+            print('current value', current_value)
 
             # If the value returned by the objective function is a tuple, then we are using PEC and the
             # evaluate_agent_rep function is returning the net_outcome, results tuple. We want the results

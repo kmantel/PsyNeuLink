@@ -3310,6 +3310,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     [TimeScale.TIME_STEP, TimeScale.PASS, TimeScale.TRIAL, TimeScale.RUN, TimeScale.LIFE]
                 )
 
+        print(self, 'variable', variable)
         value = None
 
         # GET VALUE if specified in runtime_params
@@ -3327,9 +3328,12 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             #                     that are specific to particular class of Functions
             #                     (e.g., error_matrix for LearningMechanism and controller for EVCControlMechanism)
             function_variable = self._parse_function_variable(variable, context=context)
+            print(self, 'function_variable', function_variable)
             # IMPLEMENTATION NOTE: Need to pass full runtime_params (and not just function's params) since
             #                      Mechanisms with secondary functions (e.g., IntegratorMechanism) seem them
             value = self.function(variable=function_variable, context=context, params=runtime_params, **kwargs)
+            print(self, 'value', value)
+
             try:
                 self.function.parameters.value._set(value, context)
             except AttributeError:

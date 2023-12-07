@@ -3221,6 +3221,7 @@ class OptimizationControlMechanism(ControlMechanism):
                                               context=new_context,
                                               execution_mode=exec_mode,
                                               return_results=self.return_results)
+            print(self.agent_rep, 'agent rep ret val', ret_val)
             context.composition = old_composition
             if self.defaults.search_statefulness:
                 self._tear_down_simulation(new_context, alt_controller)

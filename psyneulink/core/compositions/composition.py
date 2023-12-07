@@ -9715,6 +9715,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             base_control_allocation = self.reshape_control_signal(controller.parameters.value._get(context))
             candidate_control_allocation = self.reshape_control_signal(control_allocation)
 
+            print('base control allocation', base_control_allocation)
+            print('candidate control allocation', candidate_control_allocation)
             # Get reconfiguration cost for candidate control signal
             reconfiguration_cost = 0.
             if callable(controller.compute_reconfiguration_cost):
@@ -9803,7 +9805,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # Apply candidate control to signal(s) for the upcoming simulation and determine its cost
         total_cost = self._get_total_cost_of_control_allocation(control_allocation, context, runtime_params)
-
+        print('control allocation', control_allocation)
+        print('total cost of control allocation', total_cost)
         # Set up animation for simulation
         # HACK: _animate attribute is set in execute method, but Evaluate can be called on a Composition that has not
         # yet called the execute method, so we need to do a check here too.
@@ -9834,6 +9837,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                     execution_mode=execution_mode,
                                     skip_initialization=True,
                                     )
+            print(self, 'result', result)
             context.remove_flag(ContextFlags.SIMULATION_MODE)
             context.execution_phase = ContextFlags.CONTROL
             if buffer_animate_state:
