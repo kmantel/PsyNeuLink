@@ -67,11 +67,12 @@ pnl_mdf_results_parametrization = [
         '{Input: [0.5, 0.123], reward: [20, 20]}',
         False
     ),
-    (
+    pytest.param(
         'stroop_conflict_monitoring.py',
         'Stroop_model',
         str(stroop_stimuli).replace("'", ''),
-        False
+        False,
+        id='stroop_conflict_monitoring.py--Stroop_model--simple_edge_format-False'
     ),
     ('model_backprop.py', 'comp', '{A: [1, 2, 3]}', False),
 ]
@@ -327,8 +328,15 @@ integrators_runtime_params = (
         ('model_udfs.py', 'comp', {'A': [[10.0]]}, True, ''),
         ('model_udfs.py', 'comp', {'A': 10}, False, ''),
         ('model_varied_matrix_sizes.py', 'comp', {'A': [[1.0, 2.0]]}, True, ''),
-        ('model_integrators.py', 'comp', {'A': 1.0}, True, integrators_runtime_params),
-        ('model_integrators.py', 'comp', {'A': 1.0}, False, integrators_runtime_params),
+        # runtime_params string breaks pytest collection on windows
+        pytest.param(
+            'model_integrators.py', 'comp', {'A': 1.0}, True, integrators_runtime_params,
+            id='model_integrators.py--comp--A-1.0--with-noise--simple_edge_format-True'
+        ),
+        pytest.param(
+            'model_integrators.py', 'comp', {'A': 1.0}, False, integrators_runtime_params,
+            id='model_integrators.py--comp--A-1.0--with-noise--simple_edge_format-False'
+        ),
     ]
 )
 def test_mdf_pnl_results_equivalence(filename, composition_name, input_dict, simple_edge_format, run_args, tmp_path):
@@ -369,11 +377,13 @@ ddi_termination_conds = [
 # construct test data manually instead of with multiple @pytest.mark.parametrize
 # so that other functions can use more appropriate termination conds
 individual_functions_ddi_test_data = [
-    (
+    pytest.param(
         pnl.IntegratorMechanism,
         pnl.DriftDiffusionIntegrator(rate=0.5, offset=1, non_decision_time=1, seed=0),
-        "{{A: {{'random_draw': {0} }} }}".format(get_onnx_fixed_noise_str('randomnormal', mean=0, scale=1, seed=0, shape=(1,)))
-    ) + (x,)
+        "{{A: {{'random_draw': {0} }} }}".format(get_onnx_fixed_noise_str('randomnormal', mean=0, scale=1, seed=0, shape=(1,))),
+        x,
+        id=f"DDI_term_{x.split('(')[0] if x is not None else 'None'}",
+    )
     for x in ddi_termination_conds
 ]
 individual_functions_fhn_test_data = [
