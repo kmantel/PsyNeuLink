@@ -307,6 +307,6 @@ def test_drift_on_a_sphere_errors(params, error_msg, error_type):
 
 s = '"arg"'
 
-@pytest.mark.parametrize('a', ["{{'': ',', '{0}=': '', '\"b\":{{ 0: 0 }} }}".format(s)])
+@pytest.mark.parametrize('a', ["model_integrators.py-comp-input_dict6-True-runtime_params={A_ { _noise__ [[0.09762704372406006]] },D_ { _noise__ [[0.04881352186203003]] },E_ { _noise__ [[0.16161012649536133]] },B_ { _noise__ [[-0.4184606671333313]] },C_ { _noise__ [[0.29076966643333435]] }}]"])
 def test_invalid_name(a):
     pass
