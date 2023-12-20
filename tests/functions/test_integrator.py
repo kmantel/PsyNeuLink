@@ -303,3 +303,10 @@ def test_drift_on_a_sphere_errors(params, error_msg, error_type):
         assert error_msg in str(error_text.value)
     else:
         Functions.DriftOnASphereIntegrator(dimension=4, params=params)
+
+
+s = '"arg"'
+
+@pytest.mark.parametrize('a', ["{{'': ',', '{0}=': '', '\"b\":{{ 0: 0 }} }}".format(s)])
+def test_invalid_name(a):
+    pass
