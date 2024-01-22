@@ -68,9 +68,21 @@ jobs:
             extra-args: '--forked -m "not llvm"'
 
           # add 32-bit build on windows
+          # split llvm/non-llvm to reduce peak memory
           - python-version: '3.8'
             python-architecture: 'x86'
             os: windows
+            extra-args: '-m llvm'
+
+          - python-version: '3.8'
+            python-architecture: 'x86'
+            os: windows
+            extra-args: '-m "not llvm and not composition"'
+
+          - python-version: '3.8'
+            python-architecture: 'x86'
+            os: windows
+            extra-args: '-m "not llvm and composition"'
 
           # fp32 run on linux python 3.10
           - python-version: '3.10'
@@ -181,10 +193,14 @@ jobs:
       timeout-minutes: 180
       run: pytest --junit-xml=tests_out.xml --verbosity=0 -n logical ${{ matrix.extra-args }}
 
+    - name: Set extra-args env for artifacts
+      run: echo "EXTRA_ARGS_DESC=$(echo ${{ matrix.extra-args }} | tr ' ="' '_\-\0')" >> $GITHUB_ENV
+      shell: bash
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       with:
-        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}-${{ matrix.version-restrict }}
+        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}-${{ matrix.version-restrict }}-${{ env.EXTRA_ARGS_DESC }}
         path: tests_out.xml
         retention-days: 5
       if: (success() || failure()) && ! contains(matrix.extra-args, 'forked')
@@ -209,7 +225,7 @@ jobs:
 
     - name: Upload dist packages
       uses: actions/upload-artifact@v4
-      if: matrix.version-restrict == ''
+      if: matrix.version-restrict == '' && (! contains(matrix.python-architecture, 'x86') || ! contains(matrix.extra-args, 'not llvm'))
       with:
         name: dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}
         path: dist/
