@@ -177,9 +177,27 @@ jobs:
           Windows*) wmic cpu get description,currentclockspeed,NumberOfCores,NumberOfEnabledCore,NumberOfLogicalProcessors; wmic memorychip get capacity,speed,status,manufacturer ;;
         esac
 
-    - name: Test with pytest
+    - name: Test with pytest (non-x86)
       timeout-minutes: 180
       run: pytest --junit-xml=tests_out.xml --verbosity=0 -n logical ${{ matrix.extra-args }}
+      if: (! contains(matrix.python-architecture, 'x86'))
+
+    # run tests in each dir separately to reduce peak memory usage
+    - name: Test with pytest (x86)
+      timeout-minutes: 180
+      shell: bash
+      # any non-zero exit code will indicate failure for GHA
+      run: |
+        test_dirs=$(find psyneulink tests/* -maxdepth 0 -type d)
+        for td in $test_dirs; do echo "Running pytest $td"; pytest --junit-xml=tests_$(echo $td | sed 's;/;_;g').xml --verbosity=0 -n logical ${{ matrix.extra-args }} "$td"; done
+      if: contains(matrix.python-architecture, 'x86')
+
+    - name: Merge junit xml (x86)
+      shell: bash
+      run: |
+        pip install junitparser
+        junitparser merge tests*.xml tests_out.xml
+      if: contains(matrix.python-architecture, 'x86')
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
