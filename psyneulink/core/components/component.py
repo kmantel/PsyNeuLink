@@ -507,6 +507,7 @@ import re
 import types
 import typing
 import warnings
+import weakref
 from abc import ABCMeta
 from collections.abc import Iterable
 from enum import Enum, IntEnum
@@ -4399,40 +4400,44 @@ def make_stateful_getter_mod(param_name, parameter_port_name=None):
 
 class ParameterValue:
     def __init__(self, owner, parameter):
-        self._owner = owner
-        self._parameter = parameter
+        self._owner = weakref.ref(owner)
+        self._parameter = weakref.ref(parameter)
 
     def __repr__(self):
-        return f'{self._owner}:\n\t{self._parameter.name}.base: {self.base}\n\t{self._parameter.name}.modulated: {self.modulated}'
+        param = self._parameter()
+        return f'{self._owner()}:\n\t{param.name}.base: {self.base}\n\t{param.name}.modulated: {self.modulated}'
 
     @property
     def modulated(self):
+        param = self._parameter()
+        owner = self._owner()
+
         # TODO: consider using self._parameter.port.has_modulation
         # because the port existing doesn't necessarily mean modulation
         # is actually happening
-        if self._parameter.port is not None:
-            return self._parameter.port.owner._get_current_parameter_value(
-                self._parameter,
-                self._owner.most_recent_context
+        if param.port is not None:
+            return param.port.owner._get_current_parameter_value(
+                param,
+                owner.most_recent_context
             )
         else:
             warnings.warn(
-                f'{self._parameter.name} is not currently modulated in most'
-                f' recent context {self._owner.most_recent_context}'
+                f'{param.name} is not currently modulated in most'
+                f' recent context {owner.most_recent_context}'
             )
             return None
 
     @modulated.setter
     def modulated(self, value):
         raise ComponentError(
-            f"Cannot set {self._owner.name}'s modulated {self._parameter.name}"
+            f"Cannot set {self._owner().name}'s modulated {self._parameter().name}"
             ' value directly because it is computed by the ParameterPort.'
         )
 
     @property
     def base(self):
-        return self._parameter.get(self._owner.most_recent_context)
+        return self._parameter().get(self._owner().most_recent_context)
 
     @base.setter
     def base(self, value):
-        self._parameter.set(value, self._owner.most_recent_context)
+        self._parameter().set(value, self._owner().most_recent_context)
