@@ -1162,6 +1162,17 @@ class Parameter(ParameterBase):
         else:
             super().__setattr__(attr, value)
 
+    @property
+    def _owner(self):
+        return unproxy_weakproxy(self._owner_ref)
+
+    @_owner.setter
+    def _owner(self, value):
+        try:
+            self._owner_ref = weakref.proxy(value)
+        except TypeError:
+            self._owner_ref = value
+
     def reset(self):
         """
             Resets *default_value* to the value specified in its `Parameters` class declaration, or
