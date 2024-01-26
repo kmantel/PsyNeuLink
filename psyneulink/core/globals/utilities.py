@@ -863,6 +863,7 @@ def get_deepcopy_with_shared(shared_keys=frozenset(), shared_types=()):
                 try:
                     res_val = copy_iterable_with_shared(v, shared_types, memo)
                 except TypeError:
+                    # oddly, weakref.WeakSet contents appear to be deepcopied here
                     res_val = copy.deepcopy(v, memo)
             setattr(result, k, res_val)
         return result
@@ -876,9 +877,14 @@ def copy_iterable_with_shared(obj, shared_types=None, memo=None):
     except TypeError:
         shared_types = (shared_types, )
 
-    dict_types = (dict, collections.UserDict)
+    dict_types = (
+        dict,
+        collections.UserDict,
+        weakref.WeakKeyDictionary,
+        weakref.WeakValueDictionary,
+    )
     list_types = (list, collections.UserList, collections.deque)
-    tuple_types = (tuple, set)
+    tuple_types = (tuple, set, weakref.WeakSet)
     all_types_using_recursion = dict_types + list_types + tuple_types
 
     if isinstance(obj, dict_types):
