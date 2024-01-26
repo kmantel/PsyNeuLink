@@ -2885,6 +2885,7 @@ import logging
 import sys
 import typing
 import warnings
+import weakref
 from copy import deepcopy, copy
 from inspect import isgenerator, isgeneratorfunction
 
@@ -4031,7 +4032,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self._executed_from_command_line = False
 
         self.projections = ContentAddressableList(component_type=Component)
-        self.compositions = []
+        self.compositions = weakref.WeakSet()
 
         self._scheduler = None
         self._partially_added_nodes = []

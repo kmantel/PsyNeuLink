@@ -1257,7 +1257,7 @@ class Component(MDFSerializable, OwnerRef, metaclass=ComponentsMeta):
 
         self._update_parameter_components(context)
 
-        self.compositions = []
+        self.compositions = weakref.WeakSet()
 
         del self._prev_kwargs
         del self._user_specified_args
@@ -4215,7 +4215,7 @@ class Component(MDFSerializable, OwnerRef, metaclass=ComponentsMeta):
 
     def _add_to_composition(self, composition):
         if composition not in self.compositions:
-            self.compositions.append(composition)
+            self.compositions.add(composition)
 
         for obj in self._parameter_components:
             obj._add_to_composition(composition)
@@ -4223,7 +4223,7 @@ class Component(MDFSerializable, OwnerRef, metaclass=ComponentsMeta):
     def _remove_from_composition(self, composition):
         try:
             self.compositions.remove(composition)
-        except ValueError:
+        except KeyError:
             pass
 
         for obj in self._parameter_components:
