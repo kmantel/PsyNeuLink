@@ -492,7 +492,7 @@ def check_user_specified(func):
 
 
 class ParametersTemplate:
-    _deepcopy_shared_keys = ['_parent', '_params', '_owner_ref', '_children']
+    _deepcopy_shared_keys = ['_parent', '_params', '_owner', '_owner_ref', '_children']
     _values_default_excluded_attrs = {'user': False}
 
     def __init__(self, owner, parent=None):
@@ -718,6 +718,17 @@ class ParameterBase(types.SimpleNamespace):
 
     def __hash__(self):
         return object.__hash__(self)
+
+    @property
+    def _owner(self):
+        return unproxy_weakproxy(self._owner_ref)
+
+    @_owner.setter
+    def _owner(self, value):
+        try:
+            self._owner_ref = weakref.proxy(value)
+        except TypeError:
+            self._owner_ref = value
 
 
 class Parameter(ParameterBase):
@@ -1161,17 +1172,6 @@ class Parameter(ParameterBase):
             self._temp_uninherited.remove(attr)
         else:
             super().__setattr__(attr, value)
-
-    @property
-    def _owner(self):
-        return unproxy_weakproxy(self._owner_ref)
-
-    @_owner.setter
-    def _owner(self, value):
-        try:
-            self._owner_ref = weakref.proxy(value)
-        except TypeError:
-            self._owner_ref = value
 
     def reset(self):
         """
