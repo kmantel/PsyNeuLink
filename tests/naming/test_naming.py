@@ -62,12 +62,12 @@ class TestNaming:
             assert t.name == expected_name
 
     def test_duplicate_assigned_mechanism_names_2(self):
-        pnl.TransferMechanism(name='A')
-        pnl.TransferMechanism(name='A')  # A-1
-        pnl.TransferMechanism(name='A')  # A-2
-        t = pnl.TransferMechanism(name='A-1')
+        a = pnl.TransferMechanism(name='A')  # noqa: F841
+        b = pnl.TransferMechanism(name='A')  # A-1  # noqa: F841
+        c = pnl.TransferMechanism(name='A')  # A-2  # noqa: F841
+        d = pnl.TransferMechanism(name='A-1')
 
-        assert t.name == 'A-3'
+        assert d.name == 'A-3'
 
     # ------------------------------------------------------------------------------------------------
     # TEST 5
