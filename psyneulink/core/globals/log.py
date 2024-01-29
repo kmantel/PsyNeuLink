@@ -382,6 +382,7 @@ Class Reference
 """
 import enum
 import warnings
+import weakref
 
 from collections import OrderedDict, namedtuple
 from collections.abc import MutableMapping
@@ -526,7 +527,7 @@ class EntriesDict(MutableMapping,dict):
     def __init__(self, owner):
 
         # Log to which this dict belongs
-        self._ownerLog = owner
+        self._ownerLog = weakref.ref(owner)
 
         # # VERSION THAT USES OWNER'S logPref TO LIST ENTRIES TO BE RECORDED
         # # List of entries (in owner's logPrefs) of entries to record
@@ -550,8 +551,8 @@ class EntriesDict(MutableMapping,dict):
             raise LogError("Object other than a {} assigned to Log for {}".format(LogEntry.__name__, self.owner.name))
         try:
         # If the entry already exists, use its value and append current value to it
-            self._ownerLog.entries[key].append(value)
-            value = self._ownerLog.entries[key]
+            self._ownerLog().entries[key].append(value)
+            value = self._ownerLog().entries[key]
         except KeyError:
         # Otherwise, initialize list with value as first item
             dict.__setitem__(self,key,[value])
