@@ -4307,7 +4307,7 @@ class Component(MDFSerializable, OwnerRef, metaclass=ComponentsMeta):
         try:
             return self.__parameter_components
         except AttributeError:
-            self.__parameter_components = set()
+            self.__parameter_components = weakref.WeakSet()
             return self.__parameter_components
 
     @handle_external_context()
