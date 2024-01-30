@@ -19,7 +19,7 @@ import psyneulink as pnl
 from psyneulink import _unit_registry
 from psyneulink.core.globals.context import Context, handle_external_context
 from psyneulink.core.globals.mdf import MDFSerializable
-from psyneulink.core.globals.utilities import parse_valid_identifier
+from psyneulink.core.globals.utilities import CompositionRef, parse_valid_identifier
 from psyneulink.core.scheduling.condition import _create_as_pnl_condition, graph_structure_conditions_available, gsc_unavailable_message
 
 __all__ = [
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 SchedulingMode = graph_scheduler.scheduler.SchedulingMode
 
 
-class Scheduler(graph_scheduler.Scheduler, MDFSerializable):
+class Scheduler(graph_scheduler.Scheduler, MDFSerializable, CompositionRef):
     def __init__(
         self,
         composition=None,
