@@ -10,6 +10,7 @@
 
 import inspect
 import re
+import weakref
 
 from collections import defaultdict, namedtuple
 
@@ -198,7 +199,7 @@ def register_category(entry,
                 entry.name = name
 
             # Create instance dict:
-            instanceDict = {entry.name: entry}
+            instanceDict = weakref.WeakValueDictionary({entry.name: entry})
             renamed_instance_counts = defaultdict(int)
 
             # Register component type with instance count of 1:
@@ -269,7 +270,7 @@ def register_instance(entry, name, base_class, registry, sub_dict):
                 entry.name += '-{0}'.format(renamed_instance_counts[entry.name])
 
     # Add instance to instanceDict:
-    registry[sub_dict].instanceDict.update({entry.name: entry})
+    registry[sub_dict].instanceDict.update(weakref.WeakValueDictionary({entry.name: entry}))
 
     # Update instanceCount in registry:
     registry[sub_dict] = registry[sub_dict]._replace(instanceCount=registry[sub_dict].instanceCount + 1)
