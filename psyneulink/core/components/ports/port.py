@@ -2249,14 +2249,6 @@ class Port_Base(Port):
         return self.labeled_value
 
     @property
-    def owner(self):
-        return self._owner
-
-    @owner.setter
-    def owner(self, assignment):
-        self._owner = assignment
-
-    @property
     def all_afferents(self):
         return self._get_all_afferents()
 

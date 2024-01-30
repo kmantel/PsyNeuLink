@@ -98,15 +98,6 @@ class Mechanism(ShellClass):
 
 
 class Port(ShellClass):
-
-    @property
-    def owner(self):
-        raise ShellClassError("Must implement @property owner method in {0}".format(self.__class__.__name__))
-
-    @owner.setter
-    def owner(self, assignment):
-        raise ShellClassError("Must implement @owner.setter method in {0}".format(self.__class__.__name__))
-
     def _validate_variable(self, variable, context=None):
         raise ShellClassError("Must implement _validate_variable in {0}".format(self))
 

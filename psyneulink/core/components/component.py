@@ -537,7 +537,7 @@ from psyneulink.core.globals.preferences.preferenceset import \
 from psyneulink.core.globals.registry import register_category, _get_auto_name_prefix
 from psyneulink.core.globals.sampleiterator import SampleIterator
 from psyneulink.core.globals.utilities import \
-    ContentAddressableList, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
+    ContentAddressableList, OwnerRef, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
     is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, \
     get_all_explicit_arguments, is_numeric, call_with_pruned_args, safe_equals, safe_len, parse_valid_identifier, try_extract_0d_array_item
 from psyneulink.core.scheduling.condition import Never
@@ -729,7 +729,7 @@ class ComponentsMeta(ABCMeta):
         return self.defaults
 
 
-class Component(MDFSerializable, metaclass=ComponentsMeta):
+class Component(MDFSerializable, OwnerRef, metaclass=ComponentsMeta):
     """
     Component(                 \
         default_variable=None, \
