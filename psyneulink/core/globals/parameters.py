@@ -1650,11 +1650,15 @@ class Parameter(ParameterBase):
 
     def _get_root_owner(self):
         owner = self
-        while True:
-            if hasattr(owner, '_owner'):
-                owner = owner._owner
-            else:
-                return owner
+        # find first Component
+        while hasattr(owner, '_owner'):
+            owner = owner._owner
+
+        # find root Component
+        while hasattr(owner, 'owner'):
+            owner = owner.owner
+
+        return owner
 
     def _get_root_parameter(self):
         root = self._get_root_owner()
