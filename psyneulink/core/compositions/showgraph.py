@@ -240,7 +240,7 @@ from psyneulink.core.globals.context import ContextFlags, handle_external_contex
 from psyneulink.core.globals.keywords import \
     ALL, BOLD, COMPONENT, COMPOSITION, CONDITIONS, FUNCTIONS, INSET, LABELS, LEARNABLE, \
     MECHANISM, MECHANISMS, NESTED, PROJECTION, PROJECTIONS, ROLES, SIMULATIONS, VALUES
-from psyneulink.core.globals.utilities import convert_to_list
+from psyneulink.core.globals.utilities import CompositionRef, convert_to_list
 
 __all__ = ['DURATION', 'EXECUTION_SET', 'INITIAL_FRAME', 'MOVIE_DIR', 'MOVIE_NAME', 'MECH_FUNCTION_PARAMS',
            'NUM_TRIALS', 'NUM_RUNS', 'PORT_FUNCTION_PARAMS', 'SAVE_IMAGES',
@@ -294,7 +294,7 @@ class ShowGraphError(Exception):
         self.error_value = error_value
 
 
-class ShowGraph():
+class ShowGraph(CompositionRef):
     """ShowGraph object with `show_graph <ShowGraph.show_graph>` method for displaying `Composition`.
 
     Every Composition is assigned a ShowGraph object, with its `show_graph <ShowGraph.show_graph>` method
