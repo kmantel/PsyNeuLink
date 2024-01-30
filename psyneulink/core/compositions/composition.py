@@ -4122,6 +4122,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if termination_processing is not None:
             self.termination_processing = termination_processing
 
+        del self._prev_kwargs
+        del self._user_specified_args
+
     @property
     def graph_processing(self):
         """

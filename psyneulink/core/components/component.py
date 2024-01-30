@@ -1258,6 +1258,9 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         self.compositions = []
 
+        del self._prev_kwargs
+        del self._user_specified_args
+
     def __repr__(self):
         return '({0} {1})'.format(type(self).__name__, self.name)
         #return '{1}'.format(type(self).__name__, self.name)
