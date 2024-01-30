@@ -190,7 +190,7 @@ from collections import namedtuple
 from enum import Enum, IntEnum
 
 from psyneulink.core.globals.keywords import DEFAULT_PREFERENCE_SET_OWNER, PREFERENCE_SET_NAME
-from psyneulink.core.globals.utilities import iscompatible, kwCompatibilityType
+from psyneulink.core.globals.utilities import OwnerRef, iscompatible, kwCompatibilityType
 
 __all__ = [
     'PreferenceEntry', 'PreferenceLevel', 'PreferenceSet', 'PreferenceSetError', 'PreferenceSetRegistry',
@@ -222,7 +222,7 @@ class PreferenceSetError(Exception):
 
 
 @abc.abstractmethod
-class PreferenceSet(object):
+class PreferenceSet(OwnerRef):
     """Abstract class for PreferenceSets that stores preferences and provides access to level-specific settings
 
     COMMENT:
