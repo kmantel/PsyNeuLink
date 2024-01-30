@@ -2211,3 +2211,22 @@ def extended_shape(obj):
         return _extended_shape(convert_all_elements_to_np_array(obj))
     else:
         return tuple()
+
+
+class OwnerRef:
+    """
+    Mixin providing an 'owner' property using a weak reference
+    """
+    @property
+    def owner(self):
+        try:
+            return self._owner_ref()
+        except TypeError:
+            return self._owner_ref
+
+    @owner.setter
+    def owner(self, o):
+        try:
+            self._owner_ref = weakref.ref(o)
+        except TypeError:
+            self._owner_ref = o
