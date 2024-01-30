@@ -127,11 +127,12 @@ from psyneulink.core.globals.keywords import COMPOSITION_INTERFACE_MECHANISM, IN
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet, REPORT_OUTPUT_PREF
 from psyneulink.core.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
+from psyneulink.core.globals.utilities import CompositionRef
 
 __all__ = ['CompositionInterfaceMechanism']
 
 
-class CompositionInterfaceMechanism(ProcessingMechanism_Base):
+class CompositionInterfaceMechanism(ProcessingMechanism_Base, CompositionRef):
     """
     CompositionInterfaceMechanism(  \
         function=Identity())
