@@ -2244,3 +2244,10 @@ class OwnerRef:
     Mixin providing an 'owner' property using a weak reference
     """
     owner = ref_property('owner')
+
+
+class CompositionRef:
+    """
+    Mixin providing a 'composition' property using a weak reference
+    """
+    composition = ref_property('composition')
