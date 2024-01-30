@@ -355,7 +355,7 @@ from psyneulink.core.components.shellclasses import Mechanism
 from psyneulink.core.compositions.composition import Composition, CompositionError, NodeRole
 from psyneulink.core.globals.keywords import \
     ANY, CONTEXT, FEEDBACK, MAYBE, NODE, LEARNING_FUNCTION, OBJECTIVE_MECHANISM, PROJECTION, TARGET_MECHANISM
-from psyneulink.core.globals.utilities import is_matrix
+from psyneulink.core.globals.utilities import CompositionRef, is_matrix
 from psyneulink.core.globals.registry import register_category
 
 __all__ = [
@@ -448,7 +448,7 @@ class PathwayRole(Enum):
     LEARNING = 8
 
 
-class Pathway(object):
+class Pathway(CompositionRef):
     """
     Pathway(                       \
         pathway,                   \
