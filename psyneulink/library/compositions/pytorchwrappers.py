@@ -748,9 +748,9 @@ class PytorchProjectionWrapper():
         # Get item of value corresponding to OutputPort that is Projection's sender
         # Note: this may not be the same as _port_idx if the sender Mechanism has OutputPorts for Projections
         #       that are not in the current Composition
-        if context._composition:
+        if context.composition:
             for i, output_port in enumerate(self.sender._mechanism.output_ports):
-                if all(p in context._composition.projections for p in output_port.efferents):
+                if all(p in context.composition.projections for p in output_port.efferents):
                     if self._pnl_proj in output_port.efferents:
                         self._value_idx = i
                         break

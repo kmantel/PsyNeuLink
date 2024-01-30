@@ -86,6 +86,7 @@ import enum
 import functools
 import inspect
 import warnings
+import weakref
 
 from collections import defaultdict, namedtuple
 from queue import Queue
@@ -384,23 +385,26 @@ class Context(OwnerRef):
     @property
     def composition(self):
         try:
-            return self._composition
-        except AttributeError:
-            self._composition = None
+            return self._composition_ref()
+        except TypeError:
+            return self._composition_ref
 
     @composition.setter
     def composition(self, composition):
         # from psyneulink.core.compositions.composition import Composition
         # if isinstance(composition, Composition):
+        self._composition_ref = None
+
         if (
-            composition is None
-            or composition.__class__.__name__ in {'Composition',
-                                                  'AutodiffComposition',
-                                                  'ParameterEstimationComposition',
-                                                  'EMComposition'}
+            composition.__class__.__name__ in {
+                'Composition',
+                'AutodiffComposition',
+                'ParameterEstimationComposition',
+                'EMComposition'
+            }
         ):
-            self._composition = composition
-        else:
+            self._composition_ref = weakref.ref(composition)
+        elif composition is not None:
             raise ContextError("Assignment to context.composition for {self.owner.name} ({composition}) "
                                "must be a Composition (or \'None\').")
 
