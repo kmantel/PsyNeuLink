@@ -3076,6 +3076,20 @@ class Vertex(object):
         except KeyError:
             self._feedback = value
 
+    @property
+    def component(self):
+        try:
+            return self._component_ref()
+        except TypeError:
+            return self._component_ref
+
+    @component.setter
+    def component(self, c):
+        try:
+            self._component_ref = weakref.ref(c)
+        except TypeError:
+            self._component_ref = c
+
 
 class Graph(object):
     """A Graph of vertices and edges.
