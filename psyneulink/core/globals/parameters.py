@@ -958,6 +958,7 @@ class Parameter(ParameterBase):
         'history_max_length',
         'log_condition',
         'spec',
+        'port',
     }
 
     def __init__(
@@ -1003,6 +1004,7 @@ class Parameter(ParameterBase):
         _inherited_source=None,
         _user_specified=False,
         _scalar_converted=False,
+        _port_ref=None,
         **kwargs
     ):
         if isinstance(aliases, str):
@@ -1057,7 +1059,7 @@ class Parameter(ParameterBase):
             reference=reference,
             dependencies=dependencies,
             initializer=initializer,
-            port=port,
+            # port=port,
             mdf_name=mdf_name,
             specify_none=specify_none,
             _inherited=_inherited,
@@ -1065,6 +1067,7 @@ class Parameter(ParameterBase):
             _user_specified=_user_specified,
             _temp_uninherited=set(),
             _scalar_converted=_scalar_converted,
+            _port_ref=_port_ref,
             **kwargs
         )
 
@@ -1125,6 +1128,13 @@ class Parameter(ParameterBase):
 
     def __getattr__(self, attr):
         # runs when the object doesn't have an attr attribute itself
+        if attr in self._additional_param_attr_properties:
+            try:
+                res = getattr(self, f'_get_{attr}')()
+                return res
+            except AttributeError:
+                pass
+
         # attempt to get from its parent, which is also a Parameter
 
         # this is only called when self._inherited is True. We know
@@ -1813,6 +1823,20 @@ class Parameter(ParameterBase):
         if self.parse_spec:
             value = self._parse(value)
         super().__setattr__('spec', value)
+
+    def get_port(self):
+        return self._get_port()
+
+    def _get_port(self):
+        try:
+            return self._port_ref()
+        except TypeError:
+            return self._port_ref
+
+    def _set_port(self, p):
+        if p is not None:
+            p = weakref.ref(p)
+        super().__setattr__('_port_ref', p)
 
 
 class _ParameterAliasMeta(type):
