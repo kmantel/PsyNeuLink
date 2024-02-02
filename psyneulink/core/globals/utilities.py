@@ -2213,9 +2213,11 @@ def extended_shape(obj):
         return tuple()
 
 
-def ref_property(name, ref_name=None):
+def weakref_property(name, ref_name=None):
     if ref_name is None:
-        ref_name = f'_{name}_ref'
+        suffix = '_ref'
+        prefix = '_' if not name.startswith('_') else ''
+        ref_name = f'{prefix}{name}{suffix}'
 
     def getter(self):
         try:
@@ -2243,11 +2245,18 @@ class OwnerRef:
     """
     Mixin providing an 'owner' property using a weak reference
     """
-    owner = ref_property('owner')
+    owner = weakref_property('owner')
 
 
 class CompositionRef:
     """
     Mixin providing a 'composition' property using a weak reference
     """
-    composition = ref_property('composition')
+    composition = weakref_property('composition')
+
+
+class _CompositionRef:
+    """
+    Mixin providing a '_composition' property using a weak reference
+    """
+    _composition = weakref_property('_composition')

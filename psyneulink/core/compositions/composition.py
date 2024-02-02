@@ -3040,10 +3040,10 @@ class Vertex(object):
 
     def __init__(self, component, parents=None, children=None, feedback=None):
         self.component = component
-        if parents is not None:
-            self.parents = parents
-        else:
-            self.parents = []
+        if parents is None:
+            parents = {}
+        self.parents = weakref.WeakSet(parents)
+
         if children is not None:
             self.children = children
         else:
@@ -3131,8 +3131,10 @@ class Graph(object):
             g.add_vertex(Vertex(vertex.component, feedback=vertex.feedback))
 
         for i in range(len(self.vertices)):
-            g.vertices[i].parents = [g.comp_to_vertex[parent_vertex.component] for parent_vertex in
-                                     self.vertices[i].parents]
+            g.vertices[i].parents = weakref.WeakSet([
+                g.comp_to_vertex[parent_vertex.component] for parent_vertex in
+                self.vertices[i].parents
+            ])
             g.vertices[i].children = [g.comp_to_vertex[parent_vertex.component] for parent_vertex in
                                       self.vertices[i].children]
 
@@ -3190,7 +3192,7 @@ class Graph(object):
         if child not in parent.children:
             parent.children.append(child)
         if parent not in child.parents:
-            child.parents.append(parent)
+            child.parents.add(parent)
 
     def get_parents_from_component(self, component):
         """
@@ -3206,7 +3208,7 @@ class Graph(object):
             list[`Vertex`] :
               list of the parent `Vertices <Vertex>` of the Vertex associated with **component**.
         """
-        return self.comp_to_vertex[component].parents
+        return list(self.comp_to_vertex[component].parents)
 
     def get_children_from_component(self, component):
         """

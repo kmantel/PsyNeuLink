@@ -431,7 +431,7 @@ from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import register_category, remove_instance_from_registry
 from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
-    ContentAddressableList, is_matrix, is_matrix_keyword, is_numeric, parse_valid_identifier, convert_to_list
+    ContentAddressableList, is_matrix, is_matrix_keyword, is_numeric, parse_valid_identifier, convert_to_list, weakref_property
 
 __all__ = [
     'Projection_Base', 'projection_keywords', 'PROJECTION_SPEC_KEYWORDS',
@@ -644,6 +644,10 @@ class Projection_Base(Projection):
     registry = ProjectionRegistry
 
     classPreferenceLevel = PreferenceLevel.CATEGORY
+
+    # Port has strong reference to projections in afferents/efferents
+    sender = weakref_property('sender')
+    receiver = weakref_property('receiver')
 
     @check_user_specified
     @abc.abstractmethod

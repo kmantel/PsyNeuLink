@@ -367,6 +367,7 @@ import inspect
 import operator
 import types
 import warnings
+import weakref
 from copy import deepcopy
 
 import numpy as np
@@ -388,7 +389,7 @@ from psyneulink.core.globals.parameters import ParameterBase, ParameterAlias, Sh
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.utilities \
-    import ContentAddressableList, ReadOnlyOrderedDict, is_iterable, is_numeric, is_value_spec, iscompatible, \
+    import ContentAddressableList, OwnerRef, ReadOnlyOrderedDict, is_iterable, is_numeric, is_value_spec, iscompatible, \
     is_instance_or_subclass, UtilitiesError, gen_friendly_comma_str
 
 __all__ = [
@@ -398,7 +399,7 @@ __all__ = [
 port_type_keywords = port_type_keywords.update({PARAMETER_PORT})
 
 
-class ParameterPortList(ContentAddressableList):
+class ParameterPortList(ContentAddressableList, OwnerRef):
 
     separator = '-'
     legal_key_type_strings = ContentAddressableList.legal_key_type_strings + ['Parameter']
@@ -414,7 +415,7 @@ class ParameterPortList(ContentAddressableList):
         **kwargs
     ):
         # cache, Parameter keys added when creating Ports, others upon lookup
-        self.parameter_mapping = {}
+        self.parameter_mapping = weakref.WeakValueDictionary()
         self.owner = owner
 
         super().__init__(component_type, key, list, name, **kwargs)

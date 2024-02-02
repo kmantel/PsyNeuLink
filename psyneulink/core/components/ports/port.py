@@ -771,6 +771,7 @@ import numbers
 import sys
 import types
 import warnings
+import weakref
 from collections import defaultdict
 from collections.abc import Iterable
 
@@ -995,6 +996,12 @@ class Port_Base(Port):
             loggable=False
         )
         require_projection_in_composition = Parameter(True, stateful=False, loggable=False, read_only=True, pnl_internal=True)
+
+        def _parse_projections(self, projections):
+            if projections is not None:
+                projections = weakref.WeakSet(projections)
+
+            return projections
 
     portAttributes = {FUNCTION, FUNCTION_PARAMS, PROJECTIONS}
 

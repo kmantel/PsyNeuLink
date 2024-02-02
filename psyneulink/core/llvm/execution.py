@@ -22,6 +22,7 @@ from typing import Callable, Optional
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.globals.context import Context
+from psyneulink.core.globals.utilities import weakref_property
 from . import helpers, jit_engine, builder_context
 from .debug import debug_env
 
@@ -377,6 +378,7 @@ class MechExecution(FuncExecution):
 
 
 class CompExecution(CUDAExecution):
+    _composition = weakref_property('_composition')
 
     def __init__(self, composition, execution_ids=[None], *, additional_tags=frozenset()):
         super().__init__(buffers=['state_struct', 'param_struct', 'data_struct', 'conditions'])

@@ -639,7 +639,7 @@ from psyneulink.core.globals.context import Context
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.utilities import \
-    convert_to_np_array, is_numeric, iscompatible, make_readonly_property, recursive_update, parse_valid_identifier
+    OwnerRef, convert_to_np_array, is_numeric, iscompatible, make_readonly_property, recursive_update, parse_valid_identifier
 
 __all__ = [
     'OutputPort', 'OutputPortError', 'PRIMARY', 'SEQUENTIAL', 'StandardOutputPorts', 'StandardOutputPortsError',
@@ -1491,7 +1491,7 @@ class StandardOutputPortsError(Exception):
         return repr(self.error_value)
 
 
-class StandardOutputPorts():
+class StandardOutputPorts(OwnerRef):
     """Collection of OutputPort specification dicts for `standard OutputPorts <OutputPort_Standard>` of a class.
 
     Parses specification of VARIABLE, assigning indices to OWNER_VALUE if specified.

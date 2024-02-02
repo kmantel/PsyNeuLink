@@ -384,7 +384,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet, REPORT_OUTPUT_PREF
 from psyneulink.core.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
-from psyneulink.core.globals.utilities import ContentAddressableList
+from psyneulink.core.globals.utilities import ContentAddressableList, weakref_property
 
 __all__ = [
     'DEFAULT_MONITORED_PORT_WEIGHT', 'DEFAULT_MONITORED_PORT_EXPONENT', 'DEFAULT_MONITORED_PORT_MATRIX',
@@ -505,6 +505,8 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
         PREFERENCE_SET_NAME: 'ObjectiveCustomClassPreferences',
         REPORT_OUTPUT_PREF: PreferenceEntry(False, PreferenceLevel.INSTANCE)}
 
+    modulatory_mechanism = weakref_property('modulatory_mechanism')
+
     # class_defaults.variable = None;  Must be specified using either **input_ports** or **monitor**
     # kmantel: above needs to be clarified - can class_defaults.variable truly be anything? or should there be some format?
     #   if the latter, we should specify one such valid assignment here, and override _validate_default_variable accordingly
@@ -542,6 +544,7 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
             read_only=True,
             structural=True,
             parse_spec=True,
+            history_max_length=0,
             aliases='monitor',
             constructor_argument='monitor'
         )

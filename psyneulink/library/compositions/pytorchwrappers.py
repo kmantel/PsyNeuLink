@@ -9,6 +9,8 @@
 
 """PyTorch wrappers for Composition, Mechanism, Projection, and Functions for use in AutodiffComposition"""
 
+import weakref
+
 import graph_scheduler
 import torch
 import torch.nn as nn
@@ -21,7 +23,7 @@ from psyneulink.library.compositions.compiledoptimizer import AdamOptimizer, SGD
 from psyneulink.library.compositions.compiledloss import MSELoss, CROSS_ENTROPYLoss
 from psyneulink.core.globals.keywords import DEFAULT_VARIABLE, Loss, NODE, TARGET_MECHANISM
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
-from psyneulink.core.globals.utilities import get_deepcopy_with_shared
+from psyneulink.core.globals.utilities import get_deepcopy_with_shared, weakref_property
 from psyneulink.core.globals.log import LogCondition
 from psyneulink.core import llvm as pnlvm
 
@@ -53,6 +55,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
         are mapped (see above).
 
     """
+    _composition = weakref_property('_composition')
+
     def __init__(self,
                  composition,
                  device,
@@ -66,10 +70,10 @@ class PytorchCompositionWrapper(torch.nn.Module):
         self.name = f"PytorchCompositionWrapper[{composition.name}]"
 
         self.node_wrappers = []  # can be PytorchMechanismWrapper or PytorchCompositionWrapper
-        self.nodes_map = {} # maps Node (Mech or nested Comp) -> PytorchMechanismWrapper or PytorchCompositionWrapper
+        self.nodes_map = weakref.WeakKeyDictionary()  # maps Node (Mech or nested Comp) -> PytorchMechanismWrapper or PytorchCompositionWrapper
 
         self.projection_wrappers = [] # PytorchProjectionWrappers
-        self.projections_map = {}  # maps Projections -> PytorchProjectionWrappers
+        self.projections_map = weakref.WeakKeyDictionary()  # maps Projections -> PytorchProjectionWrappers
 
         self.params = nn.ParameterList()
         self.device = device
@@ -227,7 +231,10 @@ class PytorchCompositionWrapper(torch.nn.Module):
                 # Not sure if this is needed, but just to be safe
                 self.nodes_map.update(node_wrapper.nodes_map)
         # Purge nodes_map of entries for nested Compositions (their nodes are now in self.nodes_map)
-        self.nodes_map = {k: v for k, v in self.nodes_map.items() if not isinstance(v, PytorchCompositionWrapper)}
+        self.nodes_map = weakref.WeakKeyDictionary(
+            {k: v for k, v in self.nodes_map.items()
+             if not isinstance(v, PytorchCompositionWrapper)}
+        )
 
         # Flatten projections so that they are all in the outer Composition and visible by _regenerate_paramlist
         #     needed for call to backward() in AutodiffComposition._update_learning_parameters
@@ -570,6 +577,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
 
 class PytorchMechanismWrapper():
     """Wrapper for a Mechanism in a PytorchCompositionWrapper"""
+    _mechanism = weakref_property('_mechanism')
+
     def __init__(self, mechanism, component_idx, device, context=None):
         self._mechanism = mechanism
         self.name = f"PytorchMechanismWrapper[{mechanism.name}]"
@@ -727,6 +736,11 @@ class PytorchProjectionWrapper():
        (see `PytorchCompositionWrapper` for descriptive figure and additional details);  the actual projection is stored
        in pnl_proj.
     """
+    _projection = weakref_property('_projection')
+
+    # PytorchMechanismWrapper has strong reference to PytorchProjectionWrapper in afferents/efferents
+    sender = weakref_property('sender')
+    receiver = weakref_property('receiver')
 
     def __init__(self, projection,
                  pnl_proj,
