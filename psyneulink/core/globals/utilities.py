@@ -2213,20 +2213,34 @@ def extended_shape(obj):
         return tuple()
 
 
+def ref_property(name, ref_name=None):
+    if ref_name is None:
+        ref_name = f'_{name}_ref'
+
+    def getter(self):
+        try:
+            ref = getattr(self, ref_name)
+        except AttributeError:
+            setattr(self, ref_name, None)
+            return None
+
+        try:
+            return ref()
+        except TypeError:
+            return ref
+
+    def setter(self, value):
+        try:
+            value = weakref.ref(value)
+        except TypeError:
+            pass
+        setattr(self, ref_name, value)
+
+    return property(getter).setter(setter)
+
+
 class OwnerRef:
     """
     Mixin providing an 'owner' property using a weak reference
     """
-    @property
-    def owner(self):
-        try:
-            return self._owner_ref()
-        except TypeError:
-            return self._owner_ref
-
-    @owner.setter
-    def owner(self, o):
-        try:
-            self._owner_ref = weakref.ref(o)
-        except TypeError:
-            self._owner_ref = o
+    owner = ref_property('owner')
