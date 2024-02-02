@@ -369,7 +369,10 @@ def remove_instance_from_registry(registry, category, name=None, component=None)
         pass
 
     # Delete instance
-    del registry_entry.instanceDict[name]
+    try:
+        del registry_entry.instanceDict[name]
+    except KeyError:
+        pass
 
     # Decrement count for instances in entry
     instance_count = registry_entry.instanceCount - 1
