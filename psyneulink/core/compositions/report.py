@@ -148,6 +148,7 @@ import re
 import sys
 import types
 import warnings
+import weakref
 from enum import Enum, Flag, auto
 from io import StringIO
 from psyneulink._typing import Union, Optional
@@ -735,7 +736,7 @@ class Report:
             if cls._use_pnl_view:
                 warnings.warn("'pnl_view' not yet supported as an option for report_progress of Composition.run()")
 
-            cls.output_reports = {}
+            cls.output_reports = weakref.WeakKeyDictionary()
             cls._recorded_reports = str()
             cls._rich_diverted_reports = str()
 
