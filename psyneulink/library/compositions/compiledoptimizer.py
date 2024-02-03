@@ -1,9 +1,11 @@
 from psyneulink.core import llvm as pnlvm
+from psyneulink.core.globals.utilities import weakref_property
 from psyneulink.library.compositions.pytorchllvmhelper import *
 
 __all__ = ['AdamOptimizer', 'SGDOptimizer']
 
 class Optimizer():
+    _composition = weakref_property('_composition')
 
     def __init__(self, pytorch_model):
         self._pytorch_model = pytorch_model

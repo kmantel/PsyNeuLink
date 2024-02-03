@@ -15,6 +15,7 @@ from psyneulink.core.compositions.composition import Composition
 from psyneulink.core.compositions.report import Report, ReportProgress, ReportDevices, LEARN_REPORT, PROGRESS_REPORT
 from psyneulink.core.components.mechanisms.modulatory.learning.learningmechanism import LearningMechanism
 from psyneulink.core.globals.keywords import OBJECTIVE_MECHANISM, TRAINING_SET
+from psyneulink.core.globals.utilities import weakref_property
 from inspect import isgeneratorfunction
 
 __all__ = ["CompositionRunner"]
@@ -24,6 +25,7 @@ def inf_yield_val(val=None):
         yield val
 
 class CompositionRunner():
+    _composition = weakref_property('_composition')
 
     def __init__(self, compostion: Composition):
         self._composition = compostion
