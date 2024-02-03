@@ -97,7 +97,7 @@ from beartype import beartype
 from psyneulink._typing import Optional, Union, Literal, Set, List
 
 from psyneulink.core.globals.keywords import CONTEXT, CONTROL, EXECUTING, EXECUTION_PHASE, FLAGS, INITIALIZING, LEARNING, SEPARATOR_BAR, SOURCE, VALIDATE
-from psyneulink.core.globals.utilities import OwnerRef, get_deepcopy_with_shared
+from psyneulink.core.globals.utilities import CompositionRef, OwnerRef, get_deepcopy_with_shared
 
 
 __all__ = [
@@ -266,7 +266,7 @@ RUN_MODE_FLAGS = {
 }
 
 
-class Context(OwnerRef):
+class Context(OwnerRef, CompositionRef):
     """Used to indicate the state of initialization and phase of execution of a Component, as well as the source of
     call of a method;  also used to specify and identify `conditions <Log_Conditions>` for `logging <Log>`.
 
