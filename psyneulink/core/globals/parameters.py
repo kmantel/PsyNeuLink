@@ -1676,7 +1676,7 @@ class Parameter(ParameterBase):
             owner = owner._owner
 
         # find root Component
-        while hasattr(owner, 'owner'):
+        while hasattr(owner, 'owner') and owner.owner is not None:
             owner = owner.owner
 
         return owner
