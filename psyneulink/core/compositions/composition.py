@@ -6334,9 +6334,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for projection in projections:
             if isinstance(projection, list):
                 self.add_projections(projection, context=context)
-            elif isinstance(projection, Projection) and \
-                    hasattr(projection, "sender") and \
-                    hasattr(projection, "receiver"):
+            elif (
+                isinstance(projection, Projection)
+                and projection.sender is not None
+                and projection.receiver is not None
+            ):
                 self.add_projection(projection, context=context)
             else:
                 raise CompositionError(f"Invalid projections specification for {self.name}. The add_projections "
@@ -6803,7 +6805,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # if a receiver was not passed, check for a receiver InputPort stored on the Projection object
         if receiver is None:
-            if hasattr(projection, "receiver"):
+            if hasattr(projection, "receiver") and projection.receiver is not None:
                 receiver = projection.receiver.owner
             else:
                 raise CompositionError(f"'{projection.name}' is missing a receiver specification.  For a Projection "
