@@ -727,7 +727,7 @@ class TestInputPortSpec:
         my_input_port = InputPort(projections=[T1])
         T2 = TransferMechanism(input_ports=[my_input_port])
         assert T2.input_ports[0].name == 'InputPort-0'
-        assert T2.input_ports[0].projections[0].sender.name == 'RESULT'
+        assert list(T2.input_ports[0].projections)[0].sender.name == 'RESULT'
 
     # ------------------------------------------------------------------------------------------------
     # TEST 33
