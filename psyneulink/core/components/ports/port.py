@@ -993,7 +993,8 @@ class Port_Base(Port):
             None,
             structural=True,
             stateful=False,
-            loggable=False
+            loggable=False,
+            history_max_length=0,
         )
         require_projection_in_composition = Parameter(True, stateful=False, loggable=False, read_only=True, pnl_internal=True)
 
