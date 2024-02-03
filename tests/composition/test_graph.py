@@ -16,7 +16,8 @@ class TestGraph:
     def test_copy(self):
 
         g1 = Graph()
-        vertices = [Vertex(TestGraph.DummyComponent()) for i in range(5)]
+        test_components = [TestGraph.DummyComponent() for _ in range(5)]
+        vertices = [Vertex(c) for c in test_components]
 
         for i in range(len(vertices)):
             g1.add_vertex(vertices[i])
@@ -29,7 +30,8 @@ class TestGraph:
         assert len(g1.comp_to_vertex) == len(g2.comp_to_vertex)
 
         for i in range(len(g2.vertices)):
-            assert g2.vertices[i].parents == {g2.vertices[(i - 1) % len(g2.vertices)]}
+            # iterating dereferences weakrefs
+            assert {p for p in g2.vertices[i].parents} == {g2.vertices[(i - 1) % len(g2.vertices)]}
             assert g2.vertices[i].children == [g2.vertices[(i + 1) % len(g2.vertices)]]
 
             assert g1.vertices[i] != g2.vertices[i]

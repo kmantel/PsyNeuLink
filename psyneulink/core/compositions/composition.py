@@ -3041,7 +3041,7 @@ class Vertex(object):
     def __init__(self, component, parents=None, children=None, feedback=None):
         self.component = component
         if parents is None:
-            parents = {}
+            parents = set()
         self.parents = weakref.WeakSet(parents)
 
         if children is not None:
@@ -3131,10 +3131,10 @@ class Graph(object):
             g.add_vertex(Vertex(vertex.component, feedback=vertex.feedback))
 
         for i in range(len(self.vertices)):
-            g.vertices[i].parents = weakref.WeakSet([
+            g.vertices[i].parents.update(weakref.WeakSet([
                 g.comp_to_vertex[parent_vertex.component] for parent_vertex in
                 self.vertices[i].parents
-            ])
+            ]))
             g.vertices[i].children = [g.comp_to_vertex[parent_vertex.component] for parent_vertex in
                                       self.vertices[i].children]
 
