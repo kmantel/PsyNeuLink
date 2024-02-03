@@ -6732,7 +6732,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # if a sender was not passed, check for a sender OutputPort stored on the Projection object
         if sender is None:
-            if projection.sender is not None:
+            if hasattr(projection, "sender"):
                 sender = projection.sender
                 if isinstance(sender, CompositionInterfaceMechanism):
                     sender = sender.composition
@@ -6788,7 +6788,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"has a sender ({repr(sender_name)}) that is not (yet) in it "
                                        f"or any of its nested {Composition.__name__}s.")
 
-        if projection.sender is not None:
+        if hasattr(projection, "sender"):
             if (projection.sender.owner != sender
                     and projection.sender.owner != graph_sender
                     and projection.sender.owner != sender_mechanism):
