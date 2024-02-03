@@ -645,7 +645,7 @@ class Projection_Base(Projection):
 
     classPreferenceLevel = PreferenceLevel.CATEGORY
 
-    # Port has strong reference to projections in afferents/efferents
+    # Port has strong reference to Projection in afferents/efferents
     sender = weakref_property('sender')
     receiver = weakref_property('receiver')
 
