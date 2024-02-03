@@ -6788,7 +6788,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"has a sender ({repr(sender_name)}) that is not (yet) in it "
                                        f"or any of its nested {Composition.__name__}s.")
 
-        if hasattr(projection, "sender"):
+        if projection.sender is not None:
             if (projection.sender.owner != sender
                     and projection.sender.owner != graph_sender
                     and projection.sender.owner != sender_mechanism):
@@ -13083,10 +13083,20 @@ _
     def _inner_projections(self):
         # PNL considers afferent projections to input_CIM to be part
         # of the nested composition. Filter them out.
-        return (p for p in self.projections
-                  if p.receiver.owner is not self.input_CIM and
-                     p.receiver.owner is not self.parameter_CIM and
-                     p.sender.owner is not self.output_CIM)
+
+        # NOTE: p.receiver and p.sender are None if they were GCd. These
+        # projections likely should have been removed from
+        # self.projections somewhere
+        return (
+            p for p in self.projections
+            if (
+                p.receiver is not None
+                and p.sender is not None
+                and p.receiver.owner is not self.input_CIM
+                and p.receiver.owner is not self.parameter_CIM
+                and p.sender.owner is not self.output_CIM
+            )
+        )
 
     def _get_param_ids(self):
         return ["nodes", "projections"] + super()._get_param_ids()
