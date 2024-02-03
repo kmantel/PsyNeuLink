@@ -139,6 +139,7 @@ Class Reference
 
 """
 
+import weakref
 from collections.abc import Iterable
 
 import numpy as np
@@ -372,6 +373,15 @@ class ComparatorMechanism(ObjectiveMechanism):
         self.input_ports[1].parameters.require_projection_in_composition.set(True, override=True)
         # reset input ports spec to actual spec, not parsed
         self.parameters.input_ports.spec = input_ports_spec
+
+        # _merge_legacy_constructor_args creates port specification
+        # dicts with self references, and the default isn't used
+        # elsewhere
+        for input_port in self.defaults.input_ports:
+            try:
+                input_port['owner'] = weakref.ref(input_port['owner'])
+            except (KeyError, TypeError):
+                pass
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """If sample and target values are specified, validate that they are compatible

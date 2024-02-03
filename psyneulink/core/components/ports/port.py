@@ -998,8 +998,11 @@ class Port_Base(Port):
         require_projection_in_composition = Parameter(True, stateful=False, loggable=False, read_only=True, pnl_internal=True)
 
         def _parse_projections(self, projections):
-            if projections is not None:
-                projections = weakref.WeakSet(projections)
+            # if projections is not None:
+            #     try:
+            #         projections = weakref.WeakSet(projections)
+            #     except TypeError:
+            #         projections = weakref.WeakSet([projections])
 
             return projections
 
@@ -1116,6 +1119,7 @@ class Port_Base(Port):
             pass
 
         self.projections = self._get_all_projections()
+        self.projections = weakref.WeakSet(self.projections)
 
         if context.source == ContextFlags.COMMAND_LINE:
             owner.add_ports([self])
