@@ -635,7 +635,7 @@ from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.context import Context
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
-from psyneulink.core.globals.utilities import ContentAddressableList, convert_all_elements_to_np_array, convert_to_list, convert_to_np_array
+from psyneulink.core.globals.utilities import CompositionRef, ContentAddressableList, convert_all_elements_to_np_array, convert_to_list, convert_to_np_array
 
 __all__ = [
     'CONTROL_ALLOCATION', 'GATING_ALLOCATION', 'ControlMechanism', 'ControlMechanismError',
@@ -751,7 +751,7 @@ def _control_allocation_getter(owning_component=None, context=None):
         return owning_component.defaults.control_allocation
 
 
-class ControlMechanism(ModulatoryMechanism_Base):
+class ControlMechanism(ModulatoryMechanism_Base, CompositionRef):
     """
     ControlMechanism(                        \
         monitor_for_control=None,            \
