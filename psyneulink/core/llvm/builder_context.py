@@ -55,7 +55,7 @@ _builtin_intrinsics = frozenset(('pow', 'log', 'exp', 'tanh', 'coth', 'csch',
 class _node_wrapper():
     def __init__(self, composition, node):
         self._comp = weakref.proxy(composition)
-        self._node = weakref.proxy(node)
+        self._node = node
 
     def __repr__(self):
         return "Node wrapper for node '{}' in composition '{}'".format(self._node, self._comp)
