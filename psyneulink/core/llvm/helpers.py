@@ -18,6 +18,7 @@ import llvmlite.binding as llvm
 
 
 from .debug import debug_env
+from psyneulink.core.globals.utilities import weakref_property
 from psyneulink.core.scheduling.condition import All, AllHaveRun, Always, Any, AtPass, AtTrial, BeforeNCalls, AtNCalls, AfterNCalls, \
     EveryNCalls, Never, Not, WhenFinished, WhenFinishedAny, WhenFinishedAll, Threshold
 from psyneulink.core.scheduling.time import TimeScale
@@ -458,6 +459,8 @@ def printf_float_matrix(builder, matrix, prefix="", suffix="\n", override_debug=
 
 
 class ConditionGenerator:
+    composition = weakref_property('composition')
+
     def __init__(self, ctx, composition):
         self.ctx = ctx
         self.composition = composition
