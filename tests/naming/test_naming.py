@@ -57,9 +57,11 @@ class TestNaming:
         ]
     )
     def test_duplicate_assigned_mechanism_names(self, name, expected_list):
+        mechs = []
         for expected_name in expected_list:
             t = pnl.TransferMechanism(name=name)
             assert t.name == expected_name
+            mechs.append(t)  # avoid GC previous mechs
 
     def test_duplicate_assigned_mechanism_names_2(self):
         a = pnl.TransferMechanism(name='A')  # noqa: F841
