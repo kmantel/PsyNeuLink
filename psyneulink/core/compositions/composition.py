@@ -3112,7 +3112,7 @@ class Graph(object):
     """
 
     def __init__(self):
-        self.comp_to_vertex = collections.OrderedDict()  # Translate from PNL Mech, Comp or Proj to corresponding vertex
+        self.comp_to_vertex = weakref.WeakKeyDictionary()  # Translate from PNL Mech, Comp or Proj to corresponding vertex
         self.vertices = []  # List of vertices within graph
 
         self.cycle_vertices = []
