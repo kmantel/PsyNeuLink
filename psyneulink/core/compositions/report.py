@@ -710,7 +710,7 @@ class Report:
                              and (cls._rich_console or cls._rich_divert or cls._record_reports))
             cls._use_pnl_view = ReportDevices.PNL_VIEW in cls._report_to_devices
 
-            cls._outermost_comp = caller
+            cls._outermost_comp = weakref.ref(caller)
             cls._execution_stack = []
             cls._trial_header_stack = []
 
@@ -913,13 +913,13 @@ class Report:
             if content in {'run_start', 'execute_start'}:
                 if simulation_mode:
                     # place controller on the stack for simulations
-                    self._execution_stack.append(caller.controller)
+                    self._execution_stack.append(weakref.ref(caller.controller))
                 else:
                     # place Composition or Mechanism on the stack otherwise
-                    self._execution_stack.append(caller)
+                    self._execution_stack.append(weakref.ref(caller))
 
             elif content == 'trial_start':
-                self._execution_stack.append(caller)
+                self._execution_stack.append(weakref.ref(caller))
 
             elif content in {'execute_end', 'run_end'}:
                 self._execution_stack.pop()
@@ -1119,6 +1119,10 @@ class Report:
                 #   (indicated by current and previous entries on the stack both being Compositions but not the same)
                 if len(self._execution_stack) > 1:
                     previous_caller = self._execution_stack[-2]
+                    try:
+                        previous_caller = previous_caller()
+                    except TypeError:
+                        pass
                     if (caller is not previous_caller
                             and isinstance(caller, Composition) and isinstance(previous_caller, Composition)):
                         trial_header += f'{self._depth_indent_i}[bold {trial_panel_color}]Execution of {caller.name} ' \
@@ -1843,10 +1847,16 @@ class Report:
                     self._rich_diverted_reports += progress_reports + '\n'
                 if self._record_reports:
                     self._recorded_reports += progress_reports + '\n'
-            if self._rich_divert:
-                self._outermost_comp.rich_diverted_reports = self._rich_diverted_reports
-            if self._record_reports:
-                self._outermost_comp.recorded_reports = self._recorded_reports
+
+            try:
+                outermost_comp = self._outermost_comp()
+            except TypeError:
+                pass
+            else:
+                if self._rich_divert:
+                    outermost_comp.rich_diverted_reports = self._rich_diverted_reports
+                if self._record_reports:
+                    outermost_comp.recorded_reports = self._recorded_reports
 
     @property
     def _execution_stack_depth(self):
@@ -1855,7 +1865,16 @@ class Report:
     @property
     def _nested(self):
         from psyneulink.core.compositions.composition import Composition
-        return any(isinstance(c, Composition) for c in self._execution_stack)
+        for c in self._execution_stack:
+            try:
+                c = c()
+            except TypeError:
+                pass
+
+            if isinstance(c, Composition):
+                return True
+        else:
+            return False
 
     @property
     def _run_mode(self):
