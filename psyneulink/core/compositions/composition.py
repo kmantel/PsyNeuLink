@@ -6761,7 +6761,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             sender_output_port = sender_mechanism.output_port
             nested_compositions.append(sender)
 
-        else:
+        elif sender is not None:
             raise CompositionError("sender arg ({}) of call to add_projection method of {} is not a {}, {} or {}".
                                    format(sender, self.name,
                                           Mechanism.__name__, OutputPort.__name__, Composition.__name__))
