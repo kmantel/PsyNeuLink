@@ -993,7 +993,6 @@ class Parameter(ParameterBase):
         reference=False,
         dependencies=None,
         initializer=None,
-        port=None,  # if modulated, set to the ParameterPort
         mdf_name=None,
         specify_none=False,
         _owner=None,
@@ -1059,7 +1058,6 @@ class Parameter(ParameterBase):
             reference=reference,
             dependencies=dependencies,
             initializer=initializer,
-            # port=port,
             mdf_name=mdf_name,
             specify_none=specify_none,
             _inherited=_inherited,
@@ -1823,9 +1821,6 @@ class Parameter(ParameterBase):
         if self.parse_spec:
             value = self._parse(value)
         super().__setattr__('spec', value)
-
-    def get_port(self):
-        return self._get_port()
 
     def _get_port(self):
         try:
