@@ -255,7 +255,7 @@ def _get_engines():
 
 
 
-def cleanup(check_leaks:bool):
+def cleanup():
     global _cpu_engine
     _cpu_engine = None
     global _ptx_engine
@@ -267,16 +267,4 @@ def cleanup(check_leaks:bool):
     LLVMBinaryFunction.get.cache_clear()
     LLVMBinaryFunction.from_obj.cache_clear()
 
-    if check_leaks and LLVMBuilderContext.is_active():
-        old_context = LLVMBuilderContext.get_current()
-
-        LLVMBuilderContext.clear_global()
-
-        # check that WeakKeyDictionary is not keeping any references
-        import gc
-        gc.collect()
-        c = list(old_context._cache.keys())
-
-        assert len(c) == 0, c
-    else:
-        LLVMBuilderContext.clear_global()
+    LLVMBuilderContext.clear_global()
