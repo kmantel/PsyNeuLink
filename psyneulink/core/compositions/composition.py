@@ -6734,7 +6734,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # if a sender was not passed, check for a sender OutputPort stored on the Projection object
         if sender is None:
-            if hasattr(projection, "sender"):
+            if projection.sender is not None:
                 sender = projection.sender
                 if isinstance(sender, CompositionInterfaceMechanism):
                     sender = sender.composition
@@ -6761,7 +6761,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             sender_output_port = sender_mechanism.output_port
             nested_compositions.append(sender)
 
-        elif sender is not None:
+        else:
             raise CompositionError("sender arg ({}) of call to add_projection method of {} is not a {}, {} or {}".
                                    format(sender, self.name,
                                           Mechanism.__name__, OutputPort.__name__, Composition.__name__))
