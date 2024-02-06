@@ -2272,7 +2272,8 @@ class Component(MDFSerializable, OwnerRef, metaclass=ComponentsMeta):
                 elif value is not None or parameter_obj.specify_none:
                     parameter_obj._user_specified = True
 
-                if parameter_obj.structural:
+                if parameter_obj.structural and not isinstance(parameter_obj, SharedParameter):
+                    # TODO: check here, spec is getting set on a class param
                     parameter_obj.spec = value
 
                 if parameter_obj.modulable:
@@ -2283,7 +2284,8 @@ class Component(MDFSerializable, OwnerRef, metaclass=ComponentsMeta):
 
                         if parsed is not value:
                             # we have a modulable param spec
-                            parameter_obj.spec = value
+                            if not isinstance(parameter_obj, SharedParameter):
+                                parameter_obj.spec = value
                             value = parsed
                             param_defaults[name] = parsed
 
