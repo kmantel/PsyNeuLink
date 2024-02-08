@@ -319,7 +319,7 @@ import toposort
 from psyneulink.core.globals.context import Context, ContextError, ContextFlags, _get_time, handle_external_context
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
-from psyneulink.core.globals.utilities import call_with_pruned_args, copy_iterable_with_shared, \
+from psyneulink.core.globals.utilities import WeakRefNone, call_with_pruned_args, copy_iterable_with_shared, \
     get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, unproxy_weakproxy, create_union_set, safe_equals, get_function_sig_default_value
 from psyneulink.core.rpc.graph_pb2 import Entry, ndArray
 
@@ -333,13 +333,6 @@ logger = logging.getLogger(__name__)
 
 class ParameterError(Exception):
     pass
-
-
-def _get_prefixed_method(obj, prefix, name, sep=''):
-    try:
-        return getattr(obj, f'{prefix}{sep}{name}')
-    except AttributeError:
-        return None
 
 
 def get_validator_by_function(function):
@@ -550,6 +543,12 @@ class ParametersTemplate:
 
         for child in self._children:
             child._register_parameter(param_name)
+
+    def _invalidate_child_method_cache(self, attr):
+        self._method_cache.pop(attr, None)
+
+        for child in self._children:
+            child._invalidate_child_method_cache(attr)
 
     def values(self, show_all=False):
         """
@@ -2088,6 +2087,10 @@ class ParametersBase(ParametersTemplate):
 
     def __init__(self, owner, parent=None):
         self._initializing = True
+        if inspect.isclass(owner) or parent is None:
+            self._method_cache = weakref.WeakValueDictionary()
+        else:
+            self._method_cache = parent._method_cache
 
         super().__init__(owner=owner, parent=parent)
 
@@ -2170,6 +2173,12 @@ class ParametersBase(ParametersTemplate):
         # handles parsing: Parameter or ParameterAlias housekeeping if assigned, or creation of a Parameter
         # if just a value is assigned
         if not self._is_parameter(attr):
+            if (
+                attr.startswith(self._parsing_method_prefix)
+                or attr.startswith(self._validation_method_prefix)
+            ):
+                self._invalidate_child_method_cache(attr)
+
             super().__setattr__(attr, value)
         else:
             if isinstance(value, Parameter):
@@ -2294,6 +2303,23 @@ class ParametersBase(ParametersTemplate):
             )
         )
 
+    def _get_cached_method(self, method_prefix, parameter):
+        method_name = f'{method_prefix}{parameter}'
+        try:
+            method = self._method_cache[method_name]
+        except KeyError:
+            try:
+                method = getattr(self, method_name)
+            except AttributeError:
+                # to allow use in weak dictionary
+                method = WeakRefNone
+            self._method_cache[method_name] = method
+
+        if method is WeakRefNone:
+            method = None
+
+        return method
+
     def _get_parse_method(self, parameter):
         """
         Returns:
@@ -2301,7 +2327,7 @@ class ParametersBase(ParametersTemplate):
             attribute (ex: 'modulable') if it exists, or None if it does
             not
         """
-        return _get_prefixed_method(self, self._parsing_method_prefix, parameter)
+        return self._get_cached_method(self._parsing_method_prefix, parameter)
 
     def _get_validate_method(self, parameter):
         """
@@ -2310,7 +2336,7 @@ class ParametersBase(ParametersTemplate):
             Parameter attribute (ex: 'modulable') if it exists, or None
             if it does not
         """
-        return _get_prefixed_method(self, self._validation_method_prefix, parameter)
+        return self._get_cached_method(self._validation_method_prefix, parameter)
 
     def _validate(self, attr, value):
         err_msg = None
