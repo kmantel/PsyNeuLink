@@ -2176,13 +2176,10 @@ class ParametersBase(ParametersTemplate):
         # underscored attributes don't need special handling because
         # they're not Parameter objects. This includes parsing and
         # validation methods
-        if attr[0] == '_':
+        try:
+            return getattr(self._parent, attr)
+        except AttributeError:
             throw_error()
-        else:
-            try:
-                return getattr(self._parent, attr)
-            except AttributeError:
-                throw_error()
 
     def __setattr__(self, attr, value):
         # handles parsing: Parameter or ParameterAlias housekeeping if assigned, or creation of a Parameter
