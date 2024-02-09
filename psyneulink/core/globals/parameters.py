@@ -524,7 +524,14 @@ class ParametersTemplate:
         return newone
 
     def __contains__(self, item):
-        return item in itertools.chain.from_iterable(self.values(show_all=True).items())
+        if item in self._params:
+            return True
+
+        for p in self._params:
+            if item is getattr(self, p):
+                return True
+
+        return False
 
     def __iter__(self):
         return iter([getattr(self, k) for k in self.values(show_all=True).keys()])
