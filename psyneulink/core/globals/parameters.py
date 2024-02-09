@@ -2178,7 +2178,7 @@ class ParametersBase(ParametersTemplate):
         # underscored attributes don't need special handling because
         # they're not Parameter objects. This includes parsing and
         # validation methods
-        if attr[0] == '_':
+        if attr[0] == '_' and not attr.startswith(self._parsing_method_prefix) and not attr.startswith(self._validation_method_prefix):
             throw_error()
         else:
             try:
