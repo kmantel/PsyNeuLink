@@ -553,11 +553,11 @@ class ParametersTemplate:
         for child in self._children:
             child._register_parameter(param_name)
 
-    def _invalidate_child_nonpresent_method_cache(self, attr):
-        self._nonpresent_method_cache.pop(attr, None)
+    def _invalidate_child_nonpresent_attr_cache(self, attr):
+        self._nonpresent_attr_cache.pop(attr, None)
 
         for child in self._children:
-            child._invalidate_child_nonpresent_method_cache(attr)
+            child._invalidate_child_nonpresent_attr_cache(attr)
 
     def values(self, show_all=False):
         """
@@ -2104,7 +2104,7 @@ class ParametersBase(ParametersTemplate):
 
     def __init__(self, owner, parent=None):
         self._initializing = True
-        self._nonpresent_method_cache = {}
+        self._nonpresent_attr_cache = {}
 
         super().__init__(owner=owner, parent=parent)
 
@@ -2191,7 +2191,7 @@ class ParametersBase(ParametersTemplate):
                 attr.startswith(self._parsing_method_prefix)
                 or attr.startswith(self._validation_method_prefix)
             ):
-                self._invalidate_child_nonpresent_method_cache(attr)
+                self._invalidate_child_nonpresent_attr_cache(attr)
 
             super().__setattr__(attr, value)
         else:
@@ -2317,13 +2317,13 @@ class ParametersBase(ParametersTemplate):
 
     def _get_cached_method(self, method_prefix, parameter):
         method_name = f'{method_prefix}{parameter}'
-        if method_name in self._nonpresent_method_cache:
+        if method_name in self._nonpresent_attr_cache:
             return None
 
         try:
             method = getattr(self, method_name)
         except AttributeError:
-            self._nonpresent_method_cache[method_name] = True
+            self._nonpresent_attr_cache[method_name] = True
             method = None
 
         return method
