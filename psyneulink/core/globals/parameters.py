@@ -2152,47 +2152,46 @@ class ParametersBase(ParametersTemplate):
 
         self._initializing = False
 
+    def _throw_attr_error(self, attr):
+        try:
+            param_owner = self._owner
+            if isinstance(param_owner, type):
+                owner_string = f' of {param_owner}'
+            else:
+                owner_string = f' of {param_owner.name}'
+
+            if hasattr(param_owner, 'owner') and param_owner.owner:
+                owner_string += f' for {param_owner.owner.name}'
+                if hasattr(param_owner.owner, 'owner') and param_owner.owner.owner:
+                    owner_string += f' of {param_owner.owner.owner.name}'
+        except AttributeError:
+            owner_string = ''
+
+        raise AttributeError(
+            f"No attribute '{attr}' exists in the parameter hierarchy{owner_string}."
+        ) from None
+
     def __getattr__(self, attr):
-        def throw_error():
-            try:
-                param_owner = self._owner
-                if isinstance(param_owner, type):
-                    owner_string = f' of {param_owner}'
-                else:
-                    owner_string = f' of {param_owner.name}'
+        if (
+            attr in self._nonpresent_attr_cache
+            # attr can't be in __dict__ or __getattr__ would not be called
+            or (
+                self._parent is not None
+                and attr in self._parent._nonpresent_attr_cache
+            )
+        ):
+            self._throw_attr_error(attr)
 
-                if hasattr(param_owner, 'owner') and param_owner.owner:
-                    owner_string += f' for {param_owner.owner.name}'
-                    if hasattr(param_owner.owner, 'owner') and param_owner.owner.owner:
-                        owner_string += f' of {param_owner.owner.owner.name}'
-            except AttributeError:
-                owner_string = ''
-
-            raise AttributeError(
-                f"No attribute '{attr}' exists in the parameter hierarchy{owner_string}."
-            ) from None
-
-        # underscored attributes don't need special handling because
-        # they're not Parameter objects. This includes parsing and
-        # validation methods
-        if attr[0] == '_' and not attr.startswith(self._parsing_method_prefix) and not attr.startswith(self._validation_method_prefix):
-            throw_error()
-        else:
-            try:
-                return getattr(self._parent, attr)
-            except AttributeError:
-                throw_error()
+        try:
+            return getattr(self._parent, attr)
+        except AttributeError:
+            self._nonpresent_attr_cache[attr] = True
+            self._throw_attr_error(attr)
 
     def __setattr__(self, attr, value):
         # handles parsing: Parameter or ParameterAlias housekeeping if assigned, or creation of a Parameter
         # if just a value is assigned
         if not self._is_parameter(attr):
-            if (
-                attr.startswith(self._parsing_method_prefix)
-                or attr.startswith(self._validation_method_prefix)
-            ):
-                self._invalidate_child_nonpresent_attr_cache(attr)
-
             super().__setattr__(attr, value)
         else:
             if isinstance(value, Parameter):
@@ -2282,6 +2281,18 @@ class ParametersBase(ParametersTemplate):
             self._validate(attr, getattr(self, attr).default_value)
             self._register_parameter(attr)
 
+        if (
+            (
+                attr[0] != '_'
+                or attr.startswith(self._parsing_method_prefix)
+                or attr.startswith(self._validation_method_prefix)
+            )
+            and not self._initializing
+        ):
+            # below does happen during deepcopy, but this should only
+            # happen on instances, which won't have _children
+            self._invalidate_child_nonpresent_attr_cache(attr)
+
     def _reconcile_value_with_init_default(self, attr, value):
         constructor_default = get_init_signature_default_value(self._owner, attr)
         if constructor_default is not None and constructor_default is not inspect._empty:
@@ -2317,15 +2328,10 @@ class ParametersBase(ParametersTemplate):
 
     def _get_cached_method(self, method_prefix, parameter):
         method_name = f'{method_prefix}{parameter}'
-        if method_name in self._nonpresent_attr_cache:
-            return None
-
         try:
             method = getattr(self, method_name)
         except AttributeError:
-            self._nonpresent_attr_cache[method_name] = True
             method = None
-
         return method
 
     def _get_parse_method(self, parameter):
