@@ -1311,7 +1311,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
             # If both the mechanism and its functoin use random_state it's DDM
             # with integrator function. The mechanism's random_state is not used.
-            if 'random_state' in self.parameters and 'random_state' in self.function.parameters:
+            if hasattr(self.parameters, 'random_state') and hasattr(self.function.parameters, 'random_state'):
                 whitelist.remove('random_state')
 
 
@@ -1320,7 +1320,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             whitelist.add("num_executions")
 
         # Drop combination function params from RTM if not needed
-        if 'has_recurrent_input_port' in self.parameters:
+        if getattr(self.parameters, 'has_recurrent_input_port', False):
             blacklist.add('combination_function')
 
         # Drop integrator function if integrator_mode is not enabled
@@ -1338,7 +1338,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 blacklist.add('duration_cost_fct')
 
         # Drop previous_value from MemoryFunctions
-        if 'duplicate_keys' in self.parameters:
+        if hasattr(self.parameters, 'duplicate_keys'):
             blacklist.add("previous_value")
 
         def _is_compilation_state(p):
@@ -1449,7 +1449,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             blacklist.add('has_initializers')
 
         # Drop combination function params from RTM if not needed
-        if 'has_recurrent_input_port' in self.parameters:
+        if getattr(self.parameters, 'has_recurrent_input_port', False):
             blacklist.add('combination_function')
 
         # Drop integrator function if integrator_mode is not enabled
