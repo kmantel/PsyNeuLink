@@ -2089,11 +2089,3 @@ def toposort_key(
             return -1
 
     return _generated_toposort_key
-
-
-class WeakRefNone:
-    """
-    Use as a singleton to represent storing None in an unsupported
-    weakref structure
-    """
-    pass

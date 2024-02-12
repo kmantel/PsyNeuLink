@@ -319,7 +319,7 @@ import toposort
 from psyneulink.core.globals.context import Context, ContextError, ContextFlags, _get_time, handle_external_context
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
-from psyneulink.core.globals.utilities import WeakRefNone, call_with_pruned_args, copy_iterable_with_shared, \
+from psyneulink.core.globals.utilities import call_with_pruned_args, copy_iterable_with_shared, \
     get_alias_property_getter, get_alias_property_setter, get_deepcopy_with_shared, unproxy_weakproxy, create_union_set, safe_equals, get_function_sig_default_value
 from psyneulink.core.rpc.graph_pb2 import Entry, ndArray
 
