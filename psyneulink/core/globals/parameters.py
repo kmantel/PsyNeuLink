@@ -335,6 +335,13 @@ class ParameterError(Exception):
     pass
 
 
+def _get_prefixed_method(obj, prefix, name, sep=''):
+    try:
+        return getattr(obj, f'{prefix}{sep}{name}')
+    except AttributeError:
+        return None
+
+
 def get_validator_by_function(function):
     """
         Arguments
@@ -2326,14 +2333,6 @@ class ParametersBase(ParametersTemplate):
             )
         )
 
-    def _get_cached_method(self, method_prefix, parameter):
-        method_name = f'{method_prefix}{parameter}'
-        try:
-            method = getattr(self, method_name)
-        except AttributeError:
-            method = None
-        return method
-
     def _get_parse_method(self, parameter):
         """
         Returns:
@@ -2341,7 +2340,7 @@ class ParametersBase(ParametersTemplate):
             attribute (ex: 'modulable') if it exists, or None if it does
             not
         """
-        return self._get_cached_method(self._parsing_method_prefix, parameter)
+        return _get_prefixed_method(self, self._parsing_method_prefix, parameter)
 
     def _get_validate_method(self, parameter):
         """
@@ -2350,7 +2349,7 @@ class ParametersBase(ParametersTemplate):
             Parameter attribute (ex: 'modulable') if it exists, or None
             if it does not
         """
-        return self._get_cached_method(self._validation_method_prefix, parameter)
+        return _get_prefixed_method(self, self._validation_method_prefix, parameter)
 
     def _validate(self, attr, value):
         err_msg = None
