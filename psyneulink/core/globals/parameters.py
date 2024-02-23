@@ -2309,15 +2309,15 @@ class ParametersBase(ParametersTemplate):
                     # set _inherited before default_value because it will
                     # restore from cache
                     new_param._inherited = False
-                    new_param.default_value = value
 
                     # the old/replaced Parameter should be discarded
                     current_value._is_invalid_source = True
 
                 else:
-                    new_param = Parameter(name=attr, default_value=value, _owner=self)
+                    new_param = Parameter(name=attr, _owner=self)
 
                 super().__setattr__(attr, new_param)
+                new_param._set_default_value(value)
 
             self._validate(attr, getattr(self, attr).default_value)
             self._register_parameter(attr)
