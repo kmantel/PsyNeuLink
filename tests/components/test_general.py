@@ -1,5 +1,6 @@
 import inspect
 import psyneulink as pnl
+import numpy as np
 import pytest
 import re
 
@@ -22,6 +23,13 @@ for item in pnl.__all__:
         ).parameters
 
 component_classes.sort(key=lambda x: x.__name__)
+
+component_class_parameters = []
+for class_ in component_classes:
+    for p in class_.parameters:
+        component_class_parameters.append((class_, p.name))
+
+component_class_parameters.sort(key=lambda x: (x[0].__name__, x[1]))
 
 
 @pytest.mark.parametrize(
@@ -61,6 +69,32 @@ def test_constructors_have_check_user_specified(class_):
         f"The __init__ method of Component {class_.__name__} must be wrapped by"
         f" check_user_specified in {pnl.core.globals.parameters.check_user_specified.__module__}"
     )
+
+
+def _numeric_parameter_value_check(class_, param_name, value, descriptor):
+    descriptor = f'{class_}.parameters.{param_name}{descriptor}'
+    assert isinstance(value, np.ndarray) or not pnl.is_numeric(value), (
+        f'{descriptor} is a numeric value but is not wrapped in a'
+        f' numpy array:\n\t{value}\n\t{type(value)}'
+    )
+
+
+@pytest.mark.parametrize(
+    'class_, param_name',
+    component_class_parameters
+)
+def test_numeric_parameter_values_are_numpy_defaults(class_, param_name):
+    parameter = getattr(class_.parameters, param_name)
+    assert parameter.values is not None
+
+
+@pytest.mark.parametrize(
+    'class_, param_name',
+    component_class_parameters
+)
+def test_numeric_parameter_values_are_numpy_values(class_, param_name):
+    parameter = getattr(class_.parameters, param_name)
+    assert parameter.values is not None
 
 
 @pytest.fixture(scope='module')
