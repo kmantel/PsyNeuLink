@@ -1193,6 +1193,8 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         distances_by_field = Parameter([0], stateful=True, read_only=True)
         distances_to_entries = Parameter([0], stateful=True, read_only=True)
 
+        memory = []
+
         def _validate_retrieval_prob(self, retrieval_prob):
             retrieval_prob = float(retrieval_prob)
             if not all_within_range(retrieval_prob, 0, 1):
@@ -1253,8 +1255,6 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
                  params:Optional[Union[List, np.ndarray]]=None,
                  owner=None,
                  prefs:  Optional[ValidPrefSet] = None):
-
-        self._memory = []
 
         super().__init__(
             default_variable=default_variable,
@@ -1378,7 +1378,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
                 warnings.warn(f"Attempt to initialize memory of {self.__class__.__name__} with an entry ({entry}) "
                               f"that is identical to an existing one while 'duplicate_entries_allowed'==False; "
                               f"that entry has been skipped")
-        previous_value = self._memory
+        previous_value = self.parameters.memory._get(context)
         self.parameters.previous_value.set(previous_value, context, override=True)
         return previous_value
 
@@ -1713,7 +1713,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
             existing_entries = np.delete(existing_entries,0,axis=0)
 
         self.parameters.previous_value._set(existing_entries,context)
-        self._memory = existing_entries
+        self.parameters.memory._set(existing_entries, context)
 
         return storage_succeeded
 
@@ -1857,8 +1857,8 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
             if (np.all(entry == memory)
                     or fields and all(entry[f] == memory[f] for f in fields)):
                 pruned_memory = np.delete(pruned_memory, pruned_memory.tolist().index(memory.tolist()), axis=0)
-        self._memory = convert_all_elements_to_np_array(pruned_memory)
-        self.parameters.previous_value._set(self._memory, context)
+        self.parameters.memory._set(convert_all_elements_to_np_array(pruned_memory), context)
+        self.parameters.previous_value._set(self.parameters.memory._get(context), context)
 
     def _parse_memories(self, entries, method, context=None):
         """Parse passing of single vs. multiple memories, validate memories, and return ndarray
@@ -1891,21 +1891,11 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         """
         return self(entry, storage_prob=0.0, context=context, **kwargs)
 
-    @property
-    def memory(self):
-        """Return entries in self._memory as lists in an outer np.array;
-           use np.array for multi-line printout
-       """
-        try:
-            return self._memory
-        except:
-            return np.array([])
-
-    @property
-    def memory_num_entries(self):
+    @handle_external_context
+    def memory_num_entries(self, context):
         """Return number of entries in self._memory.
        """
-        return len(self._memory)
+        return len(self.parameters.memory._get(context))
 
 
 KEYS = 0
@@ -2250,6 +2240,8 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
         distance_function = Parameter(Distance(metric=COSINE), stateful=False, loggable=False)
         selection_function = Parameter(OneHot(mode=MIN_INDICATOR), stateful=False, loggable=False)
 
+        memory = []
+
 
     @check_user_specified
     @beartype
@@ -2272,8 +2264,6 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
 
         if initializer is None:
             initializer = []
-
-        self._memory = []
 
         super().__init__(
             default_variable=default_variable,
@@ -2587,7 +2577,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
                     warnings.warn(f"Attempt to initialize memory of {self.__class__.__name__} with an entry ({entry}) "
                                   f"that has the same key as a previous one, while 'duplicate_keys'==False; "
                                   f"that entry has been skipped")
-            return convert_to_np_array(self._memory)
+            return convert_to_np_array(self.parameters.memory._get(context))
 
     def _instantiate_attributes_before_function(self, function=None, context=None):
         self.parameters.previous_value._set(
@@ -2858,7 +2848,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
             d = np.delete(d, [KEYS], axis=1)
 
         self.parameters.previous_value._set(d,context)
-        self._memory = d
+        self.parameters.memory._set(d, context)
 
         return storage_succeeded
 
@@ -2903,14 +2893,16 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
         keys = [list(k) for k in memories[0]]
         vals = [list(k) for k in memories[0]]
 
+        memory = self.parameters.memory._get(context)
+
         for i, key in enumerate(keys):
-            for j, stored_key in enumerate(self._memory[KEYS]):
+            for j, stored_key in enumerate(memory[KEYS]):
                 if key == list(stored_key):
-                    if key_only or vals[j] == list(self._memory[VALS][j]):
-                        memory_keys = np.delete(self._memory[KEYS],j,axis=0)
-                        memory_vals = np.delete(self._memory[VALS],j,axis=0)
-                        self._memory = np.array([list(memory_keys), list(memory_vals)])
-                        self.parameters.previous_value._set(self._memory, context)
+                    if key_only or vals[j] == list(memory[VALS][j]):
+                        memory_keys = np.delete(memory[KEYS],j,axis=0)
+                        memory_vals = np.delete(memory[VALS],j,axis=0)
+                        self.parameters.memory._set(np.array([list(memory_keys), list(memory_vals)]), context)
+                        self.parameters.previous_value._set(memory, context)
 
     def _parse_memories(self, memories, method, context=None):
         """Parse passing of single vs. multiple memories, validate memories, and return ndarray"""
@@ -2926,12 +2918,3 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
             self._validate_memory(memory, context)
 
         return memories
-
-    @property
-    def memory(self):
-        try:
-            # Return 3d array with keys and vals as lists
-            # IMPLEMENTATION NOTE:  array is used for multi-line printout
-            return np.array(list(zip(self._memory[KEYS],self._memory[VALS])))
-        except:
-            return np.array([])
