@@ -2783,7 +2783,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     and issubclass(param_value, getattr(self.defaults, param_name))):
                 # Assign instance to target and move on
                 #  (compatiblity check no longer needed and can't handle function)
-                target_set[param_name] = param_value()
                 continue
 
             # Check if param value is of same type as one with the same name in defaults
