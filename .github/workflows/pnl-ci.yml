@@ -188,10 +188,14 @@ jobs:
       timeout-minutes: 180
       run: pytest --junit-xml=tests_out.xml --verbosity=0 -n logical ${{ matrix.extra-args }}
 
+    - name: Set extra-args env
+      run: echo "EXTRA_ARGS_DESC=$(echo ${{ matrix.extra-args }} | tr ' ="' '_\-\0')" >> $GITHUB_ENV
+      shell: bash
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       with:
-        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}-${{ matrix.version-restrict }}
+        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}-${{ matrix.version-restrict }}-${{ env.EXTRA_ARGS_DESC }}
         path: tests_out.xml
         retention-days: 5
       if: (success() || failure()) && ! contains(matrix.extra-args, 'forked')
