@@ -68,21 +68,16 @@ jobs:
             extra-args: '--forked -m "not llvm"'
 
           # add 32-bit build on windows
-          # split llvm/non-llvm to reduce peak memory
+          # split by marks to reduce peak memory
           - python-version: '3.8'
             python-architecture: 'x86'
             os: windows
-            extra-args: '-m llvm'
+            extra-args: '-m composition'
 
           - python-version: '3.8'
             python-architecture: 'x86'
             os: windows
-            extra-args: '-m "not llvm and not composition"'
-
-          - python-version: '3.8'
-            python-architecture: 'x86'
-            os: windows
-            extra-args: '-m "not llvm and composition"'
+            extra-args: '-m "not composition"'
 
           # fp32 run on linux python 3.10
           - python-version: '3.10'
@@ -225,7 +220,7 @@ jobs:
 
     - name: Upload dist packages
       uses: actions/upload-artifact@v4
-      if: matrix.version-restrict == '' && (! contains(matrix.python-architecture, 'x86') || ! contains(matrix.extra-args, 'not llvm'))
+      if: matrix.version-restrict == '' && (! contains(matrix.python-architecture, 'x86') || ! contains(matrix.extra-args, 'not composition'))
       with:
         name: dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture }}
         path: dist/
