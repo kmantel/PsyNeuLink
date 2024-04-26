@@ -1264,14 +1264,38 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         return self.name < other.name
 
     def __deepcopy__(self, memo):
-        if 'no_shared' in memo and memo['no_shared']:
-            shared_types = tuple()
+        if 'shared_component_types' in memo:
+            if isinstance(self, memo['shared_component_types']):
+                # print('shallow copy', self)
+                return self
+            else:
+                ...
+                # print('deep copy', self)
         else:
-            shared_types = (Component, ComponentsMeta)
+            from psyneulink.core.components.shellclasses import (
+                Composition_Base, Function, Mechanism, Port, Process_Base,
+                Projection, System_Base
+            )
+            shared_types = (
+                Component,
+                Function,
+                Mechanism,
+                Port,
+                Projection,
+                System_Base,
+                Process_Base,
+                Composition_Base,
+            )
+            memo['shared_component_types'] = shared_types  # {obj.componentType for obj in shared_types}
+
+        # if 'no_shared' in memo and memo['no_shared']:
+        #     shared_types = tuple()
+        # else:
+        #     shared_types = (Component, ComponentsMeta)
 
         fun = get_deepcopy_with_shared(
             self._deepcopy_shared_keys,
-            shared_types
+            # shared_types
         )
         newone = fun(self, memo)
 

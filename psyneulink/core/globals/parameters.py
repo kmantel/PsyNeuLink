@@ -392,24 +392,34 @@ def copy_parameter_value(value, shared_types=None, memo=None):
     from psyneulink.core.components.component import Component, ComponentsMeta
 
     if shared_types is None:
-        shared_types = (Component, ComponentsMeta, types.MethodType, types.ModuleType)
+        shared_types = (Component, ComponentsMeta)
     else:
         shared_types = tuple(shared_types)
 
-    try:
-        return copy_iterable_with_shared(
-            value,
-            shared_types=shared_types,
-            memo=memo
-        )
-    except TypeError:
-        # this will attempt to copy the current object if it
-        # is referenced in a parameter, such as
-        # ComparatorMechanism, which does this for input_ports
-        if not isinstance(value, shared_types):
-            return copy.deepcopy(value, memo)
-        else:
-            return value
+    if memo is None:
+        memo = {}
+
+    if 'shared_component_types' not in memo:
+        memo['shared_component_types'] = shared_types  # {obj.componentType for obj in shared_types}
+
+    if isinstance(value, (types.MethodType, types.ModuleType)):
+        return value
+
+    return copy.deepcopy(value, memo)
+    # try:
+    #     return copy_iterable_with_shared(
+    #         value,
+    #         shared_types=shared_types,
+    #         memo=memo
+    #     )
+    # except TypeError:
+    #     # this will attempt to copy the current object if it
+    #     # is referenced in a parameter, such as
+    #     # ComparatorMechanism, which does this for input_ports
+    #     if not isinstance(value, shared_types):
+    #         return copy.deepcopy(value, memo)
+    #     else:
+    #         return value
 
 
 def get_init_signature_default_value(obj, parameter):
