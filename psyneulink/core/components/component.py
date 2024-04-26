@@ -1278,7 +1278,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             # else:
             #     ...
             #     print('deep copy', self)
-        else:
+        elif 'no_shared' not in memo or not memo['no_shared']:
             from psyneulink.core.components.shellclasses import (
                 Composition_Base, Function, Mechanism, Port, Process_Base,
                 Projection, System_Base

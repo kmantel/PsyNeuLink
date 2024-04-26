@@ -412,7 +412,7 @@ def copy_parameter_value(value, shared_types=None, memo=None):
     try:
         return copy.deepcopy(value, memo)
     except TypeError as e:
-        if 'cannot pickle' in str(e):
+        if 'pickle' in str(e):
             return value
         else:
             raise
