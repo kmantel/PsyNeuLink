@@ -409,7 +409,13 @@ def copy_parameter_value(value, shared_types=None, memo=None):
         except KeyError:
             memo['method_copies'] = {method_owner}
 
-    return copy.deepcopy(value, memo)
+    try:
+        return copy.deepcopy(value, memo)
+    except TypeError as e:
+        if 'cannot pickle' in str(e):
+            return value
+        else:
+            raise
     # try:
     #     return copy_iterable_with_shared(
     #         value,
