@@ -1264,13 +1264,20 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         return self.name < other.name
 
     def __deepcopy__(self, memo):
+        try:
+            if self in memo['method_copies']:
+                # print('mc shallow copy', self)
+                return self
+        except KeyError:
+            pass
+
         if 'shared_component_types' in memo:
             if isinstance(self, memo['shared_component_types']):
                 # print('shallow copy', self)
                 return self
-            else:
-                ...
-                # print('deep copy', self)
+            # else:
+            #     ...
+            #     print('deep copy', self)
         else:
             from psyneulink.core.components.shellclasses import (
                 Composition_Base, Function, Mechanism, Port, Process_Base,

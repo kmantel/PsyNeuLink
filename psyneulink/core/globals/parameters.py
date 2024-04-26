@@ -402,8 +402,12 @@ def copy_parameter_value(value, shared_types=None, memo=None):
     if 'shared_component_types' not in memo:
         memo['shared_component_types'] = shared_types  # {obj.componentType for obj in shared_types}
 
-    if isinstance(value, (types.MethodType, types.ModuleType)):
-        return value
+    method_owner = getattr(value, '__self__', None)
+    if method_owner:
+        try:
+            memo['method_copies'].add(method_owner)
+        except KeyError:
+            memo['method_copies'] = {method_owner}
 
     return copy.deepcopy(value, memo)
     # try:
