@@ -799,7 +799,7 @@ from psyneulink.core.globals.keywords import \
     PROJECTION_DIRECTION, PROJECTIONS, PROJECTION_PARAMS, PROJECTION_TYPE, \
     RECEIVER, REFERENCE_VALUE, REFERENCE_VALUE_NAME, SENDER, STANDARD_OUTPUT_PORTS, \
     PORT, PORT_COMPONENT_CATEGORY, PORT_CONTEXT, Port_Name, port_params, PORT_PREFS, PORT_TYPE, port_value, \
-    VALUE, VARIABLE, WEIGHT
+    VALUE, VARIABLE, WEIGHT, INPUT_PORT
 from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.basepreferenceset import VERBOSE_PREF
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
@@ -3381,6 +3381,10 @@ def _parse_port_spec(port_type=None,
             port_dict[VARIABLE] = port_dict[VALUE]
         else:
             port_dict[VARIABLE] = port_dict[REFERENCE_VALUE]
+            # reference value should match port value after dimension
+            # reduction from function
+            if port_dict[VARIABLE] is not None and port_type.componentType == INPUT_PORT:
+                port_dict[VARIABLE] = [port_dict[VARIABLE]]
 
     if is_numeric(port_dict[VARIABLE]):
         port_dict[VARIABLE] = convert_all_elements_to_np_array(port_dict[VARIABLE])

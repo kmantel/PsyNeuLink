@@ -3965,7 +3965,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
             if isinstance(obj.sender.defaults.value, numbers.Number):
                 rows = 1
             else:
-                rows = len(obj.sender.defaults.value)
+                rows = obj.sender.socket_width
             if isinstance(obj.receiver.defaults.variable, numbers.Number):
                 cols = 1
             else:
