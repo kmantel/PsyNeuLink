@@ -121,7 +121,7 @@ class TestTransferMechanismInputs:
                 integrator_mode=True
             )
             T.execute([1, 2, 3, 4, 5])
-        assert ("Shape ((5,)) of input ([1 2 3 4 5]) does not match required shape ((4,)) "
+        assert ("Shape ((5,)) of input ([1 2 3 4 5]) does not match required shape ((1, 4)) "
                 "for input to InputPort 'InputPort-0' of T.") in str(error_text.value)
 
     @pytest.mark.mechanism
@@ -134,7 +134,7 @@ class TestTransferMechanismInputs:
                 integrator_mode=True
             )
             T.execute([1, 2, 3, 4, 5])
-        assert ("Shape ((5,)) of input ([1 2 3 4 5]) does not match required shape ((6,)) "
+        assert ("Shape ((5,)) of input ([1 2 3 4 5]) does not match required shape ((1, 6)) "
                 "for input to InputPort 'InputPort-0' of T.") in str(error_text.value)
 
 
