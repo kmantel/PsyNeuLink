@@ -1091,6 +1091,7 @@ from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import DefaultsFlexibility, Component
 from psyneulink.core.components.functions.nonstateful.optimizationfunctions import \
     GridSearch, OBJECTIVE_FUNCTION, SEARCH_SPACE, RANDOMIZATION_DIMENSION
+from psyneulink.core.components.functions.nonstateful.combinationfunctions import CombinationFunction
 from psyneulink.core.components.functions.nonstateful.transferfunctions import CostFunctions
 from psyneulink.core.components.mechanisms.mechanism import Mechanism
 from psyneulink.core.components.mechanisms.modulatory.control.controlmechanism import \
@@ -1214,7 +1215,10 @@ def _state_feature_values_getter(owning_component=None, context=None):
             state_feature_value = state_input_port.parameters.value._get(context)
         else:
             # otherwise use state_input_port's default input value
-            state_feature_value = state_input_port.default_input_shape
+            state_feature_value = state_input_port.defaults.value
+
+        if isinstance(state_input_port.function, CombinationFunction):
+            state_feature_value = np.asarray([state_feature_value])
 
         state_feature_values[key] = state_feature_value
 

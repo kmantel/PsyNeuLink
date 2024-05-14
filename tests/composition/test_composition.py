@@ -4254,7 +4254,7 @@ class TestRun:
 
         # Should get warning on first run
         warning_msg = ('No inputs provided in call to Composition-0.run(). The following defaults will be used for '
-                       'each INPUT Node:{(ProcessingMechanism ProcessingMechanism-0): [[[0.0]]]}')
+                       'each INPUT Node:{(ProcessingMechanism ProcessingMechanism-0): [array([[[0]]])]}')
         with pytest.warns(UserWarning) as warning:
             comp.run()
         assert warning_msg in warning[0].message.args[0]
@@ -4449,6 +4449,11 @@ class TestRun:
 
         res2 = C.run([5], execution_mode=comp_mode2, context=ctx)
         np.testing.assert_allclose(res2, [[4.995117]])
+
+    class TestHigherDimensions:
+        @pytest.mark.composition
+        def test_singleton(self, comp_mode):
+            pass
 
 
 class TestCallBeforeAfterTimescale:
@@ -6512,28 +6517,27 @@ class TestInputSpecifications:
         ocomp.run(inputs=inputs_source)
         np.testing.assert_array_equal(ocomp.results, results)
 
-    expected_format_strings = \
-        [
-        '{\n\tX: [ [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] ],'
-        '\n\tICOMP: [ [[0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], [[0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] ],'
-        '\n\tY: [ [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] ]\n}',
+    expected_format_strings = [
+        '{\n\tX: [ [[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], [[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]] ],'
+        '\n\tICOMP: [ [[[0.0]],[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], [[[0.0]],[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]] ],'
+        '\n\tY: [ [[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], [[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]] ]\n}',
 
-        "\nInputs to (nested) INPUT Nodes of OCOMP for 3 trials:\n\tX: [ [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], [[0.0, "
-        "0.0, 0.0],[0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] ]"
+        "\nInputs to (nested) INPUT Nodes of OCOMP for 3 trials:\n\tX: [ [[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], [[[0.0, "
+        "0.0, 0.0]],[[0.0, 0.0, 0.0]]], [[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]] ]"
         "\n\tICOMP: \n\t\tA: [ ['red'], ['green'], ['red'] ]"
         "\n\t\tC: [ ['red','blue'], ['green','yellow'], ['orange','purple'] ]"
         "\n\tY: [ ['red','red'], ['green','green'], ['red','red'] "
         "\n\nFormat as follows for inputs to run():"
-        "\n{\n\tX: [ [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], "
-        "[[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], "
-        "[[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] ],"
-        "\n\tICOMP: [ [[0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], "
-        "[[0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], "
-        "[[0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] ],"
-        "\n\tY: [ [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], "
-        "[[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], "
-        "[[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] ]\n}"
-        ]
+        "\n{\n\tX: [ [[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], "
+        "[[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], "
+        "[[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]] ],"
+        "\n\tICOMP: [ [[[0.0]],[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], "
+        "[[[0.0]],[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], "
+        "[[[0.0]],[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]] ],"
+        "\n\tY: [ [[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], "
+        "[[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]], "
+        "[[[0.0, 0.0, 0.0]],[[0.0, 0.0, 0.0]]] ]\n}"
+    ]
     test_args = [
         # form, labels, nested, num_trials, expected_format_string
         (pnl.TEXT, False, False, 2, expected_format_strings[0]),
@@ -6575,10 +6579,10 @@ class TestInputSpecifications:
                                     # Test specification of labels for all InputPorts of Mechanism:
                                     input_labels={'red':[0,0,0], 'green':[1,1,1]},
                                     name='Y')
-        assert len(Y.input_ports[0].variable) == 3
-        assert len(Y.input_ports[0].value) == 1
-        assert len(Y.input_ports[1].variable) == 3
-        assert len(Y.input_ports[1].value) == 3
+        assert Y.input_ports[0].variable.shape == (1, 3)
+        assert Y.input_ports[0].value.shape == (1,)
+        assert Y.input_ports[1].variable.shape == (1, 3)
+        assert Y.input_ports[1].value.shape == (3,)
         icomp = Composition(pathways=[[A,B],[C]], name='ICOMP')
         ocomp = Composition(nodes=[X, icomp, Y], name='OCOMP')
 
@@ -6743,6 +6747,78 @@ class TestAuxComponents:
 
         for comp in expected_stateful_nodes:
             assert comp.stateful_nodes == expected_stateful_nodes[comp]
+
+
+def map_dict_keys_to_objects(d, locals):
+    return {eval(k, {}, locals): v for k, v in d.items()}
+
+
+class TestInputs:
+
+    @pytest.mark.parametrize(
+        'size, inputs, expected_parsed_inputs, expected_num_trials',
+        [
+            # size 1, one trial
+            (1, {}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+            (1, {'A': 0}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+            (1, {'A': [0]}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+            (1, {'A': [[0]]}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+
+            # (1, {'A': [[[0]]]}, {'A': np.zeros((1, 1, 1))}, 1),   # works on devel but i think we can give this up
+
+            # size 1, two trials
+            # (1, {}, {'A': np.zeros((1, 1, 1))}, 2),  # bad
+            # (1, {'A': 0}, {'A': np.zeros((1, 1, 1))}, 2),  # bad
+            # (1, {'A': [0]}, {'A': np.zeros((2, 1, 1))}, 2),  # bad
+
+            (1, {'A': [0, 0]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
+            (1, {'A': [[0], [0]]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
+            (1, {'A': [[[0]], [[0]]]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
+            (1, {'A': [[[[0]]], [[[0]]]]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
+
+            # size 2, one trial
+            # (2, {'A': {}}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
+            # (2, {'A': 0}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
+            # (2, {'A': [0]}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
+            # (2, {'A': [0, 0]}, {'A': np.zeros((1, 1, 2))}, 1),  # bad (tested above, 1, two trials)
+
+            (2, {'A': [[0, 0]]}, {'A': np.zeros((1, 1, 1, 2))}, 1),
+            (2, {'A': [[[0, 0]]]}, {'A': np.zeros((1, 1, 1, 2))}, 1),
+
+            # size 2, two trials
+            (2, {'A': [[0, 0], [0, 0]]}, {'A': np.zeros((2, 1, 1, 2))}, 2),
+            (2, {'A': [[[0, 0]], [[0, 0]]]}, {'A': np.zeros((2, 1, 1, 2))}, 2),
+        ]
+    )
+    def test_single_nonnested(self, size, inputs, expected_parsed_inputs, expected_num_trials):
+        A = ProcessingMechanism(size=size)
+        # B = ProcessingMechanism(size=2)
+
+        comp = pnl.Composition()
+        comp.add_node(A)
+        # comp.add_node(B)
+
+        locs = locals()
+
+        inputs = map_dict_keys_to_objects(inputs, locals())
+        expected_parsed_inputs = map_dict_keys_to_objects(expected_parsed_inputs, locals())
+
+        parsed_inputs, num_trials = comp._parse_run_inputs(inputs)
+        print()
+        print(inputs)
+        print('---')
+        print(parsed_inputs)
+
+        for mech in parsed_inputs:
+            np.testing.assert_array_equal(
+                parsed_inputs[mech], expected_parsed_inputs[mech]
+            )
+            np.testing.assert_array_equal(
+                mech._parse_input_array(inputs[mech] if mech in inputs else None, comp, True),
+                expected_parsed_inputs[mech],
+            )
+        assert num_trials == expected_num_trials
+
 
 
 class TestShadowInputs:
@@ -7346,13 +7422,13 @@ class TestNodeRoles:
         assert len(result)==3
 
         input_format = ocomp.get_input_format(form=pnl.TEXT)
-        assert repr(input_format) == '\'{\\n\\tMIDDLE COMP: [[0.0],[0.0]],\\n\\tQ: [[0.0]]\\n}\''
+        assert repr(input_format) == '\'{\\n\\tMIDDLE COMP: [[[0]],[[0]]],\\n\\tQ: [[[0]]]\\n}\''
         input_format = ocomp.get_input_format(form=pnl.TEXT, num_trials=3, use_labels=True)
-        assert repr(input_format) == '"{\\n\\tMIDDLE COMP: [ [[0.0],[\'red\']], [[0.0],[\'green\']], [[0.0],[\'red\']] ],\\n\\tQ: [ [\'red\'], [\'green\'], [\'red\'] ]\\n}"'
+        assert repr(input_format) == '"{\\n\\tMIDDLE COMP: [ [[[0]],[\'red\']], [[[0]],[\'green\']], [[[0]],[\'red\']] ],\\n\\tQ: [ [\'red\'], [\'green\'], [\'red\'] ]\\n}"'
         input_format = ocomp.get_input_format(form=pnl.TEXT, num_trials=2, show_nested_input_nodes=True)
-        assert input_format == '\nInputs to (nested) INPUT Nodes of OUTER COMP for 2 trials:\n\tMIDDLE COMP: \n\t\tX: [ [[0.0]], [[0.0]] ]\n\t\tINNER COMP: \n\t\t\tA: [ [[0.0]], [[0.0]] ]\n\tQ: [ [[0.0]], [[0.0]] \n\nFormat as follows for inputs to run():\n{\n\tMIDDLE COMP: [ [[0.0],[0.0]], [[0.0],[0.0]] ],\n\tQ: [ [[0.0]], [[0.0]] ]\n}'
+        assert input_format == '\nInputs to (nested) INPUT Nodes of OUTER COMP for 2 trials:\n\tMIDDLE COMP: \n\t\tX: [ [[[0]]], [[[0]]] ]\n\t\tINNER COMP: \n\t\t\tA: [ [[[0]]], [[[0]]] ]\n\tQ: [ [[[0]]], [[[0]]] \n\nFormat as follows for inputs to run():\n{\n\tMIDDLE COMP: [ [[[0]],[[0]]], [[[0]],[[0]]] ],\n\tQ: [ [[[0]]], [[[0]]] ]\n}'
         input_format = ocomp.get_input_format(form=pnl.TEXT, num_trials=2, show_nested_input_nodes=True, use_labels=True)
-        assert input_format == "\nInputs to (nested) INPUT Nodes of OUTER COMP for 2 trials:\n\tMIDDLE COMP: \n\t\tX: [ [[0.0]], [[0.0]] ]\n\t\tINNER COMP: \n\t\t\tA: [ ['red'], ['green'] ]\n\tQ: [ ['red'], ['green'] \n\nFormat as follows for inputs to run():\n{\n\tMIDDLE COMP: [ [[0.0],[0.0]], [[0.0],[0.0]] ],\n\tQ: [ [[0.0]], [[0.0]] ]\n}"
+        assert input_format == "\nInputs to (nested) INPUT Nodes of OUTER COMP for 2 trials:\n\tMIDDLE COMP: \n\t\tX: [ [[[0]]], [[[0]]] ]\n\t\tINNER COMP: \n\t\t\tA: [ ['red'], ['green'] ]\n\tQ: [ ['red'], ['green'] \n\nFormat as follows for inputs to run():\n{\n\tMIDDLE COMP: [ [[[0]],[[0]]], [[[0]],[[0]]] ],\n\tQ: [ [[[0]]], [[[0]]] ]\n}"
 
         result = ocomp.run(inputs={mcomp:[[.2],['green']], Q:[4.6]})
         np.testing.assert_array_equal(result, [[0.2], [1.], [4.6]])

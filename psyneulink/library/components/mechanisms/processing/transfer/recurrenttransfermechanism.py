@@ -964,6 +964,7 @@ class RecurrentTransferMechanism(TransferMechanism):
             self.recurrent_projection = self._instantiate_recurrent_projection(self,
                                                                                matrix=matrix,
                                                                                context=context)
+            self.recurrent_projection._activate_for_all_compositions()
 
             # creating a recurrent_projection changes the default variable shape
             # so we have to reshape any Paramter Functions

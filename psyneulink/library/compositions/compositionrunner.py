@@ -141,7 +141,7 @@ class CompositionRunner():
                     if trial_input is None:
                         break
                     batch_ran = True
-                    yield trial_input
+                    yield {node: inp[0] for node, inp in trial_input.items()}
 
                 if batch_ran:
                     if call_after_minibatch:

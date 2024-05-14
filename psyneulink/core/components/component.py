@@ -516,6 +516,7 @@ import dill
 import graph_scheduler
 import numpy as np
 
+from psyneulink._typing import List, Union
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.globals.context import \
     Context, ContextError, ContextFlags, INITIALIZATION_STATUS_FLAGS, _get_time, handle_external_context
@@ -537,6 +538,7 @@ from psyneulink.core.globals.preferences.preferenceset import \
     PreferenceLevel, PreferenceSet, _assign_prefs
 from psyneulink.core.globals.registry import register_category, _get_auto_name_prefix
 from psyneulink.core.globals.sampleiterator import SampleIterator
+from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
     ContentAddressableList, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
     is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, \
@@ -4286,6 +4288,97 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         for obj in self._parameter_components:
             obj._remove_from_composition(composition)
+
+    def _parse_input_array(
+        self,
+        inp: Union[List, np.ndarray] = None,
+        composition=ConnectionInfo.ALL,
+        as_sequence: bool = False,
+    ):
+        def invalid_input_error(reason=''):
+            if reason:
+                reason = f' ({reason})'
+            return ComponentError(f'Invalid input to {self}{reason}: {inp}')
+
+        inp = convert_all_elements_to_np_array(inp)
+        inp_squeezed = np.squeeze(inp)
+        inp_is_sequence = False
+
+        external_input = self.external_input_shape_arr(composition)
+        external_input_squeezed = np.squeeze(external_input)
+
+        res = None
+
+        # no argument, default
+        if inp.ndim == 0 and inp.item() is None:
+            res = external_input
+        # Single scalar (alone or in list), so must be single value for
+        # single trial
+        elif inp_squeezed.ndim == 0:
+            res = np.broadcast_to(inp, external_input.shape)
+        # 1 trial's worth of input for >1 input items
+        elif inp_squeezed.shape == external_input_squeezed.shape:
+            try:
+                res = np.broadcast_to(inp, external_input.shape)
+            except ValueError:
+                res = [
+                    np.broadcast_to(item, external_input[i].shape)
+                    for i, item in enumerate(inp)
+                ]
+        # check for multiple trials worth of inputs
+        else:
+            _broadcasted_inputs = []
+
+            # each item is an input, and inp represents multiple trials of inputs
+            for i, input_item in enumerate(inp):
+                if np.squeeze(input_item).shape != external_input_squeezed.shape:
+                    # input_item doesn't differ from external_input by
+                    # only wrapper dimensions
+                    break
+
+                try:
+                    _broadcasted_inputs.append(
+                        np.broadcast_to(input_item, external_input.shape)
+                    )
+                except ValueError:
+                    # # check if each
+                    # try:
+                    #     _broadcasted_inputs.append([
+                    #         self._parse_input_array(input_item, composition, False)
+                    #         for input_item in inp
+                    #     ])
+                    # except ValueError:
+                    #     break
+                    break
+            else:
+                res = convert_all_elements_to_np_array(_broadcasted_inputs)
+                inp_is_sequence = True
+
+        if res is None:
+            raise invalid_input_error()
+
+        if as_sequence and not inp_is_sequence:
+            res = convert_all_elements_to_np_array([res])
+
+        return res
+
+    # TODO: replace 'external_input_shape' in subclasses with this
+    def default_external_input(self, composition=ConnectionInfo.ALL):
+        return copy_parameter_value(self.defaults.variable)
+
+    def external_input_shape(self, composition=ConnectionInfo.ALL):
+        # TODO: actually return the shape, not the array
+        # return self.default_external_input(composition).shape
+        return self.default_external_input(composition)
+
+    # TODO: rename to external_input_shape and replace above
+    def external_input_shape_shape(self, composition=ConnectionInfo.ALL):
+        return self.external_input_shape_arr(composition).shape
+
+    # TODO: remove this when external_input_shape and
+    # default_external_input are correctly replaced
+    def external_input_shape_arr(self, composition=ConnectionInfo.ALL):
+        return convert_all_elements_to_np_array(self.default_external_input(composition))
 
     @property
     def logged_items(self):
