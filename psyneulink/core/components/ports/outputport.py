@@ -1239,6 +1239,15 @@ class OutputPort(Port_Base):
         return self.defaults.value.shape[-1]
 
     @property
+    def socket_shape(self):
+        return self.defaults.value.shape
+
+    # TODO: replace socket_template with this
+    @property
+    def socket_shape_template(self):
+        return np.zeros(self.socket_shape)
+
+    @property
     def owner_value_index(self):
         """Return index or indices of items of owner.value for any to which OutputPort's variable has been assigned
         If the OutputPort has been assigned to:

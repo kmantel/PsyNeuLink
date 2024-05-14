@@ -3839,7 +3839,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         # proxy for checking whether the owner is a projection
         if hasattr(self.owner, "receiver"):
             sender = self.defaults.variable
-            sender_len = np.size(np.atleast_2d(self.defaults.variable), 1)
+            sender_len = np.size(np.atleast_2d(self.defaults.variable), -1)
 
             # FIX: RELABEL sender -> input AND receiver -> output
             # FIX: THIS NEEDS TO BE CLEANED UP:
@@ -4174,7 +4174,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
             if isinstance(obj.sender.defaults.value, numbers.Number):
                 rows = 1
             else:
-                rows = len(obj.sender.defaults.value)
+                rows = obj.sender.socket_width
             if isinstance(obj.receiver.defaults.variable, numbers.Number):
                 cols = 1
             else:

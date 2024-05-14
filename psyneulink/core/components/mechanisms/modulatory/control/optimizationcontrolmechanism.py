@@ -1088,9 +1088,10 @@ from beartype import beartype
 from psyneulink._typing import Optional, Union, Callable
 
 from psyneulink.core import llvm as pnlvm
-from psyneulink.core.components.component import DefaultsFlexibility, Component
+from psyneulink.core.components.component import DefaultsFlexibility, Component, ComponentError
 from psyneulink.core.components.functions.nonstateful.optimizationfunctions import \
     GridSearch, OBJECTIVE_FUNCTION, SEARCH_SPACE, RANDOMIZATION_DIMENSION
+from psyneulink.core.components.functions.nonstateful.combinationfunctions import CombinationFunction
 from psyneulink.core.components.functions.nonstateful.transferfunctions import CostFunctions
 from psyneulink.core.components.mechanisms.mechanism import Mechanism
 from psyneulink.core.components.mechanisms.modulatory.control.controlmechanism import \
@@ -1214,7 +1215,10 @@ def _state_feature_values_getter(owning_component=None, context=None):
             state_feature_value = state_input_port.parameters.value._get(context)
         else:
             # otherwise use state_input_port's default input value
-            state_feature_value = state_input_port.default_input_shape
+            state_feature_value = state_input_port.defaults.value
+
+        if isinstance(state_input_port.function, CombinationFunction):
+            state_feature_value = np.asarray([state_feature_value])
 
         state_feature_values[key] = state_feature_value
 
@@ -2893,11 +2897,15 @@ class OptimizationControlMechanism(ControlMechanism):
         try:
             # Call this to check for errors in constructing inputs dict
             self.agent_rep._parse_input_dict(self.parameters.state_feature_values._get(context))
-        except (RunError, CompositionError) as error:
+        except (RunError, CompositionError, ComponentError) as error:
+            try:
+                error_msg = error.error_value
+            except AttributeError:
+                error_msg = str(error)
             raise OptimizationControlMechanismError(
                 f"The '{STATE_FEATURES}' argument has been specified for '{self.name}' that is using a "
                 f"{Composition.componentType} ('{self.agent_rep.name}') as its agent_rep, but some of the "
-                f"specifications are not compatible with the inputs required by its 'agent_rep': '{error.error_value}' "
+                f"specifications are not compatible with the inputs required by its 'agent_rep': '{error_msg}' "
                 f"Use the get_inputs_format() method of '{self.agent_rep.name}' to see the required format, or "
                 f"remove the specification of '{STATE_FEATURES}' from the constructor for {self.name} "
                 f"to have them automatically assigned.") from error
