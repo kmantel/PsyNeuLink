@@ -262,7 +262,7 @@ def _recurrent_transfer_mechanism_matrix_getter(owning_component=None, context=N
 
 def _get_auto_hetero_from_matrix(matrix):
     matrix = matrix.copy()
-    auto = np.diag(matrix).copy()
+    auto = np.diagonal(matrix, axis1=-1, axis2=-2).copy()
 
     np.fill_diagonal(matrix, 0)
     hetero = matrix
@@ -976,6 +976,7 @@ class RecurrentTransferMechanism(TransferMechanism):
             self.recurrent_projection = self._instantiate_recurrent_projection(self,
                                                                                matrix=matrix,
                                                                                context=context)
+            self.recurrent_projection._activate_for_all_compositions()
 
             # creating a recurrent_projection changes the default variable shape
             # so we have to reshape any Paramter Functions
