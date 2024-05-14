@@ -777,6 +777,38 @@ class TestStructural:
                              })
             np.testing.assert_allclose(comp.results,[[[1.], [1.]], [[2.42], [3.38]]])
 
+        def test_dict_target_spec_divering_pathways_with_only_one_target(self):
+            # First test with both targets (but use default_variale for second for comparison with missing target)
+            A = TransferMechanism(name="diverging-learning-pathways-mech-A")
+            B = TransferMechanism(name="diverging-learning-pathways-mech-B")
+            C = TransferMechanism(name="diverging-learning-pathways-mech-C")
+            D = TransferMechanism(name="diverging-learning-pathways-mech-D")
+            E = TransferMechanism(name="diverging-learning-pathways-mech-E")
+            comp1 = Composition()
+            p1 = comp1.add_backpropagation_learning_pathway(pathway=[A,B,C])
+            p2 = comp1.add_backpropagation_learning_pathway(pathway=[A,D,E])
+            comp1.learn(inputs={A: 1.0,
+                                p1.target: 0.0,
+                                p2.target: 2.0
+                                },
+                        num_trials=2)
+            np.testing.assert_allclose(comp1.results,[[[1.], [1.]], [[0.81], [1.21]]])
+
+            F = TransferMechanism(name="diverging-learning-pathways-mech-F")
+            G = TransferMechanism(name="diverging-learning-pathways-mech-G")
+            H = TransferMechanism(name="diverging-learning-pathways-mech-H")
+            I = TransferMechanism(name="diverging-learning-pathways-mech-I")
+            J = TransferMechanism(name="diverging-learning-pathways-mech-J")
+            comp2 = Composition()
+            p3 = comp2.add_backpropagation_learning_pathway(pathway=[F,G,H])
+            p4 = comp2.add_backpropagation_learning_pathway(pathway=[F,I,J])
+            # Call learn with missing spec for p3.target;  should use default_variable
+            comp2.learn(inputs={F: 1.0,
+                                p4.target: 2.0
+                                },
+                        num_trials=2)
+            np.testing.assert_allclose(comp2.results, comp1.results)
+
         def test_target_spec_over_nesting_of_items_in_target_value_error(self):
             A = TransferMechanism(name="learning-process-mech-A")
             B = TransferMechanism(name="learning-process-mech-B")
@@ -791,14 +823,6 @@ class TestStructural:
             error_msg = ("Input stimulus shape ([[[3.0], [4.0]], [[5.0], [6.0]], [[7.0], [8.0]]]) for 'TARGET for learning-process-mech-C' is incompatible with the shape of its external input ([array([0., 0.])]).")
             assert error_msg in str(error_text.value)
 
-            # Elicit error with learn
-            with pytest.raises(RunError) as error_text:
-                comp.learn(inputs={A: [1.0, 2.0, 3.0],
-                                 p.target: [[[3.0], [4.0]], [[5.0], [6.0]], [[7.0], [8.0]]]})
-            error_msg = (f"Input stimulus shape ([[[3.0], [4.0]], [[5.0], [6.0]], [[7.0], [8.0]]]) "
-                         f"for 'TARGET for learning-process-mech-C' is incompatible with the "
-                         f"shape of its external input ([array([0., 0.])]).")
-            assert error_msg in str(error_text.value)
 
         # The input sizes were picked because the lengths conflict in set:
         # >>> print({10, 2}, {2, 10})

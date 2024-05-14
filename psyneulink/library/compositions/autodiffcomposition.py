@@ -2903,9 +2903,28 @@ class AutodiffComposition(Composition):
         A dict mapping TARGET_MECHANISMs -> target values
         """
         target_values = {}
+
         def get_target_value(target):
             if target in self.get_nodes_by_role(NodeRole.INPUT):
-                return input_dict[target]
+                # Mechanism inputs have dimensions:
+                #   0: batch
+                #   1: sequence
+                #   2: input_ports
+                #   3: input_port input (incoming projections)
+                #   4...: input_port value shape
+                # Remove dim 3 here because this is reduced by the input ports
+                # and isn't passed to the mechanism function. Not doing this
+                # causes subtle loss calculation errors in autodiff_forward
+                res = input_dict[target]
+                try:
+                    return res.squeeze(dim=3)
+                except AttributeError:
+                    # input_dict[target] should be a list due to target having a
+                    # ragged shape. this should also mean that the individual
+                    # input port items are already correctly shaped and so a
+                    # squeeze/reduction shouldn't be necessary
+                    return [[[x.squeeze(dim=0) for x in seq] for seq in batch] for batch in res]
+
             if len(target.path_afferents) > 1:
                 # TARGET_MECHANISMs should only have a single afferent input
                 raise AutodiffCompositionError(f"TARGET_MECHANISM '{target.name}' (for '{self.name}') "
