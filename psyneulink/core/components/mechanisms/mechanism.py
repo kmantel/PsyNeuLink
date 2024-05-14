@@ -1119,6 +1119,7 @@ from psyneulink.core.globals.parameters import (
 )
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import register_category, remove_instance_from_registry
+from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
     ContentAddressableList, append_type_to_name, convert_all_elements_to_np_array, convert_to_np_array, \
     iscompatible, kwCompatibilityNumeric, convert_to_list, is_numeric, parse_valid_identifier, safe_len
@@ -1308,13 +1309,6 @@ class Mechanism_Base(Mechanism):
         `internal_only <InputPort.internal_only>`;  these receive `inputs from a Composition
         <Composition_Execution_Inputs>` if the Mechanism is one of its `INPUT` `Nodes <Composition_Nodes>`.
 
-    external_input_shape : List[List or 1d np.array]
-        list of the `input_shape <InputPort.input_shape>`\\s of the Mechanism's external `input_ports
-        <Mechanism_Base.input_ports>` (i.e., excluding any `InputPorts <InputPort>` designated as `internal_only
-        <InputPort.internal_only>`), that shows the shape of the inputs expected for the Mechanism.  Each item
-        corresponds to an expected `path_afferent Projection <Port_Base.path_afferents>`, and its shape is
-        the expected `value <Projection_Base.value>` of that `Projection`.
-
     external_input_variables : List[List or 1d np.array]
         list of the `variable <InputPort.variable>`\\s of the Mechanism's `external_input_ports
         <Mechanism_Base.external_input_ports>`.
@@ -1323,7 +1317,7 @@ class Mechanism_Base(Mechanism):
         list of the `value <InputPort.value>`\\s of the Mechanism's `external_input_ports
         <Mechanism_Base.external_input_ports>`.
 
-    default_external_inputs : List[1d np.array]
+    default_external_port_inputs : List[1d np.array]
         list of the `default_input <InputPort.default_input>`\\s of the Mechanism's `external_input_ports
         <Mechanism_Base.external_input_ports>`.
 
@@ -2685,10 +2679,18 @@ class Mechanism_Base(Mechanism):
                 raise MechanismError(f"Number of inputs ({num_inputs}) to {self.name} does not match "
                                      f"its number of input_ports ({num_input_ports}).")
         for input_item, input_port in zip(input, self.input_ports):
-            if input_port.default_input_shape.size == np.array(input_item).size:
+            port_single_input_template = np.asarray([input_port.socket_shape_template])
+            input_item_arr = convert_all_elements_to_np_array(input_item)
+            if (
+                input_port.socket_shape == input_item_arr.shape
+                or input_item_arr.shape == port_single_input_template.shape
+                or input_item_arr.squeeze().shape == port_single_input_template.squeeze().shape
+            ):
                 from psyneulink.core.compositions.composition import RunError
                 # Assign input_item as input_port.variable
-                input_port.parameters.variable._set(np.atleast_2d(input_item), context)
+                variable = np.broadcast_to(input_item_arr, port_single_input_template.shape)
+                # variable = np.asarray([input_item_arr])
+                input_port.parameters.variable._set(variable, context)
 
                 # Call input_port._execute with newly assigned variable and assign result to input_port.value
                 base_error_msg = f"Input to '{self.name}' ({input_item}) is incompatible " \
@@ -2703,8 +2705,9 @@ class Mechanism_Base(Mechanism):
                 else:
                     input_port.parameters.value._set(value, context)
             else:
+                composition = context.composition or ConnectionInfo.ALL
                 raise MechanismError(f"Shape ({input_item.shape}) of input ({input_item}) does not match "
-                                     f"required shape ({input_port.default_input_shape.shape}) for input "
+                                     f"required shape ({input_port.default_external_input(composition).shape}) for input "
                                      f"to {InputPort.__name__} {repr(input_port.name)} of {self.name}.")
 
         # Return values of input_ports for use as variable of Mechanism
@@ -3813,7 +3816,7 @@ class Mechanism_Base(Mechanism):
                     old_variable = self.defaults.variable.tolist()
                 else:
                     old_variable = self.defaults.variable
-                old_variable.extend(added_variable)
+                old_variable.append(added_variable)
                 self.defaults.variable = convert_to_np_array(old_variable)
             instantiated_input_ports = _instantiate_input_ports(self,
                                                                   input_ports,
@@ -4062,26 +4065,15 @@ class Mechanism_Base(Mechanism):
         except (TypeError, AttributeError):
             return None
 
-    @property
-    def external_input_shape(self):
-        """Alias for _default_external_input_shape"""
-        return self._default_external_input_shape
-
-    @property
-    def _default_external_input_shape(self):
+    def default_external_input(self, composition=ConnectionInfo.ALL):
         try:
             shape = []
             for input_port in self.input_ports:
-                if input_port.internal_only or input_port.default_input:
+                if input_port.internal_only:
                     continue
-                if input_port._input_shape_template == VARIABLE:
-                    shape.append(input_port.defaults.variable)
-                elif input_port._input_shape_template == VALUE:
-                    shape.append(input_port.defaults.value)
-                else:
-                    assert False, f"PROGRAM ERROR: bad changes_shape in attempt to assign " \
-                                  f"default_external_input_shape for '{input_port.name}' of '{self.name}."
-            return shape
+
+                shape.append(input_port.default_external_input(composition))
+            return convert_all_elements_to_np_array(shape)
         except (TypeError, AttributeError):
             return None
 
@@ -4094,7 +4086,7 @@ class Mechanism_Base(Mechanism):
             return None
 
     @property
-    def default_external_inputs(self):
+    def default_external_port_inputs(self):
         try:
             return [input_port.default_input for input_port in self.input_ports if not input_port.internal_only]
         except (TypeError, AttributeError):
