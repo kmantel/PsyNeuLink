@@ -594,8 +594,9 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
+from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
-    append_type_to_name, is_numeric_scalar, convert_to_np_array, is_numeric, iscompatible, kwCompatibilityLength, convert_to_list, parse_valid_identifier
+    append_type_to_name, convert_all_elements_to_np_array, is_numeric_scalar, convert_to_np_array, is_numeric, iscompatible, kwCompatibilityLength, convert_to_list, parse_valid_identifier
 
 __all__ = [
     'InputPort', 'InputPortError', 'port_type_keywords', 'SHADOW_INPUTS',
@@ -1161,7 +1162,7 @@ class InputPort(Port_Base):
                         raise InputPortError(f"PROGRAM ERROR: SIZE specification found in port_specific_spec dict "
                                              f"for {self.__name__} specification of {owner.name} when SIZE or VARIABLE "
                                              f"is already present in its port_specific_spec dict or port_dict.")
-                    port_dict.update({VARIABLE:np.zeros(port_specific_spec[SIZE])})
+                    port_dict.update({VARIABLE: np.zeros((1, port_specific_spec[SIZE]))})
                     del port_specific_spec[SIZE]
 
                 if COMBINE in port_specific_spec:
@@ -1443,6 +1444,19 @@ class InputPort(Port_Base):
     def socket_template(self):
         return np.zeros(self.socket_width)
 
+    # TODO: replace socket_template with this
+    @property
+    def socket_shape_template(self):
+        return np.zeros(self.socket_shape)
+
+    # must be at least 1d. list of incoming projections
+    @property
+    def socket_shape(self):
+        if self.defaults.variable.ndim > 1:
+            return self.defaults.variable[0].shape
+        else:
+            return self.defaults.variable.shape
+
     def get_label(self, context=None):
         try:
             label_dictionary = self.owner.input_labels_dict
@@ -1452,6 +1466,7 @@ class InputPort(Port_Base):
 
     @property
     def _input_shape_template(self):
+        return VARIABLE
         try:
             if self.function.changes_shape:
                 return VARIABLE
@@ -1464,10 +1479,39 @@ class InputPort(Port_Base):
     @property
     def input_shape(self):
         """Alias for default_input_shape_template"""
-        return self.default_input_shape
+        return self.default_input_shape()
 
-    @property
-    def default_input_shape(self):
+    def default_input_shape(self, composition=ConnectionInfo.ALL):
+        from psyneulink.core.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
+
+        if (
+            composition == ConnectionInfo.ALL
+            or len(self.path_afferents) == 0
+        ):
+            return self.defaults.variable
+
+        # filter out non-CIM projections
+        path_proj_values = []
+        for i, proj in enumerate(self.path_afferents):
+            if not self.afferents_info[proj].is_active_in_composition(composition):
+                continue
+
+            try:
+                owner = proj.sender.owner
+            except AttributeError:
+                pass
+            else:
+                if not isinstance(owner, CompositionInterfaceMechanism):
+                    continue
+
+            path_proj_values.append(self.defaults.variable[i])
+
+        # no CIM projections are active, don't return empty list
+        if len(path_proj_values) == 0:
+            return self.defaults.variable
+        else:
+            return convert_all_elements_to_np_array(path_proj_values)
+
         if self._input_shape_template == VARIABLE:
             return self.defaults.variable
         elif self._input_shape_template == VALUE:
@@ -1475,6 +1519,7 @@ class InputPort(Port_Base):
         assert False, f"PROGRAM ERROR: bad _input_shape_template assignment for '{self.name}'."
 
     def get_input_shape(self, context=None):
+        return self.get_input_variables(context)
         if self._input_shape_template == VARIABLE:
             return self.get_input_variables(context)
         elif self._input_shape_template == VALUE:
