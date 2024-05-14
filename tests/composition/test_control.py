@@ -1101,8 +1101,9 @@ class TestControlMechanisms:
         # 4
         f"The '{pnl.STATE_FEATURES}' argument has been specified for 'OptimizationControlMechanism-0' that is using "
         f"a Composition ('OUTER COMP') as its agent_rep, but some of the specifications are not compatible with the "
-        f"inputs required by its 'agent_rep': 'Input stimulus shape ([[[0.0]]]) for 'OB' is incompatible with the "
-        f"shape of its external input ([array([0., 0., 0.])]).' Use the get_inputs_format() method of 'OUTER COMP' to "
+        "inputs required by its 'agent_rep': 'Invalid input to (InputPort InputPort-0) of (ProcessingMechanism OB)."
+        " Got numpy shape '(1,)': [0.]\nExpecting numpy shape '(1, 3)' for a single input or '(<num inputs>, 1, 3)' for a sequence."
+        "\nTry `np.zeros((1, 3))` for an example input.' Use the get_inputs_format() method of 'OUTER COMP' to "
         f"see the required format, or remove the specification of 'state_features' from the constructor for "
         f"OptimizationControlMechanism-0 to have them automatically assigned.",
 
@@ -1301,9 +1302,9 @@ class TestControlMechanisms:
                 assert ocm.state_features == {'IA[InputPort-0]': 'IA[InputPort-0]',
                                               'OA[InputPort-0]': 'OA[InputPort-0]',
                                               'OB[InputPort-0]': 'OB[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {ia.input_port: [0.],
-                                                                                      oa.input_port: [0.],
-                                                                                      ob.input_port: [0., 0., 0.]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {ia.input_port: [[0.]],
+                                                                                      oa.input_port: [[0.]],
+                                                                                      ob.input_port: [[0., 0., 0.]]}
 
             if test_condition == 'single_tuple_shadow_spec':
                 assert ocm.state_input_ports.names == [shadowed_ia_node, shadowed_oa_node, shadowed_ob_node]
@@ -1325,9 +1326,9 @@ class TestControlMechanisms:
                         'OB[InputPort-0]': [3, 1, 2]
                     }
                 )
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {ia.input_port: [0.0],
-                                                                                      oa.input_port: [0.0],
-                                                                                      ob.input_port: [3.0, 1.0, 2.0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {ia.input_port: [[0.0]],
+                                                                                      oa.input_port: [[0.0]],
+                                                                                      ob.input_port: [[3.0, 1.0, 2.0]]}
 
             if test_condition == 'list_spec_with_none':
                 assert len(ocm.state_input_ports) == 2
@@ -1340,7 +1341,7 @@ class TestControlMechanisms:
                     }
                 )
                 for expected, actual in zip(
-                    list(ocm.state_feature_values.values()), [[0.], [3, 1, 2]]
+                    list(ocm.state_feature_values.values()), [[[0.]], [[3, 1, 2]]]
                 ):
                     np.testing.assert_allclose(expected, actual)
 
@@ -1351,7 +1352,7 @@ class TestControlMechanisms:
                                               'OA[InputPort-0]': 'OC[InputPort-0]',
                                               'OB[InputPort-0]': 'OB[OutputPort-0]'}
                 for expected, actual in zip(
-                    list(ocm.state_feature_values.values()), [[0.], [0.], [0, 0, 0]]
+                    list(ocm.state_feature_values.values()), [[[0.]], [[0.]], [[0, 0, 0]]]
                 ):
                     np.testing.assert_allclose(expected, actual)
 
@@ -1363,7 +1364,7 @@ class TestControlMechanisms:
                                               'OA[InputPort-0]': 'OA[InputPort-0]',
                                               'OB[InputPort-0]': None}
                 for expected, actual in zip(
-                    list(ocm.state_feature_values.values()), [[0.], [0.], [0, 0, 0]]
+                    list(ocm.state_feature_values.values()), [[[0.]], [[0.]], [[0, 0, 0]]]
                 ):
                     np.testing.assert_allclose(expected, actual)
 
@@ -1374,7 +1375,7 @@ class TestControlMechanisms:
                                           'OA[InputPort-0]': None,
                                           'OB[InputPort-0]': 'OB[InputPort-0]'}
             for expected, actual in zip(
-                list(ocm.state_feature_values.values()), [[0.], [0.], [0, 0, 0]]
+                list(ocm.state_feature_values.values()), [[[0.]], [[0.]], [[0, 0, 0]]]
             ):
                 np.testing.assert_allclose(expected, actual)
 
@@ -1398,7 +1399,7 @@ class TestControlMechanisms:
                                                       'OA[InputPort-0]': 'OA[InputPort-0]',
                                                       'OB[InputPort-0]': 'OB[InputPort-0]'}
                         for expected, actual in zip(
-                            list(ocm.state_feature_values.values()), [[0.], [0.], [0, 0, 0]]
+                            list(ocm.state_feature_values.values()), [[[0.]], [[0.]], [[0, 0, 0]]]
                         ):
                             np.testing.assert_allclose(expected, actual)
 
@@ -1513,19 +1514,20 @@ class TestControlMechanisms:
             ocomp.run()
 
             if state_features_arg == 'single_numeric_spec':
-                assert ocm.state_features == {'A[SAMPLE]': [3],
-                                              'A[TARGET]': [3],
-                                              'I1[InputPort-0]': [3],
-                                              'I2[InputPort-0]': [3]}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [3],
-                                                                                      A.input_ports[pnl.TARGET]: [3],
-                                                                                      I1.input_port: [3],
-                                                                                      I2.input_port: [3]}
+                assert ocm.state_features == {'A[SAMPLE]': [[3]],
+                                              'A[TARGET]': [[3]],
+                                              'I1[InputPort-0]': [[3]],
+                                              'I2[InputPort-0]': [[3]]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [[3]],
+                                                                                      A.input_ports[pnl.TARGET]: [[3]],
+                                                                                      I1.input_port: [[3]],
+                                                                                      I2.input_port: [[3]]}
             elif state_features_arg == 'single_tuple_numeric_spec':
-                assert ocm.state_features == {'A[SAMPLE]': [3],
-                                              'A[TARGET]': [3],
-                                              'I1[InputPort-0]': [3],
-                                              'I2[InputPort-0]': [3]}
+                assert ocm.state_features == {'A[SAMPLE]': [[3]],
+                                              'A[TARGET]': [[3]],
+                                              'I1[InputPort-0]': [[3]],
+                                              'I2[InputPort-0]': [[3]]}
+                # InputPort functions are Linear, not CombinationFunction, so state_feature_values dimension is 1d, not 2d
                 assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [15],
                                                                                       A.input_ports[pnl.TARGET]: [15],
                                                                                       I1.input_port: [15],
@@ -1535,72 +1537,72 @@ class TestControlMechanisms:
                                               'A[TARGET]': 'I1[OutputPort-0]',
                                               'I1[InputPort-0]': 'I1[OutputPort-0]',
                                               'I2[InputPort-0]': 'I1[OutputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [0],
-                                                                                      A.input_ports[pnl.TARGET]: [0],
-                                                                                      I1.input_port: [0],
-                                                                                      I2.input_port: [0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [[0]],
+                                                                                      A.input_ports[pnl.TARGET]: [[0]],
+                                                                                      I1.input_port: [[0]],
+                                                                                      I2.input_port: [[0]]}
             elif state_features_arg in {'single_mech_spec'}:
                 assert ocm.state_features == {'A[SAMPLE]': 'I1[InputPort-0]',
                                               'A[TARGET]': 'I1[InputPort-0]',
                                               'I1[InputPort-0]': 'I1[InputPort-0]',
                                               'I2[InputPort-0]': 'I1[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [0],
-                                                                                      A.input_ports[pnl.TARGET]: [0],
-                                                                                      I1.input_port: [0],
-                                                                                      I2.input_port: [0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [[0]],
+                                                                                      A.input_ports[pnl.TARGET]: [[0]],
+                                                                                      I1.input_port: [[0]],
+                                                                                      I2.input_port: [[0]]}
             elif state_features_arg in 'nested_partial_list':
                 assert ocm.state_features == {'A[SAMPLE]': 'I1[OutputPort-0]',
                                               'A[TARGET]': [2],
                                               'I1[InputPort-0]': 'I2[InputPort-0]',
                                               'I2[InputPort-0]': 'I2[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [0],
-                                                                                      A.input_ports[pnl.TARGET]: [2],
-                                                                                      I1.input_port: [0],
-                                                                                      I2.input_port: [0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [[0]],
+                                                                                      A.input_ports[pnl.TARGET]: [[2]],
+                                                                                      I1.input_port: [[0]],
+                                                                                      I2.input_port: [[0]]}
             elif state_features_arg in 'nested_partial_set':
                 assert ocm.state_features == {'A[SAMPLE]': 'A[SAMPLE]',
                                               'A[TARGET]': None,
                                               'I1[InputPort-0]': None,
                                               'I2[InputPort-0]': 'I2[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [0],
-                                                                                      I2.input_port: [0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [[0]],
+                                                                                      I2.input_port: [[0]]}
 
             elif state_features_arg == 'nested_partial_dict':
                 assert ocm.state_features == {'A[SAMPLE]': [3.5],
                                               'A[TARGET]': 'A[TARGET]',
                                               'I1[InputPort-0]': 'I1[InputPort-0]',
                                               'I2[InputPort-0]': 'I1[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [3.5],
-                                                                                      A.input_ports[pnl.TARGET]: [0],
-                                                                                      I1.input_port: [0],
-                                                                                      I2.input_port: [0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [[3.5]],
+                                                                                      A.input_ports[pnl.TARGET]: [[0]],
+                                                                                      I1.input_port: [[0]],
+                                                                                      I2.input_port: [[0]]}
             elif state_features_arg in {'nested_full_set', 'nested_comp_set', 'no_spec'}:
                 assert ocm.state_features == {'A[SAMPLE]': 'A[SAMPLE]',
                                               'A[TARGET]': 'A[TARGET]',
                                               'I1[InputPort-0]': 'I1[InputPort-0]',
                                               'I2[InputPort-0]': 'I2[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [0],
-                                                                                      A.input_ports[pnl.TARGET]: [0],
-                                                                                      I1.input_port: [0],
-                                                                                      I2.input_port: [0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [[0]],
+                                                                                      A.input_ports[pnl.TARGET]: [[0]],
+                                                                                      I1.input_port: [[0]],
+                                                                                      I2.input_port: [[0]]}
             elif state_features_arg == 'nested_full_dict':
                 assert ocm.state_features == {'A[SAMPLE]': 'A[SAMPLE]',
                                               'A[TARGET]': 'A[SAMPLE]',
                                               'I1[InputPort-0]': 'I2[InputPort-0]',
                                               'I2[InputPort-0]': 'I1[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[0]: [0],
-                                                                                      A.input_ports[1]: [0],
-                                                                                      I1.input_port: [0],
-                                                                                      I2.input_port: [0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[0]: [[0]],
+                                                                                      A.input_ports[1]: [[0]],
+                                                                                      I1.input_port: [[0]],
+                                                                                      I2.input_port: [[0]]}
             elif state_features_arg == 'nested_comp_dict':
                 assert ocm.state_features == {'A[SAMPLE]': 'I1[InputPort-0]',
                                               'A[TARGET]': 'I1[InputPort-0]',
                                               'I1[InputPort-0]': 'I1[InputPort-0]',
                                               'I2[InputPort-0]': 'I1[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [0],
-                                                                                      A.input_ports[pnl.TARGET]: [0],
-                                                                                      I1.input_port: [0],
-                                                                                      I2.input_port: [0]}
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {A.input_ports[pnl.SAMPLE]: [[0]],
+                                                                                      A.input_ports[pnl.TARGET]: [[0]],
+                                                                                      I1.input_port: [[0]],
+                                                                                      I2.input_port: [[0]]}
 
     @pytest.mark.state_features
     @pytest.mark.control
@@ -1679,7 +1681,7 @@ class TestControlMechanisms:
             result = comp.run(inputs=inputs, context='test')
             assert result == [[24.]]
             for actual, expected in zip(
-                list(ocm.parameters.state_feature_values.get('test').values()), [[2],[[1],[2]],[3]]
+                list(ocm.parameters.state_feature_values.get('test').values()), [[2], [[[1]], [[2]]], [[3]]]
             ):
                 np.testing.assert_allclose(actual, expected)
         else:
@@ -1690,7 +1692,7 @@ class TestControlMechanisms:
             result = comp.run(inputs=inputs, context='test')
             assert result == [[24.]]
             for actual, expected in zip(
-                list(ocm.parameters.state_feature_values.get('test').values()), [[2],[2],[2]]
+                list(ocm.parameters.state_feature_values.get('test').values()), [[[2]], [[2]], [[2]]]
             ):
                 np.testing.assert_allclose(expected, actual)
 
@@ -1721,7 +1723,7 @@ class TestControlMechanisms:
                              ]
         )
         ocomp.add_controller(ocm)
-        for x, y in zip(ocm.state, [[0.0], [0.0], [3.0, 1.0, 2.0], [1.0], [1.0]]):
+        for x, y in zip(ocm.state, [[[0.0]], [[0.0]], [[3.0, 1.0, 2.0]], [1.0], [1.0]]):
             np.testing.assert_allclose(x, y)
         assert len(ocm.state_distal_sources_and_destinations_dict) == 6
         keys = list(ocm.state_distal_sources_and_destinations_dict.keys())
@@ -1736,7 +1738,7 @@ class TestControlMechanisms:
         assert keys[5] == (oc.parameter_ports[pnl.SLOPE], oc, ocomp, 4)
         ocomp.run()
         for expected, actual in zip(
-            list(ocm.state_feature_values.values()), [[0.], [0.], [3, 1, 2]]
+            list(ocm.state_feature_values.values()), [[[0.]], [[0.]], [[3, 1, 2]]]
         ):
             np.testing.assert_allclose(expected, actual)
 
@@ -2243,8 +2245,8 @@ class TestControlMechanisms:
                                                          num=3))
                                              ])
         )
-        taskTrain = [[0, 1], [0, 1], [0, 1]]
-        stimulusTrain = [[1, -1], [1, -1], [1, -1]]
+        taskTrain = [[[0, 1]], [[0, 1]], [[0, 1]]]
+        stimulusTrain = [[[1, -1]], [[1, -1]], [[1, -1]]]
         zipTrain = list(zip(taskTrain, stimulusTrain))
         outerComposition.run(zipTrain)
         np.testing.assert_allclose(outerComposition.results,
