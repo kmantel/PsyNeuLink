@@ -1443,6 +1443,11 @@ class InputPort(Port_Base):
     def socket_template(self):
         return np.zeros(self.socket_width)
 
+    # must be at least 1d. list of incoming projections
+    @property
+    def socket_shape(self):
+        return self.defaults.variable[0].shape
+
     def get_label(self, context=None):
         try:
             label_dictionary = self.owner.input_labels_dict

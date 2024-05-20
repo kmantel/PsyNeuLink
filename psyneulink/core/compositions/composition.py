@@ -5742,7 +5742,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if input_port not in set(self.input_CIM_ports.keys()):
                     # instantiate the InputPort on the input CIM to correspond to the Node's InputPort
                     interface_input_port = InputPort(owner=self.input_CIM,
-                                                     variable=np.atleast_2d(input_port.defaults.variable)[0],
+                                                     variable=[input_port.defaults.variable],
                                                      reference_value=input_port.defaults.value,
                                                      name= INPUT_CIM_NAME + "_" + node.name + "_" + input_port.name,
                                                      context=context)
@@ -5866,7 +5866,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
                     # instantiate the input port on the output CIM to correspond to the node's output port
                     interface_input_port = InputPort(owner=self.output_CIM,
-                                                     variable=copy_parameter_value(output_port.defaults.value),
+                                                     variable=[copy_parameter_value(output_port.defaults.value)],
                                                      reference_value=copy_parameter_value(output_port.defaults.value),
                                                      name=OUTPUT_CIM_NAME + "_" + node.name + "_" + output_port.name,
                                                      context=context)
@@ -10448,8 +10448,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                 raise CompositionError(error_base_msg + "doesn't match the shape of its InputPorts")
 
                     else:
+                        if entry[0].shape == convert_to_np_array(node_spec.external_input_shape).shape:
+                            _inputs = _inputs
                         # 2d regular array  (e.g., [[1, 2], [3, 4]] or [[1, 2]])
-                        if len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape)):
+                        elif len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape)):
                             # 1 trial's worth of input for > 1 input_ports
                             _inputs = [_inputs]
                         elif (num_input_ports == 1 and

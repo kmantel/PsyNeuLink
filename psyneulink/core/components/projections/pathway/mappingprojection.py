@@ -542,10 +542,15 @@ class MappingProjection(PathwayProjection_Base):
             mapping_input_len = len(self.defaults.variable)
         except TypeError:
             mapping_input_len = 1
+
+        mapping_input_shape = self.defaults.variable.shape
+
         try:
             receiver_len = self.receiver.socket_width
         except TypeError:
             receiver_len = 1
+
+        receiver_shape = self.receiver.socket_shape
 
         # Compare length of MappingProjection output and receiver's variable to be sure matrix has proper dimensions
         try:
@@ -553,18 +558,20 @@ class MappingProjection(PathwayProjection_Base):
         except TypeError:
             mapping_output_len = 1
 
+        mapping_output_shape = self.defaults.value.shape
+
         matrix_spec = copy_parameter_value(self.defaults.matrix)
 
         if (type(matrix_spec) == str and
                 matrix_spec == AUTO_ASSIGN_MATRIX):
-            if mapping_input_len == receiver_len:
+            if mapping_input_shape == receiver_shape:
                 matrix_spec = IDENTITY_MATRIX
             else:
                 matrix_spec = FULL_CONNECTIVITY_MATRIX
 
         # Length of the output of the Projection doesn't match the length of the receiving InputPort
         #    so consider reshaping the matrix
-        if mapping_output_len != receiver_len:
+        if receiver_shape != mapping_output_shape:
 
             if 'projection' in self.name or 'Projection' in self.name:
                 projection_string = ''
