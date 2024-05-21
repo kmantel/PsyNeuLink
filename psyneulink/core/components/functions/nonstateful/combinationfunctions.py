@@ -1211,8 +1211,6 @@ class LinearCombination(
         scale = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
         offset = Parameter(0.0, modulable=True, aliases=[ADDITIVE_PARAM])
 
-        changes_shape = Parameter(True, stateful=False, loggable=False, pnl_internal=True)
-
     @check_user_specified
     @beartype
     def __init__(self,
