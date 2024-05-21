@@ -5741,9 +5741,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # if there is not a corresponding CIM InputPort/OutputPort pair, add them
                 if input_port not in set(self.input_CIM_ports.keys()):
                     # instantiate the InputPort on the input CIM to correspond to the Node's InputPort
+                    # reference_value should match the corresponding
+                    # node's variable shape because the output of this
+                    # InputPort propagates to the corresponding node's
+                    # InputPort as input
                     interface_input_port = InputPort(owner=self.input_CIM,
                                                      variable=[input_port.defaults.variable],
-                                                     reference_value=input_port.defaults.value,
+                                                     reference_value=input_port.defaults.variable,
                                                      name= INPUT_CIM_NAME + "_" + node.name + "_" + input_port.name,
                                                      context=context)
 
@@ -10793,7 +10797,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for node, inp in inputs.items():
             if isinstance(node, Composition) and type(inp) == dict:
                 inp = node._parse_input_dict(inp)
-            if convert_to_np_array(inp).ndim == 3:
+            if np.asarray(inp).shape == (1, *np.asarray(node.external_input_shape).shape):
                 # If inp formatted for trial series, get only one one trial's worth of inputs to test
                 inp = inp[0]
             inp = self._validate_single_input(node, inp)
