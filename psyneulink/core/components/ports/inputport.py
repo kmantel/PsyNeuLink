@@ -1443,6 +1443,11 @@ class InputPort(Port_Base):
     def socket_template(self):
         return np.zeros(self.socket_width)
 
+    # TODO: replace socket_template with this
+    @property
+    def socket_shape_template(self):
+        return np.zeros(self.socket_shape)
+
     # must be at least 1d. list of incoming projections
     @property
     def socket_shape(self):
@@ -1457,6 +1462,7 @@ class InputPort(Port_Base):
 
     @property
     def _input_shape_template(self):
+        return VARIABLE
         try:
             if self.function.changes_shape:
                 return VARIABLE
@@ -1473,6 +1479,7 @@ class InputPort(Port_Base):
 
     @property
     def default_input_shape(self):
+        return self.defaults.variable
         if self._input_shape_template == VARIABLE:
             return self.defaults.variable
         elif self._input_shape_template == VALUE:
@@ -1480,6 +1487,7 @@ class InputPort(Port_Base):
         assert False, f"PROGRAM ERROR: bad _input_shape_template assignment for '{self.name}'."
 
     def get_input_shape(self, context=None):
+        return self.get_input_variables(context)
         if self._input_shape_template == VARIABLE:
             return self.get_input_variables(context)
         elif self._input_shape_template == VALUE:

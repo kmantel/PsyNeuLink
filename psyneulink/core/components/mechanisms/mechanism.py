@@ -2655,7 +2655,7 @@ class Mechanism_Base(Mechanism):
                 from psyneulink.core.compositions.composition import RunError
 
                 # Assign input_item as input_port.variable
-                input_port.parameters.variable._set(np.atleast_2d(input_item), context)
+                input_port.parameters.variable._set(np.broadcast_to(input_item, input_port.defaults.variable.shape), context)
 
                 # Call input_port._execute with newly assigned variable and assign result to input_port.value
                 base_error_msg = f"Input to '{self.name}' ({input_item}) is incompatible " \
@@ -3744,7 +3744,7 @@ class Mechanism_Base(Mechanism):
                     old_variable = self.defaults.variable.tolist()
                 else:
                     old_variable = self.defaults.variable
-                old_variable.extend(added_variable)
+                old_variable.append(added_variable)
                 self.defaults.variable = convert_to_np_array(old_variable)
             instantiated_input_ports = _instantiate_input_ports(self,
                                                                   input_ports,
@@ -4005,13 +4005,8 @@ class Mechanism_Base(Mechanism):
             for input_port in self.input_ports:
                 if input_port.internal_only or input_port.default_input:
                     continue
-                if input_port._input_shape_template == VARIABLE:
-                    shape.append(input_port.defaults.variable)
-                elif input_port._input_shape_template == VALUE:
-                    shape.append(input_port.defaults.value)
-                else:
-                    assert False, f"PROGRAM ERROR: bad changes_shape in attempt to assign " \
-                                  f"default_external_input_shape for '{input_port.name}' of '{self.name}."
+
+                shape.append(input_port.defaults.value)
             return shape
         except (TypeError, AttributeError):
             return None

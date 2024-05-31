@@ -5746,8 +5746,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # InputPort propagates to the corresponding node's
                     # InputPort as input
                     interface_input_port = InputPort(owner=self.input_CIM,
-                                                     variable=[input_port.defaults.variable],
-                                                     reference_value=input_port.defaults.variable,
+                                                     variable=[input_port.socket_shape_template],
+                                                     reference_value=input_port.socket_shape_template,
                                                      name= INPUT_CIM_NAME + "_" + node.name + "_" + input_port.name,
                                                      context=context)
 
@@ -10452,16 +10452,21 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                 raise CompositionError(error_base_msg + "doesn't match the shape of its InputPorts")
 
                     else:
-                        if entry[0].shape == convert_to_np_array(node_spec.external_input_shape).shape:
+                        external_input = convert_to_np_array(node_spec.external_input_shape)
+                        if entry.shape == external_input.shape:
+                            _inputs = [_inputs]
+                        elif entry[0].shape == convert_to_np_array(node_spec.external_input_shape).shape:
                             _inputs = _inputs
                         # 2d regular array  (e.g., [[1, 2], [3, 4]] or [[1, 2]])
                         elif len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape)):
                             # 1 trial's worth of input for > 1 input_ports
                             _inputs = [_inputs]
-                        elif (num_input_ports == 1 and
-                              len(_inputs[0]) == len(convert_to_np_array(node_spec.external_input_shape[0]))):
+                        elif (
+                            num_input_ports == 1 and
+                            len(_inputs[0]) == external_input.shape[-1]
+                        ):
                             # > 1 or more trial's worth of input for 1 input_port, so add extra dimension to each trial's input
-                            _inputs = [[input] for input in _inputs]
+                            _inputs = [np.broadcast_to(input, external_input.shape) for input in _inputs]
                         else:
                             raise CompositionError(error_base_msg + "doesn't match the shape of its InputPorts")
 
