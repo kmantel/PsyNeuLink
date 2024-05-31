@@ -2651,11 +2651,14 @@ class Mechanism_Base(Mechanism):
                                   "its number of input_ports ({2})".
                                   format(num_inputs, self.name,  num_input_ports ))
         for input_item, input_port in zip(input, self.input_ports):
-            if input_port.default_input_shape.size == np.array(input_item).size:
+            port_single_input_template = np.asarray([input_port.socket_shape_template])
+            input_item_arr = convert_all_elements_to_np_array(input_item)
+            if input_port.socket_shape == input_item_arr.shape or input_item_arr.shape == port_single_input_template.shape:
                 from psyneulink.core.compositions.composition import RunError
 
                 # Assign input_item as input_port.variable
-                variable = np.broadcast_to(input_item, input_port.defaults.variable.shape)
+                variable = np.broadcast_to(input_item_arr, port_single_input_template.shape)
+                # variable = np.asarray([input_item_arr])
                 input_port.parameters.variable._set(variable, context)
 
                 # Call input_port._execute with newly assigned variable and assign result to input_port.value

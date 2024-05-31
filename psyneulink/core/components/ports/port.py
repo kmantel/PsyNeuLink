@@ -3381,10 +3381,11 @@ def _parse_port_spec(port_type=None,
             port_dict[VARIABLE] = port_dict[VALUE]
         else:
             port_dict[VARIABLE] = port_dict[REFERENCE_VALUE]
-            # reference value should match port value after dimension
-            # reduction from function
-            if port_dict[VARIABLE] is not None and port_type.componentType == INPUT_PORT:
-                port_dict[VARIABLE] = [port_dict[VARIABLE]]
+        # reference value should match port value after dimension
+        # reduction from function
+        if port_dict[VARIABLE] is not None and port_type.componentType == INPUT_PORT:
+            port_dict[VARIABLE] = [port_dict[VARIABLE]]
+
 
     if is_numeric(port_dict[VARIABLE]):
         port_dict[VARIABLE] = convert_all_elements_to_np_array(port_dict[VARIABLE])
