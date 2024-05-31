@@ -556,9 +556,9 @@ class CompExecution(CUDAExecution):
         if len(self._execution_contexts) > 1:
             assert len(self._execution_contexts) == len(inputs)
             c_input = c_input * len(self._execution_contexts)
-            input_data = (([x] for x in self._composition._build_variable_for_input_CIM(inp)) for inp in inputs)
+            input_data = ((x for x in self._composition._build_variable_for_input_CIM(inp)) for inp in inputs)
         else:
-            input_data = ([x] for x in self._composition._build_variable_for_input_CIM(inputs))
+            input_data = (x for x in self._composition._build_variable_for_input_CIM(inputs))
 
         if "stat" in self._debug_env:
             print("Input struct size:", _pretty_size(ctypes.sizeof(c_input)),
@@ -659,7 +659,7 @@ class CompExecution(CUDAExecution):
 
         assert len(inputs) == len(self._execution_contexts)
         # Extract input for each trial and execution id
-        run_inputs = ((([x] for x in self._composition._build_variable_for_input_CIM({k:v[i] for k,v in inp.items()})) for i in range(num_input_sets)) for inp in inputs)
+        run_inputs = (((x for x in self._composition._build_variable_for_input_CIM({k:v[i] for k,v in inp.items()})) for i in range(num_input_sets)) for inp in inputs)
         c_inputs = c_input(*_tupleize(run_inputs))
         if "stat" in self._debug_env:
             print("Instantiated struct: input ( size:" ,

@@ -6083,7 +6083,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             context_string = context.string
 
             new_default_variable = [
-                deepcopy(input_port.default_input_shape)
+                deepcopy(input_port.defaults.value)
                 for input_port in cim.input_ports
             ]
 
