@@ -10561,7 +10561,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                       if input_port.internal_only is False]):
                 if port in input_port_entries:
                     # Assume input is for all trials
-                    port_spec = np.atleast_2d(input_port_entries[port]).tolist()
+                    port_spec = [input_port_entries[port]]
                     if len(port_spec) < max_num_trials:
                         # If input is not for all trials, ensure that it is only for a single trial
                         assert len(port_spec) == 1, f"PROGRAM ERROR: Length of port_spec for '{port.full_name}' " \

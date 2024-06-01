@@ -1214,9 +1214,9 @@ def _state_feature_values_getter(owning_component=None, context=None):
             state_feature_value = state_input_port.parameters.value._get(context)
         else:
             # otherwise use state_input_port's default input value
-            state_feature_value = state_input_port.default_input_shape
+            state_feature_value = state_input_port.defaults.value
 
-        state_feature_values[key] = state_feature_value
+        state_feature_values[key] = [state_feature_value]
 
     return state_feature_values
 
@@ -2892,7 +2892,9 @@ class OptimizationControlMechanism(ControlMechanism):
         # Ensure state_features are compatible with input format for agent_rep Composition
         try:
             # Call this to check for errors in constructing inputs dict
-            self.agent_rep._parse_input_dict(self.parameters.state_feature_values._get(context))
+            self.agent_rep._parse_input_dict(
+                self.parameters.state_feature_values._get(context)
+            )
         except (RunError, CompositionError) as error:
             raise OptimizationControlMechanismError(
                 f"The '{STATE_FEATURES}' argument has been specified for '{self.name}' that is using a "

@@ -4010,7 +4010,7 @@ class Mechanism_Base(Mechanism):
                 if input_port.internal_only or input_port.default_input:
                     continue
 
-                shape.append(input_port.defaults.value)
+                shape.append(input_port.default_input_shape)
             return shape
         except (TypeError, AttributeError):
             return None
