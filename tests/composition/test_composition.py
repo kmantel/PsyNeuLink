@@ -6711,6 +6711,70 @@ class TestAuxComponents:
             assert comp.stateful_nodes == expected_stateful_nodes[comp]
 
 
+def map_dict_keys_to_objects(d, locals):
+    return {eval(k, {}, locals): v for k, v in d.items()}
+
+
+class TestInputs:
+
+    @pytest.mark.parametrize(
+        'size, inputs, expected_parsed_inputs, expected_num_trials',
+        [
+            # size 1, one trial
+            (1, {}, {'A': np.zeros((1, 1, 1))}, 1),
+            (1, {'A': 0}, {'A': np.zeros((1, 1, 1))}, 1),
+            (1, {'A': [0]}, {'A': np.zeros((1, 1, 1))}, 1),
+            (1, {'A': [[0]]}, {'A': np.zeros((1, 1, 1))}, 1),
+            # (1, {'A': [[[0]]]}, {'A': np.zeros((1, 1, 1))}, 1),   # works on devel but i think we can give this up
+
+            # size 1, two trials
+            # (1, {}, {'A': np.zeros((1, 1, 1))}, 2),  # bad
+            # (1, {'A': 0}, {'A': np.zeros((1, 1, 1))}, 2),  # bad
+            # (1, {'A': [0]}, {'A': np.zeros((2, 1, 1))}, 2),  # bad
+            (1, {'A': [0, 0]}, {'A': np.zeros((2, 1, 1))}, 2),
+            (1, {'A': [[0], [0]]}, {'A': np.zeros((2, 1, 1))}, 2),
+            (1, {'A': [[[0]], [[0]]]}, {'A': np.zeros((2, 1, 1))}, 2),
+
+            # size 2, one trial
+            # (2, {'A': {}}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
+            # (2, {'A': 0}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
+            # (2, {'A': [0]}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
+            # (2, {'A': [0, 0]}, {'A': np.zeros((1, 1, 2))}, 1),  # bad (tested above, 1, two trials)
+            (2, {'A': [[0, 0]]}, {'A': np.zeros((1, 1, 2))}, 1),
+            (2, {'A': [[[0, 0]]]}, {'A': np.zeros((1, 1, 2))}, 1),
+
+            # size 2, two trials
+            (2, {'A': [[0, 0], [0, 0]]}, {'A': np.zeros((2, 1, 2))}, 2),
+            (2, {'A': [[[0, 0]], [[0, 0]]]}, {'A': np.zeros((2, 1, 2))}, 2),
+        ]
+    )
+    def test_single_nonnested(self, size, inputs, expected_parsed_inputs, expected_num_trials):
+        A = ProcessingMechanism(size=size)
+        # B = ProcessingMechanism(size=2)
+
+        comp = pnl.Composition()
+        comp.add_node(A)
+        # comp.add_node(B)
+
+        locs = locals()
+
+        inputs = map_dict_keys_to_objects(inputs, locals())
+        expected_parsed_inputs = map_dict_keys_to_objects(expected_parsed_inputs, locals())
+
+        parsed_inputs, num_trials = comp._parse_run_inputs(inputs)
+        print()
+        print(inputs)
+        print('---')
+        print(parsed_inputs)
+
+        for mech in parsed_inputs:
+            np.testing.assert_array_equal(
+                parsed_inputs[mech], expected_parsed_inputs[mech]
+            )
+        assert num_trials == expected_num_trials
+
+
+
 class TestShadowInputs:
 
     def test_two_origins(self):
