@@ -6721,31 +6721,35 @@ class TestInputs:
         'size, inputs, expected_parsed_inputs, expected_num_trials',
         [
             # size 1, one trial
-            (1, {}, {'A': np.zeros((1, 1, 1))}, 1),
-            (1, {'A': 0}, {'A': np.zeros((1, 1, 1))}, 1),
-            (1, {'A': [0]}, {'A': np.zeros((1, 1, 1))}, 1),
-            (1, {'A': [[0]]}, {'A': np.zeros((1, 1, 1))}, 1),
+            (1, {}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+            (1, {'A': 0}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+            (1, {'A': [0]}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+            (1, {'A': [[0]]}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+
             # (1, {'A': [[[0]]]}, {'A': np.zeros((1, 1, 1))}, 1),   # works on devel but i think we can give this up
 
             # size 1, two trials
             # (1, {}, {'A': np.zeros((1, 1, 1))}, 2),  # bad
             # (1, {'A': 0}, {'A': np.zeros((1, 1, 1))}, 2),  # bad
             # (1, {'A': [0]}, {'A': np.zeros((2, 1, 1))}, 2),  # bad
-            (1, {'A': [0, 0]}, {'A': np.zeros((2, 1, 1))}, 2),
-            (1, {'A': [[0], [0]]}, {'A': np.zeros((2, 1, 1))}, 2),
-            (1, {'A': [[[0]], [[0]]]}, {'A': np.zeros((2, 1, 1))}, 2),
+
+            (1, {'A': [0, 0]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
+            (1, {'A': [[0], [0]]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
+            (1, {'A': [[[0]], [[0]]]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
+            (1, {'A': [[[[0]]], [[[0]]]]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
 
             # size 2, one trial
             # (2, {'A': {}}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
             # (2, {'A': 0}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
             # (2, {'A': [0]}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
             # (2, {'A': [0, 0]}, {'A': np.zeros((1, 1, 2))}, 1),  # bad (tested above, 1, two trials)
-            (2, {'A': [[0, 0]]}, {'A': np.zeros((1, 1, 2))}, 1),
-            (2, {'A': [[[0, 0]]]}, {'A': np.zeros((1, 1, 2))}, 1),
+
+            (2, {'A': [[0, 0]]}, {'A': np.zeros((1, 1, 1, 2))}, 1),
+            (2, {'A': [[[0, 0]]]}, {'A': np.zeros((1, 1, 1, 2))}, 1),
 
             # size 2, two trials
-            (2, {'A': [[0, 0], [0, 0]]}, {'A': np.zeros((2, 1, 2))}, 2),
-            (2, {'A': [[[0, 0]], [[0, 0]]]}, {'A': np.zeros((2, 1, 2))}, 2),
+            (2, {'A': [[0, 0], [0, 0]]}, {'A': np.zeros((2, 1, 1, 2))}, 2),
+            (2, {'A': [[[0, 0]], [[0, 0]]]}, {'A': np.zeros((2, 1, 1, 2))}, 2),
         ]
     )
     def test_single_nonnested(self, size, inputs, expected_parsed_inputs, expected_num_trials):

@@ -10368,6 +10368,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # FIX: 10/29/23
                 #  USE get_input_format() spec for formatting inputs here, or below?
                 _inputs = inputs[INPUT_Node]
+                _inputs_arr = convert_all_elements_to_np_array(_inputs)
 
                 # Check formatting of entry and updimension to 3d if necessary
                 # (any other errant items will be detected in _validate_input_shapes_and_expand_for_all_trials())
@@ -10388,9 +10389,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # entry is dict for a nested Composition, which will be handled recursively
                     pass
 
-                elif convert_to_np_array(_inputs).squeeze().ndim == 0:
+                elif _inputs_arr.squeeze().ndim == 0:
                     # Single scalar (alone or in list), so must be single value for single trial
-                    _inputs = np.atleast_3d(_inputs).tolist()
+                    _inputs = [np.broadcast_to(_inputs, node_spec.external_input_shape_arr.shape)]
 
                 elif all(isinstance(elem, numbers.Number) for elem in _inputs):
                     # 1d list of scalars of len > 1 (len == 1 handled above)
@@ -10400,9 +10401,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             if len(_inputs) == len(node_spec.external_input_shape[0]):
                                 # 1 trial's worth of input for mech with 1 input_port and len(variable) > 1:
                                 _inputs = [[_inputs]]
-                            elif len(node_spec.external_input_shape[0]) == 1:
+                            elif node_spec.external_input_shape_arr.shape[0] == 1:
                                 # > 1 trial's worth of input for > 1 input_port all of which have len(variable) == 1:
-                                _inputs = [[[elem]] for elem in _inputs]
+                                _inputs = [
+                                    np.broadcast_to(elem, node_spec.external_input_shape_arr.shape)
+                                    for elem in _inputs
+                                ]
                             else:
                                 raise CompositionError(error_base_msg +
                                                        "is wrong length for a Mechanism with a single InputPort")
@@ -10417,14 +10421,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         else:
                             # > 1 trial's worth of input for input_port with len(variable) == 1:
                             _inputs = [[[elem]] for elem in _inputs]
-
-                elif convert_to_np_array(_inputs).ndim == 3:
-                    # 3d regular array
-                    if not isinstance(node_spec, Mechanism):
-                        raise CompositionError(error_base_msg + "should not be 3d since it is for an InputPort")
-                    # Nothing more to do, as entry is already 3d
-                    # shapes of entries will be validated in _validate_input_shapes_and_expand_for_all_trials())
-
                 else:
                     # 3D ragged array or 2d array
                     entry = convert_to_np_array(_inputs)
@@ -10460,10 +10456,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         # 2d regular array  (e.g., [[1, 2], [3, 4]] or [[1, 2]])
                         elif len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape)):
                             # 1 trial's worth of input for > 1 input_ports
-                            _inputs = [_inputs]
+                            _inputs = [np.broadcast_to(_inputs, node_spec.external_input_shape_arr.shape)]
                         elif (
-                            num_input_ports == 1 and
-                            len(_inputs[0]) == external_input.shape[-1]
+                            num_input_ports == 1
+                            # (assumes each element of _inputs is also valid. consider checking all)
+                            # items in _inputs differ from
+                            # external_input shape only by wrapper
+                            # dimensions, so match the input
+                            and np.squeeze(_inputs_arr[0]).shape == np.squeeze(external_input).shape
                         ):
                             # > 1 or more trial's worth of input for 1 input_port, so add extra dimension to each trial's input
                             _inputs = [np.broadcast_to(input, external_input.shape) for input in _inputs]

@@ -3997,6 +3997,12 @@ class Mechanism_Base(Mechanism):
         except (TypeError, AttributeError):
             return None
 
+    # this should basically replace external_input_shape and not be
+    # named "shape" because that implies shape and not the array
+    @property
+    def external_input_shape_arr(self):
+        return convert_all_elements_to_np_array(self.external_input_shape)
+
     @property
     def external_input_shape(self):
         """Alias for _default_external_input_shape"""
