@@ -1406,7 +1406,7 @@ COMMENT:
     ...               nested_comp_3: [[[12]],[[13]],   # Note: full input nested Composition is provide
     ...                              [[14]],[[15]]]}   #       for each TRIAL of execution
     >>> outer_comp.get_input_format()
-    >>> outer_comp.external_input_shape
+    >>> outer_comp.external_input_shape()
     >>> outer_comp.external_input_ports_of_all_input_nodes
     >>> outer_comp.run(inputs=inputs)
     Add output here
@@ -10108,11 +10108,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # Validate that a single input is properly formatted for a receiver.
         _input = []
         if isinstance(receiver, InputPort):
-            input_shape = receiver.default_input_shape
+            input_shape = receiver.default_input_shape(self)
         elif isinstance(receiver, Mechanism):
-            input_shape = receiver.external_input_shape
+            input_shape = receiver.external_input_shape(self)
         elif isinstance(receiver, Composition):
-            input_shape = receiver.input_CIM.external_input_shape
+            input_shape = receiver.input_CIM.external_input_shape(self)
         match_type = self._input_matches_variable(input, input_shape)
         if match_type == 'homogeneous':
             # np.atleast_2d will catch any single-input ports specified without an outer list
@@ -10356,7 +10356,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for INPUT_Node in input_nodes:
 
             if not inputs:
-                input_dict[INPUT_Node] = [INPUT_Node.external_input_shape]
+                input_dict[INPUT_Node] = [INPUT_Node.external_input_shape(self)]
                 continue
 
             # FIX: 11/3/23 - THE FOLLOWING CURRENTLY ONLY LOOKS AT input KEYS THAT ARE NODES
@@ -10376,7 +10376,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if isinstance(INPUT_Node, Composition):
                     node_spec = INPUT_Node.input_CIM
                 is_mech = isinstance(node_spec, Mechanism_Base)
-                num_input_ports = len(node_spec.external_input_shape) if is_mech else None
+                num_input_ports = len(node_spec.external_input_shape(self)) if is_mech else None
                 # is_input_port = not num_input_ports
 
                 if is_mech:
@@ -10391,20 +10391,20 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
                 elif _inputs_arr.squeeze().ndim == 0:
                     # Single scalar (alone or in list), so must be single value for single trial
-                    _inputs = [np.broadcast_to(_inputs, node_spec.external_input_shape_arr.shape)]
+                    _inputs = [np.broadcast_to(_inputs, node_spec.external_input_shape_arr(self).shape)]
 
                 elif all(isinstance(elem, numbers.Number) for elem in _inputs):
                     # 1d list of scalars of len > 1 (len == 1 handled above)
                     if is_mech:
                     #  node_spec is mech:
                         if num_input_ports == 1:
-                            if len(_inputs) == len(node_spec.external_input_shape[0]):
+                            if len(_inputs) == len(node_spec.external_input_shape(self)[0]):
                                 # 1 trial's worth of input for mech with 1 input_port and len(variable) > 1:
                                 _inputs = [[_inputs]]
-                            elif node_spec.external_input_shape_arr.shape[0] == 1:
+                            elif node_spec.external_input_shape_arr(self).shape[0] == 1:
                                 # > 1 trial's worth of input for > 1 input_port all of which have len(variable) == 1:
                                 _inputs = [
-                                    np.broadcast_to(elem, node_spec.external_input_shape_arr.shape)
+                                    np.broadcast_to(elem, node_spec.external_input_shape_arr(self).shape)
                                     for elem in _inputs
                                 ]
                             else:
@@ -10441,22 +10441,22 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             # Nothing more to do, as entry is already 3d
                         else:
                             # 2d ragged array (e.g., [[1, 2], [3, 4, 5]])
-                            if len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape)):
+                            if len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape(self))):
                                 # 1 trial's worth of input for > 1 input_port, so add outer dimension to make it 3d
                                 _inputs = [_inputs]
                             else:
                                 raise CompositionError(error_base_msg + "doesn't match the shape of its InputPorts")
 
                     else:
-                        external_input = convert_to_np_array(node_spec.external_input_shape)
+                        external_input = convert_to_np_array(node_spec.external_input_shape(self))
                         if entry.shape == external_input.shape:
                             _inputs = [_inputs]
-                        elif entry[0].shape == convert_to_np_array(node_spec.external_input_shape).shape:
+                        elif entry[0].shape == convert_to_np_array(node_spec.external_input_shape(self)).shape:
                             _inputs = _inputs
                         # 2d regular array  (e.g., [[1, 2], [3, 4]] or [[1, 2]])
-                        elif len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape)):
+                        elif len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape(self))):
                             # 1 trial's worth of input for > 1 input_ports
-                            _inputs = [np.broadcast_to(_inputs, node_spec.external_input_shape_arr.shape)]
+                            _inputs = [np.broadcast_to(_inputs, node_spec.external_input_shape_arr(self).shape)]
                         elif (
                             num_input_ports == 1
                             # (assumes each element of _inputs is also valid. consider checking all)
@@ -10551,7 +10551,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
             # Construct node_input_shape based on max_num_trials across all input_ports for mech
             # - shape as 3d by adding outer dim = max_num trials to accommodate potential trial-series input
-            _node_input = np.empty_like(np.array([mech.external_input_shape] * max_num_trials, dtype='object')).tolist()
+            _node_input = np.empty_like(np.array([mech.external_input_shape(self)] * max_num_trials, dtype='object')).tolist()
 
             # - move ports to outer axis for processing below
             node_input = np.swapaxes(np.atleast_3d(np.array(_node_input, dtype=object)),0,1).tolist()
@@ -10571,7 +10571,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         port_spec = [np.array(port_spec[0]).tolist()] * max_num_trials
                 else:
                     # Assign default input to Port for all trials
-                    port_spec = [np.array(port.default_input_shape).tolist()] * max_num_trials
+                    port_spec = [np.array(port.default_input_shape(self)).tolist()] * max_num_trials
                 node_input[i] = port_spec
 
             # Put trials back in outer axis
@@ -10588,7 +10588,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # If any INPUT Nodes of the Composition are not specified, add them and assign default_external_input_values
         for node in input_nodes:
             if node not in input_dict:
-                input_dict[node] = node.external_input_shape
+                input_dict[node] = node.external_input_shape(self)
 
         return input_dict
 
@@ -10674,10 +10674,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         receiver_template = receiver.default_input_shape
                         receiver_name = receiver.full_name
                     elif isinstance(receiver, Mechanism):
-                        receiver_template = receiver.external_input_shape
+                        receiver_template = receiver.external_input_shape(self)
                         receiver_name = receiver.name
                     elif isinstance(receiver, Composition):
-                        receiver_template = receiver.input_CIM.external_input_shape
+                        receiver_template = receiver.input_CIM.external_input_shape(self)
                         receiver_name = receiver.name
                     bad_stimulus_template = [stim for stim, _inp in zip(stimulus, _input) if _inp is None]
                     err_msg = (f"Input stimulus shape ({bad_stimulus_template}) for '{receiver_name}' is incompatible "
@@ -10802,13 +10802,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for node, inp in inputs.items():
             if isinstance(node, Composition) and type(inp) == dict:
                 inp = node._parse_input_dict(inp)
-            if np.asarray(inp).shape == (1, *np.asarray(node.external_input_shape).shape):
+            if np.asarray(inp).shape == (1, *np.asarray(node.external_input_shape(self)).shape):
                 # If inp formatted for trial series, get only one one trial's worth of inputs to test
                 inp = inp[0]
             inp = self._validate_single_input(node, inp)
             if inp is None:
                 raise CompositionError(f"Input stimulus ({inp}) for {node.name} is incompatible "
-                                       f"with its variable ({node.external_input_shape}).")
+                                       f"with its variable ({node.external_input_shape(self)}).")
             _inputs[node] = inp
         return _inputs
 
@@ -12621,7 +12621,7 @@ _
                         if use_labels and isinstance(node, Mechanism) and node.input_labels_dict:
                             labels_dict = node.input_labels_dict
 
-                            for i in range(len(node.external_input_shape)):
+                            for i in range(len(node.external_input_shape(self))):
                                 labels = _get_labels(labels_dict, i, node.input_ports[i])
                                 inputs_for_format.append(repr(labels[t % len(labels)]))
                                 inputs_for_template_dict.append(labels[t % len(labels)])
@@ -12640,13 +12640,13 @@ _
                                     inputs_for_format.append(repr([labels[t % len(labels)]]))
                                     inputs_for_template_dict.append([labels[t % len(labels)]])
                                 else:
-                                    inputs_for_template_dict.append(port.default_input_shape)
-                                    inputs_for_format.append(repr(np.array(port.default_input_shape).tolist()))
+                                    inputs_for_template_dict.append(port.default_input_shape(self))
+                                    inputs_for_format.append(repr(np.array(port.default_input_shape(self)).tolist()))
                             trial = f"[{','.join(inputs_for_format)}]"
 
                         # No Mechanism(s) with labels or use_labels == False
                         else:
-                            inputs_for_template_dict = [port.default_input_shape for port in node.external_input_ports]
+                            inputs_for_template_dict = [port.default_input_shape(self) for port in node.external_input_ports]
                             trial = f"[{','.join([repr(i.tolist()) for i in inputs_for_template_dict])}]"
 
                         node_inputs_for_format_string.append(trial)
@@ -12934,7 +12934,7 @@ _
             # correspond to the variable of that InputPort of input_CIM.
             # if input_port.function.changes_shape:
             #     value = [value]
-            value = [value]
+            # value = [value]
 
             build_CIM_input.append(value)
 
@@ -13374,16 +13374,16 @@ _
         except (TypeError, AttributeError):
             return None
 
-    @property
-    def external_input_shape(self):
+    def external_input_shape(self, composition=NotImplemented):
         """Alias for _default_external_input_shape"""
+        if composition is NotImplemented:
+            composition = self
         return self._default_external_input_shape
 
-    @property
-    def _default_external_input_shape(self):
+    def _default_external_input_shape(self, composition):
         """Return default_input_shape of all external InputPorts that belong to Input CompositionInterfaceMechanism"""
         try:
-            return [input_port.default_input_shape for input_port in self.input_CIM.input_ports
+            return [input_port.default_input_shape(composition) for input_port in self.input_CIM.input_ports
                     if not input_port.internal_only]
         except (TypeError, AttributeError):
             return None

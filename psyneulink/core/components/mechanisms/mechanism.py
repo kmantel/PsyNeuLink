@@ -1114,6 +1114,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import register_category, remove_instance_from_registry
+from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
     ContentAddressableList, append_type_to_name, convert_all_elements_to_np_array, convert_to_np_array, \
     iscompatible, kwCompatibilityNumeric, convert_to_list, is_numeric, parse_valid_identifier
@@ -2674,8 +2675,9 @@ class Mechanism_Base(Mechanism):
                 else:
                     input_port.parameters.value._set(value, context)
             else:
+                composition = context.composition or ConnectionInfo.ALL
                 raise MechanismError(f"Shape ({input_item.shape}) of input ({input_item}) does not match "
-                                     f"required shape ({input_port.default_input_shape.shape}) for input "
+                                     f"required shape ({input_port.default_input_shape(composition).shape}) for input "
                                      f"to {InputPort.__name__} {repr(input_port.name)} of {self.name}.")
 
         # Return values of input_ports for use as variable of Mechanism
@@ -3999,24 +4001,21 @@ class Mechanism_Base(Mechanism):
 
     # this should basically replace external_input_shape and not be
     # named "shape" because that implies shape and not the array
-    @property
-    def external_input_shape_arr(self):
-        return convert_all_elements_to_np_array(self.external_input_shape)
+    def external_input_shape_arr(self, composition=ConnectionInfo.ALL):
+        return convert_all_elements_to_np_array(self.external_input_shape(composition))
 
-    @property
-    def external_input_shape(self):
+    def external_input_shape(self, composition=ConnectionInfo.ALL):
         """Alias for _default_external_input_shape"""
-        return self._default_external_input_shape
+        return self._default_external_input_shape(composition)
 
-    @property
-    def _default_external_input_shape(self):
+    def _default_external_input_shape(self, composition):
         try:
             shape = []
             for input_port in self.input_ports:
                 if input_port.internal_only or input_port.default_input:
                     continue
 
-                shape.append(input_port.default_input_shape)
+                shape.append(input_port.default_input_shape(composition))
             return shape
         except (TypeError, AttributeError):
             return None

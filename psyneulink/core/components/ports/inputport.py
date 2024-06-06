@@ -594,8 +594,9 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
+from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
-    append_type_to_name, is_numeric_scalar, convert_to_np_array, is_numeric, iscompatible, kwCompatibilityLength, convert_to_list, parse_valid_identifier
+    append_type_to_name, convert_all_elements_to_np_array, is_numeric_scalar, convert_to_np_array, is_numeric, iscompatible, kwCompatibilityLength, convert_to_list, parse_valid_identifier
 
 __all__ = [
     'InputPort', 'InputPortError', 'port_type_keywords', 'SHADOW_INPUTS',
@@ -1475,11 +1476,22 @@ class InputPort(Port_Base):
     @property
     def input_shape(self):
         """Alias for default_input_shape_template"""
-        return self.default_input_shape
+        return self.default_input_shape()
 
-    @property
-    def default_input_shape(self):
-        return self.defaults.variable
+    def default_input_shape(self, composition=ConnectionInfo.ALL):
+        if (
+            composition == ConnectionInfo.ALL
+            or len(self.path_afferents) == 0
+        ):
+            return self.defaults.variable
+
+        path_proj_values = [
+            proj.defaults.value
+            for proj in self.path_afferents
+            if self.afferents_info[proj].is_active_in_composition(composition)
+        ]
+        return convert_all_elements_to_np_array(path_proj_values)
+
         if self._input_shape_template == VARIABLE:
             return self.defaults.variable
         elif self._input_shape_template == VALUE:
