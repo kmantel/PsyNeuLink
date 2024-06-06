@@ -13378,7 +13378,7 @@ _
         """Alias for _default_external_input_shape"""
         if composition is NotImplemented:
             composition = self
-        return self._default_external_input_shape
+        return self._default_external_input_shape(composition)
 
     def _default_external_input_shape(self, composition):
         """Return default_input_shape of all external InputPorts that belong to Input CompositionInterfaceMechanism"""
