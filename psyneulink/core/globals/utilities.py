@@ -640,7 +640,10 @@ def iscompatible(candidate, reference=None, **kargs):
                         else:
                             return True
                 else:
-                    return is_number(value)
+                    if isinstance(value, np.ndarray) and value.dtype.kind in 'fi':
+                        return True
+                    else:
+                        return is_number(value)
             # Test copy since may need to convert matrix to array (see above)
             if not recursively_check_elements_for_numeric(candidate.copy()):
                 return False
