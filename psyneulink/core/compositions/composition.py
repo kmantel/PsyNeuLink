@@ -5988,7 +5988,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 modulation = comp_projection.sender.modulation
                 # input port of parameter CIM that will receive projection from the original control signal
                 interface_input_port = InputPort(owner=self.parameter_CIM,
-                                                 variable=receiver.defaults.value,
+                                                 variable=[receiver.defaults.value],
                                                  reference_value=receiver.defaults.value,
                                                  name= PARAMETER_CIM_NAME + "_" + owner.name + "_" + receiver.name,
                                                  # default_input=DEFAULT_VARIABLE,
