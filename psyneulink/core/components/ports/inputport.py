@@ -1452,7 +1452,10 @@ class InputPort(Port_Base):
     # must be at least 1d. list of incoming projections
     @property
     def socket_shape(self):
-        return self.defaults.variable[0].shape
+        if self.defaults.variable.ndim > 1:
+            return self.defaults.variable[0].shape
+        else:
+            return self.defaults.variable.shape
 
     def get_label(self, context=None):
         try:
