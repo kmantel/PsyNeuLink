@@ -571,7 +571,11 @@ class MappingProjection(PathwayProjection_Base):
 
         # Length of the output of the Projection doesn't match the length of the receiving InputPort
         #    so consider reshaping the matrix
-        if receiver_shape != mapping_output_shape:
+        if (
+            receiver_shape != mapping_output_shape
+            # if receiving port has a LinearCombination and variable of dimension 1,
+            and self.receiver.defaults.variable.shape != self.receiver.defaults.value.shape
+        ):
 
             if 'projection' in self.name or 'Projection' in self.name:
                 projection_string = ''

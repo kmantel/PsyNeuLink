@@ -1486,8 +1486,8 @@ class InputPort(Port_Base):
             return self.defaults.variable
 
         path_proj_values = [
-            proj.defaults.value
-            for proj in self.path_afferents
+            self.defaults.variable[i]
+            for i, proj in enumerate(self.path_afferents)
             if self.afferents_info[proj].is_active_in_composition(composition)
         ]
         return convert_all_elements_to_np_array(path_proj_values)
