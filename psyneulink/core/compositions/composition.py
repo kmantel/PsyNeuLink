@@ -10456,7 +10456,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         # 2d regular array  (e.g., [[1, 2], [3, 4]] or [[1, 2]])
                         elif len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape(self))):
                             # 1 trial's worth of input for > 1 input_ports
-                            _inputs = [np.broadcast_to(_inputs, node_spec.external_input_shape_arr(self).shape)]
+                            try:
+                                _inputs = np.broadcast_to(_inputs, external_input.shape)
+                            except ValueError:
+                                _inputs = [np.broadcast_to(item, external_input[i].shape) for i, item in enumerate(_inputs)]
+
+                            _inputs = [_inputs]
                         elif (
                             num_input_ports == 1
                             # (assumes each element of _inputs is also valid. consider checking all)
