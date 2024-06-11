@@ -2638,7 +2638,12 @@ class Mechanism_Base(Mechanism):
         """
 
         input = convert_all_elements_to_np_array(input)
-        num_inputs = np.size(input, 0)
+        if input.ndim == 0:
+            num_inputs = 1
+            input = np.asarray([input])
+        else:
+            num_inputs = np.size(input, 0)
+
         num_input_ports = len(self.input_ports)
         if num_inputs != num_input_ports:
             # Check if inputs are of different lengths (indicated by dtype == np.dtype('O'))
@@ -2654,7 +2659,11 @@ class Mechanism_Base(Mechanism):
         for input_item, input_port in zip(input, self.input_ports):
             port_single_input_template = np.asarray([input_port.socket_shape_template])
             input_item_arr = convert_all_elements_to_np_array(input_item)
-            if input_port.socket_shape == input_item_arr.shape or input_item_arr.shape == port_single_input_template.shape:
+            if (
+                input_port.socket_shape == input_item_arr.shape
+                or input_item_arr.shape == port_single_input_template.shape
+                or input_item_arr.squeeze().shape == port_single_input_template.squeeze().shape
+            ):
                 from psyneulink.core.compositions.composition import RunError
 
                 # Assign input_item as input_port.variable
