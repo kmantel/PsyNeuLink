@@ -1898,7 +1898,10 @@ class Mechanism_Base(Mechanism):
             if isinstance(parsed_input_port_spec, dict):
                 try:
                     mech_variable_item = parsed_input_port_spec[VALUE]
-                    if parsed_input_port_spec[VARIABLE] is None:
+                    if (
+                        parsed_input_port_spec[VARIABLE] is None
+                        and not input_port_variable_was_specified
+                    ):
                         input_port_variable_was_specified = False
                 except KeyError:
                     pass
