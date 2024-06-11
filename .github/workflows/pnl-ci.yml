@@ -162,7 +162,7 @@ jobs:
 
     - name: Test with pytest
       timeout-minutes: 180
-      run: pytest --junit-xml=tests_out.xml --verbosity=0 -n logical ${{ matrix.extra-args }}
+      run: pytest --junit-xml=tests_out.xml --verbosity=0 -n logical ${{ matrix.extra-args }} --timeout=180
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
