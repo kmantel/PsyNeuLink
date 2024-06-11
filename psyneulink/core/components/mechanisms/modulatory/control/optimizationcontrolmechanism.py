@@ -1216,7 +1216,7 @@ def _state_feature_values_getter(owning_component=None, context=None):
             # otherwise use state_input_port's default input value
             state_feature_value = state_input_port.defaults.value
 
-        state_feature_values[key] = [state_feature_value]
+        state_feature_values[key] = np.asarray([state_feature_value])
 
     return state_feature_values
 
