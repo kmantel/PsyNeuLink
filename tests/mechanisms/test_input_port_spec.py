@@ -87,7 +87,7 @@ class TestInputPortSpec:
                 default_variable=[[0], [0]],
                 input_ports=['HELLO']
             )
-        assert mismatches_fewer_input_ports_than_default_variable_error_text in str(error_text.value)
+        assert mismatches_specified_default_variable_error_text in str(error_text.value)
 
     # ------------------------------------------------------------------------------------------------
     # TEST 2b
@@ -102,7 +102,7 @@ class TestInputPortSpec:
                 default_variable=[[0], [0]],
                 input_ports=[[32], [24], 'HELLO']
             )
-        assert mismatches_more_input_ports_than_default_variable_error_text in str(error_text.value)
+        assert mismatches_specified_default_variable_error_text in str(error_text.value)
 
     # ------------------------------------------------------------------------------------------------
     # TEST 2c
@@ -127,12 +127,17 @@ class TestInputPortSpec:
     #      seems to be adding the two axis2 values
     def test_mismatch_dim_input_ports_with_default_variable_error(self):
 
-        with pytest.raises(PortError) as error_text:
+        with pytest.raises(
+            MechanismError,
+            match=(
+                r'Default variable for[\s\S\r]*determined from the specified input_ports spec'
+                r'[\s\S\r]*is not compatible with its specified default variable[\s\S\r]*'
+            )
+        ):
             TransferMechanism(
                 default_variable=[[0], [0]],
                 input_ports=[[[32],[24]],'HELLO']
             )
-        assert 'The value' in str(error_text.value) and 'does not match the reference_value' in str(error_text.value)
 
     # ------------------------------------------------------------------------------------------------
     # TEST 3
