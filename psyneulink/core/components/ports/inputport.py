@@ -1482,17 +1482,30 @@ class InputPort(Port_Base):
         return self.default_input_shape()
 
     def default_input_shape(self, composition=ConnectionInfo.ALL):
+        from psyneulink.core.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
+
         if (
             composition == ConnectionInfo.ALL
             or len(self.path_afferents) == 0
         ):
             return self.defaults.variable
 
-        path_proj_values = [
-            self.defaults.variable[i]
-            for i, proj in enumerate(self.path_afferents)
-            if self.afferents_info[proj].is_active_in_composition(composition)
-        ]
+        # filter out non-CIM projections
+        path_proj_values = []
+        for i, proj in enumerate(self.path_afferents):
+            if not self.afferents_info[proj].is_active_in_composition(composition):
+                continue
+
+            try:
+                owner = proj.sender.owner
+            except AttributeError:
+                pass
+            else:
+                if not isinstance(owner, CompositionInterfaceMechanism):
+                    continue
+
+            path_proj_values.append(self.defaults.variable[i])
+
         return convert_all_elements_to_np_array(path_proj_values)
 
         if self._input_shape_template == VARIABLE:
