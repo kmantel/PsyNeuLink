@@ -10398,9 +10398,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     if is_mech:
                     #  node_spec is mech:
                         if num_input_ports == 1:
-                            if len(_inputs) == len(node_spec.external_input_shape(self)[0]):
+                            if _inputs_arr.squeeze().shape == node_spec.external_input_shape_arr(self).squeeze().shape:
                                 # 1 trial's worth of input for mech with 1 input_port and len(variable) > 1:
-                                _inputs = [[_inputs]]
+                                _inputs = [np.broadcast_to(_inputs_arr, node_spec.external_input_shape_arr(self).shape)]
                             elif node_spec.external_input_shape_arr(self).shape[0] == 1:
                                 # > 1 trial's worth of input for > 1 input_port all of which have len(variable) == 1:
                                 _inputs = [
