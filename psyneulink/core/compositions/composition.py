@@ -5746,8 +5746,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # InputPort propagates to the corresponding node's
                     # InputPort as input
                     interface_input_port = InputPort(owner=self.input_CIM,
-                                                     variable=[input_port.socket_shape_template],
-                                                     reference_value=input_port.socket_shape_template,
+                                                     variable=input_port.default_input_shape(self),
+                                                     reference_value=input_port.defaults.value,
                                                      name= INPUT_CIM_NAME + "_" + node.name + "_" + input_port.name,
                                                      context=context)
 
@@ -10473,7 +10473,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             # > 1 or more trial's worth of input for 1 input_port, so add extra dimension to each trial's input
                             _inputs = [np.broadcast_to(input, external_input.shape) for input in _inputs]
                         else:
-                            raise CompositionError(error_base_msg + "doesn't match the shape of its InputPorts")
+                            raise CompositionError(error_base_msg + f" doesn't match the shape of its InputPorts ({external_input})")
 
                 input_dict[INPUT_Node] = _inputs
 
@@ -10807,7 +10807,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for node, inp in inputs.items():
             if isinstance(node, Composition) and type(inp) == dict:
                 inp = node._parse_input_dict(inp)
-            if np.asarray(inp).shape == (1, *np.asarray(node.external_input_shape(self)).shape):
+            if convert_all_elements_to_np_array(inp).shape == (1, *convert_all_elements_to_np_array(node.external_input_shape(self)).shape):
                 # If inp formatted for trial series, get only one one trial's worth of inputs to test
                 inp = inp[0]
             inp = self._validate_single_input(node, inp)

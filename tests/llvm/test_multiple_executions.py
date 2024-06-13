@@ -95,7 +95,7 @@ def test_nested_composition_execution(benchmark, executions, mode):
     outer_comp._analyze_graph()
 
     # The input dict should assign inputs origin nodes (inner_comp in this case)
-    var = {inner_comp: [[1.0]]}
+    var = {inner_comp: [[[1.0]]]}
     expected = [[0.52497918747894]]
     if executions > 1:
         var = [var for _ in range(executions)]
