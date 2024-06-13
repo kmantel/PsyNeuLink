@@ -578,9 +578,9 @@ class CompExecution(CUDAExecution):
             port_inputs = {origin_port:[proj.parameters.value._get(context) for proj in p[0].path_afferents] for (origin_port, p) in self._composition.input_CIM_ports.items()}
             inputs = {}
             for p, v in port_inputs.items():
-                data = inputs.setdefault(p.owner, [0] * len(p.owner.input_ports))
+                data = inputs.setdefault(p.owner, [ip.default_input_shape(self._composition) for ip in p.owner.input_ports])
                 index = p.owner.input_ports.index(p)
-                data[index] = v[0]
+                data[index] = v
 
 
         # Set bin node to make sure self._*struct works as expected
@@ -659,7 +659,7 @@ class CompExecution(CUDAExecution):
 
         assert len(inputs) == len(self._execution_contexts)
         # Extract input for each trial and execution id
-        run_inputs = ((([x] for x in self._composition._build_variable_for_input_CIM({k:v[i] for k,v in inp.items()})) for i in range(num_input_sets)) for inp in inputs)
+        run_inputs = (((x for x in self._composition._build_variable_for_input_CIM({k:v[i] for k,v in inp.items()})) for i in range(num_input_sets)) for inp in inputs)
         c_inputs = c_input(*_tupleize(run_inputs))
         if "stat" in self._debug_env:
             print("Instantiated struct: input ( size:" ,
