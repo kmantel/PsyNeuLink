@@ -1162,7 +1162,7 @@ class InputPort(Port_Base):
                         raise InputPortError(f"PROGRAM ERROR: SIZE specification found in port_specific_spec dict "
                                              f"for {self.__name__} specification of {owner.name} when SIZE or VARIABLE "
                                              f"is already present in its port_specific_spec dict or port_dict.")
-                    port_dict.update({VARIABLE:np.zeros(port_specific_spec[SIZE])})
+                    port_dict.update({VARIABLE: np.zeros((1, port_specific_spec[SIZE]))})
                     del port_specific_spec[SIZE]
 
                 if COMBINE in port_specific_spec:
