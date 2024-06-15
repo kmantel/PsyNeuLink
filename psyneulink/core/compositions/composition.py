@@ -10554,35 +10554,34 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                            f"number ({max_num_trials}) specified for one or more others.")
                 max_num_trials = max(num_trials, max_num_trials)
 
-            # Construct node_input_shape based on max_num_trials across all input_ports for mech
-            # - shape as 3d by adding outer dim = max_num trials to accommodate potential trial-series input
-            _node_input = np.empty_like(np.array([mech.external_input_shape(self)] * max_num_trials, dtype='object')).tolist()
+            node_input = []
 
-            # - move ports to outer axis for processing below
-            node_input = np.swapaxes(np.atleast_3d(np.array(_node_input, dtype=object)),0,1).tolist()
+            for trial_num in range(max_num_trials):
+                node_trial_input = []
 
-            # Assign specs to ports of INPUT_Node, using the ones in input_port_entries or defaults
-            for i, port in enumerate([input_port for input_port in INPUT_input_ports
-                                      if input_port.internal_only is False]):
-                if port in input_port_entries:
-                    # Assume input is for all trials
-                    port_spec = [input_port_entries[port]]
-                    if len(port_spec) < max_num_trials:
-                        # If input is not for all trials, ensure that it is only for a single trial
-                        assert len(port_spec) == 1, f"PROGRAM ERROR: Length of port_spec for '{port.full_name}' " \
-                                                    f"in input to '{self.name}' ({len(port_spec)}) should now be " \
-                                                    f"1 or {max_num_trials}."
-                        # Assign the input for the single trial over all trials
-                        port_spec = [np.array(port_spec[0]).tolist()] * max_num_trials
-                else:
-                    # Assign default input to Port for all trials
-                    port_spec = [np.array(port.default_input_shape(self)).tolist()] * max_num_trials
-                node_input[i] = port_spec
+                for input_port in INPUT_input_ports:
+                    if input_port.internal_only:
+                        continue
 
-            # Put trials back in outer axis
-            input_dict[INPUT_Node] = np.swapaxes(np.atleast_2d(np.array(node_input, dtype=object)),
-                                                 0,
-                                                 1).tolist()
+                    port_spec = input_port_entries[port]
+
+                    if port in input_port_entries:
+                        if len(port_spec) < max_num_trials:
+                            # If input is not for all trials, ensure that it is only for a single trial
+                            assert len(port_spec) == 1, f"PROGRAM ERROR: Length of port_spec for '{port.full_name}' " \
+                                                        f"in input to '{self.name}' ({len(port_spec)}) should now be " \
+                                                        f"1 or {max_num_trials}."
+                            idx = 0
+                        else:
+                            idx = trial_num
+                        node_trial_input.append(port_spec[idx])
+                    else:
+                        node_trial_input.append(convert_all_elements_to_np_array(port.default_input_shape(self)))
+
+                node_input.append(node_trial_input)
+
+            input_dict[INPUT_Node] = convert_all_elements_to_np_array(node_input)
+
             remaining_inputs = remaining_inputs - inputs_to_remove
 
         if remaining_inputs:
