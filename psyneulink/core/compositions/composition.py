@@ -10574,7 +10574,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             idx = 0
                         else:
                             idx = trial_num
-                        node_trial_input.append(port_spec[idx])
+                        node_trial_input.append(np.broadcast_to(port_spec[idx], port.default_input_shape(self).shape))
                     else:
                         node_trial_input.append(convert_all_elements_to_np_array(port.default_input_shape(self)))
 
