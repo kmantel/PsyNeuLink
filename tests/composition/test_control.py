@@ -1310,8 +1310,8 @@ class TestControlMechanisms:
                 assert ocm.state_features == {'IA[InputPort-0]': 'IA[InputPort-0]',
                                               'OA[InputPort-0]': 'OA[InputPort-0]',
                                               'OB[InputPort-0]': 'OB[InputPort-0]'}
-                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {ia.input_port: [[0.5]],
-                                                                                      oa.input_port: [[0.5]],
+                assert {k:v.tolist() for k,v in ocm.state_feature_values.items()} == {ia.input_port: [0.5],
+                                                                                      oa.input_port: [0.5],
                                                                                       ob.input_port: [[0.5, 0.5, 0.5]]}
                 assert all('Logistic' in port.function.name for port in ocm.state_input_ports)
 

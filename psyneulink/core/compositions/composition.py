@@ -9981,7 +9981,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # 3) Resize inputs to be of the form [[[]]],
         # where each level corresponds to: <TRIALS <PORTS <INPUTS> > >
+
+        # set context execution_phase here to force parsing of inputs specified as a function (situation identified in comments in _parse_input_dict)
+        orig_execution_phase = context.execution_phase
+        context.execution_phase = ContextFlags.PREPARING
+
         inputs, num_inputs_sets = self._parse_input_dict(inputs, context)
+
+        context.execution_phase = orig_execution_phase
 
         return inputs, num_inputs_sets
 
@@ -10782,6 +10789,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         elif isgenerator(inputs):
             next_inputs, _ = self._parse_input_dict(inputs.__next__(), context)
             i = 0
+            # _parse_input_dict returns a list of trials, we only want one
+            # next_inputs = {node: inp[0] for node, inp in next_inputs.items()}
         else:
             num_inputs_sets = len(next(iter(inputs.values())))
             i = trial_num % num_inputs_sets
@@ -10808,11 +10817,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             if convert_all_elements_to_np_array(inp).shape == (1, *convert_all_elements_to_np_array(node.external_input_shape(self)).shape):
                 # If inp formatted for trial series, get only one one trial's worth of inputs to test
                 inp = inp[0]
-            inp = self._validate_single_input(node, inp)
-            if inp is None:
+            input_after_validate = self._validate_single_input(node, inp)
+            if input_after_validate is None:
                 raise CompositionError(f"Input stimulus ({inp}) for {node.name} is incompatible "
                                        f"with its variable ({node.external_input_shape(self)}).")
-            _inputs[node] = inp
+            _inputs[node] = input_after_validate
         return _inputs
 
     def _check_nested_target_mechs(self):
