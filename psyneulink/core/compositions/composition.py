@@ -10563,20 +10563,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     if input_port.internal_only:
                         continue
 
-                    port_spec = input_port_entries[port]
-
-                    if port in input_port_entries:
+                    if input_port in input_port_entries:
+                        port_spec = input_port_entries[input_port]
                         if len(port_spec) < max_num_trials:
                             # If input is not for all trials, ensure that it is only for a single trial
-                            assert len(port_spec) == 1, f"PROGRAM ERROR: Length of port_spec for '{port.full_name}' " \
+                            assert len(port_spec) == 1, f"PROGRAM ERROR: Length of port_spec for '{input_port.full_name}' " \
                                                         f"in input to '{self.name}' ({len(port_spec)}) should now be " \
                                                         f"1 or {max_num_trials}."
                             idx = 0
                         else:
                             idx = trial_num
-                        node_trial_input.append(np.broadcast_to(port_spec[idx], port.default_input_shape(self).shape))
+                        node_trial_input.append(np.broadcast_to(port_spec[idx], input_port.default_input_shape(self).shape))
                     else:
-                        node_trial_input.append(convert_all_elements_to_np_array(port.default_input_shape(self)))
+                        node_trial_input.append(convert_all_elements_to_np_array(input_port.default_input_shape(self)))
 
                 node_input.append(node_trial_input)
 
