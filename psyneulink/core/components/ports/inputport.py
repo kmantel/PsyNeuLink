@@ -1506,7 +1506,11 @@ class InputPort(Port_Base):
 
             path_proj_values.append(self.defaults.variable[i])
 
-        return convert_all_elements_to_np_array(path_proj_values)
+        # no CIM projections are active, don't return empty list
+        if len(path_proj_values) == 0:
+            return self.defaults.variable
+        else:
+            return convert_all_elements_to_np_array(path_proj_values)
 
         if self._input_shape_template == VARIABLE:
             return self.defaults.variable
