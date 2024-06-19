@@ -10507,8 +10507,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             else:
                                 can_broadcast_input_items = True
 
-                            can_broadcast_input_items = False
-
                             if can_broadcast_input_items:
                                 _inputs = convert_all_elements_to_np_array(_broadcasted_inputs)
                             else:
