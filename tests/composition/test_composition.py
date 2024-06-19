@@ -6542,9 +6542,9 @@ class TestInputSpecifications:
                                     input_labels={'red':[0,0,0], 'green':[1,1,1]},
                                     name='Y')
         assert Y.input_ports[0].variable.shape == (1, 3)
-        assert Y.input_ports[0].value.shape == (1, 1)
+        assert Y.input_ports[0].value.shape == (1,)
         assert Y.input_ports[1].variable.shape == (1, 3)
-        assert Y.input_ports[1].value.shape == (1, 3)
+        assert Y.input_ports[1].value.shape == (3,)
         icomp = Composition(pathways=[[A,B],[C]], name='ICOMP')
         ocomp = Composition(nodes=[X, icomp, Y], name='OCOMP')
 

@@ -1680,7 +1680,7 @@ class TestControlMechanisms:
             result = comp.run(inputs=inputs, context='test')
             assert result == [[24.]]
             for actual, expected in zip(
-                list(ocm.parameters.state_feature_values.get('test').values()), [[[2]], [[1], [2]], [[3]]]
+                list(ocm.parameters.state_feature_values.get('test').values()), [[[2]], [[[1]], [[2]]], [[3]]]
             ):
                 np.testing.assert_allclose(actual, expected)
         else:
