@@ -10456,6 +10456,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
                     else:
                         external_input = convert_to_np_array(node_spec.external_input_shape(self))
+                        external_input_squeezed = np.squeeze(external_input)
                         if entry.shape == external_input.shape:
                             _inputs = [_inputs]
                         elif entry[0].shape == convert_to_np_array(node_spec.external_input_shape(self)).shape:
@@ -10480,7 +10481,38 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             # > 1 or more trial's worth of input for 1 input_port, so add extra dimension to each trial's input
                             _inputs = [np.broadcast_to(input, external_input.shape) for input in _inputs]
                         else:
-                            raise CompositionError(error_base_msg + f" doesn't match the shape of its InputPorts ({external_input})")
+                            can_broadcast_input_items = False
+                            _broadcasted_inputs = []
+
+                            for i, input_item in enumerate(_inputs_arr):
+                                if np.squeeze(input_item).shape != external_input_squeezed.shape:
+                                    # input_item doesn't differ from external_input by only wrapper dimensions
+                                    break
+                                try:
+                                    _broadcasted_inputs.append(np.broadcast_to(input_item, external_input.shape))
+                                except ValueError:
+                                    if len(input_item) != len(external_input):
+                                        break
+                                    _port_bcast_item = []
+
+                                    for j, port_item in enumerate(input_item):
+                                        if np.squeeze(port_item).shape != np.squeeze(external_input[j]).shape:
+                                            break
+                                        try:
+                                            _port_bcast_item.append(np.broadcast_to(port_item, external_input[j].shape))
+                                        except ValueError:
+                                            break
+                                    else:
+                                        _broadcasted_inputs.append(_port_bcast_item)
+                            else:
+                                can_broadcast_input_items = True
+
+                            can_broadcast_input_items = False
+
+                            if can_broadcast_input_items:
+                                _inputs = convert_all_elements_to_np_array(_broadcasted_inputs)
+                            else:
+                                raise CompositionError(error_base_msg + f" doesn't match the shape of its InputPorts ({external_input})")
 
                 input_dict[INPUT_Node] = _inputs
 
