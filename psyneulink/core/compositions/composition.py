@@ -10846,7 +10846,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for node, inp in inputs.items():
             if isinstance(node, Composition) and type(inp) == dict:
                 inp = node._parse_input_dict(inp)
-            if convert_all_elements_to_np_array(inp).shape == (1, *convert_all_elements_to_np_array(node.external_input_shape(self)).shape):
+            inp_arr = convert_all_elements_to_np_array(inp)
+            if (
+                len(inp_arr) > 1
+                and inp_arr.shape[1:] == convert_all_elements_to_np_array(node.external_input_shape(self)).shape
+            ):
                 # If inp formatted for trial series, get only one one trial's worth of inputs to test
                 inp = inp[0]
             input_after_validate = self._validate_single_input(node, inp)
