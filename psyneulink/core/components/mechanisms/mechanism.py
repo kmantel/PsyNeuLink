@@ -2641,10 +2641,11 @@ class Mechanism_Base(Mechanism):
         """
 
         input = convert_all_elements_to_np_array(input)
-        if input.dtype != object:
+        input = np.atleast_1d(input)
+        if not any(isinstance(item, np.ndarray) for item in input):
             input = np.atleast_2d(input)
 
-        num_inputs = np.size(input, 0)
+        num_inputs = len(input)
 
         num_input_ports = len(self.input_ports)
         if num_inputs != num_input_ports:
