@@ -516,6 +516,7 @@ import dill
 import graph_scheduler
 import numpy as np
 
+from psyneulink._typing import List, Union
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.globals.context import \
     Context, ContextError, ContextFlags, INITIALIZATION_STATUS_FLAGS, _get_time, handle_external_context
@@ -537,6 +538,7 @@ from psyneulink.core.globals.preferences.preferenceset import \
     PreferenceLevel, PreferenceSet, _assign_prefs
 from psyneulink.core.globals.registry import register_category, _get_auto_name_prefix
 from psyneulink.core.globals.sampleiterator import SampleIterator
+from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
     ContentAddressableList, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
     is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, \
@@ -4270,6 +4272,24 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         for obj in self._parameter_components:
             obj._remove_from_composition(composition)
+
+    def _parse_input_array(inp: Union[List, np.ndarray], single: bool = False):
+        pass
+
+    # TODO: replace 'external_input_shape' in subclasses with this
+    def default_external_input(self, composition=ConnectionInfo.ALL):
+        return copy_parameter_value(self.defaults.variable)
+
+    # TODO: rename to external_input_shape
+    def external_input_shape(self, composition=ConnectionInfo.ALL):
+        # TODO: actually return the shape, not the array
+        # return self.default_external_input(composition).shape
+        return self.default_external_input(composition)
+
+    # TODO: remove this when external_input_shape and
+    # default_external_input are correctly replaced
+    def external_input_shape_arr(self, composition=ConnectionInfo.ALL):
+        return convert_all_elements_to_np_array(self.default_external_input(composition))
 
     @property
     def logged_items(self):

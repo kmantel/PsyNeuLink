@@ -4416,6 +4416,11 @@ class TestRun:
         self._check_comp_ex(comp, None, comp_mode, struct_name, is_not=True)
         self._check_comp_ex(comp, orig_comp_ex, comp_mode, struct_name, is_not=True)
 
+    class TestHigherDimensions:
+        @pytest.mark.composition
+        def test_singleton(self, comp_mode):
+            pass
+
 
 class TestCallBeforeAfterTimescale:
 
