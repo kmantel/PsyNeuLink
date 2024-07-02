@@ -4279,6 +4279,11 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         composition=ConnectionInfo.ALL,
         as_sequence: bool = False,
     ):
+        def invalid_input_error(reason=''):
+            if reason:
+                reason = f' ({reason})'
+            return ComponentError(f'Invalid input to {self}{reason}: {inp}')
+
         inp = convert_all_elements_to_np_array(inp)
         inp_squeezed = np.squeeze(inp)
         inp_is_sequence = False
@@ -4289,9 +4294,10 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         res = None
 
-        # Single scalar (alone or in list), so must be single value for single trial
+        # Single scalar (alone or in list), so must be single value for
+        # single trial
         if inp_squeezed.ndim == 0:
-            res = np.broadcast_to(inp, self.external_input_shape_shape(composition))
+            res = np.broadcast_to(inp, external_input.shape)
         # 1d list of scalars of len > 1 (len == 1 handled above)
         elif inp.ndim == 1 and np.issubdtype(inp.dtype, np.number):
             if num_input_items == 1:
@@ -4307,9 +4313,20 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                         for elem in inp
                     ]
                     inp_is_sequence = True
+                else:
+                    raise invalid_input_error('wrong length for single input item')
+            elif external_input.ndim == 1:
+                pass
+            else:
+                raise invalid_input_error(
+                    'must be at least 2d because there is more than one input'
+                    f' item ({num_input_items})'
+                )
+        else:
+            pass
 
         if res is None:
-            raise ComponentError(f'Invalid input to {self}: {inp}')
+            raise invalid_input_error()
 
         if as_sequence and not inp_is_sequence:
             res = convert_all_elements_to_np_array([res])
