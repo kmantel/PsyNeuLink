@@ -4273,18 +4273,61 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         for obj in self._parameter_components:
             obj._remove_from_composition(composition)
 
-    def _parse_input_array(inp: Union[List, np.ndarray], single: bool = False):
-        pass
+    def _parse_input_array(
+        self,
+        inp: Union[List, np.ndarray],
+        composition=ConnectionInfo.ALL,
+        as_sequence: bool = False,
+    ):
+        inp = convert_all_elements_to_np_array(inp)
+        inp_squeezed = np.squeeze(inp)
+        inp_is_sequence = False
+
+        external_input = self.external_input_shape_arr(composition)
+        external_input_squeezed = np.squeeze(external_input)
+        num_input_items = len(external_input)
+
+        res = None
+
+        # Single scalar (alone or in list), so must be single value for single trial
+        if inp_squeezed.ndim == 0:
+            res = np.broadcast_to(inp, self.external_input_shape_shape(composition))
+        # 1d list of scalars of len > 1 (len == 1 handled above)
+        elif inp.ndim == 1 and np.issubdtype(inp.dtype, np.number):
+            if num_input_items == 1:
+                # 1 trial's worth of input for obj with 1 input item
+                # with len >1:
+                if inp_squeezed.shape == external_input_squeezed.shape:
+                    res = np.broadcast_to(inp, external_input.shape)
+                # >1 trial's worth of input for >1 input items all of
+                # which have len 1:
+                elif external_input.shape[-1] == 1:
+                    res = [
+                        np.broadcast_to(elem, external_input.shape)
+                        for elem in inp
+                    ]
+                    inp_is_sequence = True
+
+        if res is None:
+            raise ComponentError(f'Invalid input to {self}: {inp}')
+
+        if as_sequence and not inp_is_sequence:
+            res = convert_all_elements_to_np_array([res])
+
+        return res
 
     # TODO: replace 'external_input_shape' in subclasses with this
     def default_external_input(self, composition=ConnectionInfo.ALL):
         return copy_parameter_value(self.defaults.variable)
 
-    # TODO: rename to external_input_shape
     def external_input_shape(self, composition=ConnectionInfo.ALL):
         # TODO: actually return the shape, not the array
         # return self.default_external_input(composition).shape
         return self.default_external_input(composition)
+
+    # TODO: rename to external_input_shape and replace above
+    def external_input_shape_shape(self, composition=ConnectionInfo.ALL):
+        return self.external_input_shape_arr(composition).shape
 
     # TODO: remove this when external_input_shape and
     # default_external_input are correctly replaced

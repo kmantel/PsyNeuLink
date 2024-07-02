@@ -2956,6 +2956,7 @@ from psyneulink.core.globals.parameters import Parameter, ParametersBase, check_
 from psyneulink.core.globals.preferences.basepreferenceset import BasePreferenceSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel, _assign_prefs
 from psyneulink.core.globals.registry import register_category
+from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import ContentAddressableList, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list, \
     nesting_depth, convert_to_np_array, is_numeric, is_matrix, is_matrix_keyword, parse_valid_identifier, extended_array_equal
 from psyneulink.core.scheduling.condition import All, AllHaveRun, Always, Any, Condition, Never, AtNCalls, BeforeNCalls
@@ -10408,7 +10409,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             if _inputs_arr.squeeze().shape == node_spec.external_input_shape_arr(self).squeeze().shape:
                                 # 1 trial's worth of input for mech with 1 input_port and len(variable) > 1:
                                 _inputs = [np.broadcast_to(_inputs_arr, node_spec.external_input_shape_arr(self).shape)]
-                            elif node_spec.external_input_shape_arr(self).shape[0] == 1:
+                            elif node_spec.external_input_shape_arr(self).shape[-1] == 1:
                                 # > 1 trial's worth of input for > 1 input_port all of which have len(variable) == 1:
                                 _inputs = [
                                     np.broadcast_to(elem, node_spec.external_input_shape_arr(self).shape)
@@ -13416,6 +13417,14 @@ _
             return self._get_input_receivers(comp=self, type=PORT, comp_as_node=False)
         except (TypeError, AttributeError):
             return None
+
+    def _parse_input_array(
+        self,
+        inp: Union[List, np.ndarray],
+        composition=ConnectionInfo.ALL,
+        sequence: bool = False,
+    ):
+        return self.input_CIM._parse_input_array(inp, composition, sequence)
 
     def external_input_shape(self, composition=NotImplemented):
         """Alias for _default_external_input_shape"""

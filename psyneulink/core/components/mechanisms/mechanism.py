@@ -4011,6 +4011,9 @@ class Mechanism_Base(Mechanism):
         except (TypeError, AttributeError):
             return None
 
+    def default_external_input(self, composition=ConnectionInfo.ALL):
+        return self._default_external_input_shape(composition)
+
     # this should basically replace external_input_shape and not be
     # named "shape" because that implies shape and not the array
     def external_input_shape_arr(self, composition=ConnectionInfo.ALL):
