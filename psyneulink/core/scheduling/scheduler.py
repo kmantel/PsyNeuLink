@@ -111,9 +111,9 @@ class Scheduler(graph_scheduler.Scheduler, MDFSerializable):
         condition = _create_as_pnl_condition(condition)
         super().add_condition(owner, condition)
 
-        if graph_structure_conditions_available:
-            if isinstance(condition, pnl.GraphStructureCondition):
-                self.composition._analyze_graph()
+        # if graph_structure_conditions_available:
+        #     if isinstance(condition, pnl.GraphStructureCondition):
+        #         self.composition._analyze_graph()
 
     def add_condition_set(self, conditions):
         self._user_specified_conds.add_condition_set(conditions)
@@ -136,9 +136,9 @@ class Scheduler(graph_scheduler.Scheduler, MDFSerializable):
                 )
             else:
                 raise
-        else:
-            if isinstance(res, pnl.GraphStructureCondition):
-                self.composition._analyze_graph()
+        # else:
+        #     if isinstance(res, pnl.GraphStructureCondition):
+        #         self.composition._analyze_graph()
 
         return res
 
