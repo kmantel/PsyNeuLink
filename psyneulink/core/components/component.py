@@ -4290,7 +4290,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         external_input = self.external_input_shape_arr(composition)
         external_input_squeezed = np.squeeze(external_input)
-        num_input_items = len(external_input)
 
         res = None
 
@@ -4301,75 +4300,40 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # single trial
         elif inp_squeezed.ndim == 0:
             res = np.broadcast_to(inp, external_input.shape)
-        # 1d list of scalars of len > 1 (len == 1 handled above)
-        # elif inp.ndim == 1 and np.issubdtype(inp.dtype, np.number):
-        #     if num_input_items == 1:
-        #         # 1 trial's worth of input for obj with 1 input item
-        #         # with len >1:
-        #         if inp_squeezed.shape == external_input_squeezed.shape:
-        #             res = np.broadcast_to(inp, external_input.shape)
-        #         # >1 trial's worth of input for >1 input items all of
-        #         # which have len 1:
-        #         elif external_input.shape[-1] == 1:
-        #             res = [
-        #                 np.broadcast_to(elem, external_input.shape)
-        #                 for elem in inp
-        #             ]
-        #             inp_is_sequence = True
-        #         else:
-        #             raise invalid_input_error('wrong length for single input item')
-        #     elif external_input.ndim == 1:
-        #         pass
-        #     else:
-        #         raise invalid_input_error(
-        #             'must be at least 2d because there is more than one input'
-        #             f' item ({num_input_items})'
-        #         )
         # 1 trial's worth of input for >1 input items
-        # elif len(inp) == num_input_items:
         elif inp_squeezed.shape == external_input_squeezed.shape:
             try:
                 res = np.broadcast_to(inp, external_input.shape)
             except ValueError:
-                res = [np.broadcast_to(item, external_input[i].shape) for i, item in enumerate(inp)]
+                res = [
+                    np.broadcast_to(item, external_input[i].shape)
+                    for i, item in enumerate(inp)
+                ]
         # check for multiple trials worth of inputs
         else:
-            can_broadcast_input_items = True
             _broadcasted_inputs = []
 
             # each item is an input, and inp represents multiple trials of inputs
             for i, input_item in enumerate(inp):
                 if np.squeeze(input_item).shape != external_input_squeezed.shape:
-                    # input_item doesn't differ from external_input by only wrapper dimensions
-                    can_broadcast_input_items = False
+                    # input_item doesn't differ from external_input by
+                    # only wrapper dimensions
                     break
 
                 try:
-                    _broadcasted_inputs.append(np.broadcast_to(input_item, external_input.shape))
+                    _broadcasted_inputs.append(
+                        np.broadcast_to(input_item, external_input.shape)
+                    )
                 except ValueError:
-                    # if len(input_item) != len(external_input):
-                    #     can_broadcast_input_items = False
+                    # # check if each
+                    # try:
+                    #     _broadcasted_inputs.append([
+                    #         self._parse_input_array(input_item, composition, False)
+                    #         for input_item in inp
+                    #     ])
+                    # except ValueError:
                     #     break
-                    # _port_bcast_item = []
-
-                    # for j, port_item in enumerate(input_item):
-                    #     if np.squeeze(port_item).shape != np.squeeze(input_item[j]).shape:
-                    #         can_broadcast_input_items = False
-                    #         break
-                    #     try:
-                    #         _port_bcast_item.append(np.broadcast_to(port_item, input_item[j].shape))
-                    #     except ValueError:
-                    #         can_broadcast_input_items = False
-                    #         break
-                    # else:
-                    #     _broadcasted_inputs.append(_port_bcast_item)
-                    try:
-                        _broadcasted_inputs.append([
-                            self._parse_input_array(input_item, composition, False)
-                            for input_item in inp
-                        ])
-                    except ValueError:
-                        break
+                    break
             else:
                 res = convert_all_elements_to_np_array(_broadcasted_inputs)
                 inp_is_sequence = True
