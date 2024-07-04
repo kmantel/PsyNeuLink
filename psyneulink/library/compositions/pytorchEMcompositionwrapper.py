@@ -92,6 +92,7 @@ class PytorchEMCompositionWrapper(PytorchCompositionWrapper):
 
         :return: List[2d tensor] updated memories
         """
+        memory_to_store = self.storage_node.execute_input_ports(memory_to_store)
 
         memory = self.memory
         assert memory is not None, f"PROGRAM ERROR: '{self.name}'.memory is None"

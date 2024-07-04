@@ -10,6 +10,7 @@
 """PyTorch wrappers for Composition, Mechanism, Projection, and Functions for use in AutodiffComposition"""
 
 import graph_scheduler
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -513,9 +514,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
                                 variable.append(input_port.defaults.variable)
                             elif not input_port.internal_only:
                                 # otherwise, use the node's input_port's afferents
-                                variable.append(node.collate_afferents(i).squeeze(0))
-                        if len(variable) == 1:
-                            variable = variable[0]
+                                variable.append(node.collate_afferents(i))
                 else:
                     # Node is not INPUT to Composition or BIAS, so get all input from its afferents
                     variable = node.collate_afferents()
@@ -613,35 +612,39 @@ class PytorchMechanismWrapper():
         # FIX: USING _port_idx TO INDEX INTO sender.value GETS IT WRONG IF THE MECHANISM HAS AN OUTPUT PORT
         #      USED BY A PROJECTION NOT IN THE CURRENT COMPOSITION
         if port is not None:
-            return sum(proj_wrapper.execute(proj_wrapper.sender.value[proj_wrapper._value_idx]).unsqueeze(0)
+            return [proj_wrapper.execute(proj_wrapper.sender.value[proj_wrapper._value_idx]).unsqueeze(0)
                                             for proj_wrapper in self.afferents
                                             if proj_wrapper._pnl_proj
-                                            in self._mechanism.input_ports[port].path_afferents)
+                                            in self._mechanism.input_ports[port].path_afferents]
         # Has only one input_port
         elif len(self._mechanism.input_ports) == 1:
             # Get value corresponding to port from which each afferent projects
-            return sum((proj_wrapper.execute(proj_wrapper.sender.value[proj_wrapper._value_idx]).unsqueeze(0)
-                        for proj_wrapper in self.afferents))
+            return [proj_wrapper.execute(proj_wrapper.sender.value[proj_wrapper._value_idx]).unsqueeze(0)
+                        for proj_wrapper in self.afferents]
         # Has multiple input_ports
         else:
-            return [sum(proj_wrapper.execute(proj_wrapper.sender.value[proj_wrapper._value_idx]).unsqueeze(0)
+            return [[proj_wrapper.execute(proj_wrapper.sender.value[proj_wrapper._value_idx]).unsqueeze(0)
                          for proj_wrapper in self.afferents
-                         if proj_wrapper._pnl_proj in input_port.path_afferents)
+                         if proj_wrapper._pnl_proj in input_port.path_afferents]
                      for input_port in self._mechanism.input_ports]
+
+    def execute_input_ports(self, variable, port=None):
+        # as in (only) collate_afferents, only sum of input to each
+        # input_port is computed
+        # TODO: support InputPort functions
+        if port is not None:
+            return sum(variable)
+        else:
+            res = [sum(v) for v in variable]
+            try:
+                return torch.stack(res)
+            except TypeError:
+                return torch.from_numpy(np.asarray(res))
 
     def execute(self, variable):
         """Execute Mechanism's function on variable, enforce result to be 2d, and assign to self.value"""
-        if ((isinstance(variable, list) and len(variable) == 1)
-            or (isinstance(variable, torch.Tensor) and len(variable.squeeze(0).shape) == 1)
-                or isinstance(self._mechanism.function, LinearCombination)):
-            # Enforce 2d on value of MechanismWrapper (using unsqueeze)
-            # for single InputPort or if CombinationFunction (which reduces output to single item from multi-item input)
-            if isinstance(variable, torch.Tensor):
-                variable = variable.squeeze(0)
-            self.value = self.function(variable).unsqueeze(0)
-        else:
-            # Make value 2d by creating list of values returned by function for each item in variable
-            self.value = [self.function(variable[i].squeeze(0)) for i in range(len(variable))]
+        variable = self.execute_input_ports(variable)
+        self.value = self.function(variable)
         return self.value
 
     def _gen_llvm_execute(self, ctx, builder, state, params, mech_input, data):
