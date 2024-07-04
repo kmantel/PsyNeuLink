@@ -542,7 +542,8 @@ from psyneulink.core.globals.socket import ConnectionInfo
 from psyneulink.core.globals.utilities import \
     ContentAddressableList, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
     is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, \
-    get_all_explicit_arguments, is_numeric, call_with_pruned_args, safe_equals, safe_len, parse_valid_identifier, try_extract_0d_array_item, contains_type
+    get_all_explicit_arguments, is_numeric, call_with_pruned_args, safe_equals, safe_len, parse_valid_identifier, \
+    try_extract_0d_array_item, contains_type, array_shapes_equal, array_is_compatible, ragged_np_shape
 from psyneulink.core.scheduling.condition import Never
 from psyneulink.core.scheduling.time import Time, TimeScale
 
@@ -4293,78 +4294,141 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         for obj in self._parameter_components:
             obj._remove_from_composition(composition)
 
+    def _reshape_irregular_input_array(self, inp, match, match_itemwise):
+        reshaped_inputs = []
+
+        try:
+            iter(inp)
+        except TypeError:
+            inp = [inp]
+
+        if match_itemwise:
+            if safe_len(inp) != safe_len(match):
+                return None
+
+        for i, item in enumerate(inp):
+            if match_itemwise:
+                try:
+                    match_item = match[i]
+                except IndexError:
+                    return None
+            else:
+                match_item = match
+
+            if array_shapes_equal(item, match_item):
+                reshaped_inputs.append(item)
+            else:
+                if not array_is_compatible(item, match_item):
+                    # input_item doesn't differ from external_input by
+                    # only wrapper dimensions
+                    return None
+
+                try:
+                    reshaped_inputs.append(np.reshape(item, match_item.shape))
+                except ValueError:
+                    return None
+        else:
+            return reshaped_inputs
+
     def _parse_input_array(
         self,
         inp: Union[List, np.ndarray] = None,
         composition=ConnectionInfo.ALL,
         as_sequence: bool = False,
     ):
-        def invalid_input_error(reason=''):
-            if reason:
-                reason = f' ({reason})'
-            return ComponentError(f'Invalid input to {self}{reason}: {inp}')
-
         inp = convert_all_elements_to_np_array(inp)
         inp_squeezed = np.squeeze(inp)
         inp_is_sequence = False
 
         external_input = self.external_input_shape_arr(composition)
-        external_input_squeezed = np.squeeze(external_input)
-
         res = None
 
         # no argument, default
         if inp.ndim == 0 and inp.item() is None:
             res = external_input
-        # Single scalar (alone or in list), so must be single value for
-        # single trial
-        elif inp_squeezed.ndim == 0:
-            res = np.broadcast_to(inp, external_input.shape)
-        # 1 trial's worth of input for >1 input items
-        elif inp_squeezed.shape == external_input_squeezed.shape:
+        elif array_shapes_equal(inp, external_input):
+            res = inp
+        elif (
+            # Single scalar (alone or in list), so must be single value
+            # for single trial
+            inp_squeezed.ndim == 0
+            # 1 trial's worth of input for >1 input items
+            or array_is_compatible(inp, external_input)
+        ):
             try:
-                res = np.broadcast_to(inp, external_input.shape)
+                res = np.reshape(inp, external_input.shape)
             except ValueError:
-                res = [
-                    np.broadcast_to(item, external_input[i].shape)
-                    for i, item in enumerate(inp)
-                ]
-        # check for multiple trials worth of inputs
+                pass
+        # check for one or more trials worth of inputs
         else:
-            _broadcasted_inputs = []
-
-            # each item is an input, and inp represents multiple trials of inputs
-            for i, input_item in enumerate(inp):
-                if np.squeeze(input_item).shape != external_input_squeezed.shape:
-                    # input_item doesn't differ from external_input by
-                    # only wrapper dimensions
-                    break
-
-                try:
-                    _broadcasted_inputs.append(
-                        np.broadcast_to(input_item, external_input.shape)
-                    )
-                except ValueError:
-                    # # check if each
-                    # try:
-                    #     _broadcasted_inputs.append([
-                    #         self._parse_input_array(input_item, composition, False)
-                    #         for input_item in inp
-                    #     ])
-                    # except ValueError:
-                    #     break
-                    break
-            else:
-                res = convert_all_elements_to_np_array(_broadcasted_inputs)
+            # each item is an input, and inp represents multiple trials
+            # of inputs
+            res = self._reshape_irregular_input_array(
+                inp, external_input, match_itemwise=False
+            )
+            if res is not None:
                 inp_is_sequence = True
 
+            # single trial input for multiple ragged input_ports
+            if res is None:
+                res = self._reshape_irregular_input_array(
+                    inp, external_input, match_itemwise=True
+                )
+
+            # multiple trial input for multiple ragged input_ports
+            if res is None:
+                reshaped_inputs = []
+                for trial_item in inp:
+                    parsed_trial_item = self._reshape_irregular_input_array(
+                        trial_item, external_input, match_itemwise=True
+                    )
+
+                    if parsed_trial_item is None:
+                        break
+                    else:
+                        reshaped_inputs.append(parsed_trial_item)
+                else:
+                    res = reshaped_inputs
+                    inp_is_sequence = True
+
         if res is None:
-            raise invalid_input_error()
+            def _shape_type_strs(shape, ragged_shape):
+                if shape == ragged_shape:
+                    return 'numpy shape', 'np.zeros'
+                else:
+                    return 'pnl.ragged_np_shape', 'pnl.ragged_np_zeros'
+
+            obj_str = str(self)
+            if getattr(self, 'owner', None) is not None:
+                obj_str = f'{obj_str} of {self.owner}'
+
+            # shape is equivalent to np.shape if not ragged
+            inp_ragged_shape = ragged_np_shape(inp)
+            external_input_ragged_shape = ragged_np_shape(external_input)
+
+            inp_shape_type, _ = _shape_type_strs(inp.shape, inp_ragged_shape)
+            expected_shape_type, expected_zeros_fct_name = _shape_type_strs(
+                external_input.shape, external_input_ragged_shape
+            )
+
+            if external_input.shape == external_input_ragged_shape:
+                valid_sequence_shape_str = "'(<num inputs>, {0})'".format(
+                    ', '.join(str(x) for x in external_input.shape)
+                )
+            else:
+                valid_sequence_shape_str = f"'tuple({external_input_ragged_shape} for _ in range(<num inputs>))'"
+
+            raise ComponentError(
+                f"Invalid input to {obj_str}. Got {inp_shape_type} '{inp_ragged_shape}': {inp}"
+                f"\nExpecting {expected_shape_type} '{external_input_ragged_shape}' for a single input or {valid_sequence_shape_str} for a sequence."
+                f'\nTry `{expected_zeros_fct_name}({external_input_ragged_shape})` for an example input.'
+            )
 
         if as_sequence and not inp_is_sequence:
-            res = convert_all_elements_to_np_array([res])
+            # can't use np.expand_dims because of ragged arrays
+            res = [res]
 
-        return res
+        return convert_all_elements_to_np_array(res)
 
     # TODO: replace 'external_input_shape' in subclasses with this
     def default_external_input(self, composition=ConnectionInfo.ALL):
@@ -4382,7 +4446,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     # TODO: remove this when external_input_shape and
     # default_external_input are correctly replaced
     def external_input_shape_arr(self, composition=ConnectionInfo.ALL):
-        return convert_all_elements_to_np_array(self.default_external_input(composition))
+        return convert_all_elements_to_np_array(self.external_input_shape(composition))
 
     @property
     def logged_items(self):
