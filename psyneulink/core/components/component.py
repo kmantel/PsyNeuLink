@@ -4303,12 +4303,16 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # 1 trial's worth of input for >1 input items
         elif inp_squeezed.shape == external_input_squeezed.shape:
             try:
-                res = np.broadcast_to(inp, external_input.shape)
+                res = np.reshape(inp, external_input.shape)
             except ValueError:
-                res = [
-                    np.broadcast_to(item, external_input[i].shape)
-                    for i, item in enumerate(inp)
-                ]
+                pass
+            # try:
+            #     res = np.broadcast_to(inp, external_input.shape)
+            # except ValueError:
+            #     res = [
+            #         np.broadcast_to(item, external_input[i].shape)
+            #         for i, item in enumerate(inp)
+            #     ]
         # check for multiple trials worth of inputs
         else:
             _broadcasted_inputs = []
@@ -4322,18 +4326,24 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
                 try:
                     _broadcasted_inputs.append(
-                        np.broadcast_to(input_item, external_input.shape)
+                        np.reshape(input_item, external_input.shape)
                     )
                 except ValueError:
-                    # # check if each
-                    # try:
-                    #     _broadcasted_inputs.append([
-                    #         self._parse_input_array(input_item, composition, False)
-                    #         for input_item in inp
-                    #     ])
-                    # except ValueError:
-                    #     break
                     break
+                # try:
+                #     _broadcasted_inputs.append(
+                #         np.broadcast_to(input_item, external_input.shape)
+                #     )
+                # except ValueError:
+                #     # check if each
+                #     try:
+                #         _broadcasted_inputs.append([
+                #             self._parse_input_array(input_item, composition, False)
+                #             for input_item in inp
+                #         ])
+                #     except ValueError:
+                #         break
+                #     # break
             else:
                 res = convert_all_elements_to_np_array(_broadcasted_inputs)
                 inp_is_sequence = True
