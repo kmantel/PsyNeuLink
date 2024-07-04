@@ -3381,14 +3381,31 @@ def _parse_port_spec(port_type=None,
             port_dict[VARIABLE] = port_dict[VALUE]
         else:
             port_dict[VARIABLE] = port_dict[REFERENCE_VALUE]
+        # TODO: remove this in favor of below
         # reference value should match port value after dimension
         # reduction from function
         if port_dict[VARIABLE] is not None and port_type.componentType == INPUT_PORT:
             port_dict[VARIABLE] = [port_dict[VARIABLE]]
 
-
     if is_numeric(port_dict[VARIABLE]):
         port_dict[VARIABLE] = convert_all_elements_to_np_array(port_dict[VARIABLE])
+
+        # if only a variable is specified, make sure it is one dim higher than reference, for combination functions
+        # ideally this would check for the function instead of InputPort, but that info may not be available at this point
+        if port_type.componentType == INPUT_PORT:
+            try:
+                reference_value_ndim = port_dict[REFERENCE_VALUE].ndim
+            except AttributeError:
+                pass
+            else:
+                if port_dict[VARIABLE].ndim <= reference_value_ndim:
+                    # adds extra wrapper dimensions to port_dict[VARIABLE] to be one higher than port_dict[REFERENCE_VALUE]
+                    # port_dict[VARIABLE].reshape(
+                    #     (1,) * (reference_value_ndim - port_dict[VARIABLE].ndim + 1) + port_dict[VARIABLE].shape
+                    # )
+                    port_dict[VARIABLE] = np.expand_dims(
+                        port_dict[VARIABLE], tuple(range(reference_value_ndim - port_dict[VARIABLE].ndim + 1))
+                    )
 
     # get the Port's value from the spec function if it exists,
     # otherwise we can assume there is a default function that does not
