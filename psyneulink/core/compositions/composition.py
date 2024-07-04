@@ -10371,149 +10371,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             #                HANDLING OF InputPorts IS INCLUDED FOR FUTURE USE
             #              - SHOULD ALSO BE CONSOLIDATED WITH _validate_input_shapes_and_expand_for_all_trials()
             if INPUT_Node in inputs:
-                # If entry is for an INPUT_Node of self,
-                # check format, adjust as needed, assign the entry to input_dict, and proceed to next
-                # FIX: 10/29/23
-                #  USE get_input_format() spec for formatting inputs here, or below?
-                _inputs = inputs[INPUT_Node]
-                _inputs_arr = convert_all_elements_to_np_array(_inputs)
-
-                # Check formatting of entry and updimension to 3d if necessary
-                # (any other errant items will be detected in _validate_input_shapes_and_expand_for_all_trials())
-                node_spec = INPUT_Node
-                if isinstance(INPUT_Node, Composition):
-                    node_spec = INPUT_Node.input_CIM
-                is_mech = isinstance(node_spec, Mechanism_Base)
-                num_input_ports = len(node_spec.external_input_shape(self)) if is_mech else None
-                # is_input_port = not num_input_ports
-
-                if is_mech:
-                    node_name = node_spec.name
-                else:
-                    node_name = node_spec.full_name
-                error_base_msg = f"Input for '{node_name}' of {self.name} ({_inputs}) "
-
-                if isinstance(_inputs, dict):
+                if isinstance(inputs[INPUT_Node], dict):
                     # entry is dict for a nested Composition, which will be handled recursively
-                    pass
-
-                elif _inputs_arr.squeeze().ndim == 0:
-                    # Single scalar (alone or in list), so must be single value for single trial
-                    _inputs = [np.broadcast_to(_inputs, node_spec.external_input_shape_arr(self).shape)]
-
-                elif all(isinstance(elem, numbers.Number) for elem in _inputs):
-                    # 1d list of scalars of len > 1 (len == 1 handled above)
-                    if is_mech:
-                    #  node_spec is mech:
-                        if num_input_ports == 1:
-                            if _inputs_arr.squeeze().shape == node_spec.external_input_shape_arr(self).squeeze().shape:
-                                # 1 trial's worth of input for mech with 1 input_port and len(variable) > 1:
-                                _inputs = [np.broadcast_to(_inputs_arr, node_spec.external_input_shape_arr(self).shape)]
-                            elif node_spec.external_input_shape_arr(self).shape[-1] == 1:
-                                # > 1 trial's worth of input for > 1 input_port all of which have len(variable) == 1:
-                                _inputs = [
-                                    np.broadcast_to(elem, node_spec.external_input_shape_arr(self).shape)
-                                    for elem in _inputs
-                                ]
-                            else:
-                                raise CompositionError(error_base_msg +
-                                                       "is wrong length for a Mechanism with a single InputPort")
-                        else:
-                            raise CompositionError(error_base_msg +
-                                                   "should be a 2d list since Mechanism has more than one InputPort")
-                    else:
-                    # node_spec is inpput_port:
-                        if len(_inputs) == len(node_spec.variable):
-                            # 1 trial's worth of input for input_port with len(variable) > 1:
-                            _inputs = [[_inputs]]
-                        else:
-                            # > 1 trial's worth of input for input_port with len(variable) == 1:
-                            _inputs = [[[elem]] for elem in _inputs]
+                    input_dict[INPUT_Node] = inputs[INPUT_Node]
                 else:
-                    # 3D ragged array or 2d array
-                    entry = convert_to_np_array(_inputs)
-                    ragged_array = entry.dtype == object
-                    if ragged_array:
-                        if entry.ndim == 2:
-                            # 3d ragged array  (e.g., [[[1, 2], [3, 4, 5]]] or [[[1, 2]], [[3, 4, 5]]])
-                            #   one or more trials' worth inputs for 2 or more input_ports
-                            # Ensure that node_spec is mech (input spec for port should not be 3d)
-                            if not isinstance(node_spec, Mechanism):
-                                raise CompositionError(error_base_msg + "should not be 3d since it is for an InputPort")
-                            # Ensure that each entry is one trial's worth of input for 2 or more input_ports
-                            if num_input_ports == 1 and len(entry[0]) > 1:
-                                raise CompositionError(error_base_msg +
-                                                       "is incorrect for Mechanism with a single InputPort")
-                            if num_input_ports > 1 and len(entry[0]) != num_input_ports:
-                                raise CompositionError(error_base_msg + "badly shaped for multiple InputPorts")
-                            # Nothing more to do, as entry is already 3d
-                        else:
-                            # 2d ragged array (e.g., [[1, 2], [3, 4, 5]])
-                            if len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape(self))):
-                                # 1 trial's worth of input for > 1 input_port, so add outer dimension to make it 3d
-                                _inputs = [_inputs]
-                            else:
-                                raise CompositionError(error_base_msg + "doesn't match the shape of its InputPorts")
-
-                    else:
-                        external_input = convert_to_np_array(node_spec.external_input_shape(self))
-                        external_input_squeezed = np.squeeze(external_input)
-                        if entry.shape == external_input.shape:
-                            _inputs = [_inputs]
-                        elif entry[0].shape == convert_to_np_array(node_spec.external_input_shape(self)).shape:
-                            _inputs = _inputs
-                        # 2d regular array  (e.g., [[1, 2], [3, 4]] or [[1, 2]])
-                        elif len(_inputs) == len(convert_to_np_array(node_spec.external_input_shape(self))):
-                            # 1 trial's worth of input for > 1 input_ports
-                            try:
-                                _inputs = np.broadcast_to(_inputs, external_input.shape)
-                            except ValueError:
-                                _inputs = [np.broadcast_to(item, external_input[i].shape) for i, item in enumerate(_inputs)]
-
-                            _inputs = [_inputs]
-                        elif (
-                            num_input_ports == 1
-                            # (assumes each element of _inputs is also valid. consider checking all)
-                            # items in _inputs differ from
-                            # external_input shape only by wrapper
-                            # dimensions, so match the input
-                            and np.squeeze(_inputs_arr[0]).shape == np.squeeze(external_input).shape
-                        ):
-                            # > 1 or more trial's worth of input for 1 input_port, so add extra dimension to each trial's input
-                            _inputs = [np.broadcast_to(input, external_input.shape) for input in _inputs]
-                        else:
-                            can_broadcast_input_items = False
-                            _broadcasted_inputs = []
-
-                            for i, input_item in enumerate(_inputs_arr):
-                                if np.squeeze(input_item).shape != external_input_squeezed.shape:
-                                    # input_item doesn't differ from external_input by only wrapper dimensions
-                                    break
-                                try:
-                                    _broadcasted_inputs.append(np.broadcast_to(input_item, external_input.shape))
-                                except ValueError:
-                                    if len(input_item) != len(external_input):
-                                        break
-                                    _port_bcast_item = []
-
-                                    for j, port_item in enumerate(input_item):
-                                        if np.squeeze(port_item).shape != np.squeeze(external_input[j]).shape:
-                                            break
-                                        try:
-                                            _port_bcast_item.append(np.broadcast_to(port_item, external_input[j].shape))
-                                        except ValueError:
-                                            break
-                                    else:
-                                        _broadcasted_inputs.append(_port_bcast_item)
-                            else:
-                                can_broadcast_input_items = True
-
-                            if can_broadcast_input_items:
-                                _inputs = convert_all_elements_to_np_array(_broadcasted_inputs)
-                            else:
-                                raise CompositionError(error_base_msg + f" doesn't match the shape of its InputPorts ({external_input})")
-
-                input_dict[INPUT_Node] = _inputs
+                    # If entry is for an INPUT_Node of self,
+                    # check format, adjust as needed, assign the entry to input_dict, and proceed to next
+                    # FIX: 10/29/23
+                    #  USE get_input_format() spec for formatting inputs here, or below?
+                    input_dict[INPUT_Node] = INPUT_Node._parse_input_array(inputs[INPUT_Node], self, True)
 
                 remaining_inputs.remove(INPUT_Node)
                 continue
