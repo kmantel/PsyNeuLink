@@ -893,8 +893,13 @@ class AutodiffComposition(Composition):
             # (outputs, targets, weights, and more) and returns a scalar
             new_loss = 0
             for i in range(len(outputs_for_targets[component])):
-                new_loss += self.loss(outputs_for_targets[component][i],
-                                      curr_tensor_targets[component][i])
+                # loss only accepts 0 or 1d target. reshape assuming tracked_loss dim is correct
+                comp_loss = self.loss(
+                    outputs_for_targets[component][i],
+                    torch.atleast_1d(curr_tensor_targets[component][i].squeeze())
+                )
+                comp_loss = comp_loss.reshape_as(tracked_loss)
+                new_loss += comp_loss
             tracked_loss += new_loss
 
         # Get values of trained OUTPUT nodes
