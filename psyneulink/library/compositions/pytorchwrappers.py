@@ -579,12 +579,15 @@ class PytorchMechanismWrapper():
         self._is_bias = False
         self.afferents = []
         self.efferents = []
-        try:
-            self.function = mechanism.function._gen_pytorch_fct(device, context)
-        except:
+
+        pytorch_fct = getattr(mechanism.function, '_gen_pytorch_fct', None)
+        if pytorch_fct is None:
             from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
             raise AutodiffCompositionError(
-                f"Function {mechanism.function} is not currently supported by AutodiffComposition")
+                f"Function {mechanism.function} is not currently supported by AutodiffComposition"
+            )
+        else:
+            self.function = pytorch_fct(device, context)
 
         self.value = None
         self._target_mechanism = None
