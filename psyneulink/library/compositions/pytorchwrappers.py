@@ -11,6 +11,7 @@
 from psyneulink._typing import Optional, Literal, Union
 
 import graph_scheduler
+import numpy as np
 import torch
 import torch.nn as nn
 import numpy as np
@@ -30,7 +31,7 @@ from psyneulink.core.globals.keywords import (ADD, AFTER, ALL, BEFORE, DEFAULT_V
                                               NODE, NODE_VALUES, NODE_VARIABLES, OUTPUTS, RESULTS, RUN,
                                               TARGETS, TARGET_MECHANISM, )
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
-from psyneulink.core.globals.utilities import convert_to_np_array, get_deepcopy_with_shared, convert_to_list
+from psyneulink.core.globals.utilities import convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared
 from psyneulink.core.globals.log import LogCondition
 from psyneulink.core import llvm as pnlvm
 
@@ -41,6 +42,18 @@ class DataTypeEnum(Enum):
     TRAINED_OUTPUTS = 0
     TARGETS = auto()
     LOSSES = auto()
+
+
+def _get_pytorch_function(obj, device, context):
+    pytorch_fct = getattr(obj, '_gen_pytorch_fct', None)
+    if pytorch_fct is None:
+        from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
+        raise AutodiffCompositionError(
+            f"Function {obj} is not currently supported by AutodiffComposition"
+        )
+    else:
+        return pytorch_fct(device, context)
+
 
 # # MODIFIED 7/29/24 OLD:
 class PytorchCompositionWrapper(torch.nn.Module):
@@ -633,7 +646,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
                                     variable.append(input[i])
                                 elif input_port.default_input == DEFAULT_VARIABLE:
                                     # input_port uses a bias, so get that
-                                    variable.append(input_port.defaults.variable)
+                                    variable.append(torch.from_numpy(input_port.defaults.variable))
 
                     # Input for the Mechanism is *not* explicitly specified, but its input_port(s) may have been
                     else:
@@ -645,15 +658,28 @@ class PytorchCompositionWrapper(torch.nn.Module):
                                 variable.append(inputs[input_port])
                             elif input_port.default_input == DEFAULT_VARIABLE:
                                 # input_port uses a bias, so get that
-                                variable.append(input_port.defaults.variable)
+                                variable.append(torch.from_numpy(input_port.defaults.variable))
                             elif not input_port.internal_only:
                                 # otherwise, use the node's input_port's afferents
-                                variable.append(node.aggregate_afferents(i).squeeze(0))
-                        if len(variable) == 1:
-                            variable = variable[0]
+                                variable.append(node.aggregate_afferents(i))
                 else:
                     # Node is not INPUT to Composition or BIAS, so get all input from its afferents
                     variable = node.aggregate_afferents()
+                variable = node.execute_input_ports(variable)
+
+                # try to make a tensor from input if not already
+                # if not isinstance(variable, torch.Tensor):
+                #     variable_arr = convert_all_elements_to_np_array(variable)
+                #     try:
+                #         variable = torch.from_numpy(variable_arr)
+                #     except (RuntimeError, TypeError):
+                #         for i, item in enumerate(variable_arr):
+                #             try:
+                #                 variable_arr[i] = torch.from_numpy(item)
+                #             except (RuntimeError, TypeError):
+                #                 break
+                #         else:
+                #             variable = variable_arr
 
                 if node.exclude_from_gradient_calc:
                     if node.exclude_from_gradient_calc == AFTER:
@@ -921,20 +947,16 @@ class PytorchMechanismWrapper():
         self.afferents = []
         self.efferents = []
 
-        from psyneulink.core.components.functions.function import FunctionError
-        from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
-        try:
-            pnl_fct = mechanism.function
-            self.function = pnl_fct._gen_pytorch_fct(device, context)
-            if hasattr(mechanism, 'integrator_function'):
-                pnl_fct = mechanism.integrator_function
-                self.integrator_function = pnl_fct._gen_pytorch_fct(device, context)
-                self.integrator_previous_value = pnl_fct._get_pytorch_fct_param_value('initializer', device, context)
-        except FunctionError as error:
-            from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
-            raise AutodiffCompositionError(error.args[0])
-        except:
-            raise AutodiffCompositionError(f"Function {pnl_fct} is not currently supported by AutodiffComposition")
+        self.function = _get_pytorch_function(mechanism.function, device, context)
+
+        if hasattr(mechanism, 'integrator_function'):
+            self.integrator_function = _get_pytorch_function(mechanism.integrator_function, device, context)
+            self.integrator_previous_value = mechanism.integrator_function._get_pytorch_fct_param_value('initializer', device, context)
+
+        self.input_ports = [
+            PytorchFunctionWrapper(ip.function, device, context)
+            for ip in mechanism.input_ports
+        ]
 
 
     def add_efferent(self, efferent):
@@ -971,49 +993,63 @@ class PytorchMechanismWrapper():
         # FIX: USING _port_idx TO INDEX INTO sender.value GETS IT WRONG IF THE MECHANISM HAS AN OUTPUT PORT
         #      USED BY A PROJECTION NOT IN THE CURRENT COMPOSITION
         if port is not None:
-            return sum(proj_wrapper.execute(proj_wrapper._curr_sender_value).unsqueeze(0)
+            res = [proj_wrapper.execute(proj_wrapper._curr_sender_value)
                                             for proj_wrapper in self.afferents
                                             if proj_wrapper._pnl_proj
-                                            in self._mechanism.input_ports[port].path_afferents)
-        # Has only one input_port
-        elif len(self._mechanism.input_ports) == 1:
-            # Get value corresponding to port from which each afferent projects
-            return sum((proj_wrapper.execute(proj_wrapper._curr_sender_value).unsqueeze(0)
-                        for proj_wrapper in self.afferents))
-        # Has multiple input_ports
+                                            in self._mechanism.input_ports[port].path_afferents]
         else:
-            return [sum(proj_wrapper.execute(proj_wrapper._curr_sender_value).unsqueeze(0)
-                         for proj_wrapper in self.afferents
-                         if proj_wrapper._pnl_proj in input_port.path_afferents)
-                     for input_port in self._mechanism.input_ports]
+            res = []
+            for input_port in self._mechanism.input_ports:
+                ip_res = []
+                for proj_wrapper in self.afferents:
+                    if proj_wrapper._pnl_proj in input_port.path_afferents:
+                        ip_res.append(proj_wrapper.execute(proj_wrapper._curr_sender_value))
+                res.append(torch.stack(ip_res))
+        try:
+            res = torch.stack(res)
+        except (RuntimeError, TypeError):
+            # is ragged, will handle input_port by input_port during execute
+            pass
+        return res
+
+    def execute_input_ports(self, variable):
+        if not isinstance(variable, torch.Tensor):
+            try:
+                variable = torch.stack(variable)
+            except (RuntimeError, ValueError):
+                pass
+
+        res = [
+            self.input_ports[i].function(variable[i]) for i in range(len(self.input_ports))
+        ]
+        try:
+            res = torch.stack(res)
+        except (RuntimeError, TypeError):
+            # ragged
+            pass
+        return res
 
     def execute(self, variable, context):
         """Execute Mechanism's _gen_pytorch version of function on variable.
         Enforce result to be 2d, and assign to self.output
         """
-        def execute_function(function, variable, fct_has_mult_args=False, is_combination_fct=False):
+        def execute_function(function, variable, fct_has_mult_args=False):
             """Execute _gen_pytorch_fct on variable, enforce result to be 2d, and return it
             If fct_has_mult_args is True, treat each item in variable as an arg to the function
             If False, compute function for each item in variable and return results in a list
             """
-            if ((isinstance(variable, list) and len(variable) == 1)
-                or (isinstance(variable, torch.Tensor) and len(variable.squeeze(0).shape) == 1)
-                    or isinstance(self._mechanism.function, LinearCombination)):
-                # Enforce 2d on value of MechanismWrapper (using unsqueeze) for single InputPort
-                # or if CombinationFunction (which reduces output to single item from multi-item input)
-                if isinstance(variable, torch.Tensor):
-                    variable = variable.squeeze(0)
-                return function(variable).unsqueeze(0)
-            elif is_combination_fct:
-                # Function combines the elements
-                return function(variable)
+            from psyneulink.core.components.functions.nonstateful.combinationfunctions import CombinationFunction
+            # variable is ragged
+            if isinstance(variable, list):
+                res = [function(variable[i]) for i in range(len(variable))]
             elif fct_has_mult_args:
-                # Assign each element of variable as an arg to the function
-                return function(*variable)
+                res = function(*variable)
             else:
-                # Treat each item in variable as a separate input to the function and get result for each in a list:
-                # make return value 2d by creating list of the results of function returned for each item in variable
-                return [function(variable[i].squeeze(0)) for i in range(len(variable))]
+                res = function(variable)
+            # LinearCombination reduces output to single item from multi-item input
+            if isinstance(function, CombinationFunction):
+                res = res.unsqueeze(0)
+            return res
 
         # If mechanism has an integrator_function and integrator_mode is True,
         #   execute it first and use result as input to the main function;
@@ -1028,9 +1064,7 @@ class PytorchMechanismWrapper():
         self.input = variable
 
         # Compute main function of mechanism and return result
-        from psyneulink.core.components.functions.nonstateful.combinationfunctions import CombinationFunction
-        self.output = execute_function(self.function, variable,
-                                      is_combination_fct=isinstance(self._mechanism.function, CombinationFunction))
+        self.output = execute_function(self.function, variable)
         return self.output
 
     def _gen_llvm_execute(self, ctx, builder, state, params, mech_input, data):
@@ -1236,3 +1270,14 @@ class PytorchProjectionWrapper():
 
     def __repr__(self):
         return "PytorchWrapper for: " +self._projection.__repr__()
+
+
+class PytorchFunctionWrapper():
+    def __init__(self, function, device, context=None):
+        self._pnl_function = function
+        self.name = f"PytorchFunctionWrapper[{function.name}]"
+        self._context = context
+        self.function = _get_pytorch_function(function, device, context)
+
+    def __repr__(self):
+        return "PytorchWrapper for: " + self._pnl_function.__repr__()

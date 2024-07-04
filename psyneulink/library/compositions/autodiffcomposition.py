@@ -1117,12 +1117,26 @@ class AutodiffComposition(Composition):
         for component in curr_tensors_for_trained_outputs.keys():
             trial_loss = 0
             for i in range(len(curr_tensors_for_trained_outputs[component])):
-                trial_loss += self.loss_function(curr_tensors_for_trained_outputs[component][i],
-                                               curr_target_tensors_for_trained_outputs[component][i])
+                # loss only accepts 0 or 1d target. reshape assuming pytorch_rep.minibatch_loss dim is correct
+                comp_loss = self.loss_function(
+                    curr_tensors_for_trained_outputs[component][i],
+                    torch.atleast_1d(curr_target_tensors_for_trained_outputs[component][i].squeeze())
+                )
+                comp_loss = comp_loss.reshape_as(pytorch_rep.minibatch_loss)
+                trial_loss += comp_loss
             pytorch_rep.minibatch_loss += trial_loss
         pytorch_rep.minibatch_loss_count += 1
 
-        # --------- Return the values of OUTPUT of trained nodes and all nodes  ---------------------------------------
+        # Compute the loss (TARGET-OUTPUT) for each trained OUTPUT node
+        outputs_for_targets = {k:v for k,v in curr_tensor_outputs.items() if k in self.target_output_map.values()}
+        for component in outputs_for_targets.keys():
+            # possibly add custom loss option, which is a loss function that takes many args
+            # (outputs, targets, weights, and more) and returns a scalar
+            new_loss = 0
+            for i in range(len(outputs_for_targets[component])):
+                new_loss += self.loss(outputs_for_targets[component][i],
+                                      curr_tensor_targets[component][i])
+            tracked_loss += new_loss
 
         # Get values of trained OUTPUT nodes
         trained_output_values = []
