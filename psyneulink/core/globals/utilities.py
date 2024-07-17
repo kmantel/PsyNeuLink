@@ -153,6 +153,7 @@ __all__ = [
     'tensor_power', 'TEST_CONDTION', 'type_match',
     'underscore_to_camelCase', 'UtilitiesError', 'unproxy_weakproxy', 'create_union_set', 'merge_dictionaries',
     'contains_type', 'is_numeric_scalar', 'try_extract_0d_array_item', 'fill_array', 'update_array_in_place', 'array_from_matrix_string',
+    'ragged_np_shape', 'ragged_np_full', 'ragged_np_zeros', 'ragged_np_ones', 'ragged_np_clip',
 ]
 
 logger = logging.getLogger(__name__)
@@ -2240,7 +2241,7 @@ def extended_array_equal(a, b, equal_nan: bool = False) -> bool:
 
         | a | b | np.array_equal | extended_array_equal |
         |---|---|----------------|----------------------|
-        | X | X | False          | True                 |
+        | X | X | ValueError     | True                 |
     """
     a = convert_all_elements_to_np_array(a)
     b = convert_all_elements_to_np_array(b)
@@ -2364,6 +2365,7 @@ def array_from_matrix_string(
 
     return np.asarray(arr, dtype=dtype)
 
+
 #endregion
 
 #region PYTORCH TENSOR METHODS *****************************************************************************************
@@ -2418,3 +2420,112 @@ def safe_create_np_array(value):
                 raise
 
 #endregion
+
+def ragged_np_shape(obj: typing.Union[np.ndarray, collections.abc.Iterable]) -> tuple:
+    """
+    Produces a shape tuple of **obj** that handles optionally-nested
+    Iterables, including standard, ragged, or object-dtype
+    numpy.ndarray. The standard numpy shape is returned when **obj** can
+    be represented as a non-ragged numpy.ndarray.
+
+    Args:
+        obj (typing.Union[np.ndarray, collections.abc.Iterable])
+
+    Returns:
+        tuple: a numpy.ndarray-style shape of **obj**
+
+    Note:
+        The purpose of this function is to distinguish shapes of inner
+        items of ragged arrays. For example:
+
+        `A = np.array([[0], [0, 0]], dtype=object)`
+        `B = np.array([[0], [0, 0, 0]], dtype=object)`
+
+        | array | np.shape | ragged_np_shape |
+        |-------|----------|-----------------|
+        | A     | (2, )    | ((1,), (2,))    |
+        | B     | (2, )    | ((1,), (3,))    |
+    """
+    def _ragged_np_shape(obj):
+        try:
+            if obj.dtype != object:
+                return obj.shape
+        except AttributeError:
+            pass
+
+        shape = []
+        try:
+            for item in obj:
+                shape.append(_ragged_np_shape(item))
+        except TypeError:
+            return tuple()
+
+        if all([i == tuple() for i in shape]):
+            return (len(obj), )
+        else:
+            return tuple(shape)
+
+    try:
+        # handle non-ragged numpy.ndarray
+        if obj.dtype != object:
+            return obj.shape
+    except AttributeError:
+        pass
+
+    return _ragged_np_shape(convert_all_elements_to_np_array(obj))
+
+
+def array_shapes_equal(a: np.ndarray, b: np.ndarray) -> bool:
+    if (a.dtype == object or b.dtype == object):
+        return ragged_np_shape(a) == ragged_np_shape(b)
+    else:
+        return a.shape == b.shape
+
+
+def array_is_compatible(source, target):
+    source_squeezed = np.squeeze(source)
+    target_squeezed = np.squeeze(target)
+    return array_shapes_equal(source_squeezed, target_squeezed)
+
+
+def ragged_np_full(shape, fill_value, dtype=None, order='C', *, like=None) -> np.ndarray:
+    def _ragged_np_full(s):
+        try:
+            return np.full(
+                s, fill_value=fill_value, dtype=dtype, order=order, like=like
+            )
+        except TypeError as e:
+            if "'tuple' object cannot be interpreted as an integer" in str(e):
+                return [_ragged_np_full(x) for x in s]
+            else:
+                raise
+
+    res = _ragged_np_full(shape)
+    if like is not None:
+        if isinstance(res, list):
+            res = np.asarray(res, dtype=object)
+    else:
+        res = convert_all_elements_to_np_array(res)
+    return res
+
+
+def ragged_np_zeros(shape, dtype=float, order='C', *, like=None):
+    return ragged_np_full(shape, 0, dtype=dtype, order=order, like=like)
+
+
+def ragged_np_ones(shape, dtype=float, order='C', *, like=None):
+    return ragged_np_full(shape, 1, dtype=dtype, order=order, like=like)
+
+
+def ragged_np_clip(a, a_min, a_max, **kwargs):
+    def _ragged_np_clip(x):
+        try:
+            return np.clip(x, a_min, a_max, **kwargs)
+        except ValueError as e:
+            if 'The truth value of an array with more than one element is ambiguous' in str(e):
+                return [_ragged_np_clip(x_i) for x_i in x]
+            else:
+                raise
+    return convert_all_elements_to_np_array(
+        _ragged_np_clip(convert_all_elements_to_np_array(a))
+    )
