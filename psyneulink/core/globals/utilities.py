@@ -153,6 +153,7 @@ __all__ = [
     'tensor_power', 'TEST_CONDTION', 'type_match',
     'underscore_to_camelCase', 'UtilitiesError', 'unproxy_weakproxy', 'create_union_set', 'merge_dictionaries',
     'contains_type', 'is_numeric_scalar', 'try_extract_0d_array_item', 'fill_array', 'update_array_in_place', 'array_from_matrix_string',
+    'extended_shape',
 ]
 
 logger = logging.getLogger(__name__)
@@ -2418,3 +2419,56 @@ def safe_create_np_array(value):
                 raise
 
 #endregion
+
+def extended_shape(obj: typing.Union[np.ndarray, collections.abc.Iterable]) -> tuple:
+    """
+    Produces a shape tuple of **obj** that handles optionally-nested
+    Iterables, including standard, ragged, or object-dtype
+    numpy.ndarray. The standard numpy shape is returned when **obj** can
+    be represented as a non-ragged numpy.ndarray.
+
+    Args:
+        obj (typing.Union[np.ndarray, collections.abc.Iterable])
+
+    Returns:
+        tuple: a numpy.ndarray-style shape of **obj**
+
+    Note:
+        The purpose of this function is to distinguish shapes of inner
+        items of ragged arrays. For example:
+
+        `A = np.array([[0], [0, 0]], dtype=object)`
+        `B = np.array([[0], [0, 0, 0]], dtype=object)`
+
+        | array | np.shape | extended_shape |
+        |-------|----------|----------------|
+        | A     | (2, )    | ((1,), (2,))   |
+        | B     | (2, )    | ((1,), (3,))   |
+    """
+    def _extended_shape(obj):
+        try:
+            if obj.dtype != object:
+                return obj.shape
+        except AttributeError:
+            pass
+
+        shape = []
+        try:
+            for item in obj:
+                shape.append(_extended_shape(item))
+        except TypeError:
+            return tuple()
+
+        if all([i == tuple() for i in shape]):
+            return (len(obj), )
+        else:
+            return tuple(shape)
+
+    try:
+        # handle numpy.ndarray
+        if obj.dtype != object:
+            return obj.shape
+        else:
+            return _extended_shape(obj)
+    except AttributeError:
+        return _extended_shape(convert_all_elements_to_np_array(obj))
