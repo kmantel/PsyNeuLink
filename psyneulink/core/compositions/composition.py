@@ -12867,9 +12867,12 @@ _
                         INPUT_node = INPUT_node.composition
 
                     if INPUT_node in inputs:
-                        value = inputs[INPUT_node][index]
+                        value = inputs[INPUT_node]
                     else:
-                        value = INPUT_node.defaults.variable[index]
+                        value = None
+
+                    value = INPUT_node.parse_input_array(value, composition=self)
+                    value = value[index]
 
             # need extra dimension because `value` matches the shape of
             # an item in INPUT_node variable (= the value of an
