@@ -1102,8 +1102,8 @@ class TestControlMechanisms:
         f"The '{pnl.STATE_FEATURES}' argument has been specified for 'OptimizationControlMechanism-0' that is using "
         f"a Composition ('OUTER COMP') as its agent_rep, but some of the specifications are not compatible with the "
         "inputs required by its 'agent_rep': 'Invalid input to (InputPort InputPort-0) of (ProcessingMechanism OB)."
-        " Got numpy shape (1,): [0.]\nExpecting numpy shape '(1, 3)' or '(<num inputs>, 1, 3)'."
-        "\nTry np.zeros((1, 3)) for an example input.' Use the get_inputs_format() method of 'OUTER COMP' to "
+        " Got numpy shape '(1,)': [0.]\nExpecting numpy shape '(1, 3)' for a single input or '(<num inputs>, 1, 3)' for a sequence."
+        "\nTry `np.zeros((1, 3))` for an example input.' Use the get_inputs_format() method of 'OUTER COMP' to "
         f"see the required format, or remove the specification of 'state_features' from the constructor for "
         f"OptimizationControlMechanism-0 to have them automatically assigned.",
 
