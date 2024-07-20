@@ -10438,7 +10438,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # check format, adjust as needed, assign the entry to input_dict, and proceed to next
                     # FIX: 10/29/23
                     #  USE get_input_format() spec for formatting inputs here, or below?
-                    input_dict[INPUT_Node] = INPUT_Node._parse_input_array(inputs[INPUT_Node], self, True)
+                    input_dict[INPUT_Node] = INPUT_Node.parse_input_array(inputs[INPUT_Node], self, True)
 
                 remaining_inputs.remove(INPUT_Node)
                 continue
@@ -10536,7 +10536,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             idx = 0
                         else:
                             idx = trial_num
-                        node_trial_input.append(input_port._parse_input_array(port_spec[idx], self))
+                        node_trial_input.append(input_port.parse_input_array(port_spec[idx], self))
                     else:
                         node_trial_input.append(convert_all_elements_to_np_array(input_port.default_input_shape(self)))
 
@@ -10772,7 +10772,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             if inp_arr.shape[1:] == convert_all_elements_to_np_array(node.external_input_shape(self)).shape:
                 # If inp formatted for trial series, get only one one trial's worth of inputs to test
                 inp = inp[0]
-            inp = node._parse_input_array(inp, self)
+            inp = node.parse_input_array(inp, self)
             input_after_validate = self._validate_single_input(node, inp)
             if input_after_validate is None:
                 raise CompositionError(f"Input stimulus ({inp}) for {node.name} is incompatible "
@@ -13381,13 +13381,13 @@ _
         except (TypeError, AttributeError):
             return None
 
-    def _parse_input_array(
+    def parse_input_array(
         self,
         inp: Union[List, np.ndarray],
         composition=ConnectionInfo.ALL,
         sequence: bool = False,
     ):
-        return self.input_CIM._parse_input_array(inp, composition, sequence)
+        return self.input_CIM.parse_input_array(inp, composition, sequence)
 
     def external_input_shape(self, composition=NotImplemented):
         """Alias for _default_external_input_shape"""
