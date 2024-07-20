@@ -6801,7 +6801,7 @@ class TestInputs:
                 parsed_inputs[mech], expected_parsed_inputs[mech]
             )
             np.testing.assert_array_equal(
-                mech._parse_input_array(inputs[mech] if mech in inputs else None, comp, True),
+                mech.parse_input_array(inputs[mech] if mech in inputs else None, comp, True),
                 expected_parsed_inputs[mech],
             )
         assert num_trials == expected_num_trials

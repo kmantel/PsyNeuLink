@@ -4326,7 +4326,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         else:
             return reshaped_inputs
 
-    def _parse_input_array(
+    def parse_input_array(
         self,
         inp: Union[List, np.ndarray] = None,
         composition=ConnectionInfo.ALL,
