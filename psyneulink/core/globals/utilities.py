@@ -2162,8 +2162,8 @@ def contains_type(
         if dtype_kind not in {'O', 'V'}:
             try:
                 return isinstance(next(arr_items), typ)
-            except StopIteration:
-                return False
+            except (StopIteration, TypeError):
+                return isinstance(arr.item(), typ)
 
     recurse = not isinstance(arr, np.matrix)
     for a in arr_items:
