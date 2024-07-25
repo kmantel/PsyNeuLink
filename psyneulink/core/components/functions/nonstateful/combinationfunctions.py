@@ -1508,7 +1508,7 @@ class LinearCombination(
         # FIXME: Workaround a special case of simple array.
         #        It should just pass through to modifiers, which matches what
         #        single element 2d array does
-        default_var = self.defaults.variable
+        default_var = np.atleast_2d(self.defaults.variable)
         return ctx.convert_python_struct_to_llvm_ir(default_var)
 
     def _gen_llvm_combine(self, builder, index, ctx, vi, vo, params):
