@@ -180,6 +180,21 @@ RAND2_S = np.random.rand()
 RAND3_S = np.random.rand()
 
 
+# higher dimension arrays
+test_varh1 = np.random.rand(1, 1, SIZE)
+test_varh2 = np.random.rand(2, 3, SIZE, SIZE)
+test_varh3 = np.random.rand(4, 3, SIZE, SIZE, SIZE)
+
+RANDh_V = {
+    k: {
+        test_varh1.shape: np.random.rand(*test_varh1.shape),
+        test_varh2.shape: np.random.rand(*test_varh2.shape),
+        test_varh3.shape: np.random.rand(*test_varh3.shape),
+    }
+    for k in ['exponents', 'weights', 'scale', 'offset']
+}
+
+
 @pytest.mark.benchmark(group="ReduceFunction")
 @pytest.mark.function
 @pytest.mark.combination_function
@@ -270,6 +285,54 @@ def test_linear_combination_function(variable, operation, exponents, weights, sc
         expected = np.prod(tmp, axis=0) * scale + offset
 
     np.testing.assert_allclose(res, expected, rtol=1e-5, atol=1e-8)
+
+
+@pytest.mark.benchmark(group="LinearCombinationFunction higher dim")
+@pytest.mark.function
+@pytest.mark.combination_function
+@pytest.mark.parametrize("variable", [test_varh1, test_varh2, test_varh3], ids=["VAR1h", "VAR2h", "VAR3h"])
+@pytest.mark.parametrize("operation", [pnl.SUM, pnl.PRODUCT])
+@pytest.mark.parametrize("exponents", [None, 2.0, [3.0], 'V'], ids=["E_NONE", "E_SCALAR", "E_VECTOR1", "E_VECTORN"])
+@pytest.mark.parametrize("weights", [None, 0.5, 'V'], ids=["W_NONE", "W_SCALAR", "W_VECTORN"])
+@pytest.mark.parametrize("scale", [None, RAND1_S, 'V'], ids=["S_NONE", "S_SCALAR", "S_VECTOR"])
+@pytest.mark.parametrize("offset", [None, RAND2_S, 'V'], ids=["O_NONE", "O_SCALAR", "O_VECTOR"])
+def test_linear_combination_function_higher_dim(variable, operation, exponents, weights, scale, offset, func_mode, benchmark):
+    # vectors in shape of input
+    if weights == 'V':
+        # random 1/-1
+        weights = 2 * (np.round(RANDh_V['weights'][variable.shape]) - .5)
+    if exponents == 'V':
+        exponents = RANDh_V['exponents'][variable.shape]
+
+    # vectors in shape of output
+    if scale == 'V':
+        scale = RANDh_V['scale'][variable.shape][0]
+    if offset == 'V':
+        offset = RANDh_V['offset'][variable.shape][0]
+
+    f = pnl.LinearCombination(default_variable=variable,
+                              operation=operation,
+                              exponents=exponents,
+                              weights=weights,
+                              scale=scale,
+                              offset=offset)
+    EX = pytest.helpers.get_func_execution(f, func_mode)
+    res = benchmark(EX, variable)
+
+    scale = 1.0 if scale is None else scale
+    offset = 0.0 if offset is None else offset
+    exponent = 1.0 if exponents is None else exponents
+    weights = 1.0 if weights is None else weights
+
+    tmp = (variable ** exponent) * weights
+    if operation == pnl.SUM:
+        expected = np.sum(tmp, axis=0) * scale + offset
+    if operation == pnl.PRODUCT:
+        expected = np.prod(tmp, axis=0) * scale + offset
+
+    # wider tolerances needed for fp32
+    np.testing.assert_allclose(res, expected, rtol=3e-5, atol=2e-7)
+    # np.testing.assert_allclose(res, expected, rtol=1e-5, atol=1e-8)
 
 
 @pytest.mark.benchmark(group="LinearCombinationFunction in Mechanism")
