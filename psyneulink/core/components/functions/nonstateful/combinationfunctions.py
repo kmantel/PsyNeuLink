@@ -91,8 +91,13 @@ class CombinationFunction(Function_Base):
             assert len(param_type) == 0
             return ctx.float_ty(default)
         elif isinstance(param_type, pnlvm.ir.ArrayType):
-            index = ctx.int32_ty(0) if len(param_type) == 1 else index
-            param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), index])
+            if len(param_type) == 1 and not isinstance(param_type.element, pnlvm.ir.ArrayType):
+                index = [ctx.int32_ty(0)]
+
+            if not isinstance(index, list):
+                index = [index]
+
+            param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), *index])
         return builder.load(param_ptr)
 
     def _gen_llvm_function_body(self, ctx, builder, params, _, arg_in, arg_out, *, tags:frozenset):
@@ -1511,17 +1516,90 @@ class LinearCombination(
         default_var = np.atleast_2d(self.defaults.variable)
         return ctx.convert_python_struct_to_llvm_ir(default_var)
 
-    def _gen_llvm_combine(self, builder, index, ctx, vi, vo, params):
-        scale = self._gen_llvm_load_param(ctx, builder, params, SCALE, index, 1.0)
-        offset = self._gen_llvm_load_param(ctx, builder, params, OFFSET, index, -0.0)
+    def _gen_llvm_function_body(self, ctx, builder, params, _, arg_in, arg_out, *, tags: frozenset):
+        # Sometimes we arg_out to 2d array
+        if self.defaults.variable.ndim == self.defaults.value.ndim:
+            arg_out = pnlvm.helpers.unwrap_2d_array(builder, arg_out)
 
+        self._gen_llvm_combine(builder, ctx=ctx, vi=arg_in, vo=arg_out, params=params)
+        return builder
+
+    def _llvm_combine_body(self, builder, ctx, vi, vo, val_f, pow_f, comb_op, params, indices):
+        ptro = builder.gep(vo, [ctx.int32_ty(0), *indices])
+
+        if isinstance(ptro.type.pointee, pnlvm.ir.ArrayType):
+            with pnlvm.helpers.array_ptr_loop(builder, ptro, f"combine_axis{len(indices)}") as (b, idx):
+                self._llvm_combine_body(b, ctx, vi, vo, val_f, pow_f, comb_op, params, [*indices, idx])
+        else:
+            val_p = builder.alloca(val_f.type, name="combined_result")
+            builder.store(val_f, val_p)
+
+            assert isinstance(vi.type.pointee, pnlvm.ir.ArrayType)
+            with pnlvm.helpers.array_ptr_loop(builder, vi, "combine") as (b, idx):
+                in_idx = [idx, *indices]
+                ptri = b.gep(vi, [ctx.int32_ty(0), *in_idx])
+                in_val = b.load(ptri)
+
+                # lower-dim array specification (ex: exponents [a, b]
+                # and var [[[1, 1]], [[2, 2]]], applying a to [[1, 1]]
+                # and b to [[2, 2]])
+                exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, idx, 1.0)
+                # Vector of vectors (even 1-element vectors)
+                if (
+                    isinstance(exponent.type, pnlvm.ir.ArrayType)
+                    and len(exponent.type) == 1
+                    and not isinstance(exponent.type.element, pnlvm.ir.ArrayType)
+                ):
+                    # FIXME: Add support for matrix weights
+                    exponent = b.extract_value(exponent, [0])
+                else:
+                    # variable (input) matching array specification
+                    exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, in_idx, 1.0)
+
+                # FIXME: Remove this micro-optimization,
+                #        it should be handled by the compiler
+                if not isinstance(exponent, pnlvm.ir.Constant) or exponent.constant != 1.0:
+                    in_val = b.call(pow_f, [in_val, exponent])
+
+                # lower-dim array specification (see exponent above)
+                weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, idx, 1.0)
+                # Vector of vectors (even 1-element vectors)
+                if (
+                    isinstance(weight.type, pnlvm.ir.ArrayType)
+                    and len(weight.type) == 1
+                    and not isinstance(weight.type.element, pnlvm.ir.ArrayType)
+                ):
+                    # FIXME: Add support for matrix weights
+                    weight = b.extract_value(weight, [0])
+                else:
+                    # variable (input) matching array specification
+                    weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, in_idx, 1.0)
+
+                in_val = b.fmul(in_val, weight)
+
+                val = b.load(val_p)
+                val = getattr(b, comb_op)(val, in_val)
+
+                b.store(val, val_p)
+
+            # value (output) matching
+            scale = self._gen_llvm_load_param(ctx, builder, params, SCALE, indices, 1.0)
+            offset = self._gen_llvm_load_param(ctx, builder, params, OFFSET, indices, -0.0)
+
+            val = builder.load(val_p)
+            val = builder.fmul(val, scale)
+            val = builder.fadd(val, offset)
+
+            builder.store(val, ptro)
+
+    def _gen_llvm_combine(self, builder, ctx, vi, vo, params):
         # assume operation does not change dynamically
         operation = self.parameters.operation.get()
         if operation == SUM:
-            val = ctx.float_ty(-0.0)
+            val_f = ctx.float_ty(-0.0)
             comb_op = "fadd"
         elif operation == PRODUCT:
-            val = ctx.float_ty(1.0)
+            val_f = ctx.float_ty(1.0)
             comb_op = "fmul"
         elif operation == CROSS_ENTROPY:
             raise FunctionError(f"LinearCombination Function does not (yet) support CROSS_ENTROPY operation.")
@@ -1536,45 +1614,8 @@ class LinearCombination(
         else:
             assert False, "Unknown operation: {}".format(operation)
 
-        val_p = builder.alloca(val.type, name="combined_result")
-        builder.store(val, val_p)
-
         pow_f = ctx.get_builtin("pow", [ctx.float_ty])
-
-        with pnlvm.helpers.array_ptr_loop(builder, vi, "combine") as (b, idx):
-            ptri = b.gep(vi, [ctx.int32_ty(0), idx, index])
-            in_val = b.load(ptri)
-
-            exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS,
-                                                 idx, 1.0)
-            # Vector of vectors (even 1-element vectors)
-            if isinstance(exponent.type, pnlvm.ir.ArrayType):
-                assert len(exponent.type) == 1 # FIXME: Add support for matrix weights
-                exponent = b.extract_value(exponent, [0])
-            # FIXME: Remove this micro-optimization,
-            #        it should be handled by the compiler
-            if not isinstance(exponent, pnlvm.ir.Constant) or exponent.constant != 1.0:
-                in_val = b.call(pow_f, [in_val, exponent])
-
-            weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS,
-                                               idx, 1.0)
-            # Vector of vectors (even 1-element vectors)
-            if isinstance(weight.type, pnlvm.ir.ArrayType):
-                assert len(weight.type) == 1 # FIXME: Add support for matrix weights
-                weight = b.extract_value(weight, [0])
-
-            in_val = b.fmul(in_val, weight)
-
-            val = b.load(val_p)
-            val = getattr(b, comb_op)(val, in_val)
-            b.store(val, val_p)
-
-        val = builder.load(val_p)
-        val = builder.fmul(val, scale)
-        val = builder.fadd(val, offset)
-
-        ptro = builder.gep(vo, [ctx.int32_ty(0), index])
-        builder.store(val, ptro)
+        self._llvm_combine_body(builder, ctx, vi, vo, val_f, pow_f, comb_op, params, [])
 
     def _gen_pytorch_fct(self, device, context=None):
         weights = self._get_pytorch_fct_param_value('weights', device, context)
