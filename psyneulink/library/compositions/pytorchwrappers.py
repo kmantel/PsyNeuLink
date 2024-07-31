@@ -647,10 +647,10 @@ class PytorchMechanismWrapper():
         self.afferents = []
         self.efferents = []
 
-        self.function = _get_pytorch_function(mechanism.function, device, context)
+        self.function = PytorchFunctionWrapper(mechanism.function, device, context)
 
         if hasattr(mechanism, 'integrator_function'):
-            self.integrator_function = _get_pytorch_function(mechanism.integrator_function, device, context)
+            self.integrator_function = PytorchFunctionWrapper(mechanism.integrator_function, device, context)
             self.integrator_previous_value = mechanism.integrator_function._get_pytorch_fct_param_value('initializer', device, context)
 
         self.input_ports = [
@@ -749,7 +749,7 @@ class PytorchMechanismWrapper():
             else:
                 res = function(variable)
             # LinearCombination reduces output to single item from multi-item input
-            if isinstance(function, CombinationFunction):
+            if isinstance(function._pnl_function, CombinationFunction):
                 res = res.unsqueeze(0)
             return res
 
@@ -963,3 +963,6 @@ class PytorchFunctionWrapper():
 
     def __repr__(self):
         return "PytorchWrapper for: " + self._pnl_function.__repr__()
+
+    def __call__(self, *args, **kwargs):
+        return self.function(*args, **kwargs)
