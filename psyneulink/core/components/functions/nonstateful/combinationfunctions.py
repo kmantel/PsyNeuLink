@@ -97,7 +97,8 @@ class CombinationFunction(Function_Base):
 
     def _gen_llvm_function_body(self, ctx, builder, params, _, arg_in, arg_out, *, tags:frozenset):
         # Sometimes we arg_out to 2d array
-        arg_out = pnlvm.helpers.unwrap_2d_array(builder, arg_out)
+        if self.defaults.variable.ndim == self.defaults.value.ndim:
+            arg_out = pnlvm.helpers.unwrap_2d_array(builder, arg_out)
 
         with pnlvm.helpers.array_ptr_loop(builder, arg_out, "linear") as args:
             self._gen_llvm_combine(ctx=ctx, vi=arg_in, vo=arg_out, params=params, *args)
