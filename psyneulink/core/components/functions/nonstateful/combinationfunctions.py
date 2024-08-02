@@ -1520,13 +1520,13 @@ class LinearCombination(
             axis_indices = []
         axis = len(axis_indices)
 
+        recursed = False
         with pnlvm.helpers.array_ptr_loop(builder, vi, f"combine_axis{axis}") as (b, idx):
             ptri = b.gep(vi, [ctx.int32_ty(0), *axis_indices, idx, elem_index])
             if isinstance(ptri.type.pointee, pnlvm.ir.ArrayType):
                 recursed = True
                 self._llvm_combine_body(b, elem_index, ctx, vi, vo, val_p, pow_f, comb_op, params, axis_indices + [idx])
             else:
-                recursed = False
                 in_val = b.load(ptri)
 
                 exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS,
