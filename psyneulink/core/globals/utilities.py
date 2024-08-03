@@ -1645,6 +1645,14 @@ def convert_all_elements_to_np_array(arr, cast_from=None, cast_to=None):
             else:
                 return arr
 
+        try:
+            regular_arr = np.asarray(arr)
+        except ValueError:
+            pass
+        else:
+            if regular_arr.dtype != object:
+                return regular_arr
+
         subarr = [recurse(x) for x in arr]
 
         with warnings.catch_warnings():
@@ -1672,6 +1680,14 @@ def convert_all_elements_to_np_array(arr, cast_from=None, cast_to=None):
         # only wrap a noniterable if it's the outermost value
         return np.asarray(arr)
     else:
+        try:
+            res = np.asarray(arr)
+        except ValueError:
+            pass
+        else:
+            if res.dtype != object:
+                return res
+
         return recurse(arr)
 
 # Seeds and randomness
