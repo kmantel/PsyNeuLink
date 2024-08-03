@@ -4437,10 +4437,46 @@ class TestRun:
         res2 = C.run([5], execution_mode=comp_mode2, context=ctx)
         np.testing.assert_allclose(res2, [[4.995117]])
 
+    @pytest.mark.composition
     class TestHigherDimensions:
-        @pytest.mark.composition
-        def test_singleton(self, comp_mode):
-            pass
+        @pytest.mark.parametrize(
+            'shape',
+            [
+                (1, 1, 1),
+                (5, 4, 3, 2, 1),
+                (((1,), (2,),)),
+                # (((1,), (2,),), (1, 2, 3), ((1,), (2,), (1, 2))),
+            ]
+        )
+        def test_singleton(self, shape):
+            var = pnl.ragged_np_zeros(shape)
+            A = pnl.ProcessingMechanism(default_variable=var)
+            comp = pnl.Composition([A])
+            comp.run(inputs={A: var})
+
+            assert pnl.extended_array_equal(comp.results, [var])
+
+        @pytest.mark.parametrize(
+            'shape',
+            [
+                (2, 1, 1),
+                # (5, 4, 3, 2, 1),
+                # (((1,), (2,),), ((1,), (2,),)),
+                # (((1,), (2,),), (1, 2, 3), ((1,), (2,), (1, 2))),
+            ]
+        )
+        def test_dim_reduce(self, shape):
+            var = pnl.ragged_np_zeros(shape)
+            reduced = pnl.ragged_np_zeros(shape[1:])
+
+            A = pnl.ProcessingMechanism(default_variable=var, function=pnl.LinearCombination)
+            B = pnl.ProcessingMechanism(default_variable=reduced)
+
+            comp = pnl.Composition([A, B])
+            comp.run(inputs={A: var})
+
+            assert pnl.extended_array_equal(comp.results, [reduced])
+
 
 
 class TestCallBeforeAfterTimescale:
