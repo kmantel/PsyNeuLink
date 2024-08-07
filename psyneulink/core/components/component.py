@@ -4341,7 +4341,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         # no argument, default
         if inp.ndim == 0 and inp.item() is None:
-            res = external_input
+            res = copy_parameter_value(external_input)
         elif array_shapes_equal(inp, external_input):
             res = inp
         elif (
