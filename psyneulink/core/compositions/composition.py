@@ -5754,7 +5754,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # InputPort propagates to the corresponding node's
                     # InputPort as input
                     if len(input_port._input_projections(self)) == 0:
-                        iip_var = [input_port.defaults.value]
+                        # previous behavior, assumes that desired CIM
+                        # shape is a single socket item
+                        iip_var = [input_port.defaults.variable[0]]
                     else:
                         iip_var = input_port.external_input_shape(self)
                     interface_input_port = InputPort(owner=self.input_CIM,
