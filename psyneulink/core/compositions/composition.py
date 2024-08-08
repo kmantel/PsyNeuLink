@@ -5753,8 +5753,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # node's variable shape because the output of this
                     # InputPort propagates to the corresponding node's
                     # InputPort as input
+                    if len(input_port._input_projections(self)) == 0:
+                        iip_var = [input_port.defaults.value]
+                    else:
+                        iip_var = input_port.external_input_shape(self)
                     interface_input_port = InputPort(owner=self.input_CIM,
-                                                     variable=input_port.default_input_shape(self),
+                                                     variable=iip_var,
                                                      reference_value=input_port.defaults.value,
                                                      name= INPUT_CIM_NAME + "_" + node.name + "_" + input_port.name,
                                                      context=context)

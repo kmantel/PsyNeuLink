@@ -1484,17 +1484,10 @@ class InputPort(Port_Base):
     def external_input_shape(self, composition=ConnectionInfo.ALL):
         return self.default_input_shape(composition)
 
-    def default_input_shape(self, composition=ConnectionInfo.ALL):
+    def _input_projections(self, composition=ConnectionInfo.ALL):
         from psyneulink.core.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
 
-        if (
-            composition == ConnectionInfo.ALL
-            or len(self.path_afferents) == 0
-        ):
-            return self.defaults.variable
-
-        # filter out non-CIM projections
-        path_proj_values = []
+        projections = []
         for i, proj in enumerate(self.path_afferents):
             if not self.afferents_info[proj].is_active_in_composition(composition):
                 continue
@@ -1507,6 +1500,19 @@ class InputPort(Port_Base):
                 if not isinstance(owner, CompositionInterfaceMechanism):
                     continue
 
+            projections.append((i, proj))
+        return projections
+
+    def default_input_shape(self, composition=ConnectionInfo.ALL):
+        if (
+            composition == ConnectionInfo.ALL
+            or len(self.path_afferents) == 0
+        ):
+            return self.defaults.variable
+
+        # filter out non-CIM projections
+        path_proj_values = []
+        for i, proj in self._input_projections(composition):
             path_proj_values.append(self.defaults.variable[i])
 
         # no CIM projections are active, don't return empty list
