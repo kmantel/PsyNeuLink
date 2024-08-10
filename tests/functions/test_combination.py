@@ -160,6 +160,8 @@ np.random.seed(0)
 test_varr1 = np.random.rand(1, SIZE)
 test_varr2 = np.random.rand(2, SIZE)
 test_varr3 = np.random.rand(3, SIZE)
+test_varr4 = np.random.rand(2, 1, SIZE)
+test_varr5 = np.random.rand(2, 2, SIZE)
 
 #This gives us the correct 2d column array
 test_varc1 = np.random.rand(SIZE, 1)
@@ -249,6 +251,39 @@ def test_linear_combination_function(variable, operation, exponents, weights, sc
     if exponents == 'V':
         exponents = [[v[0]] for v in variable]
 
+    f = pnl.LinearCombination(default_variable=variable,
+                              operation=operation,
+                              exponents=exponents,
+                              weights=weights,
+                              scale=scale,
+                              offset=offset)
+    EX = pytest.helpers.get_func_execution(f, func_mode)
+    res = benchmark(EX, variable)
+
+    scale = 1.0 if scale is None else scale
+    offset = 0.0 if offset is None else offset
+    exponent = 1.0 if exponents is None else exponents
+    weights = 1.0 if weights is None else weights
+
+    tmp = (variable ** exponent) * weights
+    if operation == pnl.SUM:
+        expected = np.sum(tmp, axis=0) * scale + offset
+    if operation == pnl.PRODUCT:
+        expected = np.prod(tmp, axis=0) * scale + offset
+
+    np.testing.assert_allclose(res, expected, rtol=1e-5, atol=1e-8)
+
+
+@pytest.mark.benchmark(group="LinearCombinationFunction")
+@pytest.mark.function
+@pytest.mark.combination_function
+@pytest.mark.parametrize("variable", [test_varr4, test_varr5], ids=["VAR4", "VAR5"])
+@pytest.mark.parametrize("operation", [pnl.SUM, pnl.PRODUCT])
+@pytest.mark.parametrize("exponents", [None, 2.0], ids=["E_NONE", "E_SCALAR"])
+@pytest.mark.parametrize("weights", [None, 0.5], ids=["W_NONE", "W_SCALAR"])
+@pytest.mark.parametrize("scale", [None, RAND1_S], ids=["S_NONE", "S_SCALAR"])
+@pytest.mark.parametrize("offset", [None, RAND2_S], ids=["O_NONE", "O_SCALAR"])
+def test_linear_combination_function_hdim(variable, operation, exponents, weights, scale, offset, func_mode, benchmark):
     f = pnl.LinearCombination(default_variable=variable,
                               operation=operation,
                               exponents=exponents,
