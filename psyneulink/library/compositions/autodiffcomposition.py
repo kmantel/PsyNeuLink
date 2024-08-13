@@ -1127,16 +1127,7 @@ class AutodiffComposition(Composition):
             pytorch_rep.minibatch_loss += trial_loss
         pytorch_rep.minibatch_loss_count += 1
 
-        # Compute the loss (TARGET-OUTPUT) for each trained OUTPUT node
-        outputs_for_targets = {k:v for k,v in curr_tensor_outputs.items() if k in self.target_output_map.values()}
-        for component in outputs_for_targets.keys():
-            # possibly add custom loss option, which is a loss function that takes many args
-            # (outputs, targets, weights, and more) and returns a scalar
-            new_loss = 0
-            for i in range(len(outputs_for_targets[component])):
-                new_loss += self.loss(outputs_for_targets[component][i],
-                                      curr_tensor_targets[component][i])
-            tracked_loss += new_loss
+        # --------- Return the values of OUTPUT of trained nodes and all nodes  ---------------------------------------
 
         # Get values of trained OUTPUT nodes
         trained_output_values = []

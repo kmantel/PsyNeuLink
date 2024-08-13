@@ -31,7 +31,7 @@ from psyneulink.core.globals.keywords import (ADD, AFTER, ALL, BEFORE, DEFAULT_V
                                               NODE, NODE_VALUES, NODE_VARIABLES, OUTPUTS, RESULTS, RUN,
                                               TARGETS, TARGET_MECHANISM, )
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
-from psyneulink.core.globals.utilities import convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared
+from psyneulink.core.globals.utilities import convert_all_elements_to_np_array, convert_to_list, convert_to_np_array, get_deepcopy_with_shared
 from psyneulink.core.globals.log import LogCondition
 from psyneulink.core import llvm as pnlvm
 
