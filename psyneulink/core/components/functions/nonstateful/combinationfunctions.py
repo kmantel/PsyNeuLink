@@ -1567,13 +1567,11 @@ class LinearCombination(
             builder.store(val_f, val_p)
 
             assert isinstance(builder.gep(vi, [ctx.int32_ty(0)]).type.pointee, pnlvm.ir.ArrayType)
-            with pnlvm.helpers.array_ptr_loop(builder, vi, f"linear") as (b, idx):
+            with pnlvm.helpers.array_ptr_loop(builder, vi, "combine") as (b, idx):
                 in_idx = [idx, *indices]
                 ptri = b.gep(vi, [ctx.int32_ty(0), *in_idx])
                 in_val = b.load(ptri)
 
-                scale = self._gen_llvm_load_param(ctx, builder, params, SCALE, in_idx, 1.0)
-                offset = self._gen_llvm_load_param(ctx, builder, params, OFFSET, in_idx, -0.0)
                 exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, in_idx, 1.0)
                 # Vector of vectors (even 1-element vectors)
                 if isinstance(exponent.type, pnlvm.ir.ArrayType):
@@ -1594,11 +1592,18 @@ class LinearCombination(
 
                 val = b.load(val_p)
                 val = getattr(b, comb_op)(val, in_val)
-                val = builder.fmul(val, scale)
-                val = builder.fadd(val, offset)
+
                 b.store(val, val_p)
 
-            builder.store(builder.load(val_p), ptro)
+            idx_o = [ctx.int32_ty(0), *indices]
+            scale = self._gen_llvm_load_param(ctx, builder, params, SCALE, idx_o, 1.0)
+            offset = self._gen_llvm_load_param(ctx, builder, params, OFFSET, idx_o, -0.0)
+
+            val = builder.load(val_p)
+            val = builder.fmul(val, scale)
+            val = builder.fadd(val, offset)
+
+            builder.store(val, ptro)
 
     def _gen_llvm_combine(self, builder, ctx, vi, vo, params):
         # assume operation does not change dynamically
