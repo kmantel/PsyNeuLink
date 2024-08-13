@@ -160,8 +160,8 @@ np.random.seed(0)
 test_varr1 = np.random.rand(1, SIZE)
 test_varr2 = np.random.rand(2, SIZE)
 test_varr3 = np.random.rand(3, SIZE)
-test_varr4 = np.random.rand(2, 1, SIZE)
-test_varr5 = np.random.rand(2, 2, SIZE)
+test_varr4 = np.random.rand(3, 5, SIZE, 1, SIZE)
+test_varr5 = np.random.rand(3, 2, 10, SIZE, 2, SIZE)
 
 #This gives us the correct 2d column array
 test_varc1 = np.random.rand(SIZE, 1)
