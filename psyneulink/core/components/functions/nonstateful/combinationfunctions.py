@@ -91,8 +91,8 @@ class CombinationFunction(Function_Base):
             assert len(param_type) == 0
             return ctx.float_ty(default)
         elif isinstance(param_type, pnlvm.ir.ArrayType):
-            index = ctx.int32_ty(0) if len(param_type) == 1 else index
-            param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), index])
+            index = [ctx.int32_ty(0)] if len(param_type) == 1 else index
+            param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), *index])
         return builder.load(param_ptr)
 
     def _gen_llvm_function_body(self, ctx, builder, params, _, arg_in, arg_out, *, tags:frozenset):
@@ -1558,14 +1558,15 @@ class LinearCombination(
 
     def _llvm_combine_body(self, builder, ctx, vi, vo, val_f, pow_f, comb_op, params, indices):
         ptro = builder.gep(vo, [ctx.int32_ty(0), *indices])
-        if (
-            isinstance(ptro.type.pointee, pnlvm.ir.ArrayType)
-            and len(ptro.type.pointee)
-            and isinstance(builder.gep(vo, [ctx.int32_ty(0), *indices, ctx.int32_ty(0)]), pnlvm.ir.ArrayType)
-        ):
+
+        if isinstance(ptro.type.pointee, pnlvm.ir.ArrayType):
+            with pnlvm.helpers.array_ptr_loop(builder, ptro, f"combine_axis{len(indices)}") as (b, idx):
+                self._llvm_combine_body(b, ctx, vi, vo, val_f, pow_f, comb_op, params, [*indices, idx])
+        else:
             val_p = builder.alloca(val_f.type, name="combined_result")
             builder.store(val_f, val_p)
 
+            assert isinstance(builder.gep(vi, [ctx.int32_ty(0)]).type.pointee, pnlvm.ir.ArrayType)
             with pnlvm.helpers.array_ptr_loop(builder, vi, f"linear") as (b, idx):
                 in_idx = [idx, *indices]
                 ptri = b.gep(vi, [ctx.int32_ty(0), *in_idx])
@@ -1591,15 +1592,13 @@ class LinearCombination(
 
                 in_val = b.fmul(in_val, weight)
 
-            val = b.load(val_p)
-            val = getattr(b, comb_op)(val, in_val)
-            val = builder.fmul(val, scale)
-            val = builder.fadd(val, offset)
-            b.store(val, ptro)
-        else:
-            axis = len(indices)
-            with pnlvm.helpers.array_ptr_loop(builder, vo, f"combine_axis{axis}") as (b, idx):
-                self._llvm_combine_body(b, ctx, vi, vo, val_f, pow_f, comb_op, params, [*indices, idx])
+                val = b.load(val_p)
+                val = getattr(b, comb_op)(val, in_val)
+                val = builder.fmul(val, scale)
+                val = builder.fadd(val, offset)
+                b.store(val, val_p)
+
+            builder.store(builder.load(val_p), ptro)
 
     def _gen_llvm_combine(self, builder, ctx, vi, vo, params):
         # assume operation does not change dynamically
