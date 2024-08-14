@@ -6827,10 +6827,6 @@ class TestInputs:
         expected_parsed_inputs = map_dict_keys_to_objects(expected_parsed_inputs, locals())
 
         parsed_inputs, num_trials = comp._parse_run_inputs(inputs)
-        print()
-        print(inputs)
-        print('---')
-        print(parsed_inputs)
 
         for mech in parsed_inputs:
             np.testing.assert_array_equal(
