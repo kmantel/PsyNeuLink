@@ -1562,6 +1562,7 @@ class LinearCombination(
                 if not isinstance(exponent, pnlvm.ir.Constant): # or exponent.constant != 1.0:
                     in_val = b.call(pow_f, [in_val, exponent])
 
+                # lower-dim array specification (see exponent above)
                 weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, idx, 1.0)
                 # Vector of vectors (even 1-element vectors)
                 if (
@@ -1572,6 +1573,7 @@ class LinearCombination(
                     # FIXME: Add support for matrix weights
                     weight = b.extract_value(weight, [0])
                 else:
+                    # variable (input) matching array specification
                     weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, in_idx, 1.0)
 
                 in_val = b.fmul(in_val, weight)
