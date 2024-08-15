@@ -91,9 +91,8 @@ class CombinationFunction(Function_Base):
             assert len(param_type) == 0
             return ctx.float_ty(default)
         elif isinstance(param_type, pnlvm.ir.ArrayType):
-            # support single item vector
-            if getattr(self.defaults, param_name).shape == (1,) and len(param_type) == 1:
-                index = ctx.int32_ty(0)
+            if len(param_type) == 1 and not isinstance(param_type.element, pnlvm.ir.ArrayType):
+                index = [ctx.int32_ty(0)]
 
             if not isinstance(index, list):
                 index = [index]
@@ -1579,13 +1578,35 @@ class LinearCombination(
                 in_val = b.load(ptri)
 
                 param_idx = [ctx.int32_ty(0), idx]
-                exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, in_idx, 1.0)
+
+                exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, idx, 1.0)
+                # Vector of vectors (even 1-element vectors)
+                if (
+                    isinstance(exponent.type, pnlvm.ir.ArrayType)
+                    and len(exponent.type) == 1
+                    and not isinstance(exponent.type.element, pnlvm.ir.ArrayType)
+                ):
+                    # FIXME: Add support for matrix weights
+                    exponent = b.extract_value(exponent, [0])
+                else:
+                    exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, in_idx, 1.0)
+
                 # FIXME: Remove this micro-optimization,
                 #        it should be handled by the compiler
-                if not isinstance(exponent, pnlvm.ir.Constant) or exponent.constant != 1.0:
+                if not isinstance(exponent, pnlvm.ir.Constant): # or exponent.constant != 1.0:
                     in_val = b.call(pow_f, [in_val, exponent])
 
-                weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, in_idx, 1.0)
+                weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, idx, 1.0)
+                # Vector of vectors (even 1-element vectors)
+                if (
+                    isinstance(weight.type, pnlvm.ir.ArrayType)
+                    and len(weight.type) == 1
+                    and not isinstance(weight.type.element, pnlvm.ir.ArrayType)
+                ):
+                    # FIXME: Add support for matrix weights
+                    weight = b.extract_value(weight, [0])
+                else:
+                    weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, in_idx, 1.0)
 
                 in_val = b.fmul(in_val, weight)
 
