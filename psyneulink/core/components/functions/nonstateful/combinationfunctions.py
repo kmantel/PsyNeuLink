@@ -91,9 +91,11 @@ class CombinationFunction(Function_Base):
             assert len(param_type) == 0
             return ctx.float_ty(default)
         elif isinstance(param_type, pnlvm.ir.ArrayType):
+            # support single item vector
+            if getattr(self.defaults, param_name).shape == (1,) and len(param_type) == 1:
+                index = ctx.int32_ty(0)
+
             if not isinstance(index, list):
-                if len(param_type) == 1:
-                    index = ctx.int32_ty(0)
                 index = [index]
 
             param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), *index])
