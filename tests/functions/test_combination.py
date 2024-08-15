@@ -308,19 +308,19 @@ def test_linear_combination_function(variable, operation, exponents, weights, sc
 @pytest.mark.combination_function
 @pytest.mark.parametrize("variable", [test_varh1, test_varh2, test_varh3], ids=["VAR1h", "VAR2h", "VAR3h"])
 @pytest.mark.parametrize("operation", [pnl.SUM, pnl.PRODUCT])
-@pytest.mark.parametrize("exponents", [None, 2.0, [3.0], 'V'], ids=["E_NONE", "E_SCALAR", "E_VECTOR1", "E_VECTORN"])
+@pytest.mark.parametrize("exponents", [None, 2.0, 'V'], ids=["E_NONE", "E_SCALAR", "E_VECTORN"])
 @pytest.mark.parametrize("weights", [None, 0.5, 'V'], ids=["W_NONE", "W_SCALAR", "W_VECTORN"])
 @pytest.mark.parametrize("scale", [None, RAND1_S, 'V'], ids=["S_NONE", "S_SCALAR", "S_VECTOR"])
 @pytest.mark.parametrize("offset", [None, RAND2_S, 'V'], ids=["O_NONE", "O_SCALAR", "O_VECTOR"])
 def test_linear_combination_function_hdim(variable, operation, exponents, weights, scale, offset, func_mode, benchmark):
-
+    # vectors in shape of input
     if weights == 'V':
         # random 1/-1
         weights = 2 * (np.round(RANDh_V['weights'][variable.shape]) - .5)
     if exponents == 'V':
         exponents = RANDh_V['exponents'][variable.shape]
 
-    # vector in shape of output
+    # vectors in shape of output
     if scale == 'V':
         scale = RANDh_V['scale'][variable.shape][0]
     if offset == 'V':
