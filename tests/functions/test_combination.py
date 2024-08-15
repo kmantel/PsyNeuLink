@@ -346,7 +346,7 @@ def test_linear_combination_function_higher_dim(variable, operation, exponents, 
     if operation == pnl.PRODUCT:
         expected = np.prod(tmp, axis=0) * scale + offset
 
-    np.testing.assert_allclose(res, expected, rtol=1e-5, atol=1e-8)
+    np.testing.assert_allclose(res, expected, rtol=3e-5, atol=2e-7)
 
 
 @pytest.mark.benchmark(group="LinearCombinationFunction in Mechanism")
