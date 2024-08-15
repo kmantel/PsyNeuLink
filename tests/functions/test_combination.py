@@ -185,17 +185,21 @@ test_varh1 = np.random.rand(1, 1, SIZE)
 test_varh2 = np.random.rand(2, 3, SIZE, SIZE)
 test_varh3 = np.random.rand(4, 3, SIZE, SIZE, SIZE)
 
-RAND1h_V = {
-    test_varh1.shape: np.random.rand(*test_varh1.shape),
-    test_varh2.shape: np.random.rand(*test_varh2.shape),
-    test_varh3.shape: np.random.rand(*test_varh3.shape),
+RANDh_V = {
+    k: {
+        test_varh1.shape: np.random.rand(*test_varh1.shape),
+        test_varh2.shape: np.random.rand(*test_varh2.shape),
+        test_varh3.shape: np.random.rand(*test_varh3.shape),
+    }
+    for k in ['exponents', 'weights', 'scale', 'offset']
 }
+# RAND1h_V =
 
-RAND2h_V = {
-    test_varh1.shape: np.random.rand(*test_varh1.shape),
-    test_varh2.shape: np.random.rand(*test_varh2.shape),
-    test_varh3.shape: np.random.rand(*test_varh3.shape),
-}
+# RAND2h_V = {
+#     test_varh1.shape: np.random.rand(*test_varh1.shape),
+#     test_varh2.shape: np.random.rand(*test_varh2.shape),
+#     test_varh3.shape: np.random.rand(*test_varh3.shape),
+# }
 
 # RAND1_h1_V = np.random.rand(size=test_varh1.shape)
 # RAND2_h1_V = np.random.rand(size=test_varh1.shape)
@@ -304,21 +308,23 @@ def test_linear_combination_function(variable, operation, exponents, weights, sc
 @pytest.mark.combination_function
 @pytest.mark.parametrize("variable", [test_varh1, test_varh2, test_varh3], ids=["VAR1h", "VAR2h", "VAR3h"])
 @pytest.mark.parametrize("operation", [pnl.SUM, pnl.PRODUCT])
-@pytest.mark.parametrize("exponents", [None, 2.0], ids=["E_NONE", "E_SCALAR"])
-@pytest.mark.parametrize("weights", [None, 0.5], ids=["W_NONE", "W_SCALAR"])
+@pytest.mark.parametrize("exponents", [None, 2.0, [3.0], 'V'], ids=["E_NONE", "E_SCALAR", "E_VECTOR1", "E_VECTORN"])
+@pytest.mark.parametrize("weights", [None, 0.5, 'V'], ids=["W_NONE", "W_SCALAR", "W_VECTORN"])
 @pytest.mark.parametrize("scale", [None, RAND1_S, 'V'], ids=["S_NONE", "S_SCALAR", "S_VECTOR"])
 @pytest.mark.parametrize("offset", [None, RAND2_S, 'V'], ids=["O_NONE", "O_SCALAR", "O_VECTOR"])
 def test_linear_combination_function_hdim(variable, operation, exponents, weights, scale, offset, func_mode, benchmark):
+
     if weights == 'V':
-        weights = [[-1 ** i] for i, v in enumerate(variable)]
+        # random 1/-1
+        weights = 2 * (np.round(RANDh_V['weights'][variable.shape]) - .5)
     if exponents == 'V':
-        exponents = [[v[0]] for v in variable]
+        exponents = RANDh_V['exponents'][variable.shape]
 
     # vector in shape of output
     if scale == 'V':
-        scale = RAND1h_V[variable.shape][0]
+        scale = RANDh_V['scale'][variable.shape][0]
     if offset == 'V':
-        offset = RAND2h_V[variable.shape][0]
+        offset = RANDh_V['offset'][variable.shape][0]
 
     f = pnl.LinearCombination(default_variable=variable,
                               operation=operation,

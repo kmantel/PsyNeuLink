@@ -1572,26 +1572,18 @@ class LinearCombination(
 
             assert isinstance(builder.gep(vi, [ctx.int32_ty(0)]).type.pointee, pnlvm.ir.ArrayType)
             with pnlvm.helpers.array_ptr_loop(builder, vi, "combine") as (b, idx):
-                in_idx = [ctx.int32_ty(0), idx, *indices]
-                ptri = b.gep(vi, in_idx)
+                in_idx = [idx, *indices]
+                ptri = b.gep(vi, [ctx.int32_ty(0), *in_idx])
                 in_val = b.load(ptri)
 
                 param_idx = [ctx.int32_ty(0), idx]
-                exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, idx, 1.0)
-                # Vector of vectors (even 1-element vectors)
-                if isinstance(exponent.type, pnlvm.ir.ArrayType):
-                    assert len(exponent.type) == 1 # FIXME: Add support for matrix weights
-                    exponent = b.extract_value(exponent, [0])
+                exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, in_idx, 1.0)
                 # FIXME: Remove this micro-optimization,
                 #        it should be handled by the compiler
                 if not isinstance(exponent, pnlvm.ir.Constant) or exponent.constant != 1.0:
                     in_val = b.call(pow_f, [in_val, exponent])
 
-                weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, idx, 1.0)
-                # Vector of vectors (even 1-element vectors)
-                if isinstance(weight.type, pnlvm.ir.ArrayType):
-                    assert len(weight.type) == 1 # FIXME: Add support for matrix weights
-                    weight = b.extract_value(weight, [0])
+                weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, in_idx, 1.0)
 
                 in_val = b.fmul(in_val, weight)
 
