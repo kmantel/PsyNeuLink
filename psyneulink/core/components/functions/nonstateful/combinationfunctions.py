@@ -91,8 +91,12 @@ class CombinationFunction(Function_Base):
             assert len(param_type) == 0
             return ctx.float_ty(default)
         elif isinstance(param_type, pnlvm.ir.ArrayType):
-            index = ctx.int32_ty(0) if len(param_type) == 1 else index
-            param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), index])
+            if not isinstance(index, list):
+                if len(param_type) == 1:
+                    index = ctx.int32_ty(0)
+                index = [index]
+
+            param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), *index])
         return builder.load(param_ptr)
 
     def _gen_llvm_function_body(self, ctx, builder, params, _, arg_in, arg_out, *, tags:frozenset):
@@ -1597,8 +1601,8 @@ class LinearCombination(
                 b.store(val, val_p)
 
             idx_o = [ctx.int32_ty(0), *indices]
-            scale = self._gen_llvm_load_param(ctx, builder, params, SCALE, indices[0], 1.0)
-            offset = self._gen_llvm_load_param(ctx, builder, params, OFFSET, indices[0], -0.0)
+            scale = self._gen_llvm_load_param(ctx, builder, params, SCALE, indices, 1.0)
+            offset = self._gen_llvm_load_param(ctx, builder, params, OFFSET, indices, -0.0)
 
             val = builder.load(val_p)
             val = builder.fmul(val, scale)

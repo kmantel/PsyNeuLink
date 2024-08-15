@@ -160,8 +160,6 @@ np.random.seed(0)
 test_varr1 = np.random.rand(1, SIZE)
 test_varr2 = np.random.rand(2, SIZE)
 test_varr3 = np.random.rand(3, SIZE)
-test_varr4 = np.random.rand(3, 5, SIZE, 1, SIZE)
-test_varr5 = np.random.rand(3, 2, 10, SIZE, 2, SIZE)
 
 #This gives us the correct 2d column array
 test_varc1 = np.random.rand(SIZE, 1)
@@ -180,6 +178,33 @@ RAND3_V = np.random.rand(SIZE)
 RAND1_S = np.random.rand()
 RAND2_S = np.random.rand()
 RAND3_S = np.random.rand()
+
+
+# higher dimension arrays
+test_varh1 = np.random.rand(1, 1, SIZE)
+test_varh2 = np.random.rand(2, 3, SIZE, SIZE)
+test_varh3 = np.random.rand(4, 3, SIZE, SIZE, SIZE)
+
+RAND1h_V = {
+    test_varh1.shape: np.random.rand(*test_varh1.shape),
+    test_varh2.shape: np.random.rand(*test_varh2.shape),
+    test_varh3.shape: np.random.rand(*test_varh3.shape),
+}
+
+RAND2h_V = {
+    test_varh1.shape: np.random.rand(*test_varh1.shape),
+    test_varh2.shape: np.random.rand(*test_varh2.shape),
+    test_varh3.shape: np.random.rand(*test_varh3.shape),
+}
+
+# RAND1_h1_V = np.random.rand(size=test_varh1.shape)
+# RAND2_h1_V = np.random.rand(size=test_varh1.shape)
+#
+# RAND1_h2_V = np.random.rand(size=test_varh2.shape)
+# RAND2_h2_V = np.random.rand(size=test_varh2.shape)
+#
+# RAND1_h3_V = np.random.rand(size=test_varh3.shape)
+# RAND2_h3_V = np.random.rand(size=test_varh3.shape)
 
 
 @pytest.mark.benchmark(group="ReduceFunction")
@@ -277,13 +302,24 @@ def test_linear_combination_function(variable, operation, exponents, weights, sc
 @pytest.mark.benchmark(group="LinearCombinationFunction")
 @pytest.mark.function
 @pytest.mark.combination_function
-@pytest.mark.parametrize("variable", [test_varr4, test_varr5], ids=["VAR4", "VAR5"])
+@pytest.mark.parametrize("variable", [test_varh1, test_varh2, test_varh3], ids=["VAR1h", "VAR2h", "VAR3h"])
 @pytest.mark.parametrize("operation", [pnl.SUM, pnl.PRODUCT])
 @pytest.mark.parametrize("exponents", [None, 2.0], ids=["E_NONE", "E_SCALAR"])
 @pytest.mark.parametrize("weights", [None, 0.5], ids=["W_NONE", "W_SCALAR"])
-@pytest.mark.parametrize("scale", [None, RAND1_S], ids=["S_NONE", "S_SCALAR"])
-@pytest.mark.parametrize("offset", [None, RAND2_S], ids=["O_NONE", "O_SCALAR"])
+@pytest.mark.parametrize("scale", [None, RAND1_S, 'V'], ids=["S_NONE", "S_SCALAR", "S_VECTOR"])
+@pytest.mark.parametrize("offset", [None, RAND2_S, 'V'], ids=["O_NONE", "O_SCALAR", "O_VECTOR"])
 def test_linear_combination_function_hdim(variable, operation, exponents, weights, scale, offset, func_mode, benchmark):
+    if weights == 'V':
+        weights = [[-1 ** i] for i, v in enumerate(variable)]
+    if exponents == 'V':
+        exponents = [[v[0]] for v in variable]
+
+    # vector in shape of output
+    if scale == 'V':
+        scale = RAND1h_V[variable.shape][0]
+    if offset == 'V':
+        offset = RAND2h_V[variable.shape][0]
+
     f = pnl.LinearCombination(default_variable=variable,
                               operation=operation,
                               exponents=exponents,
