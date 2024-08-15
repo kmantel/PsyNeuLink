@@ -1517,42 +1517,6 @@ class LinearCombination(
         default_var = np.atleast_2d(self.defaults.variable)
         return ctx.convert_python_struct_to_llvm_ir(default_var)
 
-    # TODO: REMOVE - this is example code to be implemented as llvm
-    # def _lincomb_outer(op, arr, res_arr, axis_indices=None):
-    #     if axis_indices is None:
-    #         axis_indices = []
-
-    #     a_idx = tuple([*axis_indices])
-    #     itm = res_arr[a_idx]
-    #     if itm.ndim == 1:
-    #         if op is np.sum:
-    #             val_p = 0
-    #         elif op is np.prod:
-    #             val_p = 1
-    #         else:
-    #             assert False
-
-    #         # iterate, sum, store
-    #         for i in range(len(arr)):
-    #             val = arr[(i, *axis_indices)]
-    #             if op is np.sum:
-    #                 val_p += val
-    #             elif op is np.prod:
-    #                 val_p *= val
-
-    #         res_arr[a_idx] = val_p
-
-    #     else:
-    #         for i in range(len(res_arr[a_idx])):
-    #             _lincomb_outer(op, arr, res_arr, [*axis_indices, i])
-
-    # def linear_combination(arr, op=np.sum):
-    #     assert len(arr)
-    #     res_arr = np.empty(arr.shape[1:])
-    #     _lincomb_outer(op, arr, res_arr)
-    #     return res_arr
-
-    # TODO: copied from CombinationFunction._gen_llvm_function_body to remove outer loop
     def _gen_llvm_function_body(self, ctx, builder, params, _, arg_in, arg_out, *, tags:frozenset):
         # Sometimes we arg_out to 2d array
         if self.defaults.variable.ndim == self.defaults.value.ndim:
@@ -1577,8 +1541,9 @@ class LinearCombination(
                 ptri = b.gep(vi, [ctx.int32_ty(0), *in_idx])
                 in_val = b.load(ptri)
 
-                param_idx = [ctx.int32_ty(0), idx]
-
+                # lower-dim array specification (ex: exponents [a, b]
+                # and var [[[1, 1]], [[2, 2]]], applying a to [[1, 1]]
+                # and b to [[2, 2]])
                 exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, idx, 1.0)
                 # Vector of vectors (even 1-element vectors)
                 if (
@@ -1589,6 +1554,7 @@ class LinearCombination(
                     # FIXME: Add support for matrix weights
                     exponent = b.extract_value(exponent, [0])
                 else:
+                    # variable (input) matching array specification
                     exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, in_idx, 1.0)
 
                 # FIXME: Remove this micro-optimization,
@@ -1615,7 +1581,7 @@ class LinearCombination(
 
                 b.store(val, val_p)
 
-            idx_o = [ctx.int32_ty(0), *indices]
+            # value (output) matching
             scale = self._gen_llvm_load_param(ctx, builder, params, SCALE, indices, 1.0)
             offset = self._gen_llvm_load_param(ctx, builder, params, OFFSET, indices, -0.0)
 
