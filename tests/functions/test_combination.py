@@ -303,16 +303,16 @@ def test_linear_combination_function(variable, operation, exponents, weights, sc
     np.testing.assert_allclose(res, expected, rtol=1e-5, atol=1e-8)
 
 
-@pytest.mark.benchmark(group="LinearCombinationFunction")
+@pytest.mark.benchmark(group="LinearCombinationFunction higher dim")
 @pytest.mark.function
 @pytest.mark.combination_function
 @pytest.mark.parametrize("variable", [test_varh1, test_varh2, test_varh3], ids=["VAR1h", "VAR2h", "VAR3h"])
 @pytest.mark.parametrize("operation", [pnl.SUM, pnl.PRODUCT])
-@pytest.mark.parametrize("exponents", [None, 2.0, 'V'], ids=["E_NONE", "E_SCALAR", "E_VECTORN"])
+@pytest.mark.parametrize("exponents", [None, 2.0, [3.0], 'V'], ids=["E_NONE", "E_SCALAR", "E_VECTOR1", "E_VECTORN"])
 @pytest.mark.parametrize("weights", [None, 0.5, 'V'], ids=["W_NONE", "W_SCALAR", "W_VECTORN"])
 @pytest.mark.parametrize("scale", [None, RAND1_S, 'V'], ids=["S_NONE", "S_SCALAR", "S_VECTOR"])
 @pytest.mark.parametrize("offset", [None, RAND2_S, 'V'], ids=["O_NONE", "O_SCALAR", "O_VECTOR"])
-def test_linear_combination_function_hdim(variable, operation, exponents, weights, scale, offset, func_mode, benchmark):
+def test_linear_combination_function_higher_dim(variable, operation, exponents, weights, scale, offset, func_mode, benchmark):
     # vectors in shape of input
     if weights == 'V':
         # random 1/-1
