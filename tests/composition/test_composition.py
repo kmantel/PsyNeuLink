@@ -4445,7 +4445,6 @@ class TestRun:
                 (1, 1, 1),
                 (5, 4, 3, 2, 1),
                 (((1,), (2,),)),
-                # (((1,), (2,),), (1, 2, 3), ((1,), (2,), (1, 2))),
             ]
         )
         def test_singleton(self, shape):
@@ -4460,23 +4459,24 @@ class TestRun:
             'shape',
             [
                 (2, 1, 1),
-                # (5, 4, 3, 2, 1),
-                # (((1,), (2,),), ((1,), (2,),)),
-                # (((1,), (2,),), (1, 2, 3), ((1,), (2,), (1, 2))),
+                (5, 4, 3, 2, 1),
+                pytest.param(
+                    (((1,), (2,),), ((1,), (2,),)),
+                    marks=pytest.mark.xfail(reason='matrix multiplication of ragged arrays')
+                )
             ]
         )
         def test_dim_reduce(self, shape):
             var = pnl.ragged_np_zeros(shape)
             reduced = pnl.ragged_np_zeros(shape[1:])
 
-            A = pnl.ProcessingMechanism(default_variable=var, function=pnl.LinearCombination)
-            B = pnl.ProcessingMechanism(default_variable=reduced)
+            A = pnl.ProcessingMechanism(default_variable=[var], function=pnl.LinearCombination)
+            B = pnl.ProcessingMechanism(default_variable=[reduced])
 
             comp = pnl.Composition([A, B])
             comp.run(inputs={A: var})
 
-            assert pnl.extended_array_equal(comp.results, [reduced])
-
+            assert pnl.extended_array_equal(comp.results, [[reduced]])
 
 
 class TestCallBeforeAfterTimescale:
