@@ -4478,6 +4478,38 @@ class TestRun:
 
             assert pnl.extended_array_equal(comp.results, [[reduced]])
 
+        @pytest.mark.nested
+        def test_nested_parallel(self):
+            A = ProcessingMechanism(
+                name="A", default_variable=[[[[0]]]], function=AdaptiveIntegrator(rate=0.1)
+            )
+            B = ProcessingMechanism(
+                name="B", default_variable=[[[[0]]]], function=Logistic
+            )
+
+            inner_comp1 = Composition(name="inner_comp1")
+            inner_comp1.add_linear_processing_pathway([A, B])
+
+            C = TransferMechanism(
+                name="C",
+                default_variable=[[[[0]]]],
+                function=Logistic,
+                integration_rate=0.1,
+                integrator_mode=True
+            )
+
+            inner_comp2 = Composition(name="inner_comp2")
+            inner_comp2.add_node(C)
+
+            outer_comp = Composition(name="outer_comp")
+            outer_comp.add_node(inner_comp1)
+            outer_comp.add_node(inner_comp2)
+
+            outer_comp.run(inputs={inner_comp1: [[[[1.0]]]], inner_comp2: [[[[1.0]]]]})
+            np.testing.assert_allclose(
+                outer_comp.results, [[[[[0.52497918747894]]], [[[0.52497918747894]]]]]
+            )
+
 
 class TestCallBeforeAfterTimescale:
 
