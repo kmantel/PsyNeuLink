@@ -1406,7 +1406,7 @@ COMMENT:
     ...               nested_comp_3: [[[12]],[[13]],   # Note: full input nested Composition is provide
     ...                              [[14]],[[15]]]}   #       for each TRIAL of execution
     >>> outer_comp.get_input_format()
-    >>> outer_comp.external_input_shape()
+    >>> outer_comp.default_external_input()
     >>> outer_comp.external_input_ports_of_all_input_nodes
     >>> outer_comp.run(inputs=inputs)
     Add output here
@@ -5810,7 +5810,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         # shape is a single socket item
                         iip_var = [input_port.defaults.variable[0]]
                     else:
-                        iip_var = input_port.external_input_shape(self)
+                        iip_var = input_port.default_external_input(self)
                     interface_input_port = InputPort(owner=self.input_CIM,
                                                      variable=iip_var,
                                                      reference_value=input_port.defaults.value,
@@ -10180,12 +10180,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # Validate that a single input is properly formatted for a receiver.
         _input = []
-        if isinstance(receiver, InputPort):
-            input_shape = receiver.default_input_shape(self)
-        elif isinstance(receiver, Mechanism):
-            input_shape = receiver.external_input_shape(self)
-        elif isinstance(receiver, Composition):
-            input_shape = receiver.input_CIM.external_input_shape(self)
+        input_shape = receiver.default_external_input(self)
         match_type = self._input_matches_variable(input, input_shape)
         if match_type == 'homogeneous':
             # np.atleast_2d will catch any single-input ports specified without an outer list
@@ -10429,7 +10424,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for INPUT_Node in input_nodes:
 
             if inputs is None:
-                input_dict[INPUT_Node] = [INPUT_Node.external_input_shape(self)]
+                input_dict[INPUT_Node] = [INPUT_Node.default_external_input(self)]
                 continue
 
             # FIX: 11/3/23 - THE FOLLOWING CURRENTLY ONLY LOOKS AT input KEYS THAT ARE NODES
@@ -10544,7 +10539,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             idx = trial_num
                         node_trial_input.append(input_port.parse_input_array(port_spec[idx], self))
                     else:
-                        node_trial_input.append(convert_all_elements_to_np_array(input_port.default_input_shape(self)))
+                        node_trial_input.append(convert_all_elements_to_np_array(input_port.default_external_input(self)))
 
                 node_input.append(node_trial_input)
 
@@ -10560,7 +10555,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # If any INPUT Nodes of the Composition are not specified, add them and assign default_external_input_values
         for node in input_nodes:
             if node not in input_dict:
-                input_dict[node] = node.external_input_shape(self)
+                input_dict[node] = node.default_external_input(self)
 
         return input_dict
 
@@ -10643,13 +10638,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # Look for any bad ones (for which _validate_single_input() returned None) and report if found
                 if any(i is None for i in _input):
                     if isinstance(receiver, InputPort):
-                        receiver_template = receiver.default_input_shape
+                        receiver_template = receiver.default_external_input
                         receiver_name = receiver.full_name
                     elif isinstance(receiver, Mechanism):
-                        receiver_template = receiver.external_input_shape(self)
+                        receiver_template = receiver.default_external_input(self)
                         receiver_name = receiver.name
                     elif isinstance(receiver, Composition):
-                        receiver_template = receiver.input_CIM.external_input_shape(self)
+                        receiver_template = receiver.input_CIM.default_external_input(self)
                         receiver_name = receiver.name
                     bad_stimulus_template = [stim for stim, _inp in zip(stimulus, _input) if _inp is None]
                     err_msg = (f"Input stimulus shape ({bad_stimulus_template}) for '{receiver_name}' is incompatible "
@@ -10775,14 +10770,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         _inputs = {}
         for node, inp in inputs.items():
             inp_arr = convert_all_elements_to_np_array(inp)
-            if inp_arr.shape[1:] == convert_all_elements_to_np_array(node.external_input_shape(self)).shape:
+            if inp_arr.shape[1:] == convert_all_elements_to_np_array(node.default_external_input(self)).shape:
                 # If inp formatted for trial series, get only one one trial's worth of inputs to test
                 inp = inp[0]
             inp = node.parse_input_array(inp, self)
             input_after_validate = self._validate_single_input(node, inp)
             if input_after_validate is None:
                 raise CompositionError(f"Input stimulus ({inp}) for {node.name} is incompatible "
-                                       f"with its variable ({node.external_input_shape(self)}).")
+                                       f"with its variable ({node.default_external_input(self)}).")
             _inputs[node] = input_after_validate
         return _inputs
 
@@ -12623,7 +12618,7 @@ _
                         if use_labels and isinstance(node, Mechanism) and node.input_labels_dict:
                             labels_dict = node.input_labels_dict
 
-                            for i in range(len(node.external_input_shape(self))):
+                            for i in range(len(node.default_external_input(self))):
                                 labels = _get_labels(labels_dict, i, node.input_ports[i])
                                 inputs_for_format.append(repr(labels[t % len(labels)]))
                                 inputs_for_template_dict.append(labels[t % len(labels)])
@@ -12642,13 +12637,13 @@ _
                                     inputs_for_format.append(repr([labels[t % len(labels)]]))
                                     inputs_for_template_dict.append([labels[t % len(labels)]])
                                 else:
-                                    inputs_for_template_dict.append(port.default_input_shape(self))
-                                    inputs_for_format.append(repr(np.array(port.default_input_shape(self)).tolist()))
+                                    inputs_for_template_dict.append(port.default_external_input(self))
+                                    inputs_for_format.append(repr(np.array(port.default_external_input(self)).tolist()))
                             trial = f"[{','.join(inputs_for_format)}]"
 
                         # No Mechanism(s) with labels or use_labels == False
                         else:
-                            inputs_for_template_dict = [port.default_input_shape(self) for port in node.external_input_ports]
+                            inputs_for_template_dict = [port.default_external_input(self) for port in node.external_input_ports]
                             trial = f"[{','.join([repr(i.tolist()) for i in inputs_for_template_dict])}]"
 
                         node_inputs_for_format_string.append(trial)
@@ -13395,19 +13390,13 @@ _
     ):
         return self.input_CIM.parse_input_array(inp, composition, sequence)
 
-    def external_input_shape(self, composition=NotImplemented):
-        """Alias for _default_external_input_shape"""
+    def default_external_input(self, composition=NotImplemented):
         if composition is NotImplemented:
             composition = self
-        return self._default_external_input_shape(composition)
+        return self.input_CIM.default_external_input(composition)
 
-    def _default_external_input_shape(self, composition):
-        """Return default_input_shape of all external InputPorts that belong to Input CompositionInterfaceMechanism"""
-        try:
-            return [input_port.default_input_shape(composition) for input_port in self.input_CIM.input_ports
-                    if not input_port.internal_only]
-        except (TypeError, AttributeError):
-            return None
+    def external_input_shape(self, composition=NotImplemented):
+        return self.default_external_input(composition).shape
 
     @property
     def external_input_variables(self):

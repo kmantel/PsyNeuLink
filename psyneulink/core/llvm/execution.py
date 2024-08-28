@@ -450,7 +450,7 @@ class CompExecution(CUDAExecution):
             port_inputs = {origin_port:[proj.parameters.value._get(context) for proj in p[0].path_afferents] for (origin_port, p) in self._composition.input_CIM_ports.items()}
             inputs = {}
             for p, v in port_inputs.items():
-                data = inputs.setdefault(p.owner, [ip.default_input_shape(self._composition) for ip in p.owner.input_ports])
+                data = inputs.setdefault(p.owner, [ip.default_external_input(self._composition) for ip in p.owner.input_ports])
                 index = p.owner.input_ports.index(p)
                 data[index] = v
 

@@ -4340,7 +4340,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         inp_squeezed = np.squeeze(inp)
         inp_is_sequence = False
 
-        external_input = self.external_input_shape_arr(composition)
+        external_input = self.default_external_input(composition)
         res = None
 
         # no argument, default
@@ -4430,23 +4430,15 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         return convert_all_elements_to_np_array(res)
 
-    # TODO: replace 'external_input_shape' in subclasses with this
     def default_external_input(self, composition=ConnectionInfo.ALL):
         return copy_parameter_value(self.defaults.variable)
 
     def external_input_shape(self, composition=ConnectionInfo.ALL):
-        # TODO: actually return the shape, not the array
-        # return self.default_external_input(composition).shape
-        return self.default_external_input(composition)
-
-    # TODO: rename to external_input_shape and replace above
-    def external_input_shape_shape(self, composition=ConnectionInfo.ALL):
-        return self.external_input_shape_arr(composition).shape
-
-    # TODO: remove this when external_input_shape and
-    # default_external_input are correctly replaced
-    def external_input_shape_arr(self, composition=ConnectionInfo.ALL):
-        return convert_all_elements_to_np_array(self.external_input_shape(composition))
+        inp = self.default_external_input(composition)
+        if inp is None:
+            return None
+        else:
+            return ragged_np_shape(inp)
 
     @property
     def logged_items(self):

@@ -1479,10 +1479,7 @@ class InputPort(Port_Base):
     @property
     def input_shape(self):
         """Alias for default_input_shape_template"""
-        return self.default_input_shape()
-
-    def external_input_shape(self, composition=ConnectionInfo.ALL):
-        return self.default_input_shape(composition)
+        return self.default_external_input()
 
     def _input_projections(self, composition=ConnectionInfo.ALL):
         from psyneulink.core.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
@@ -1503,7 +1500,7 @@ class InputPort(Port_Base):
             projections.append((i, proj))
         return projections
 
-    def default_input_shape(self, composition=ConnectionInfo.ALL):
+    def default_external_input(self, composition=ConnectionInfo.ALL):
         if (
             composition == ConnectionInfo.ALL
             or len(self.path_afferents) == 0

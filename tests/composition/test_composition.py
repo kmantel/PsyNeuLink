@@ -3230,7 +3230,7 @@ class TestRunInputSpecifications:
         comp = pnl.Composition(mech, name='comp')
 
         # escape parents for use in regex
-        shape_str = str(mech.external_input_shape_shape()).replace('(', r'\(').replace(')', r'\)')
+        shape_str = str(mech.external_input_shape()).replace('(', r'\(').replace(')', r'\)')
         with pytest.raises(
             pnl.ComponentError,
             match=f'Invalid input.*\nExpecting.*{shape_str}.*\n.*'

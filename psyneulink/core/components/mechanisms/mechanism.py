@@ -2689,7 +2689,7 @@ class Mechanism_Base(Mechanism):
             else:
                 composition = context.composition or ConnectionInfo.ALL
                 raise MechanismError(f"Shape ({input_item.shape}) of input ({input_item}) does not match "
-                                     f"required shape ({input_port.default_input_shape(composition).shape}) for input "
+                                     f"required shape ({input_port.default_external_input(composition).shape}) for input "
                                      f"to {InputPort.__name__} {repr(input_port.name)} of {self.name}.")
 
         # Return values of input_ports for use as variable of Mechanism
@@ -4011,26 +4011,14 @@ class Mechanism_Base(Mechanism):
             return None
 
     def default_external_input(self, composition=ConnectionInfo.ALL):
-        return self._default_external_input_shape(composition)
-
-    # this should basically replace external_input_shape and not be
-    # named "shape" because that implies shape and not the array
-    def external_input_shape_arr(self, composition=ConnectionInfo.ALL):
-        return convert_all_elements_to_np_array(self.external_input_shape(composition))
-
-    def external_input_shape(self, composition=ConnectionInfo.ALL):
-        """Alias for _default_external_input_shape"""
-        return self._default_external_input_shape(composition)
-
-    def _default_external_input_shape(self, composition):
         try:
             shape = []
             for input_port in self.input_ports:
                 if input_port.internal_only or input_port.default_input:
                     continue
 
-                shape.append(input_port.default_input_shape(composition))
-            return shape
+                shape.append(input_port.default_external_input(composition))
+            return convert_all_elements_to_np_array(shape)
         except (TypeError, AttributeError):
             return None
 
