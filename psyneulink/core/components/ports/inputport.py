@@ -1501,12 +1501,6 @@ class InputPort(Port_Base):
         return projections
 
     def default_external_input(self, composition=ConnectionInfo.ALL):
-        if (
-            composition == ConnectionInfo.ALL
-            or len(self.path_afferents) == 0
-        ):
-            return self.defaults.variable
-
         # filter out non-CIM projections
         path_proj_values = []
         for i, proj in self._input_projections(composition):
@@ -1514,7 +1508,10 @@ class InputPort(Port_Base):
 
         # no CIM projections are active, don't return empty list
         if len(path_proj_values) == 0:
-            return self.defaults.variable
+            if self.default_input is None:
+                return None
+            else:
+                return self.defaults.variable
         else:
             return convert_all_elements_to_np_array(path_proj_values)
 
