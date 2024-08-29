@@ -1340,9 +1340,9 @@ for each `TRIAL <TimeScale.TRIAL>` must be compatible with each of the correspon
 `external_input_ports_of_all_input_nodes <Composition.external_input_ports_of_all_input_nodes>` attribute of a
 Composition). More specifically, the shape of each item in the outer dimension (i.e., the input for each `TRIAL
 <TimeScale.TRIAL>`, as described `above <Composition_Input_Dictionary_Input_Values>`) must be compatible with the
-shape of the Node's `external_input_shape <Mechanism_Base.external_input_shape>` attribute if it is Mechanism, and
-similarly the `external_input_shape <Composition.external_input_shape>` attribute of a Composition). While these are
-always 2d arrays, the number and size of the 1d arrays within them (corresponding to each InputPort) may vary; in some
+Node's `external_input_shape <Mechanism_Base.external_input_shape>`.
+While these are always at least 2d arrays, the number and size of the
+arrays within them (corresponding to each InputPort) may vary; in some
 case shorthand notations are allowed, as illustrated in the `examples  <Composition_Examples_Input_Dictionary>` below.
 
     .. _Composition_Execution_Input_Dict_Fig:
