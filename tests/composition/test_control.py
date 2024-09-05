@@ -1900,13 +1900,19 @@ class TestControlMechanisms:
     @pytest.mark.composition
     @pytest.mark.benchmark(group="Multilevel GridSearch")
     @pytest.mark.parametrize("mode", [pnl.ExecutionMode.Python])
-    def test_multilevel_ocm_gridsearch_conflicting_directions(self, mode, benchmark):
-        oa = pnl.TransferMechanism(name='oa')
-        ob = pnl.TransferMechanism(name='ob')
+    @pytest.mark.parametrize('input_dim', [2, 3, 4])
+    def test_multilevel_ocm_gridsearch_conflicting_directions(self, mode, benchmark, input_dim):
+        input_shape = (1,) * input_dim
+
+        oa = pnl.TransferMechanism(name='oa', default_variable=np.zeros(input_shape))
+        ob = pnl.TransferMechanism(name='ob', default_variable=np.zeros(input_shape))
         ocomp = pnl.Composition(name='ocomp', controller_mode=pnl.BEFORE)
-        ia = pnl.TransferMechanism(name='ia')
-        ib = pnl.ProcessingMechanism(name='ib',
-                                     function=lambda x: abs(x - 75))
+        ia = pnl.TransferMechanism(name='ia', default_variable=np.zeros(input_shape))
+        ib = pnl.ProcessingMechanism(
+            name='ib',
+            default_variable=np.zeros(input_shape),
+            function=lambda x: abs(x - 75),
+        )
         icomp = pnl.Composition(name='icomp', controller_mode=pnl.BEFORE)
         ocomp.add_node(oa, required_roles=pnl.NodeRole.INPUT)
         ocomp.add_node(ob)
@@ -1953,8 +1959,8 @@ class TestControlMechanisms:
                                                    intensity_cost_function=pnl.Linear(slope=0.0),
                                                    allocation_samples=pnl.SampleSpec(start=1.0, stop=5.0, num=5))])
         )
-        result = benchmark(ocomp.run, [5], execution_mode=mode)
-        np.testing.assert_allclose(result, [[50]])
+        result = benchmark(ocomp.run, [np.full(input_shape[1:], 5)], execution_mode=mode)
+        np.testing.assert_allclose(result, np.full(input_shape, 50))
 
     @pytest.mark.control
     @pytest.mark.composition
