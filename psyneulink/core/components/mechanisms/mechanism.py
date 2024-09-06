@@ -4002,7 +4002,7 @@ class Mechanism_Base(Mechanism):
         try:
             shape = []
             for input_port in self.input_ports:
-                if input_port.internal_only or input_port.default_input:
+                if input_port.internal_only or input_port.default_input is not None:
                     continue
                 if input_port._input_shape_template == VARIABLE:
                     shape.append(input_port.defaults.variable)

@@ -7023,7 +7023,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             if context.flags & ContextFlags.PREPARING and context.string != 'IGNORE_NO_AFFERENTS_WARNING':
                 for input_port in node.input_ports:
                     if input_port.require_projection_in_composition \
-                            and not input_port.path_afferents and not input_port.default_input:
+                            and not input_port.path_afferents and input_port.default_input is None:
                         warnings.warn(f"{InputPort.__name__} ('{input_port.name}') of '{node.name}' "
                                       f"doesn't have any afferent {Projection.__name__}s.")
                 for output_port in node.output_ports:
