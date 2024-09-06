@@ -1503,7 +1503,7 @@ class InputPort(Port_Base):
     def default_external_input(self, composition=ConnectionInfo.ALL):
         # filter out non-CIM projections
         path_proj_values = []
-        for i, proj in self._input_projections(composition):
+        for i, _ in self._input_projections(composition):
             path_proj_values.append(self.defaults.variable[i])
 
         # no CIM projections are active, don't return empty list
