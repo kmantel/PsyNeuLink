@@ -1508,10 +1508,14 @@ class InputPort(Port_Base):
 
         # no CIM projections are active, don't return empty list
         if len(path_proj_values) == 0:
+            # "reversed" here because if default_input is given, then
+            # this port is excluded from needing external input. See
+            # Mechanism.default_external_input where this exclusion
+            # occurs
             if self.default_input is None:
-                return None
-            else:
                 return self.defaults.variable
+            else:
+                return None
         else:
             return convert_all_elements_to_np_array(path_proj_values)
 
