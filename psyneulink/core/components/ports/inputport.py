@@ -1466,8 +1466,12 @@ class InputPort(Port_Base):
 
     @property
     def input_shape(self):
-        """Alias for default_input_shape_template"""
-        return self.default_external_input()
+        """
+        shows the shape of the input to the InputPort;  that is, the
+        shape of the `value <Projection_Base.value>` expected for any
+        `path_afferent Projections <Port_Base.path_afferents>`.
+        """
+        return self.defaults.variable
 
     def _input_projections(self, composition=ConnectionInfo.ALL):
         from psyneulink.core.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
@@ -1496,14 +1500,7 @@ class InputPort(Port_Base):
 
         # no CIM projections are active, don't return empty list
         if len(path_proj_values) == 0:
-            # "reversed" here because if default_input is given, then
-            # this port is excluded from needing external input. See
-            # Mechanism.default_external_input where this exclusion
-            # occurs
-            if self.default_input is None:
-                return self.defaults.variable
-            else:
-                return None
+            return self.defaults.variable
         else:
             return convert_all_elements_to_np_array(path_proj_values)
 

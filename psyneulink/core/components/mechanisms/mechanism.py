@@ -4007,7 +4007,7 @@ class Mechanism_Base(Mechanism):
         try:
             shape = []
             for input_port in self.input_ports:
-                if input_port.internal_only or input_port.default_input:
+                if input_port.internal_only:
                     continue
 
                 shape.append(input_port.default_external_input(composition))
