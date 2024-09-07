@@ -1306,8 +1306,8 @@ INPUT Node or one or more of its InputPorts, but *not both*.  Entries can be for
 (or the Inputport(s) of one) at any level of nesting within the Composition, so long it is nested under INPUT Nodes
 at all levels of nesting (that is, an INPUT Node of a nested Composition can only be included if the nested Composition
 is a INPUT Node of the Composition to which it belongs). Any INPUT Nodes for which no input is specified (that is, for
-which there are no entries in the inputs dictionary) are assigned their `default_external_inputs
-<Mechanism_Base.default_external_inputs>` on each `TRIAL <TimeScale.TRIAL>` of execution; similarly, if the dictionary
+which there are no entries in the inputs dictionary) are assigned their `default_external_input
+<Mechanism_Base.default_external_input>` on each `TRIAL <TimeScale.TRIAL>` of execution; similarly, if the dictionary
 contains entries for some but not all of the InputPorts of a Node, the remaining InputPorts are assigned their
 `default_input <InputPort.default_input>` on each `TRIAL <TimeScale.TRIAL>` of execution.  See below for additional
 information concerning `entries for Nodes <Composition_Input_Dictionary_Node_Entries>` and `entries for InputPorts

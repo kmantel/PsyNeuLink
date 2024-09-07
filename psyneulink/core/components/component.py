@@ -4335,7 +4335,33 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         inp: Union[List, np.ndarray] = None,
         composition=ConnectionInfo.ALL,
         as_sequence: bool = False,
-    ):
+    ) -> np.ndarray:
+        """
+        Attempts to produce valid input to this Component from the given
+        **inp**, to allow more flexible input. This may involve
+        reshaping, broadcasting, or changing the dimension of **inp** to
+        match this object's `Component.default_external_input` if
+        necessary. If **inp** is not provided,
+        `Component.default_external_input` will be used.
+
+        Args:
+            inp (Union[List, np.ndarray], optional): The input to parse
+                for use with this Component, targeting
+                `Component.default_external_input`. Defaults to None.
+            composition (`Composition`, optional): The `Composition`
+                this `Component` will be executed in, if any.
+                Defaults to ConnectionInfo.ALL.
+            as_sequence (bool, optional): If True, **inp** will be
+                interpreted and returned as a sequence of inputs,
+                instead of a single input. Defaults to False.
+
+        Raises:
+            ComponentError: If compatible input cannot be produced from
+                **inp**
+
+        Returns:
+            `numpy.ndarray`
+        """
         inp = convert_all_elements_to_np_array(inp)
         inp_squeezed = np.squeeze(inp)
         inp_is_sequence = False
@@ -4430,10 +4456,37 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         return convert_all_elements_to_np_array(res)
 
-    def default_external_input(self, composition=ConnectionInfo.ALL):
+    def default_external_input(self, composition=ConnectionInfo.ALL) -> Union[np.ndarray, None]:
+        """
+        Returns an array (or None) that will be used as input to
+        `Component.execute` if no input is given. **composition** is
+        used to determine what incoming `Projection`\\ s are active, if
+        applicable.
+
+        Args:
+            composition (`Composition`, optional): The `Composition`
+                this `Component` will be executed in, if any.
+                Defaults to ConnectionInfo.ALL.
+
+        Returns:
+            `numpy.ndarray`, None
+        """
         return copy_parameter_value(self.defaults.variable)
 
-    def external_input_shape(self, composition=ConnectionInfo.ALL):
+    def external_input_shape(self, composition=ConnectionInfo.ALL) -> Union[tuple, None]:
+        """
+        Returns a numpy shape-like tuple (see `ragged_np_shape`) (or
+        None) corresponding to this `Component`\\ 's
+        `default_external_input`.
+
+        Args:
+            composition (`Composition`, optional): The `Composition`
+                this `Component` will be executed in, if any.
+                Defaults to ConnectionInfo.ALL.
+
+        Returns:
+            tuple, None
+        """
         inp = self.default_external_input(composition)
         if inp is None:
             return None

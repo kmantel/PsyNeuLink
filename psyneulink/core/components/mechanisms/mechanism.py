@@ -1301,16 +1301,6 @@ class Mechanism_Base(Mechanism):
         `internal_only <InputPort.internal_only>`;  these receive `inputs from a Composition
         <Composition_Execution_Inputs>` if the Mechanism is one of its `INPUT` `Nodes <Composition_Nodes>`.
 
-    default_external_input : np.ndarray
-
-        list of the `input_shape <InputPort.input_shape>`\\s of the Mechanism's external `input_ports
-        <Mechanism_Base.input_ports>` (i.e., excluding any `InputPorts <InputPort>` designated as `internal_only
-        <InputPort.internal_only>`), that shows the shape of the inputs expected for the Mechanism.  Each item
-        corresponds to an expected `path_afferent Projection <Port_Base.path_afferents>`, and its shape is
-        the expected `value <Projection_Base.value>` of that `Projection`.
-
-    external_input_shape : List[List or 1d np.array]
-
     external_input_variables : List[List or 1d np.array]
         list of the `variable <InputPort.variable>`\\s of the Mechanism's `external_input_ports
         <Mechanism_Base.external_input_ports>`.
@@ -1319,7 +1309,7 @@ class Mechanism_Base(Mechanism):
         list of the `value <InputPort.value>`\\s of the Mechanism's `external_input_ports
         <Mechanism_Base.external_input_ports>`.
 
-    default_external_inputs : List[1d np.array]
+    default_external_port_inputs : List[1d np.array]
         list of the `default_input <InputPort.default_input>`\\s of the Mechanism's `external_input_ports
         <Mechanism_Base.external_input_ports>`.
 
@@ -4034,7 +4024,7 @@ class Mechanism_Base(Mechanism):
             return None
 
     @property
-    def default_external_inputs(self):
+    def default_external_port_inputs(self):
         try:
             return [input_port.default_input for input_port in self.input_ports if not input_port.internal_only]
         except (TypeError, AttributeError):

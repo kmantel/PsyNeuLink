@@ -1465,18 +1465,6 @@ class InputPort(Port_Base):
         return self._get_value_label(label_dictionary, self.owner.input_ports, context=context)
 
     @property
-    def _input_shape_template(self):
-        return VARIABLE
-        try:
-            if self.function.changes_shape:
-                return VARIABLE
-            else:
-                return VALUE
-        except:
-            assert False, f"PROGRAM ERROR: Missing or unrecognized 'changes_shape' attribute for " \
-                          f"('{self.function.name}') of '{self.name}'."
-
-    @property
     def input_shape(self):
         """Alias for default_input_shape_template"""
         return self.default_external_input()
@@ -1518,20 +1506,6 @@ class InputPort(Port_Base):
                 return None
         else:
             return convert_all_elements_to_np_array(path_proj_values)
-
-        if self._input_shape_template == VARIABLE:
-            return self.defaults.variable
-        elif self._input_shape_template == VALUE:
-            return self.defaults.value
-        assert False, f"PROGRAM ERROR: bad _input_shape_template assignment for '{self.name}'."
-
-    def get_input_shape(self, context=None):
-        return self.get_input_variables(context)
-        if self._input_shape_template == VARIABLE:
-            return self.get_input_variables(context)
-        elif self._input_shape_template == VALUE:
-            return self.get_input_values(context)
-        assert False, f"PROGRAM ERROR: bad _input_shape_template assignment for '{self.name}'."
 
     @property
     def position_in_mechanism(self):
