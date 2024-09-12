@@ -1698,19 +1698,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                                       "integer, its value changed to {}.".format(x, int_x))
                 return int_x
 
-            if variable is not None:
-                variable = np.array(variable)
-                if variable.dtype == object:
-                    # CAVEAT: assuming here that object dtype implies there are list objects (i.e. array with
-                    # different sized arrays/lists inside like [[0, 1], [2, 3, 4]]), even though putting a None
-                    # value in the array will give object dtype. This case doesn't really make sense in our
-                    # context though, so ignoring this case in the interest of quickly fixing 3D variable behavior
-                    variable = np.atleast_1d(variable)
-                else:
-                    variable = np.atleast_2d(variable)
-
-                variable = convert_all_elements_to_np_array(variable)
-
             try:
                 if size is not None:
                     size = np.atleast_1d(size)
