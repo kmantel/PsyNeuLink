@@ -270,7 +270,7 @@ def construct_model(model_name:str=model_params['name'],
 
     prediction_layer = ProcessingMechanism(name=prediction_layer_name, size=state_size)
 
-    
+
     # ----------------------------------------------------------------------------------------------------------------
     # -------------------------------------------------  EGO Composition  --------------------------------------------
     # ----------------------------------------------------------------------------------------------------------------
@@ -443,7 +443,7 @@ if __name__ == '__main__':
             np.save('EGO TARGETS', TARGETS)
 
         if PLOT_RESULTS:
-            fig, axes = plt.subplots(3, 1, figsize=(5, 12))
+            fig, axes = plt.subplots(3, 1, figsize=[5, 12])
             # Weight matrix
             axes[0].imshow(model.projections[7].parameters.matrix.get(model.name), interpolation=None)
             # L1 of loss

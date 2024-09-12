@@ -1083,7 +1083,7 @@ def _plot_results(response_and_trial_types, stats):
         bias[i]=s
 
     #%%
-    f,axar = plt.subplots(2,2,figsize=(15,8))
+    f,axar = plt.subplots(2,2,figsize=[15,8])
     axar=axar.reshape(-1)
     cL = ['blue','darkblue','lightgreen','forestgreen']
     labL = ['2b,ctrl','2b,lure','3b,ctrl','3b,lure']

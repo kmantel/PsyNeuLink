@@ -94,7 +94,7 @@ class LCALayer(torch.nn.Module):
         dev = self.leak.device
 
         # Mark all accumulators as active by default
-        active = torch.ones(size=(num_simulations, 1), device=dev)
+        active = torch.ones(size=[num_simulations, 1], device=dev)
 
         # If threshold is provided, only integrate accumulators until they reach the threshold.
         # if self.threshold is not None:

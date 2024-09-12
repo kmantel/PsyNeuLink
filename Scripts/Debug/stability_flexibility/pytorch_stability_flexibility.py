@@ -86,13 +86,13 @@ NUM_TRIALS = len(stimuli)
 
 # Initialize the LCA task activities, these are maintained throughout the whole
 # experiment.
-lca_activities = torch.zeros(size=(NUM_SIMULATIONS, 2), device=dev)
+lca_activities = torch.zeros(size=[NUM_SIMULATIONS, 2], device=dev)
 
 for trial_idx in range(NUM_TRIALS):
 
     # Reset DDM activities for this trial.
-    ddm_activities = torch.ones(size=(NUM_SIMULATIONS,), device=dev) * STARTING_VALUE
-    rts = torch.zeros(size=(NUM_SIMULATIONS,), device=dev)
+    ddm_activities = torch.ones(size=[NUM_SIMULATIONS,], device=dev) * STARTING_VALUE
+    rts = torch.zeros(size=[NUM_SIMULATIONS,], device=dev)
 
     stimulus = torch.from_numpy(stimuli[trial_idx]).float().to(dev)
     task = torch.from_numpy(tasks[trial_idx]).float().to(dev)
@@ -129,5 +129,5 @@ for trial_idx in range(NUM_TRIALS):
     # Compute reaction times in seconds for these trials
     rts = (NON_DECISION_TIME + rts * TIME_STEP_SIZE)
 
-    decisions = torch.ones(size=(NUM_SIMULATIONS,), device=dev)
+    decisions = torch.ones(size=[NUM_SIMULATIONS,], device=dev)
     decisions[ddm_activities <= -THRESHOLD] = 0

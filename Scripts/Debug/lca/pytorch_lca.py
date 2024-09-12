@@ -97,7 +97,7 @@ class LCALayer(torch.nn.Module):
         num_simulations, num_lca_dim = activities.shape
 
         # Mark all accumulators as active by default
-        active = torch.ones(size=(num_simulations, 1), device=self.dev)
+        active = torch.ones(size=[num_simulations, 1], device=self.dev)
 
         # If threshold is provided, only integrate accumulators until they reach the threshold.
         if self.threshold is not None:
@@ -183,26 +183,26 @@ class LCAModel(torch.nn.Module):
         """
 
         # Mark all accumulators as active by default
-        active = torch.ones(size=(self.num_simulations, 1), device=self.dev)
+        active = torch.ones(size=[self.num_simulations, 1], device=self.dev)
 
         if self.save_activities:
             pre_activities = torch.zeros(
-                size=(self.num_simulations, self.num_lca_dim, self.num_time_steps + 1),
+                size=[self.num_simulations, self.num_lca_dim, self.num_time_steps + 1],
                 device=self.dev,
             )
             activities = torch.zeros(
-                size=(self.num_simulations, self.num_lca_dim, self.num_time_steps + 1),
+                size=[self.num_simulations, self.num_lca_dim, self.num_time_steps + 1],
                 device=self.dev,
             )
         else:
             pre_activities = torch.zeros(
-                size=(self.num_simulations, self.num_lca_dim), device=self.dev
+                size=[self.num_simulations, self.num_lca_dim], device=self.dev
             )
             activities = torch.zeros(
-                size=(self.num_simulations, self.num_lca_dim), device=self.dev
+                size=[self.num_simulations, self.num_lca_dim], device=self.dev
             )
 
-        rts = torch.zeros(size=(self.num_simulations, 1), device=self.dev)
+        rts = torch.zeros(size=[self.num_simulations, 1], device=self.dev)
 
         # Simulate N time steps of the model. This could be done with a while(active) type loop but this is slightly
         # faster actually on the GPU.

@@ -40,9 +40,9 @@ class DriftDiffusionModel(torch.nn.Module):
             A two element tuple containing the reaction times and the decisions
         """
 
-        particle = torch.ones(size=(num_walkers,), device=dev) * starting_value
-        active = torch.ones(size=(num_walkers,), dtype=torch.bool, device=dev)
-        rts = torch.zeros(size=(num_walkers,), device=dev)
+        particle = torch.ones(size=[num_walkers,], device=dev) * starting_value
+        active = torch.ones(size=[num_walkers,], dtype=torch.bool, device=dev)
+        rts = torch.zeros(size=[num_walkers,], device=dev)
 
         for i in range(3000):
             #dw = torch.distributions.Normal(loc=rate * time_step_size * active, scale=noise * active).rsample()
@@ -53,7 +53,7 @@ class DriftDiffusionModel(torch.nn.Module):
 
         rts = (non_decision_time + rts * time_step_size)
 
-        decisions = torch.ones(size=(num_walkers,), device=dev)
+        decisions = torch.ones(size=[num_walkers,], device=dev)
         decisions[particle <= -threshold] = 0
 
         return rts, decisions

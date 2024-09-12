@@ -1954,7 +1954,7 @@ class TestNestedLearning:
 
         nodes = nodes_for_testing_nested_comps(2, 0, 1)
         input_nodes, hidden_nodes, output_nodes = nodes
-        hidden_with_2_inputs = pnl.ProcessingMechanism(name='hidden_x', size=(3,3), function=pnl.LinearCombination)
+        hidden_with_2_inputs = pnl.ProcessingMechanism(name='hidden_x', size=[3,3], function=pnl.LinearCombination)
 
         inputs = {input_nodes[0]:np.array([[0, 0], [0, 1], [1, 0], [1, 1]])}
 
@@ -2191,7 +2191,7 @@ class TestNestedLearning:
     #     input_nodes, hidden_nodes, output_nodes = nodes
     #     inputs = {input_nodes[0]:np.array([[0, 0], [0, 1], [1, 0], [1, 1]])}
     #
-    #     hidden_2d = pnl.ProcessingMechanism(name='hidden 2d', size=(2,2))
+    #     hidden_2d = pnl.ProcessingMechanism(name='hidden 2d', size=[2,2])
     #     nested = AutodiffComposition(nodes = [hidden_nodes[0], hidden_2d], name='nested')
     #     pathway_a = [input_nodes[0],
     #                  MappingProjection(input_nodes[0], hidden_2d),
@@ -2397,7 +2397,7 @@ class TestAutodiffMultipleOutput_ports:
     def test_parallel_inputs_to_output_ports_converge_internal(self):
 
         # Autodiff: PARALLEL PATHWAYS USING SEPARATE INPUT AND OUTPUT PORTS ON hidden_1
-        sizes = {HIDDEN_A: (2,3)}
+        sizes = {HIDDEN_A: [2, 3]}
         nodes = nodes_for_testing_nested_comps(sizes)
         input_A = nodes[INPUT_A]
         input_B = nodes[INPUT_B]
@@ -2446,7 +2446,7 @@ class TestAutodiffMultipleOutput_ports:
                                 learning_rate = .01, epochs=3)
 
         # # Composition: PARALLEL PATHWAYS USING SEPARATE INPUT AND OUTPUT PORTS ON hidden_1
-        sizes = {HIDDEN_A: (2,3)}
+        sizes = {HIDDEN_A: [2, 3]}
         nodes = nodes_for_testing_nested_comps(sizes)
         input_A = nodes[INPUT_A]
         input_B = nodes[INPUT_B]
@@ -2501,7 +2501,7 @@ class TestAutodiffMultipleOutput_ports:
     def test_single_input_to_multiple_output_ports_converge_internal(self):
 
         # Autodiff: DIVERGENT PATHWAY USING SEPARATE INPUT AND OUTPUT PORTS ON hidden_1
-        sizes = {HIDDEN_A: (2,3)}
+        sizes = {HIDDEN_A: [2, 3]}
         nodes = nodes_for_testing_nested_comps(sizes)
         input = nodes[INPUT_A]
         hidden_A = nodes[HIDDEN_A]
@@ -2538,7 +2538,7 @@ class TestAutodiffMultipleOutput_ports:
                                                learning_rate = .01, epochs=3)
 
         # Composition: DIVERGENT PATHWAY USING SEPARATE INPUT AND OUTPUT PORTS ON hidden_1
-        sizes = {HIDDEN_A: (2,3)}
+        sizes = {HIDDEN_A: [2, 3]}
         nodes = nodes_for_testing_nested_comps(sizes)
         input = nodes[INPUT_A]
         hidden_A = nodes[HIDDEN_A]
@@ -2583,7 +2583,7 @@ class TestAutodiffMultipleOutput_ports:
     def test_single_input_to_multiple_output_ports_converge_on_OUTPUT_Node(self):
 
         # Autodiff: PARALLEL PATHWAYS USE SEPARATE INPUT AND OUTPUT PORTS ON hidden
-        sizes = {HIDDEN_A: (2,3)}
+        sizes = {HIDDEN_A: [2, 3]}
         nodes = nodes_for_testing_nested_comps(sizes)
         input = nodes[INPUT_A]
         hidden = nodes[HIDDEN_A]
@@ -2629,7 +2629,7 @@ class TestAutodiffMultipleOutput_ports:
                                learning_rate = .01, epochs=3)
 
         # Comp: PARALLEL PATHWAYS USE SEPARATE INPUT AND OUTPUT PORTS ON hidden_c
-        sizes = {HIDDEN_A: (2,3)}
+        sizes = {HIDDEN_A: [2, 3]}
         nodes = nodes_for_testing_nested_comps(sizes)
         input = nodes[INPUT_A]
         hidden = nodes[HIDDEN_A]

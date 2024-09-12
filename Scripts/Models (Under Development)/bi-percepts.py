@@ -83,7 +83,7 @@ for node in bp_comp.nodes:
 # init the inputs
 n_time_steps = 10
 input_dict = {
-    node_: np.random.normal(size=(n_time_steps,))
+    node_: np.random.normal(size=[n_time_steps,])
     for node_ in bp_comp.nodes
 }
 
@@ -91,7 +91,7 @@ input_dict = {
 bp_comp.run(input_dict, num_trials=10)
 
 acts = np.squeeze(bp_comp.results)
-f, ax = plt.subplots(1, 1, figsize=(8, 5))
+f, ax = plt.subplots(1, 1, figsize=[8, 5])
 ax.plot(acts[:, :n_nodes_per_percepts], color='red')
 ax.plot(acts[:, n_nodes_per_percepts:], color='blue')
 ax.set_xlabel('Time')

@@ -121,7 +121,7 @@ def test_necker_cube(benchmark, comp_mode, n_nodes, n_time_steps, expected):
     # bp_comp.show_graph()
 
     input_dict = {
-        node_: np.random.normal(size=(n_time_steps,))
+        node_: np.random.normal(size=[n_time_steps,])
         for node_ in bp_comp.nodes
     }
 

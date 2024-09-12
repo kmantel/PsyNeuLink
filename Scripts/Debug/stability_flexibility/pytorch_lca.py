@@ -84,7 +84,7 @@ class LCALayer(torch.nn.Module):
         num_simulations, num_lca_dim = activities.shape
 
         # Mark all accumulators as active by default
-        active = torch.ones(size=(num_simulations, 1), device=dev)
+        active = torch.ones(size=[num_simulations, 1], device=dev)
 
         # If threshold is provided, only integrate accumulators until they reach the threshold.
         if self.threshold is not None:
@@ -158,7 +158,7 @@ class LCAModel(torch.nn.Module):
         dev = "cuda:0"
 
         # Mark all accumulators as active by default
-        active = torch.ones(size=(self.num_simulations, 1), device=dev)
+        active = torch.ones(size=[self.num_simulations, 1], device=dev)
 
         if self.save_activities:
             pre_activities = torch.zeros(size=(self.num_simulations,
@@ -168,10 +168,10 @@ class LCAModel(torch.nn.Module):
                                            self.num_lca_dim,
                                            self.num_time_steps + 1), device=dev)
         else:
-            pre_activities = torch.zeros(size=(self.num_simulations, self.num_lca_dim), device=dev)
-            activities = torch.zeros(size=(self.num_simulations, self.num_lca_dim), device=dev)
+            pre_activities = torch.zeros(size=[self.num_simulations, self.num_lca_dim], device=dev)
+            activities = torch.zeros(size=[self.num_simulations, self.num_lca_dim], device=dev)
 
-        rts = torch.zeros(size=(self.num_simulations, 1), device=dev)
+        rts = torch.zeros(size=[self.num_simulations, 1], device=dev)
 
         # Simulate N time steps of the model.
         for time_i in range(self.num_time_steps):

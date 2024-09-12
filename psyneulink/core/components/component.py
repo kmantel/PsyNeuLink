@@ -1666,9 +1666,9 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     idx_str = ''
 
                 raise ComponentError(
-                    f'Invalid size argument of {self}{idx_str}: size must'
-                    ' be a valid numpy shape-tuple or a list of'
-                    ' shape-tuples for use with numpy.zeros'
+                    f'Invalid size argument of {self}{idx_str}. size must be a'
+                    ' valid numpy shape or a list of shapes for use with'
+                    f' numpy.zeros: {e}'
                 ) from e
 
         if not isinstance(size, list):
