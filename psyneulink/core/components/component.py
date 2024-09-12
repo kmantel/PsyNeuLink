@@ -1105,7 +1105,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     def __init__(self,
                  default_variable,
                  param_defaults,
-                 size=NotImplemented,  # 7/5/17 CW: this is a hack to check whether the user has passed in a size arg
+                 size=None,
                  function=None,
                  name=None,
                  reset_stateful_function_when=None,
@@ -1646,18 +1646,45 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 None otherwise
         """
         default_variable = self._parse_arg_variable(default_variable)
+        default_variable = self._handle_size(size, default_variable)
 
-        if default_variable is None:
-            default_variable = self._handle_size(size, default_variable)
-
-            if default_variable is None or default_variable is NotImplemented:
-                return None
-            else:
-                self._variable_shape_flexibility = self._specified_variable_shape_flexibility
+        if default_variable is None or default_variable is NotImplemented:
+            return None
         else:
             self._variable_shape_flexibility = self._specified_variable_shape_flexibility
 
         return convert_to_np_array(default_variable, dimension=1)
+
+    def _parse_size(self, size):
+        def get_size_elem(s, idx=None):
+            try:
+                return np.zeros(s)
+            except (TypeError, ValueError) as e:
+                if idx is not None:
+                    idx_str = f' at index {idx}'
+                else:
+                    idx_str = ''
+
+                raise ComponentError(
+                    f'Invalid size argument of {self}{idx_str}: size must'
+                    ' be a valid numpy shape-tuple or a list of'
+                    ' shape-tuples for use with numpy.zeros'
+                ) from e
+
+        if not isinstance(size, list):
+            variable_from_size = get_size_elem(size)
+        else:
+            if len(size) == 0:
+                raise ComponentError(
+                    f'Invalid size argument of {self}: size must not be an empty list'
+                )
+            variable_from_size = []
+            for i, s in enumerate(size):
+                variable_from_size.append(get_size_elem(s, i))
+            variable_from_size = convert_all_elements_to_np_array(variable_from_size)
+
+        return variable_from_size
+
 
     # ELIMINATE SYSTEM
     # IMPLEMENTATION NOTE: (7/7/17 CW) Due to System and Process being initialized with size at the moment (which will
@@ -1672,7 +1699,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             If size is NotImplemented (usually in the case of Projections/Functions), then this function passes without
             doing anything. Be aware that if size is NotImplemented, then variable is never cast to a particular shape.
         """
-        if size is not NotImplemented:
+        if size is not None:
             self._variable_shape_flexibility = self._specified_variable_shape_flexibility
             # region Fill in and infer variable and size if they aren't specified in args
             # if variable is None and size is None:
@@ -1680,96 +1707,51 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             # 6/30/17 now handled in the individual subclasses' __init__() methods because each subclass has different
             # expected behavior when variable is None and size is None.
 
-            def checkAndCastInt(x):
-                if not isinstance(x, numbers.Number):
-                    raise ComponentError("An element ({}) in size is not a number.".format(x))
-                if x < 1:
-                    raise ComponentError("An element ({}) in size is not a positive number.".format(x))
-                try:
-                    int_x = int(x)
-                except:
-                    raise ComponentError(
-                        "Failed to convert an element ({}) in size argument for {} {} to an integer. size "
-                        "should be a number, or iterable of numbers, which are integers or "
-                        "can be converted to integers.".format(x, type(self), self.name))
-                if int_x != x:
-                    if hasattr(self, 'prefs') and hasattr(self.prefs, VERBOSE_PREF) and self.prefs.verbosePref:
-                        warnings.warn("When an element ({}) in the size argument was cast to "
-                                      "integer, its value changed to {}.".format(x, int_x))
-                return int_x
-
-            try:
-                if size is not None:
-                    size = np.atleast_1d(size)
-                    if len(np.shape(size)) > 1:  # number of dimensions of size > 1
-                        if hasattr(self, 'prefs') and hasattr(self.prefs, VERBOSE_PREF) and self.prefs.verbosePref:
-                            warnings.warn(
-                                "size had more than one dimension (size had {} dimensions), so only the first "
-                                "element of its highest-numbered axis will be used".format(len(np.shape(size))))
-                        while len(np.shape(size)) > 1:  # reduce the dimensions of size
-                            size = size[0]
-            except:
-                raise ComponentError("Failed to convert size (of type {}) to a 1D array.".format(type(size)))
-
-            if size is not None:
-                size = np.array(list(map(checkAndCastInt, size)))  # convert all elements of size to int
-
             # implementation note: for good coding practices, perhaps add setting to enable easy change of the default
             # value of variable (though it's an unlikely use case), which is an array of zeros at the moment
-            if variable is None and size is not None:
-                try:
-                    variable = []
-                    for s in size:
-                        variable.append(np.zeros(s))
-                    variable = convert_to_np_array(variable)
-                # TODO: fix bare except
-                except:
-                    raise ComponentError("variable (possibly default_variable) was not specified, but PsyNeuLink "
-                                         "was unable to infer variable from the size argument, {}. size should be"
-                                         " an integer or an array or list of integers. Either size or "
-                                         "variable must be specified.".format(size))
 
-            # the two regions below (creating size if it's None and/or expanding it) are probably obsolete (7/7/17 CW)
+            def get_conflict_error(reason=None):
+                if reason is not None:
+                    reason_str = f': {reason}'
+                else:
+                    reason_str = ''
 
-            if size is None and variable is not None:
-                size = []
-                try:
-                    for input_vector in variable:
-                        size.append(len(input_vector))
-                    size = np.array(size)
-                except:
-                    raise ComponentError(
-                            "{}: size was not specified, and unable to infer it from the variable argument ({}) "
-                            "-- it can be an array, list, a 2D array, a list of arrays, array of lists, etc. ".
-                                format(self.name, variable))
-            # endregion
+                return ComponentError(
+                    f'size and default_variable arguments of {self} conflict{reason_str}'
+                )
 
-            if size is not None and variable is not None:
-                if len(size) == 1 and len(variable) > 1:
-                    new_size = np.empty(len(variable))
-                    new_size.fill(size[0])
-                    size = new_size
+            # import ipdb
+            # ipdb.set_trace()
+            variable_from_size = self._parse_size(size)
 
-            # the two lines below were used when size was a param and are likely obsolete (7/7/17 CW)
-            # param_defaults['size'] = size  # 7/5/17 potentially buggy? Not sure (CW)
-            # self.user_params_for_instantiation['size'] = None  # 7/5/17 VERY HACKY: See Changyan's Notes on this.
+            if variable is None:
+                return variable_from_size
 
-            # Both variable and size are specified
-            if variable is not None and size is not None:
-                # If they conflict, give warning
-                if len(size) != len(variable):
-                    if hasattr(self, 'prefs') and hasattr(self.prefs, VERBOSE_PREF) and self.prefs.verbosePref:
-                        warnings.warn("The size arg of {} conflicts with the length "
-                                      "of its variable arg ({}) at element {}: variable takes precedence".
-                                      format(self.name, size, variable))
+            if isinstance(size, list):
+                assert len(size) == len(variable_from_size)
+
+                if variable.ndim == 0:
+                    raise get_conflict_error('size gives a list of items but default_variable is 0d')
+                elif len(size) != len(variable):
+                    raise get_conflict_error(
+                        f'len(size) is {len(size)};'
+                        f' len(default_variable) is {len(variable)}'
+                    )
                 else:
                     for i in range(len(size)):
-                        if size[i] != len(variable[i]):
-                            if hasattr(self, 'prefs') and hasattr(self.prefs, VERBOSE_PREF) and self.prefs.verbosePref:
-                                warnings.warn("The size arg of {} ({}) conflicts with the length "
-                                              "of its variable arg ({}) at element {}: variable takes precedence".
-                                              format(self.name, size[i], variable[i], i))
+                        if variable_from_size[i].shape != variable[i].shape:
+                            raise get_conflict_error(
+                                f'size[{i}].shape: {variable_from_size[i].shape};'
+                                f' default_variable[{i}].shape: {variable[i].shape}'
+                            )
+            else:
+                if variable_from_size.shape != variable.shape:
+                    raise get_conflict_error(
+                        f'size.shape: {variable_from_size.shape};'
+                        f' default_variable.shape: {variable.shape}'
+                    )
 
+        # variable_from_size and variable are equal
         return variable
 
     def _get_allowed_arguments(self) -> set:

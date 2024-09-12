@@ -1787,6 +1787,13 @@ class Mechanism_Base(Mechanism):
 
         return super()._parse_arg_variable(convert_to_np_array(variable, dimension=2))
 
+    def _parse_size(self, size):
+        # size is treated as a list of port sizes
+        if not isinstance(size, list):
+            size = [size]
+
+        return super()._parse_size(size)
+
     # ------------------------------------------------------------------------------------------------------------------
     # Handlers
     # ------------------------------------------------------------------------------------------------------------------
