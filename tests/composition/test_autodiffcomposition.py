@@ -2657,7 +2657,7 @@ class TestAutodiffMultipleOutput_ports:
     def test_two_output_ports_on_OUTPUT_Node(self):
 
         # Autodiff: SEPARATE INPUT NODES TO ONE OUTPUT NODE WITH TWO OUTPUTPORTS
-        sizes = {OUTPUT_A: (2,3)}
+        sizes = {OUTPUT_A: [2, 3]}
         nodes = nodes_for_testing_nested_comps(sizes)
         input_A = nodes[INPUT_A]
         input_B = nodes[INPUT_B]

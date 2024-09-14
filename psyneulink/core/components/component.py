@@ -1676,7 +1676,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         else:
             if len(size) == 0:
                 raise ComponentError(
-                    f'Invalid size argument of {self}: size must not be an empty list'
+                    f'Invalid size argument of {self}. size must not be an empty list'
                 )
             variable_from_size = []
             for i, s in enumerate(size):
