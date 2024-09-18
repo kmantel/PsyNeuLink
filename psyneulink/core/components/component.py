@@ -1685,19 +1685,16 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         return variable_from_size
 
-
     # ELIMINATE SYSTEM
     # IMPLEMENTATION NOTE: (7/7/17 CW) Due to System and Process being initialized with size at the moment (which will
     # be removed later), I’m keeping _handle_size in Component.py. I’ll move the bulk of the function to Mechanism
     # through an override, when Composition is done. For now, only Port.py overwrites _handle_size().
     def _handle_size(self, size, variable):
         """If variable is None, _handle_size tries to infer variable based on the **size** argument to the
-            __init__() function. This method is overwritten in subclasses like Mechanism and Port.
-            If self is a Mechanism, it converts variable to a 2D array, (for a Mechanism, variable[i] represents
-            the input from the i-th InputPort). If self is a Port, variable is a 1D array and size is a length-1 1D
-            array. It performs some validations on size and variable as well. This function is overridden in Port.py.
-            If size is NotImplemented (usually in the case of Projections/Functions), then this function passes without
-            doing anything. Be aware that if size is NotImplemented, then variable is never cast to a particular shape.
+            __init__() function. If size is None (usually in the case of
+            Projections/Functions), then this function passes without
+            doing anything. If both size and variable are not None, a
+            ComponentError is thrown if they are not compatible.
         """
         if size is not None:
             self._variable_shape_flexibility = self._specified_variable_shape_flexibility
@@ -1710,7 +1707,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             # implementation note: for good coding practices, perhaps add setting to enable easy change of the default
             # value of variable (though it's an unlikely use case), which is an array of zeros at the moment
 
-            def get_conflict_error(reason=None):
+            def conflict_error(reason=None):
                 if reason is not None:
                     reason_str = f': {reason}'
                 else:
@@ -1720,8 +1717,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     f'size and default_variable arguments of {self} conflict{reason_str}'
                 )
 
-            # import ipdb
-            # ipdb.set_trace()
             variable_from_size = self._parse_size(size)
 
             if variable is None:
@@ -1731,22 +1726,24 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 assert len(size) == len(variable_from_size)
 
                 if variable.ndim == 0:
-                    raise get_conflict_error('size gives a list of items but default_variable is 0d')
+                    raise conflict_error(
+                        'size gives a list of items but default_variable is 0d'
+                    )
                 elif len(size) != len(variable):
-                    raise get_conflict_error(
+                    raise conflict_error(
                         f'len(size) is {len(size)};'
                         f' len(default_variable) is {len(variable)}'
                     )
                 else:
                     for i in range(len(size)):
                         if variable_from_size[i].shape != variable[i].shape:
-                            raise get_conflict_error(
+                            raise conflict_error(
                                 f'size[{i}].shape: {variable_from_size[i].shape};'
                                 f' default_variable[{i}].shape: {variable[i].shape}'
                             )
             else:
                 if variable_from_size.shape != variable.shape:
-                    raise get_conflict_error(
+                    raise conflict_error(
                         f'size.shape: {variable_from_size.shape};'
                         f' default_variable.shape: {variable.shape}'
                     )
