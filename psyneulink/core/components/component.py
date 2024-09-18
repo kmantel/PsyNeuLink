@@ -1662,7 +1662,9 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         return convert_to_np_array(default_variable, dimension=1)
 
-    def _parse_size(self, size: typing.Union[int, tuple, list[typing.Union[int, tuple]]]) -> np.ndarray:
+    def _parse_size(
+        self, size: typing.Union[int, tuple, typing.List[typing.Union[int, tuple]]]
+    ) -> np.ndarray:
         """
         Returns the equivalent 'variable' array specified by **size**
 
