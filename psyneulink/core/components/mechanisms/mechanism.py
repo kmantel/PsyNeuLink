@@ -1224,10 +1224,13 @@ class Mechanism_Base(Mechanism):
 
     size : int, list or np.ndarray of ints : default None
         specifies default_variable as array(s) of zeros if **default_variable** is not passed as an argument;
-        if **default_variable** is specified, it takes precedence over the specification of **size**.
+        if **default_variable** is specified, it must be equivalent to
+        **size**.
         For example, the following Mechanisms are equivalent::
             my_mech = ProcessingMechanism(size = [3, 2])
             my_mech = ProcessingMechanism(default_variable = [[0, 0, 0], [0, 0]])
+        When specified as a list, each element of **size** is used as
+        the size of the corresponding InputPort.
 
     input_ports : str, list, dict, or np.ndarray : default None
         specifies the InputPorts for the Mechanism; if it is not specified, a single InputPort is created
@@ -1786,13 +1789,6 @@ class Mechanism_Base(Mechanism):
             return None
 
         return super()._parse_arg_variable(convert_to_np_array(variable, dimension=2))
-
-    def _parse_size(self, size):
-        # size is treated as a list of port sizes
-        if not isinstance(size, list):
-            size = [size]
-
-        return super()._parse_size(size)
 
     # ------------------------------------------------------------------------------------------------------------------
     # Handlers

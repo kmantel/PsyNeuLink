@@ -94,8 +94,8 @@ with the one exception of `prefs <Component_Prefs>`.
 * **variable** - used as the input to its `function <Component_Function>`.  Specification of the **default_variable**
   argument in the constructor for a Component determines both its format (e.g., whether its value is numeric, its
   dimensionality and shape if it is an array, etc.) as well as its `default_value <Component.defaults>` (the value
-  used when the Component is executed and no input is provided), and takes precedence over the specification of `size
-  <Component_Size>`.
+  used when the Component is executed and no input is provided).
+  It may alternatively be specified by `size <Component_Size>`.
 
   .. technical_note::
     Internally, the attribute **variable** is not directly used as input to functions, to allow for parallelization.
@@ -105,11 +105,18 @@ with the one exception of `prefs <Component_Prefs>`.
 
 .. _Component_Size:
 
-* **size** - the dimension of the `variable <Component.variable>` attribute.  The **size** argument of the
+* **size** - the numpy shape or list of shapes matching the `variable
+  <Component.variable>` attribute.  The **size** argument of the
   constructor for a Component can be used as a convenient method for specifying the `variable <Component_Variable>`,
-  attribute in which case it will be assigned as an array of zeros of the specified size.  For example,
+  attribute in which case it will be assigned as an array of zeros of
+  the specified shape. When **size** is an integer or tuple, it is
+  treated as a single shape. When **size** is a list, each item in the
+  list is treated as a single shape, and the entire list is then
+  assigned as an array. For example,
   setting  **size** = 3 is equivalent to setting **variable** = [0, 0, 0] and setting **size** = [4, 3] is equivalent
-  to setting **variable** = [[0, 0, 0, 0], [0, 0, 0]].
+  to setting **variable** = [[0, 0, 0, 0], [0, 0, 0]], while setting
+  **size** = (3, 3) is equivalent to setting **variable** = [[0, 0, 0],
+  [0, 0, 0], [0, 0, 0]]
 
   .. note::
      The size attribute serves a role similar to
@@ -324,10 +331,9 @@ COMMENT:
       _instantiate_function method checks that the input of the Component's `function <Comonent.function>` is compatible
       with its `variable <Component.variable>`).
 
-      * `_handle_size <Component._handle_size>` converts the `variable <Component.variable>` and `size <Component.size>`
-        arguments to the correct dimensions (for `Mechanism <Mechanism>`, this is a 2D array and 1D
-        array, respectively). If **variable** is not passed as an argument, this method attempts to infer `variable
-        <Component.variable>` from the **size** argument, and vice versa if the **size** argument is missing.
+      * `_handle_size <Component._handle_size>` attempts to infer
+        `variable <Component.variable>` from the **size** argument if
+        **variable** is not passed as an argument.
         The _handle_size method then checks that the **size** and **variable** arguments are compatible.
 
       * `_instantiate_defaults <Component._instantiate_defaults>` first calls the validation methods, and then
@@ -810,7 +816,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
     size : int, list or np.ndarray of ints : default None
         specifies default_variable as array(s) of zeros if **default_variable** is not passed as an argument;
-        if **default_variable** is specified, it takes precedence over the specification of **size** (see
+        if **default_variable** is specified, it is checked for
+        compatibility against **size** (see
         `size <Component_Size>` for additonal details).
 
     COMMENT:
@@ -839,7 +846,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     variable : 2d np.array
         see `variable <Component_Variable>`
 
-    size : int or array of ints
+    size : Union[int, tuple, List[Union[int, tuple]]]
         see `size <Component_Size>`
 
     function : Function, function or method
@@ -1655,7 +1662,16 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         return convert_to_np_array(default_variable, dimension=1)
 
-    def _parse_size(self, size):
+    def _parse_size(self, size: typing.Union[int, tuple, list[typing.Union[int, tuple]]]) -> np.ndarray:
+        """
+        Returns the equivalent 'variable' array specified by **size**
+
+        Args:
+            size (typing.Union[int, tuple, list[typing.Union[int, tuple]]])
+
+        Returns:
+            np.ndarray
+        """
         def get_size_elem(s, idx=None):
             try:
                 return np.zeros(s)
@@ -1748,7 +1764,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                         f' default_variable.shape: {variable.shape}'
                     )
 
-        # variable_from_size and variable are equal
+        # if variable_from_size is created an error has not been thrown
+        # so far, variable is equal
         return variable
 
     def _get_allowed_arguments(self) -> set:
