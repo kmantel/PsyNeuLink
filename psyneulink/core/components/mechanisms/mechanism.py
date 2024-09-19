@@ -2460,6 +2460,7 @@ class Mechanism_Base(Mechanism):
                                     for i in range(len(item.shape)))
                                 for item in return_value))):
 
+                    assert False
                     return return_value
                 else:
                     converted_to_2d = convert_to_np_array(return_value, dimension=2)
@@ -2552,7 +2553,7 @@ class Mechanism_Base(Mechanism):
                                 all(item.shape[i]==value[0].shape[0]
                                     for i in range(len(item.shape)))
                                 for item in value))):
-                    pass
+                    assert False
                 else:
                     converted_to_2d = convert_to_np_array(value, dimension=2)
                     # If return_value is a list of heterogenous elements, return as is
