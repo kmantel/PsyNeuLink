@@ -381,7 +381,6 @@ class ComparatorMechanism(ObjectiveMechanism):
         """
         # By default, ComparatorMechanism compares two 1D np.array input_ports
         variable = Parameter(np.array([[0], [0]]), read_only=True, pnl_internal=True, constructor_argument='default_variable')
-        function = Parameter(LinearCombination(weights=[[-1], [1]]), stateful=False, loggable=False)
         sample = Parameter(None, getter = _sample_getter, stateful=False, structural=True, fallback_value=None)
         target = Parameter(None, getter = _target_getter, stateful=False, structural=True, fallback_value=None)
 
@@ -406,6 +405,7 @@ class ComparatorMechanism(ObjectiveMechanism):
     standard_output_port_names = ObjectiveMechanism.standard_output_port_names.copy()
     standard_output_port_names.extend([SUM.upper(), Loss.SSE.name, Loss.MSE.name])
 
+    default_weights = [-1, 1]
 
     @check_user_specified
     @beartype
