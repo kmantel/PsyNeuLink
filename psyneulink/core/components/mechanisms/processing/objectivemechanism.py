@@ -385,7 +385,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet, REPORT_OUTPUT_PREF
 from psyneulink.core.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
-from psyneulink.core.globals.utilities import ContentAddressableList
+from psyneulink.core.globals.utilities import ContentAddressableList, convert_all_elements_to_np_array, is_iterable
 
 __all__ = [
     'DEFAULT_MONITORED_PORT_WEIGHT', 'DEFAULT_MONITORED_PORT_EXPONENT', 'DEFAULT_MONITORED_PORT_MATRIX',
@@ -560,6 +560,17 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
     standard_output_ports.extend([{NAME:OUTCOME, VARIABLE:(OWNER_VALUE, 0)}])
     standard_output_port_names = ProcessingMechanism_Base.standard_output_ports.copy()
     standard_output_port_names.extend([OUTCOME])
+
+    # these are used to fill in None values when 'weights' or
+    # 'exponents' are partially specified
+    default_weight = 1
+    default_exponent = 1
+
+    # these indicate what should be used if user does not specify
+    # 'weights' or 'exponents' at all. (these are overridden in
+    # ComparatorMechanism for example)
+    default_weights = None
+    default_exponents = None
 
     # FIX:  TYPECHECK MONITOR TO LIST OR ZIP OBJECT
     @check_user_specified
@@ -752,37 +763,115 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
         super()._instantiate_attributes_after_function(context=context)
         self._instantiate_function_weights_and_exponents(context=context)
 
+    def _reshape_array_items_to_variable_items(self, arr):
+        if len(arr) != len(self.defaults.variable):
+            raise MechanismError('array and variable length mismatch')
+
+        return convert_all_elements_to_np_array([
+            np.broadcast_to(arr[i], self.defaults.variable[i].shape)
+            for i in range(len(arr))
+        ])
+
+    def _get_weights_and_exponents(self, context):
+        # weights/exponents here would ideally be integrated in some way
+        # as shared parameters, but their optional nature and
+        # interactions with input port weight/exponent complicate this.
+
+        def mismatch_error(attr):
+            return MechanismError(
+                f'if specifying {attr} as an iterable, its length must'
+                f' match the number of input_ports ({len(self.input_ports)})'
+            )
+
+        def _get_default(attr, idx=None):
+            default = getattr(self, f'default_{attr}')
+            if idx is None:
+                return default
+            else:
+                try:
+                    return default[idx]
+                except IndexError:
+                    raise mismatch_error(attr)
+                except TypeError:
+                    return default
+
+        weights = []
+        exponents = []
+
+        for input_port in self.input_ports:
+            try:
+                weight = input_port.parameters.weight._get(context)
+            except AttributeError:
+                try:
+                    weight = input_port[PARAMS][WEIGHT]
+                except (KeyError, TypeError):
+                    weight = None
+            weights.append(weight)
+
+            try:
+                exponent = input_port.parameters.exponent._get(context)
+            except AttributeError:
+                try:
+                    exponent = input_port[PARAMS][EXPONENT]
+                except (KeyError, TypeError):
+                    exponent = None
+            exponents.append(exponent)
+
+        if all(weight is None for weight in weights):
+            if WEIGHTS in self.function.parameters:
+                weights = self.function.parameters.weights._get(context)
+        if weights is None:
+            weights = self.default_weights
+
+        if (
+            all(exponent is None for exponent in exponents)
+            and EXPONENTS in self.function.parameters
+        ):
+            exponents = self.function.parameters.exponents._get(context)
+
+        if exponents is None:
+            exponents = self.default_exponents
+
+        # each weight or exponent item must match the input port's value
+        # (=items in self.variable) dimension to ensure that when
+        # multiplying (or exponentiating) this mech's variable, the
+        # variable's shape doesn't change
+        if is_iterable(weights):
+            parsed_weights = [
+                weights[i] if weights[i] is not None else _get_default(WEIGHT, i)
+                for i in range(len(weights))
+            ]
+            try:
+                weights = self._reshape_array_items_to_variable_items(parsed_weights)
+            except MechanismError:
+                raise mismatch_error(WEIGHTS)
+
+        if is_iterable(exponents):
+            parsed_exponents = [
+                exponents[i] if exponents[i] is not None else _get_default(EXPONENT, i)
+                for i in range(len(exponents))
+            ]
+            try:
+                exponents = self._reshape_array_items_to_variable_items(parsed_exponents)
+            except MechanismError:
+                raise mismatch_error(EXPONENTS)
+
+        return weights, exponents
+
     def _instantiate_function_weights_and_exponents(self, context=None):
         """Assign weights and exponents to ObjectiveMechanism's function if it has those attributes
 
         For each, only make assignment if one or more entries in it has been assigned a value
         If any one value has been assigned, assign default value (1) to all other elements
         """
-        DEFAULT_WEIGHT = 1
-        DEFAULT_EXPONENT = 1
 
-        weights = [input_port.defaults.weight for input_port in self.input_ports]
-        exponents = [input_port.defaults.exponent for input_port in self.input_ports]
+        weights, exponents = self._get_weights_and_exponents(context)
 
         if WEIGHTS in self.function.parameters:
-            if any(weight is not None for weight in weights):
-                self.function.parameters.weights._set(
-                    np.asarray([
-                        [weight if weight is not None else DEFAULT_WEIGHT]
-                        for weight in weights
-                    ]),
-                    context
-                )
+            self.function.parameters.weights._set(weights, context)
+
         if EXPONENTS in self.function.parameters:
-            if any(exponent is not None for exponent in exponents):
-                self.function.parameters.exponents._set(
-                    np.asarray([
-                        [exponent if exponent is not None else DEFAULT_EXPONENT]
-                        for exponent in exponents
-                    ]),
-                    context
-                )
-        assert True
+            self.function.parameters.exponents._set(exponents, context)
 
     # # MODIFIED 6/8/19 NEW: [JDC]
     # def _parse_function_variable(self, variable, context=None, context=None):

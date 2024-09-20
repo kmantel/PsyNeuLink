@@ -2156,6 +2156,14 @@ class Mechanism_Base(Mechanism):
                 [input_port.defaults.weight if input_port.defaults.weight is not None else default_weight]
                 for input_port, default_weight in zip(self.input_ports, default_weights)
             ])
+            # each weight item must match the input port's value
+            # (=items in self.variable) dimension to ensure that
+            # when multiplying this mech's variable by the weights,
+            # the variable's shape doesn't change
+            weights = np.asarray([
+                np.broadcast_to(weights[i], self.input_ports[i].defaults.value.shape)
+                for i in range(len(self.input_ports))
+            ])
             self.function.parameters.weights._set(weights, context)
 
         if (
@@ -2184,6 +2192,10 @@ class Mechanism_Base(Mechanism):
                     else default_exponent
                 ]
                 for input_port, default_exponent in zip(self.input_ports, default_exponents)
+            ])
+            exponents = np.asarray([
+                np.broadcast_to(exponents[i], self.input_ports[i].defaults.value.shape)
+                for i in range(len(self.input_ports))
             ])
             self.function.parameters.exponents._set(exponents, context)
 
