@@ -2474,6 +2474,15 @@ class FunctionParameter(SharedParameter):
 
                 :type: str
                 :default: 'function'
+
+            primary
+                indicates whether **default_value** takes precedence
+                over the default value of the target Parameter when a
+                user does not specify either
+
+                :type: bool
+                :default: True
+
     """
     _unsourced_attrs = SharedParameter._unsourced_attrs.union({'function_name', 'function_parameter_name'})
 
