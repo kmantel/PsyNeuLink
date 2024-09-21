@@ -4455,6 +4455,12 @@ class TestRun:
 
             assert pnl.extended_array_equal(comp.results, [var])
 
+        @pytest.mark.xfail(
+            reason=(
+                'currently we expect Mechanisms with combination functions not to'
+                'reduce the result dimension, but this could be optional in the future'
+            )
+        )
         @pytest.mark.parametrize(
             'shape',
             [
