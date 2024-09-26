@@ -142,7 +142,7 @@ class TestConstructorArguments:
         'cls_', [pnl.ProcessingMechanism, pnl.TransferMechanism, pnl.IntegratorMechanism]
     )
     @pytest.mark.parametrize(
-        'size, expected_variable',
+        'input_shapes, expected_variable',
         [
             (1, [[0]]),
             (2, [[0, 0]]),
@@ -154,7 +154,7 @@ class TestConstructorArguments:
     )
     @pytest.mark.parametrize('params_dict_entry', [NotImplemented, 'params'])
     def test_size(self, cls_, params_dict_entry, size, expected_variable):
-        c = cls_(**nest_dictionary({'size': size}, params_dict_entry))
+        c = cls_(**nest_dictionary({'input_shapes': size}, params_dict_entry))
         np.testing.assert_array_equal(c.defaults.variable, expected_variable)
 
     @pytest.mark.parametrize(

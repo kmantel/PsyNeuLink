@@ -7,7 +7,7 @@ import psyneulink.core.llvm as pnlvm
 @pytest.mark.function
 @pytest.mark.identity_function
 @pytest.mark.benchmark(group="IdentityFunction")
-@pytest.mark.parametrize("size", [1, 2, 4, 8, 16])
+@pytest.mark.parametrize("input_shapes", [1, 2, 4, 8, 16])
 def test_basic(size, benchmark, func_mode):
     variable = np.random.rand(size)
     f = Functions.Identity(default_variable=variable)
