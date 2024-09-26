@@ -562,7 +562,7 @@ class EpisodicMemoryMechanism(ProcessingMechanism_Base):
             **kwargs
         )
 
-    def _handle_default_variable(self, default_variable=None, size=None, input_ports=None, function=None, params=None):
+    def _handle_default_variable(self, default_variable=None, input_shapes=None, input_ports=None, function=None, params=None):
         """Override to initialize or validate default_variable based on _memory_init or function.memory
             - if memory argument for Mechanism is specified and default_variable is not, use former to specify latter;
             - if both are specified, validate that they are the same shape;
@@ -601,7 +601,7 @@ class EpisodicMemoryMechanism(ProcessingMechanism_Base):
                                                        f"does not match the shape of entries ({entry_shape}) in "
                                                        f"the memory of its function ({self.function.name}).")
 
-        return super()._handle_default_variable(default_variable, size, input_ports, function, params)
+        return super()._handle_default_variable(default_variable, input_shapes, input_ports, function, params)
 
     def _instantiate_input_ports(self, context=None):
         """Override to assign default names to input_ports"""

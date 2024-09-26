@@ -95,7 +95,7 @@ with the one exception of `prefs <Component_Prefs>`.
   argument in the constructor for a Component determines both its format (e.g., whether its value is numeric, its
   dimensionality and shape if it is an array, etc.) as well as its `default_value <Component.defaults>` (the value
   used when the Component is executed and no input is provided).
-  It may alternatively be specified by `input_shapes <Component_Size>`.
+  It may alternatively be specified by `input_shapes <Component_Input_Shapes>`.
 
   .. technical_note::
     Internally, the attribute **variable** is not directly used as input to functions, to allow for parallelization.
@@ -103,7 +103,7 @@ with the one exception of `prefs <Component_Prefs>`.
     During parallelization however, the attribute may not accurately represent the most current value of variable
     being used, due to asynchrony inherent to parallelization.
 
-.. _Component_Size:
+.. _Component_Input_Shapes:
 
 * **input_shapes** - the numpy shape or list of shapes matching the `variable
   <Component.variable>` attribute.  The **input_shapes** argument of the
@@ -817,7 +817,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         specifies default_variable as array(s) of zeros if **default_variable** is not passed as an argument;
         if **default_variable** is specified, it is checked for
         compatibility against **input_shapes** (see
-        `input_shapes <Component_Size>` for additonal details).
+        `input_shapes <Component_Input_Shapes>` for additonal details).
 
     COMMENT:
     param_defaults :   :  default None,
@@ -846,7 +846,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         see `variable <Component_Variable>`
 
     input_shapes : Union[int, tuple, List[Union[int, tuple]]]
-        see `input_shapes <Component_Size>`
+        see `input_shapes <Component_Input_Shapes>`
 
     function : Function, function or method
         see `function <Component_Function>`
@@ -1652,7 +1652,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 None otherwise
         """
         default_variable = self._parse_arg_variable(default_variable)
-        default_variable = self._handle_input_shapes(size, default_variable)
+        default_variable = self._handle_input_shapes(input_shapes, default_variable)
 
         if default_variable is None or default_variable is NotImplemented:
             return None
@@ -1661,19 +1661,19 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         return convert_to_np_array(default_variable, dimension=1)
 
-    def _parse_size(
+    def _parse_input_shapes(
         self, input_shapes: typing.Union[int, tuple, typing.List[typing.Union[int, tuple]]]
     ) -> np.ndarray:
         """
         Returns the equivalent 'variable' array specified by **input_shapes**
 
         Args:
-            size (typing.Union[int, tuple, list[typing.Union[int, tuple]]])
+            input_shapes (typing.Union[int, tuple, list[typing.Union[int, tuple]]])
 
         Returns:
             np.ndarray
         """
-        def get_size_elem(s, idx=None):
+        def get_input_shapes_elem(s, idx=None):
             try:
                 return np.zeros(s)
             except (TypeError, ValueError) as e:
@@ -1688,16 +1688,16 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     f' numpy.zeros: {e}'
                 ) from e
 
-        if not is_iterable(size, exclude_str=True):
-            variable_from_input_shapes = np.asarray([get_size_elem(size)])
+        if not is_iterable(input_shapes, exclude_str=True):
+            variable_from_input_shapes = np.asarray([get_input_shapes_elem(input_shapes)])
         else:
-            if len(size) == 0:
+            if len(input_shapes) == 0:
                 raise ComponentError(
                     f'Invalid input_shapes argument of {self}. input_shapes must not be an empty list'
                 )
             variable_from_input_shapes = []
-            for i, s in enumerate(size):
-                variable_from_input_shapes.append(get_size_elem(s, i))
+            for i, s in enumerate(input_shapes):
+                variable_from_input_shapes.append(get_input_shapes_elem(s, i))
             variable_from_input_shapes = convert_all_elements_to_np_array(variable_from_input_shapes)
 
         return variable_from_input_shapes
@@ -1734,7 +1734,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     f'input_shapes and default_variable arguments of {self} conflict{reason_str}'
                 )
 
-            variable_from_input_shapes = self._parse_size(input_shapes)
+            variable_from_input_shapes = self._parse_input_shapes(input_shapes)
 
             if variable is None:
                 return variable_from_input_shapes

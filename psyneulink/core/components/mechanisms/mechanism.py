@@ -1827,18 +1827,18 @@ class Mechanism_Base(Mechanism):
 
         if default_variable_from_input_ports is not None:
             if default_variable is None:
-                if size is None:
+                if input_shapes is None:
                     default_variable = default_variable_from_input_ports
                 else:
                     if input_ports_variable_was_specified:
-                        size_variable = self._handle_input_shapes(size, None)
-                        if iscompatible(size_variable, default_variable_from_input_ports):
+                        input_shapes_variable = self._handle_input_shapes(input_shapes, None)
+                        if iscompatible(input_shapes_variable, default_variable_from_input_ports):
                             default_variable = default_variable_from_input_ports
                         else:
                             raise MechanismError(
                                 f'Default variable for {self.name} determined from the specified input_ports spec '
                                 f'({default_variable_from_input_ports}) is not compatible with the default variable '
-                                f'determined from input_shapes parameter ({size_variable}).')
+                                f'determined from input_shapes parameter ({input_shapes_variable}).')
                     else:
                         # do not pass input_ports variable as default_variable, fall back to input_shapes specification
                         pass
@@ -1853,7 +1853,7 @@ class Mechanism_Base(Mechanism):
                     # do not pass input_ports variable as default_variable, fall back to default_variable specification
                     pass
 
-        return super()._handle_default_variable(default_variable=default_variable, size=size)
+        return super()._handle_default_variable(default_variable=default_variable, input_shapes=input_shapes)
 
     def _handle_arg_input_ports(self, input_ports):
         """

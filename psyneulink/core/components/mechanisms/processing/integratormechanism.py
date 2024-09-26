@@ -232,7 +232,7 @@ class IntegratorMechanism(ProcessingMechanism_Base):
     # def _parse_function_variable(self, variable, context=None, context=None):
     #     super()._parse_function_variable(variable, context, context)
 
-    def _handle_default_variable(self, default_variable=None, size=None, input_ports=None, function=None, params=None):
+    def _handle_default_variable(self, default_variable=None, input_shapes=None, input_ports=None, function=None, params=None):
         """If any parameters with len>1 have been specified for the Mechanism's function, and Mechanism's
         default_variable has not been specified, reshape Mechanism's variable to match function's,
         but make sure function's has the same outer dimensionality as the Mechanism's
@@ -281,7 +281,7 @@ class IntegratorMechanism(ProcessingMechanism_Base):
             #    as the reshaping of the function's variable will be taken care of in _instantiate_function
 
         return super()._handle_default_variable(default_variable=variable,
-                                                size=size,
+                                                input_shapes=input_shapes,
                                                 input_ports=input_ports,
                                                 function=function,
                                                 params=params)
