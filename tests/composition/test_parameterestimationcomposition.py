@@ -219,7 +219,7 @@ def test_parameter_optimization_ddm(func_mode, opt_method, expected_result):
     # trial_inputs = np.ones((num_trials, 1))
     rng = np.random.default_rng(12345)
     trial_inputs = rng.choice(
-        [5.0, -5.0], size=[num_trials, 1], p=[0.10, 0.9], replace=True
+        [5.0, -5.0], size=(num_trials, 1), p=[0.10, 0.9], replace=True
     )
 
     # Make the first and last input positive for sure. This helps make sure inputs are really getting
@@ -272,7 +272,7 @@ def test_parameter_estimation_ddm_mle(func_mode):
     # trial_inputs = np.ones((num_trials, 1))
     rng = np.random.default_rng(12345)
     trial_inputs = rng.choice(
-        [5.0, -5.0], size=[num_trials, 1], p=[0.10, 0.9], replace=True
+        [5.0, -5.0], size=(num_trials, 1), p=[0.10, 0.9], replace=True
     )
 
     # Make the first and last input positive for sure. This helps make sure inputs are really getting

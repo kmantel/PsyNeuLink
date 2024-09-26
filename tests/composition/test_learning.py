@@ -1981,7 +1981,7 @@ class TestBackPropLearning:
                                             function=pnl.Linear())
         hidden_layer = pnl.ProcessingMechanism(name="hidden",
                                                input_ports=['input1','input2'],
-                                               size=[4,4],
+                                               size=(4,4),
                                                function=pnl.LinearCombination(operation=pnl.PRODUCT))
         output_layer = pnl.TransferMechanism(name="output",
                                              size=2,
@@ -2046,7 +2046,7 @@ class TestBackPropLearning:
                                             function=pnl.Linear())
         hidden_layer = pnl.ProcessingMechanism(name="hidden",
                                                input_ports=['input1','input2','input3'],
-                                               size=[5,5,5],
+                                               size=(5,5,5),
                                                function=pnl.LinearCombination(operation=pnl.PRODUCT))
         output_layer = pnl.TransferMechanism(name="output",
                                              size=2,
@@ -2102,7 +2102,7 @@ class TestBackPropLearning:
 
         input_A = pnl.ProcessingMechanism(name='INPUT_A', size=2)
         input_B = pnl.ProcessingMechanism(name='INPUT_B', size=2)
-        output = pnl.ProcessingMechanism(name='OUTPUT', size=[2,3])
+        output = pnl.ProcessingMechanism(name='OUTPUT', size=(2,3))
         comp = Composition(name='comp')
 
         with pytest.raises(CompositionError) as error_text:

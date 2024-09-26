@@ -3231,7 +3231,7 @@ class TestRunInputSpecifications:
         assert "is incorrect for Mechanism with a single InputPort" in str(error_text.value)
 
         # Mechanism with two InputPorts
-        mech2 = pnl.TransferMechanism(name='input', size=[2,2])
+        mech2 = pnl.TransferMechanism(name='input', size=(2,2))
         comp = pnl.Composition(mech2, name='comp')
 
         with pytest.raises(CompositionError) as error_text:

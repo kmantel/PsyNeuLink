@@ -109,14 +109,13 @@ with the one exception of `prefs <Component_Prefs>`.
   <Component.variable>` attribute.  The **size** argument of the
   constructor for a Component can be used as a convenient method for specifying the `variable <Component_Variable>`,
   attribute in which case it will be assigned as an array of zeros of
-  the specified shape. When **size** is an integer or tuple, it is
-  treated as a single shape. When **size** is a list, each item in the
-  list is treated as a single shape, and the entire list is then
-  assigned as an array. For example,
-  setting  **size** = 3 is equivalent to setting **variable** = [0, 0, 0] and setting **size** = [4, 3] is equivalent
-  to setting **variable** = [[0, 0, 0, 0], [0, 0, 0]], while setting
-  **size** = (3, 3) is equivalent to setting **variable** = [[0, 0, 0],
-  [0, 0, 0], [0, 0, 0]]
+  the specified shape. When **size** is an iterable, each item in the
+  list is treated as a single shape, and the entire iterable is then
+  assigned as an array. When **size** is an integer, it is treated the
+  same as a one-item iterable containing that integer. For example,
+  setting  **size** = 3 is equivalent to setting
+  **variable** = [[0, 0, 0]] and setting **size** = [4, 3] is equivalent
+  to setting **variable** = [[0, 0, 0, 0], [0, 0, 0]].
 
   .. note::
      The size attribute serves a role similar to
@@ -546,7 +545,7 @@ from psyneulink.core.globals.sampleiterator import SampleIterator
 from psyneulink.core.globals.utilities import \
     ContentAddressableList, convert_all_elements_to_np_array, convert_to_np_array, get_deepcopy_with_shared, \
     is_instance_or_subclass, is_matrix, iscompatible, kwCompatibilityLength, \
-    get_all_explicit_arguments, is_numeric, call_with_pruned_args, safe_equals, safe_len, parse_valid_identifier, try_extract_0d_array_item, contains_type
+    get_all_explicit_arguments, is_numeric, call_with_pruned_args, safe_equals, safe_len, parse_valid_identifier, try_extract_0d_array_item, contains_type, is_iterable
 from psyneulink.core.scheduling.condition import Never
 from psyneulink.core.scheduling.time import Time, TimeScale
 
@@ -1689,8 +1688,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     f' numpy.zeros: {e}'
                 ) from e
 
-        if not isinstance(size, list):
-            variable_from_size = get_size_elem(size)
+        if not is_iterable(size, exclude_str=True):
+            variable_from_size = np.asarray([get_size_elem(size)])
         else:
             if len(size) == 0:
                 raise ComponentError(
@@ -1740,7 +1739,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             if variable is None:
                 return variable_from_size
 
-            if isinstance(size, list):
+            if is_iterable(size, exclude_str=True):
                 assert len(size) == len(variable_from_size)
 
                 if variable.ndim == 0:
