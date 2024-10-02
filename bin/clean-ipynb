@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+nbclean() {
+    jupyter nbconvert --clear-output --ClearMetadataPreprocessor.enabled=True --inplace "$@"
+}
+
+if [[ -n "$@" ]]; then
+    nbclean "$@"
+else
+    export -f nbclean
+    git ls-files "*.ipynb" | xargs -I {} -d "\n" bash -c 'nbclean "$@"' _ {}
+fi

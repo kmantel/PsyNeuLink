@@ -2122,6 +2122,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
               constructor_argument
             - arguments that don't correspond to Parameters or other
               arguments to __init__
+
+
             - non-equal values of a Parameter and a corresponding
               ParameterAlias
         """
