@@ -57,7 +57,15 @@ from psyneulink.core.globals.keywords import (
      HAS_INITIALIZERS, HOLLOW_MATRIX, IDENTITY_MATRIX, LINEAR_COMBINATION_FUNCTION, L0,
      MATRIX, MATRIX_KEYWORD_NAMES, MATRIX_TRANSFORM_FUNCTION,  MULTIPLICATIVE_PARAM, NORMALIZE,
      OFFSET, OPERATION, PREDICTION_ERROR_DELTA_FUNCTION, PRODUCT,
-     REARRANGE_FUNCTION, RECEIVER, REDUCE_FUNCTION, SCALE, SUM, WEIGHTS, PREFERENCE_SET_NAME)
+    DEFAULT,
+    PREFERENCE_SET_NAME,
+    REARRANGE_FUNCTION,
+    RECEIVER,
+    REDUCE_FUNCTION,
+    SCALE,
+    SUM,
+    WEIGHTS,
+)
 from psyneulink.core.globals.utilities import (
     convert_all_elements_to_np_array, convert_to_np_array, is_numeric, is_matrix_keyword, is_numeric_scalar,
     np_array_less_than_2d, ValidParamSpecType)
@@ -1862,6 +1870,7 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
         matrix = Parameter(None, modulable=True, mdf_name='B')
         operation = Parameter(DOT_PRODUCT, stateful=False)
         normalize = Parameter(False, fallback_value=DEFAULT)
+        axes = DEFAULT
 
     @check_user_specified
     @beartype
@@ -1911,7 +1920,7 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
         # proxy for checking whether the owner is a projection
         if hasattr(self.owner, 'receiver'):
             sender = self.defaults.variable
-            sender_len = np.size(np.atleast_2d(self.defaults.variable), 1)
+            sender_len = np.size(np.atleast_2d(self.defaults.variable), -1)
 
             # Check for and validate receiver first, since it may be needed to validate and/or construct the matrix
             # First try to get receiver from specification in params
@@ -1969,10 +1978,6 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
                                                 "function of {}".format(param_value,
                                                                         self.name,
                                                                         self.owner_name))
-
-                        if weight_matrix.ndim != 2:
-                            raise FunctionError("The matrix provided for the {} function of {} must be 2d (it is {}d".
-                                                format(weight_matrix.ndim, self.name, self.owner_name))
 
                         matrix_rows = weight_matrix.shape[0]
                         matrix_cols = weight_matrix.shape[1]
@@ -2133,7 +2138,7 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
                 # receiver = sender
             receiver_len = receiver.shape[0]
 
-            matrix = get_matrix(specification, rows=sender_len, cols=receiver_len, context=context)
+            matrix = get_matrix(specification, inp=sender, out=receiver, context=context)
 
             # This should never happen (should have been picked up in validate_param or above)
             if matrix is None:
@@ -2256,7 +2261,19 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
                     #      Replace columns (if norming axis 0) or rows (if norming axis 1) of zeros with 1's
                     # matrix = matrix / np.linalg.norm(matrix,axis=-1,keepdims=True)
                     matrix = matrix / np.linalg.norm(matrix, axis=0, keepdims=True)
-            result = np.dot(vector, matrix)
+
+            axes = self.parameters.axes._get(context)
+            if axes == DEFAULT:
+                # if matrix.ndim <= 2:
+                #     axes = 1
+                # else:
+                #     axes = vector.ndim
+                axes = vector.ndim
+                # else:
+                #     # tensordot default
+                #     axes = 2
+
+            result = np.tensordot(vector, matrix, axes=axes)
 
         elif operation == L0:
             if normalize:
@@ -2278,12 +2295,12 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
             if isinstance(obj.sender.defaults.value, numbers.Number):
                 rows = 1
             else:
-                rows = len(obj.sender.defaults.value)
+                rows = obj.sender.socket_width
             if isinstance(obj.receiver.defaults.variable, numbers.Number):
                 cols = 1
             else:
                 cols = obj.receiver.socket_width
-        matrix = get_matrix(keyword, rows, cols)
+        matrix = get_matrix(keyword, obj.sender.socket_shape, obj.receiver.socket_shape)
 
         if matrix is None:
             raise FunctionError("Unrecognized keyword ({}) specified for the {} function of {}".
