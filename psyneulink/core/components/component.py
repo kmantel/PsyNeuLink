@@ -1611,6 +1611,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                      "mask",
                      # LossMechanism
                      "loss", "metric",
+                     # LinearMatrix
+                     "axes",
                      }
 
         # Mechanism's need few extra entries:
