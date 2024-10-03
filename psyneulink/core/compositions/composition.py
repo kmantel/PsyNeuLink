@@ -12935,15 +12935,6 @@ _
                     value = INPUT_node.parse_input_array(value, composition=self)
                     value = value[index]
 
-            # need extra dimension because `value` matches the shape of
-            # an item in INPUT_node variable (= the value of an
-            # InputPort of INPUT_node) (= user input). So the input
-            # (build_CIM_input) to each InputPort of input_CIM must
-            # correspond to the variable of that InputPort of input_CIM.
-            # if input_port.function.changes_shape:
-            #     value = [value]
-            # value = [value]
-
             build_CIM_input.append(value)
 
         return build_CIM_input

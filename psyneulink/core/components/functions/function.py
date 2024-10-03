@@ -249,6 +249,20 @@ def get_param_value_for_keyword(owner, keyword):
     """
     try:
         return owner.function.keyword(owner, keyword)
+    except FunctionError as e:
+        # assert(False)
+        # prefs is not always created when this is called, so check
+        try:
+            owner.prefs
+            has_prefs = True
+        except AttributeError:
+            has_prefs = False
+
+        if has_prefs and owner.prefs.verbosePref:
+            print("{} of {}".format(e, owner.name))
+        # return None
+        else:
+            raise FunctionError(e)
     except AttributeError:
         # prefs is not always created when this is called, so check
         try:
