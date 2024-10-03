@@ -97,7 +97,7 @@ from psyneulink.core.globals.keywords import \
      TANH_FUNCTION, MATRIX_KEYWORD_NAMES, MATRIX, MAX_INDICATOR, MAX_VAL, MULTIPLICATIVE_PARAM, NORMALIZE,
      OFF, OFFSET, ON, OUTPUT_TYPE, PER_ITEM, PROB, PRODUCT, PROB_INDICATOR,
      RATE, RECEIVER, RELU_FUNCTION, SCALE, SLOPE, SOFTMAX_FUNCTION, STANDARD_DEVIATION, SUM,
-     TRANSFER_FUNCTION_TYPE, TRANSFER_WITH_COSTS_FUNCTION, VARIANCE, VARIABLE, X_0, PREFERENCE_SET_NAME)
+     TRANSFER_FUNCTION_TYPE, TRANSFER_WITH_COSTS_FUNCTION, VARIANCE, VARIABLE, X_0, PREFERENCE_SET_NAME, DEFAULT)
 from psyneulink.core.globals.parameters import \
     FunctionParameter, Parameter, get_validator_by_function, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.basepreferenceset import \
@@ -3764,6 +3764,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         matrix = Parameter(None, modulable=True, mdf_name='B')
         normalize = Parameter(False)
         bounds = None
+        axes = DEFAULT
 
     # def is_matrix_spec(m):
     #     if m is None:
@@ -4160,7 +4161,15 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
                 # matrix = matrix / np.linalg.norm(matrix,axis=-1,keepdims=True)
                 matrix = matrix / np.linalg.norm(matrix,axis=0,keepdims=True)
 
-        result = np.dot(vector, matrix)
+        axes = self.parameters.axes._get(context)
+        if axes == DEFAULT:
+            if vector.ndim <= 2 or matrix.ndim <= 2:
+                axes = 1
+            else:
+                # tensordot default
+                axes = 2
+
+        result = np.tensordot(vector, matrix, axes=axes)
         return self.convert_output_type(result)
 
     @staticmethod
