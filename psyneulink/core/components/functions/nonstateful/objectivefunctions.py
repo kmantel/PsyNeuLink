@@ -339,26 +339,19 @@ class Stability(ObjectiveFunction):
         from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
         from psyneulink.core.components.ports.parameterport import ParameterPort
 
-        # this mirrors the transformation in _function
-        # it is a hack, and a general solution should be found
-        squeezed = np.array(self.defaults.variable)
-        if squeezed.ndim > 1:
-            squeezed = np.squeeze(squeezed)
-
-        size = safe_len(squeezed)
-
         matrix = self.parameters.matrix._get(context)
+        squeezed_var = np.squeeze(self.defaults.variable)
 
         if isinstance(matrix, MappingProjection):
             matrix = matrix._parameter_ports[MATRIX]
         # elif isinstance(matrix, ParameterPort):
         #     pass
         else:
-            matrix = get_matrix(matrix, size, size)
+            matrix = get_matrix(matrix, squeezed_var, squeezed_var)
 
         self.parameters.matrix._set(matrix, context)
 
-        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, size, size)
+        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, squeezed_var, squeezed_var)
 
         default_variable = [self.defaults.variable,
                             self.defaults.variable]
@@ -384,6 +377,7 @@ class Stability(ObjectiveFunction):
         # this mirrors the transformation in _function
         # it is a hack, and a general solution should be found
         new_default_variable = convert_all_elements_to_np_array(new_default_variable)
+        squeezed_var = np.squeeze(new_default_variable)
         size = safe_len(np.squeeze(new_default_variable))
         matrix = self.parameters.matrix._get(context)
 
@@ -392,11 +386,11 @@ class Stability(ObjectiveFunction):
         elif isinstance(matrix, ParameterPort):
             pass
         else:
-            matrix = get_matrix(copy_parameter_value(self.defaults.matrix), size, size)
+            matrix = get_matrix(copy_parameter_value(self.defaults.matrix), squeezed_var, squeezed_var)
 
         self.parameters.matrix._set(matrix, context)
 
-        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, size, size)
+        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, squeezed_var, squeezed_var)
 
         super()._update_default_variable(new_default_variable, context)
 
