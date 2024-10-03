@@ -163,7 +163,7 @@ from psyneulink.core.globals.keywords import (
     ARGUMENT_THERAPY_FUNCTION, AUTO_ASSIGN_MATRIX, EXAMPLE_FUNCTION_TYPE, FULL_CONNECTIVITY_MATRIX,
     FUNCTION_COMPONENT_CATEGORY, FUNCTION_OUTPUT_TYPE, FUNCTION_OUTPUT_TYPE_CONVERSION, HOLLOW_MATRIX,
     IDENTITY_MATRIX, INVERSE_HOLLOW_MATRIX, NAME, PREFERENCE_SET_NAME, RANDOM_CONNECTIVITY_MATRIX, VALUE, VARIABLE,
-    MODEL_SPEC_ID_MDF_VARIABLE, MatrixKeywordLiteral, ZEROS_MATRIX
+    MODEL_SPEC_ID_MDF_VARIABLE, MatrixKeywordLiteral, ZEROS_MATRIX, DEFAULT
 )
 from psyneulink.core.globals.mdf import _get_variable_parameter_name
 from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
@@ -1322,7 +1322,38 @@ class RandomMatrix():
         return random_matrix(sender_size, receiver_size, offset=self.center - 0.5, scale=self.range)
 
 
-def get_matrix(specification, rows=1, cols=1, context=None):
+def identity_matrix(n, ndim=2):
+    if ndim <= 2:
+        return np.identity(n)
+    else:
+        res = np.zeros(ndim * (n,))
+
+        for i in range(n):
+            res[ndim * (i,)] = 1
+
+        return res
+
+
+def _parse_as_shape(obj):
+    # treat 0-dim array as a scalar
+    try:
+        if obj.ndim == 0:
+            obj = obj.item()
+    except (AttributeError, ValueError):
+        pass
+
+    try:
+        return obj.shape
+    except AttributeError:
+        pass
+
+    try:
+        return tuple(obj)
+    except TypeError:
+        return (obj,)
+
+
+def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
     """Returns matrix conforming to specification with dimensions = rows x cols or None
 
      Specification can be a matrix keyword, filler value or np.ndarray
@@ -1342,6 +1373,32 @@ def get_matrix(specification, rows=1, cols=1, context=None):
 
      Returns 2D array with length=rows in dim 0 and length=cols in dim 1, or none if specification is not recognized
     """
+    input_shape = _parse_as_shape(inp)
+    output_shape = _parse_as_shape(out)
+
+    def _check_shape_equality():
+        if input_shape != output_shape:
+            raise FunctionError(
+                "Sender shape ({}) must equal receiver shape ({}) to use {}".format(
+                    input_shape, output_shape, specification
+                )
+            )
+
+        if len(input_shape) > 2 and any([x != input_shape[0] for x in input_shape]):
+            raise FunctionError(
+                "For >2D matrices, sender and receiver dimension lengths ({})"
+                " must be equal to the number of dimensions ({}) to use {}".format(
+                    input_shape, len(input_shape), specification
+                )
+            )
+
+    if axes == DEFAULT:
+        axes = len(input_shape)
+
+    if axes == 0:
+        matrix_shape = input_shape + output_shape
+    else:
+        matrix_shape = (*input_shape[-axes:], *output_shape[len(input_shape) - axes:])
 
     # Matrix provided (and validated in _validate_params); convert to array
     if isinstance(specification, (list, np.matrix)):
@@ -1352,51 +1409,48 @@ def get_matrix(specification, rows=1, cols=1, context=None):
         # MODIFIED 4/9/22 END
 
     if isinstance(specification, np.ndarray):
-        if specification.ndim == 2:
+        if specification.ndim >= 2:
             return specification
         # FIX: MAKE THIS AN np.array WITH THE SAME DIMENSIONS??
-        elif specification.ndim < 2:
-            return np.atleast_2d(specification)
         else:
-            raise FunctionError("Specification of np.array for matrix ({}) is more than 2d".
-                                format(specification))
+            return np.atleast_2d(specification)
 
     if specification == AUTO_ASSIGN_MATRIX:
-        if rows == cols:
+        if (
+            input_shape == output_shape
+            and (
+                len(matrix_shape) <= 2
+                or all([x == input_shape[0] for x in input_shape])
+            )
+        ):
             specification = IDENTITY_MATRIX
         else:
             specification = FULL_CONNECTIVITY_MATRIX
 
     if specification == FULL_CONNECTIVITY_MATRIX:
-        return np.full((rows, cols), 1.0)
+        return np.full(matrix_shape, 1.0)
 
     if specification == ZEROS_MATRIX:
-        return np.zeros((rows, cols))
+        return np.zeros(matrix_shape)
 
     if specification == IDENTITY_MATRIX:
-        if rows != cols:
-            raise FunctionError("Sender length ({}) must equal receiver length ({}) to use {}".
-                                format(rows, cols, specification))
-        return np.identity(rows)
+        _check_shape_equality()
+        return identity_matrix(input_shape[0], len(matrix_shape))
 
     if specification == HOLLOW_MATRIX:
-        if rows != cols:
-            raise FunctionError("Sender length ({}) must equal receiver length ({}) to use {}".
-                                format(rows, cols, specification))
-        return 1 - np.identity(rows)
+        _check_shape_equality()
+        return 1 - identity_matrix(input_shape[0], len(matrix_shape))
 
     if specification == INVERSE_HOLLOW_MATRIX:
-        if rows != cols:
-            raise FunctionError("Sender length ({}) must equal receiver length ({}) to use {}".
-                                format(rows, cols, specification))
-        return (1 - np.identity(rows)) * -1
+        _check_shape_equality()
+        return (1 - identity_matrix(input_shape[0], len(matrix_shape))) * -1
 
     if specification == RANDOM_CONNECTIVITY_MATRIX:
-        return np.random.rand(rows, cols)
+        return np.random.rand(*matrix_shape)
 
     # Function is specified, so assume it uses random.rand() and call with sender_len and receiver_len
     if isinstance(specification, (types.FunctionType, RandomMatrix)):
-        return specification(rows, cols)
+        return specification(*matrix_shape)
 
     # (7/12/17 CW) this is a PATCH (like the one in MappingProjection) to allow users to
     # specify 'matrix' as a string (e.g. r = RecurrentTransferMechanism(matrix='1 2; 3 4'))
