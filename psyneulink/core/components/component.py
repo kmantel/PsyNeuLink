@@ -1601,7 +1601,9 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                      # SoftMax:
                      'mask_threshold', 'adapt_scale', 'adapt_base', 'adapt_entropy_weighting',
                      # LCAMechanism
-                     "mask"
+                     "mask",
+                     # LinearMatrix
+                     "axes",
                      }
 
         # OneHot:
