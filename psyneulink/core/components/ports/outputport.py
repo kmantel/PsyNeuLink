@@ -1242,7 +1242,6 @@ class OutputPort(Port_Base):
     def socket_shape(self):
         return self.defaults.value.shape
 
-    # TODO: replace socket_template with this
     @property
     def socket_shape_template(self):
         return np.zeros(self.socket_shape)

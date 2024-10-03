@@ -1441,11 +1441,6 @@ class InputPort(Port_Base):
         return self.defaults.variable.shape[-1]
 
     @property
-    def socket_template(self):
-        return np.zeros(self.socket_width)
-
-    # TODO: replace socket_template with this
-    @property
     def socket_shape_template(self):
         return np.zeros(self.socket_shape)
 

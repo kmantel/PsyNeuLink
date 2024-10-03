@@ -1130,20 +1130,20 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         # Should be OK to use attributes here because initialization should only occur during None context
         self._set_multiple_parameter_values(
             context,
-            initial_value=self.input_ports[RECURRENT].socket_template,
-            current_activity=self.input_ports[RECURRENT].socket_template,
-            minus_phase_activity=self.input_ports[RECURRENT].socket_template,
-            plus_phase_activity=self.input_ports[RECURRENT].socket_template,
+            initial_value=self.input_ports[RECURRENT].socket_shape_template,
+            current_activity=self.input_ports[RECURRENT].socket_shape_template,
+            minus_phase_activity=self.input_ports[RECURRENT].socket_shape_template,
+            plus_phase_activity=self.input_ports[RECURRENT].socket_shape_template,
             execution_phase=None,
         )
-        self.defaults.initial_value = copy.deepcopy(self.input_ports[RECURRENT].socket_template)
-        self.defaults.current_activity = copy.deepcopy(self.input_ports[RECURRENT].socket_template)
-        self.defaults.minus_phase_activity = copy.deepcopy(self.input_ports[RECURRENT].socket_template)
-        self.defaults.plus_phase_activity = copy.deepcopy(self.input_ports[RECURRENT].socket_template)
+        self.defaults.initial_value = copy.deepcopy(self.input_ports[RECURRENT].socket_shape_template)
+        self.defaults.current_activity = copy.deepcopy(self.input_ports[RECURRENT].socket_shape_template)
+        self.defaults.minus_phase_activity = copy.deepcopy(self.input_ports[RECURRENT].socket_shape_template)
+        self.defaults.plus_phase_activity = copy.deepcopy(self.input_ports[RECURRENT].socket_shape_template)
         self.defaults.execution_phase = None
 
         if self._target_included:
-            self.parameters.output_activity._set(self.input_ports[TARGET].socket_template, context)
+            self.parameters.output_activity._set(self.input_ports[TARGET].socket_shape_template, context)
 
     @beartype
     def _instantiate_recurrent_projection(self,
@@ -1186,7 +1186,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
             # If current execution follows completion of a previous trial,
             #    zero activity for input from recurrent projection so that
             #    input does not contain residual activity of previous trial
-            variable[RECURRENT_INDEX] = self.input_ports[RECURRENT].socket_template
+            variable[RECURRENT_INDEX] = self.input_ports[RECURRENT].socket_shape_template
 
         # self.parameters.is_finished_._set(False, context)
         self.parameters.is_finished_flag._set(False, context)

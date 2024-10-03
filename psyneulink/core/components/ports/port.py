@@ -1770,7 +1770,7 @@ class Port_Base(Port):
                     # PathwayProjection:
                     #    - check that projection's value is compatible with the receiver's variable
                     if isinstance(projection, PathwayProjection_Base):
-                        if not iscompatible(projection.value, receiver.socket_template):
+                        if not iscompatible(projection.value, receiver.socket_shape_template):
                             raise PortError(f"Output of {projection.name} ({projection.value}) "
                                             f"is not compatible with the variable ({receiver.defaults.variable}) of "
                                             f"the Port to which it is supposed to project ({receiver.name}).")
