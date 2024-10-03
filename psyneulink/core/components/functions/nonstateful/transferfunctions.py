@@ -103,7 +103,7 @@ from psyneulink.core.globals.keywords import \
      PER_ITEM, PROB, PRODUCT, PROB_INDICATOR, PROBABILISTIC_TRANSFER_FUNCTION_TYPE,
      RATE, RELU_FUNCTION, SCALE, SLOPE, SOFTMAX_FUNCTION, STANDARD_DEVIATION, SUM,
      TANH_FUNCTION, TRANSFER_FUNCTION_TYPE, TRANSFER_WITH_COSTS_FUNCTION,
-     VARIANCE, VARIABLE, X_0, PREFERENCE_SET_NAME)
+     VARIANCE, VARIABLE, X_0, PREFERENCE_SET_NAME, DEFAULT)
 from psyneulink.core.globals.parameters import \
     FunctionParameter, Parameter, get_validator_by_function, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.basepreferenceset import \
