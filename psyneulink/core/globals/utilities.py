@@ -1066,12 +1066,9 @@ def convert_to_np_array(value, dimension=None):
     elif dimension == 2:
         # Array is made up of non-uniform elements, so treat as 2d array and pass
         if (
-            value.ndim > 0
-            and value.dtype == object
-            and any([safe_len(x) > 1 for x in value])
+            value.ndim == 0
+            or (value.ndim == 1 and value.shape == ragged_np_shape(value))
         ):
-            pass
-        else:
             if torch and torch.is_tensor(value):
                 value = torch.atleast_2d(value)
             else:
