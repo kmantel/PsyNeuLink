@@ -4444,7 +4444,8 @@ class TestRun:
             [
                 (1, 1, 1),
                 (5, 4, 3, 2, 1),
-                (((1,), (2,),)),
+                ((5, 4, 3, 2, 1),),
+                ((((1,),), ((2,),),)),
             ]
         )
         def test_singleton(self, shape):
@@ -4454,6 +4455,23 @@ class TestRun:
             comp.run(inputs={A: var})
 
             assert pnl.extended_array_equal(comp.results, [var])
+
+        @pytest.mark.parametrize(
+            'shape',
+            [
+                (1, 1, 1),
+                ((5, 4, 3, 2, 1),),
+            ]
+        )
+        def test_branching_identical_shapes(self, shape):
+            var = pnl.ragged_np_zeros(shape)
+            A = pnl.ProcessingMechanism(default_variable=var)
+            B = pnl.ProcessingMechanism(default_variable=var)
+            C = pnl.ProcessingMechanism(default_variable=var)
+            D = pnl.ProcessingMechanism(default_variable=var)
+
+            comp = pnl.Composition([[A, B, D], [A, C, D]])
+            comp.run(inputs={A: var})
 
         @pytest.mark.xfail(
             reason=(
