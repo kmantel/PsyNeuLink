@@ -4464,7 +4464,7 @@ class TestRun:
             ]
         )
         def test_branching_identical_shapes(self, shape):
-            var = pnl.ragged_np_zeros(shape)
+            var = pnl.ragged_np_ones(shape)
             A = pnl.ProcessingMechanism(default_variable=var)
             B = pnl.ProcessingMechanism(default_variable=var)
             C = pnl.ProcessingMechanism(default_variable=var)
@@ -4472,6 +4472,7 @@ class TestRun:
 
             comp = pnl.Composition([[A, B, D], [A, C, D]])
             comp.run(inputs={A: var})
+            np.testing.assert_allclose(comp.results, [pnl.ragged_np_full(shape, 2)])
 
         @pytest.mark.xfail(
             reason=(
