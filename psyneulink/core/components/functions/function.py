@@ -1302,6 +1302,15 @@ class RandomMatrix():
         return random_matrix(sender_size, receiver_size, offset=self.center - 0.5, scale=self.range)
 
 
+def identity_tensor(n_dim):
+    res = np.zeros(n_dim * (n_dim,))
+
+    for i in range(n_dim):
+        res[((i,) * n_dim)] = 1
+
+    return res
+
+
 def get_matrix(specification, rows=1, cols=1, context=None):
     """Returns matrix conforming to specification with dimensions = rows x cols or None
 
