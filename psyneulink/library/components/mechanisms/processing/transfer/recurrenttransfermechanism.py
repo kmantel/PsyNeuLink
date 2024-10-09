@@ -730,7 +730,7 @@ class RecurrentTransferMechanism(TransferMechanism):
                 matrix = matrix_param.matrix
 
             elif isinstance(matrix_param, str):
-                matrix = get_matrix(matrix_param, rows=self.recurrent_size, cols=self.recurrent_size)
+                matrix = get_matrix(matrix_param, inp=self.recurrent_size, out=self.recurrent_size)
 
             elif isinstance(matrix_param, (np.matrix, list)):
                 matrix = np.array(matrix_param)
@@ -816,7 +816,7 @@ class RecurrentTransferMechanism(TransferMechanism):
 
         param_keys = self._parameter_ports.key_values
 
-        matrix = get_matrix(copy_parameter_value(self.defaults.matrix), rows=self.recurrent_size, cols=self.recurrent_size)
+        matrix = get_matrix(copy_parameter_value(self.defaults.matrix), inp=self.recurrent_size, out=self.recurrent_size)
 
         # below implements the rules provided by KAM:
         # - If auto and hetero but not matrix are specified, the diagonal terms of the matrix are determined by auto and the off-diagonal terms are determined by hetero.

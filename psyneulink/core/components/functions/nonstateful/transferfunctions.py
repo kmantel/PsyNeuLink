@@ -4075,7 +4075,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
                 # receiver = sender
             receiver_len = receiver.shape[0]
 
-            matrix = get_matrix(specification, rows=sender_len, cols=receiver_len, context=context)
+            matrix = get_matrix(specification, inp=sender_len, out=receiver_len, context=context)
 
             # This should never happen (should have been picked up in validate_param or above)
             if matrix is None:
