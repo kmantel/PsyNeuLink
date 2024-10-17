@@ -237,5 +237,5 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        previous_release=$(gh --repo ${{ GITHUB_REPOSITORY }} | head -n 1 | awk '{print $1}')
-        gh --repo ${{ GITHUB_REPOSITORY }} release create --verify-tag --generate-notes --notes-start-tag "$previous_release" ${{ GITHUB_REF }} dist/*
+        previous_release=$(gh --repo ${{ github.repository }} | head -n 1 | awk '{print $1}')
+        gh --repo ${{ github.repository }} release create --verify-tag --generate-notes --notes-start-tag "$previous_release" ${{ github.ref }} dist/*
