@@ -50,11 +50,11 @@ jobs:
         # Include implicit dependency on setuptools{,-rust} and preinstall wheel
         pip install setuptools setuptools-rust wheel
         pip install twine
-        # This expects TWINE_TEST_USERNAME, TWINE_TEST_PASSWORD, and
-        # TWINE_TEST_REPOSITORY_URL environment variables
+        # This expects TWINE_USERNAME, TWINE_PASSWORD, and TWINE_REPOSITORY_URL
+        # environment variables
         # It's not possible to condition steps on env or secrets,
         # We need an explicit check here
-        if [ -n "$TWINE_TEST_USERNAME" -a -n "$TWINE_TEST_PASSWORD" ]; then
+        if [ -n "$TWINE_USERNAME" -a -n "$TWINE_PASSWORD" ]; then
           twine upload dist/*
         else
           echo "::warning::Not uploading to test PyPI, no credentials available!"
