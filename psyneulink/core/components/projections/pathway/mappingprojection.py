@@ -626,7 +626,7 @@ class MappingProjection(PathwayProjection_Base):
                                  self.receiver.owner.name))
 
                 self.parameters.matrix._set(
-                    get_matrix(matrix_spec, mapping_input_len, receiver_len, context=context),
+                    get_matrix(matrix_spec, self.defaults.variable, self.receiver.socket_shape, context=context),
                     context
                 )
 

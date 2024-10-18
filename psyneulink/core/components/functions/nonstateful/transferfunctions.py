@@ -3910,10 +3910,6 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
                                                                         self.name,
                                                                         self.owner_name))
 
-                        if weight_matrix.ndim != 2:
-                            raise FunctionError("The matrix provided for the {} function of {} must be 2d (it is {}d".
-                                                format(weight_matrix.ndim, self.name, self.owner_name))
-
                         matrix_rows = weight_matrix.shape[0]
                         matrix_cols = weight_matrix.shape[1]
 
@@ -4075,7 +4071,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
                 # receiver = sender
             receiver_len = receiver.shape[0]
 
-            matrix = get_matrix(specification, inp=sender_len, out=receiver_len, context=context)
+            matrix = get_matrix(specification, inp=sender, out=receiver, context=context)
 
             # This should never happen (should have been picked up in validate_param or above)
             if matrix is None:
@@ -4163,11 +4159,12 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
         axes = self.parameters.axes._get(context)
         if axes == DEFAULT:
-            if vector.ndim <= 2 or matrix.ndim <= 2:
-                axes = 1
-            else:
-                # tensordot default
-                axes = 2
+            axes = vector.ndim
+            # if vector.ndim <= 2 or matrix.ndim <= 2:
+            #     axes = 1
+            # else:
+            #     # tensordot default
+            #     axes = 2
 
         result = np.tensordot(vector, matrix, axes=axes)
         return self.convert_output_type(result)
@@ -4188,7 +4185,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
                 cols = 1
             else:
                 cols = obj.receiver.socket_width
-        matrix = get_matrix(keyword, rows, cols)
+        matrix = get_matrix(keyword, obj.sender.socket_shape, obj.receiver.socket_shape)
 
         if matrix is None:
             raise FunctionError("Unrecognized keyword ({}) specified for the {} function of {}".

@@ -163,7 +163,7 @@ from psyneulink.core.globals.keywords import (
     ARGUMENT_THERAPY_FUNCTION, AUTO_ASSIGN_MATRIX, EXAMPLE_FUNCTION_TYPE, FULL_CONNECTIVITY_MATRIX,
     FUNCTION_COMPONENT_CATEGORY, FUNCTION_OUTPUT_TYPE, FUNCTION_OUTPUT_TYPE_CONVERSION, HOLLOW_MATRIX,
     IDENTITY_MATRIX, INVERSE_HOLLOW_MATRIX, NAME, PREFERENCE_SET_NAME, RANDOM_CONNECTIVITY_MATRIX, VALUE, VARIABLE,
-    MODEL_SPEC_ID_MDF_VARIABLE, MatrixKeywordLiteral, ZEROS_MATRIX
+    MODEL_SPEC_ID_MDF_VARIABLE, MatrixKeywordLiteral, ZEROS_MATRIX, DEFAULT
 )
 from psyneulink.core.globals.mdf import _get_variable_parameter_name
 from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
@@ -1333,7 +1333,7 @@ def _parse_as_shape(obj):
         return (obj,)
 
 
-def get_matrix(specification, inp=1, out=1, context=None, axes=0):
+def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
     """Returns matrix conforming to specification with dimensions = rows x cols or None
 
      Specification can be a matrix keyword, filler value or np.ndarray
@@ -1372,6 +1372,9 @@ def get_matrix(specification, inp=1, out=1, context=None, axes=0):
                 )
             )
 
+    if axes == DEFAULT:
+        axes = len(input_shape)
+
     if axes == 0:
         matrix_shape = input_shape + output_shape
     else:
@@ -1386,14 +1389,11 @@ def get_matrix(specification, inp=1, out=1, context=None, axes=0):
         # MODIFIED 4/9/22 END
 
     if isinstance(specification, np.ndarray):
-        if specification.ndim == 2:
+        if specification.ndim >= 2:
             return specification
         # FIX: MAKE THIS AN np.array WITH THE SAME DIMENSIONS??
-        elif specification.ndim < 2:
-            return np.atleast_2d(specification)
         else:
-            raise FunctionError("Specification of np.array for matrix ({}) is more than 2d".
-                                format(specification))
+            return np.atleast_2d(specification)
 
     if specification == AUTO_ASSIGN_MATRIX:
         if (

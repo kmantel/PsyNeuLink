@@ -872,9 +872,10 @@ class Projection_Base(Projection):
             matrix = self.parameters.matrix.get(context)
             if is_matrix_keyword(matrix):
                 if self.sender_instantiated and self.receiver_instantiated:
-                    self.parameters.matrix.set(get_matrix(self.matrix, len(self.sender.value),
-                                                          len(self.receiver.variable)),
-                                               context)
+                    self.parameters.matrix.set(
+                        get_matrix(self.matrix, self.sender.value, self.receiver.variable),
+                        context
+                    )
 
     def _instantiate_parameter_ports(self, function=None, context=None):
 
