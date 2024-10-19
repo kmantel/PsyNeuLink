@@ -1364,7 +1364,7 @@ def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
                 )
             )
 
-        if len(input_shape) > 2 and any(input_shape != len(input_shape)):
+        if len(input_shape) > 2 and any([x != input_shape[0] for x in input_shape]):
             raise FunctionError(
                 "For >2D matrices, sender and receiver dimension lengths ({})"
                 " must be equal to the number of dimensions ({}) to use {}".format(

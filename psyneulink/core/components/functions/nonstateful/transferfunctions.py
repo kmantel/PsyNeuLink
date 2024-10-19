@@ -4159,9 +4159,10 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
         axes = self.parameters.axes._get(context)
         if axes == DEFAULT:
-            axes = vector.ndim
-            # if vector.ndim <= 2 or matrix.ndim <= 2:
-            #     axes = 1
+            if matrix.ndim <= 2:
+                axes = 1
+            else:
+                axes = vector.ndim
             # else:
             #     # tensordot default
             #     axes = 2
