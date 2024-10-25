@@ -164,13 +164,13 @@ jobs:
         # It's not possible to condition steps on env or secrets,
         # We need an explicit check here
         if [ -n "$TWINE_USERNAME" -a -n "$TWINE_PASSWORD" ]; then
-          twine upload --verbose dist/*
+          echo "twine upload --verbose dist/*"
         else
           echo "::warning::Not uploading to PyPI, no credentials available!"
         fi
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        TWINE_PASSWORD: ${{ secrets.TWINE_INCORRECT_PASSWORD }}
         TWINE_REPOSITORY_URL: ${{ secrets.TWINE_REPOSITORY_URL }}
 
   publish-github:
