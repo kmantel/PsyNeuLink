@@ -2778,3 +2778,54 @@ def ragged_np_clip(a, a_min, a_max, **kwargs):
     return convert_all_elements_to_np_array(
         _ragged_np_clip(convert_all_elements_to_np_array(a))
     )
+
+
+# _validate_np_tensordot_args is based heavily on contents of
+# numpy.tensordot v2.1.0, which provides a less detailed error message.
+# Attribution:
+# Copyright (c) 2005-2025, NumPy Developers. All rights reserved.
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#     * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#     * Neither the name of the NumPy Developers nor the names of any contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+def _validate_np_tensordot_args(a, b, axes=2):
+    try:
+        iter(axes)
+    except Exception:
+        axes_a = list(range(-axes, 0))
+        axes_b = list(range(0, axes))
+    else:
+        axes_a, axes_b = axes
+    try:
+        na = len(axes_a)
+        axes_a = list(axes_a)
+    except TypeError:
+        axes_a = [axes_a]
+        na = 1
+    try:
+        nb = len(axes_b)
+        axes_b = list(axes_b)
+    except TypeError:
+        axes_b = [axes_b]
+        nb = 1
+
+    a, b = np.asarray(a), np.asarray(b)
+    as_ = a.shape
+    bs = b.shape
+    equal = True
+    if na != nb:
+        equal = False
+        reason = f'unequal number of axes ({na} and {nb})'
+    else:
+        wrong_a = []
+        wrong_b = []
+        for k in range(na):
+            if as_[axes_a[k]] != bs[axes_b[k]]:
+                equal = False
+                wrong_a.append(str(axes_a[k]))
+                wrong_b.append(str(axes_b[k]))
+            reason = ', '.join([f'({wrong_a[i]},{wrong_b[i]})' for i in range(len(wrong_a))])
+        reason = f"axes pairs (a,b) {reason}"
+    if not equal:
+        raise ValueError(f'shape-mismatch for sum: {reason}')
