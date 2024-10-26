@@ -2611,3 +2611,55 @@ def ragged_np_clip(a, a_min, a_max, **kwargs):
     return convert_all_elements_to_np_array(
         _ragged_np_clip(convert_all_elements_to_np_array(a))
     )
+
+
+# based heavily on contents of numpy.tensordot v2.1.0
+def _validate_np_tensordot_args(a, b, axes=2):
+    try:
+        iter(axes)
+    except Exception:
+        axes_a = list(range(-axes, 0))
+        axes_b = list(range(0, axes))
+        axes_as_pairs = True
+    else:
+        axes_a, axes_b = axes
+        axes_as_pairs = False
+    try:
+        na = len(axes_a)
+        axes_a = list(axes_a)
+    except TypeError:
+        axes_a = [axes_a]
+        na = 1
+    try:
+        nb = len(axes_b)
+        axes_b = list(axes_b)
+    except TypeError:
+        axes_b = [axes_b]
+        nb = 1
+
+    a, b = np.asarray(a), np.asarray(b)
+    as_ = a.shape
+    nda = a.ndim
+    bs = b.shape
+    ndb = b.ndim
+    equal = True
+    if na != nb:
+        equal = False
+        reason = f'unequal number of axes ({na} and {nb})'
+    else:
+        wrong_a = []
+        wrong_b = []
+        for k in range(na):
+            if as_[axes_a[k]] != bs[axes_b[k]]:
+                equal = False
+                wrong_a.append(str(axes_a[k]))
+                wrong_b.append(str(axes_b[k]))
+
+                # mismatching_axes.append(
+                #     ((, as_[axes_a[k]]), (axes_b[k], bs[axes_b[k]]))
+                # )
+            reason = ', '.join([f'({wrong_a[i]},{wrong_b[i]})' for i in range(len(wrong_a))])
+        # reason = f"axes of a ({','.join(wrong_a)}), axes of b ({','.join(wrong_b)})"
+        reason = f"axes pairs (a,b) {reason}"
+    if not equal:
+        raise ValueError(f'shape-mismatch for sum: {reason}')
