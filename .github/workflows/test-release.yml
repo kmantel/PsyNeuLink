@@ -130,15 +130,7 @@ jobs:
         # remove sources to prevent conflict with the isntalled package
         rm -r -f psyneulink/ docs/ bin/ Matlab/
         # run tests
-        pytest  --junit-xml=tests_out.xml --verbosity=0 -n auto tests
-
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
-        path: tests_out.xml
-        retention-days: 30
-      if: success() || failure()
+        pytest --collect-only --verbosity=0 tests
 
 
   publish-pypi:
