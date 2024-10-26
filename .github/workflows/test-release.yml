@@ -74,6 +74,7 @@ jobs:
         extra-args: ['']
         os: [ubuntu, macos, windows]
         version-restrict: ['']
+        dist: ['sdist', 'wheel']
         exclude:
           # 3.7 is broken on macos-11,
           # https://github.com/actions/virtual-environments/issues/4230
