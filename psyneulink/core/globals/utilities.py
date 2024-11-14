@@ -2061,6 +2061,15 @@ def contains_type(
         Note: `isinstance(**arr**, **typ**)` should be used to check
         **arr** itself if needed
     """
+    # handle common numeric numpy array quickly
+    try:
+        dtype = arr.dtype
+    except AttributeError:
+        pass
+    else:
+        if dtype.kind in 'biufc':  # numeric or boolean type
+            return dtype == typ
+
     try:
         arr_items = iter(arr)
     except TypeError:
