@@ -1249,7 +1249,12 @@ class TransferMechanism(ProcessingMechanism_Base):
                     return 'first item must be less than the second.'
 
         def _validate_integrator_mode(self, integrator_mode):
-            if not isinstance(integrator_mode, bool):
+            if (
+                not isinstance(integrator_mode, bool)
+                # int representation may be used for compatibility/sync
+                # with LLVM structs
+                and not (isinstance(integrator_mode, int) and integrator_mode in {0, 1})
+            ):
                 return 'may only be True or False.'
 
         def _validate_integration_rate(self, integration_rate):
