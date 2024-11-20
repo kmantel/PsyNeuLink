@@ -1289,7 +1289,12 @@ class TransferMechanism(ProcessingMechanism_Base):
                     return 'first item must be less than the second.'
 
         def _validate_integrator_mode(self, integrator_mode):
-            if not isinstance(integrator_mode, bool):
+            if (
+                not isinstance(integrator_mode, bool)
+                # number representation may be used for
+                # compatibility/sync with LLVM structs
+                and not (integrator_mode == 0 or integrator_mode == 1)
+            ):
                 return 'may only be True or False.'
 
         def _validate_integration_rate(self, integration_rate):
@@ -1299,6 +1304,13 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         def _validate_termination_measure(self, termination_measure):
             if not isinstance(termination_measure, TimeScale) and not is_function_type(termination_measure):
+                try:
+                    TimeScale(termination_measure)
+                except ValueError:
+                    pass
+                else:
+                    # int representation for use/sync with LLVM
+                    return None
                 return f"must be a function or a TimeScale."
 
         def _parse_termination_measure(self, termination_measure):
