@@ -25,21 +25,21 @@ from psyneulink.core.globals.utilities import parse_valid_identifier, toposort_k
 
 
 __all__ = [  # noqa: F822  (dynamically generated)
-    'AbsoluteCondition', 'AddEdgeTo', 'AfterCall', 'AfterNCalls',
-    'AfterNCallsCombined', 'AfterNode', 'AfterNodes', 'AfterNPasses',
-    'AfterNRuns', 'AfterNTimeSteps', 'AfterNTrials', 'AfterPass',
-    'AfterRun', 'AfterTimeStep', 'AfterTrial', 'All', 'AllHaveRun',
-    'Always', 'And', 'Any', 'AtNCalls', 'AtPass', 'AtRun',
-    'AtRunNStart', 'AtRunStart', 'AtTimeStep', 'AtTrial',
-    'AtTrialNStart', 'AtTrialStart', 'BeforeNCalls', 'BeforeNode',
-    'BeforeNodes', 'BeforePass', 'BeforeTimeStep', 'BeforeTrial',
-    'CompositeCondition', 'Condition', 'ConditionBase',
-    'ConditionError', 'ConditionSet', 'CustomGraphStructureCondition',
-    'EveryNCalls', 'EveryNPasses', 'GraphStructureCondition', 'JustRan',
-    'Never', 'Not', 'NWhen', 'Operation', 'Or', 'RemoveEdgeFrom',
-    'Threshold', 'TimeInterval', 'TimeTermination', 'When',
-    'WhenFinished', 'WhenFinishedAll', 'WhenFinishedAny', 'While',
-    'WhileNot', 'WithNode',
+    'AbsoluteCondition', 'AfterCall', 'AfterNCalls', 'AfterNCallsCombined',
+    'AfterNPasses', 'AfterNRuns', 'AfterNTimeSteps', 'AfterNTrials',
+    'AfterPass', 'AfterRun', 'AfterTimeStep', 'AfterTrial', 'All', 'AllHaveRun',
+    'Always', 'And', 'Any', 'AtNCalls', 'AtPass', 'AtRun', 'AtRunNStart',
+    'AtRunStart', 'AtTimeStep', 'AtTrial', 'AtTrialNStart', 'AtTrialStart',
+    'BeforeNCalls', 'BeforePass', 'BeforeTimeStep', 'BeforeTrial',
+    'CompositeCondition', 'Condition', 'ConditionError', 'ConditionSet',
+    'EveryNCalls', 'EveryNPasses', 'JustRan', 'NWhen', 'Never', 'Not', 'Or',
+    'Threshold', 'TimeInterval', 'TimeTermination', 'When', 'WhenFinished',
+    'WhenFinishedAll', 'WhenFinishedAny', 'While', 'WhileNot',
+]
+_gsc__all__ = [
+    'AddEdgeTo', 'AfterNode', 'AfterNodes', 'BeforeNode', 'BeforeNodes',
+    'ConditionBase', 'CustomGraphStructureCondition', 'GraphStructureCondition',
+    'Operation', 'RemoveEdgeFrom', 'WithNode',
 ]
 
 
@@ -60,6 +60,7 @@ else:
                 f'MDF support not yet implemented for {type(self)}'
             )
     condition_class_parents.append(ConditionBase)
+    __all__.extend(_gsc__all__)
 
 
 try:
