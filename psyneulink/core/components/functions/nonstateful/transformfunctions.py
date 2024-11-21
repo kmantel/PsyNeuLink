@@ -2260,11 +2260,10 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
 
             axes = self.parameters.axes._get(context)
             if axes == DEFAULT:
-                # if matrix.ndim <= 2:
-                #     axes = 1
-                # else:
-                #     axes = vector.ndim
-                axes = vector.ndim
+                if matrix.ndim <= 2:
+                    axes = 1
+                else:
+                    axes = vector.ndim
                 # else:
                 #     # tensordot default
                 #     axes = 2
