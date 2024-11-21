@@ -4353,6 +4353,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self.warned_about_run_with_no_inputs = False
         self._warned_about_target_nodes_in_target_specs = False
         self._warned_about_targets_mechs_in_inputs_and_targets = False
+        self.warned_about_unlearnable_identity_matrices = False
 
         self.cycle_vertices = set()
 

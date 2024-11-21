@@ -1549,14 +1549,6 @@ def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
                 )
             )
 
-        if len(input_shape) > 2 and any([x != input_shape[0] for x in input_shape]):
-            raise FunctionError(
-                "For >2D matrices, sender and receiver dimension lengths ({})"
-                " must be equal to the number of dimensions ({}) to use {}".format(
-                    input_shape, len(input_shape), specification
-                )
-            )
-
     if axes == DEFAULT:
         axes = len(input_shape)
 
@@ -1581,13 +1573,7 @@ def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
             return np.atleast_2d(specification)
 
     if specification == AUTO_ASSIGN_MATRIX:
-        if (
-            input_shape == output_shape
-            and (
-                len(matrix_shape) <= 2
-                or all([x == input_shape[0] for x in input_shape])
-            )
-        ):
+        if input_shape == output_shape:
             specification = IDENTITY_MATRIX
         else:
             specification = FULL_CONNECTIVITY_MATRIX
@@ -1600,15 +1586,15 @@ def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
 
     if specification == IDENTITY_MATRIX:
         _check_shape_equality()
-        return identity_matrix(input_shape[0], len(matrix_shape))
+        return np.identity(input_shape[-1])
 
     if specification == HOLLOW_MATRIX:
         _check_shape_equality()
-        return 1 - identity_matrix(input_shape[0], len(matrix_shape))
+        return 1 - np.identity(input_shape[-1])
 
     if specification == INVERSE_HOLLOW_MATRIX:
         _check_shape_equality()
-        return (1 - identity_matrix(input_shape[0], len(matrix_shape))) * -1
+        return (1 - np.identity(input_shape[-1])) * -1
 
     if specification == RANDOM_CONNECTIVITY_MATRIX:
         return np.random.rand(*matrix_shape)

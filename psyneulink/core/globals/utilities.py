@@ -2829,3 +2829,32 @@ def _validate_np_tensordot_args(a, b, axes=2):
         reason = f"axes pairs (a,b) {reason}"
     if not equal:
         raise ValueError(f'shape-mismatch for sum: {reason}')
+
+
+def diagonal_matrix(v, batch=True):
+    if batch:
+        return np.eye(*v.shape[-2:])
+    else:
+        res = np.zeros_like(v)
+
+        for i in range(v.ndim):
+            try:
+                res[v.ndim * (i,)] = 1
+            except IndexError:
+                pass
+
+        return res
+
+
+def convert_to_tensor(obj, dtype=None):
+    if isinstance(obj, list) and len(obj) > 0 and isinstance(obj, np.ndarray):
+        res = torch.from_numpy(np.asarray(obj))
+        if dtype is not None:
+            res = res.to(dtype)
+        return res
+
+    try:
+        return torch.tensor(obj, dtype=dtype)
+    except (TypeError, ValueError):
+        # We probably have a ragged array, so we need to convert to a list of tensors
+        return [convert_to_tensor(x, dtype) for x in obj]
