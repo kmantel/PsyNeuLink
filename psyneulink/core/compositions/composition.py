@@ -4133,6 +4133,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self.needs_determine_node_roles = False # Set in add_node and add_projection to insure update of NodeRoles
         self._need_check_for_unused_projections = True
         self.warned_about_run_with_no_inputs = False
+        self.warned_about_unlearnable_identity_matrices = False
 
         self.nodes_to_roles = collections.OrderedDict()
         self.cycle_vertices = set()
