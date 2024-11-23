@@ -6868,9 +6868,9 @@ def map_dict_keys_to_objects(d, locals):
 class TestInputs:
 
     @pytest.mark.parametrize(
-        'size, inputs, expected_parsed_inputs, expected_num_trials',
+        'input_shapes, inputs, expected_parsed_inputs, expected_num_trials',
         [
-            # size 1, one trial
+            # input_shapes 1, one trial
             (1, {}, {'A': np.zeros((1, 1, 1, 1))}, 1),
             (1, {'A': 0}, {'A': np.zeros((1, 1, 1, 1))}, 1),
             (1, {'A': [0]}, {'A': np.zeros((1, 1, 1, 1))}, 1),
@@ -6878,7 +6878,7 @@ class TestInputs:
 
             # (1, {'A': [[[0]]]}, {'A': np.zeros((1, 1, 1))}, 1),   # works on devel but i think we can give this up
 
-            # size 1, two trials
+            # input_shapes 1, two trials
             # (1, {}, {'A': np.zeros((1, 1, 1))}, 2),  # bad
             # (1, {'A': 0}, {'A': np.zeros((1, 1, 1))}, 2),  # bad
             # (1, {'A': [0]}, {'A': np.zeros((2, 1, 1))}, 2),  # bad
@@ -6888,7 +6888,7 @@ class TestInputs:
             (1, {'A': [[[0]], [[0]]]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
             (1, {'A': [[[[0]]], [[[0]]]]}, {'A': np.zeros((2, 1, 1, 1))}, 2),
 
-            # size 2, one trial
+            # input_shapes 2, one trial
             # (2, {'A': {}}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
             # (2, {'A': 0}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
             # (2, {'A': [0]}, {'A': np.zeros((1, 1, 2))}, 1),  # bad
@@ -6897,14 +6897,14 @@ class TestInputs:
             (2, {'A': [[0, 0]]}, {'A': np.zeros((1, 1, 1, 2))}, 1),
             (2, {'A': [[[0, 0]]]}, {'A': np.zeros((1, 1, 1, 2))}, 1),
 
-            # size 2, two trials
+            # input_shapes 2, two trials
             (2, {'A': [[0, 0], [0, 0]]}, {'A': np.zeros((2, 1, 1, 2))}, 2),
             (2, {'A': [[[0, 0]], [[0, 0]]]}, {'A': np.zeros((2, 1, 1, 2))}, 2),
         ]
     )
-    def test_single_nonnested(self, size, inputs, expected_parsed_inputs, expected_num_trials):
-        A = ProcessingMechanism(size=size)
-        # B = ProcessingMechanism(size=2)
+    def test_single_nonnested(self, input_shapes, inputs, expected_parsed_inputs, expected_num_trials):
+        A = ProcessingMechanism(input_shapes=input_shapes)
+        # B = ProcessingMechanism(input_shapes=2)
 
         comp = pnl.Composition()
         comp.add_node(A)
