@@ -1012,11 +1012,11 @@ class PytorchMechanismWrapper():
             If False, compute function for each item in variable and return results in a list
             """
             from psyneulink.core.components.functions.nonstateful.transformfunctions import TransformFunction
-            # variable is ragged
-            if isinstance(variable, list):
-                res = [function(variable[i]) for i in range(len(variable))]
-            elif fct_has_mult_args:
+            if fct_has_mult_args:
                 res = function(*variable)
+            # variable is ragged
+            elif isinstance(variable, list):
+                res = [function(variable[i]) for i in range(len(variable))]
             else:
                 res = function(variable)
             # TransformFunction can reduce output to single item from
