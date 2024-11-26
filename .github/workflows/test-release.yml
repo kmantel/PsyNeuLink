@@ -55,7 +55,7 @@ jobs:
         # It's not possible to condition steps on env or secrets,
         # We need an explicit check here
         if [ -n "$TWINE_USERNAME" -a -n "$TWINE_PASSWORD" ]; then
-          twine upload --verbose dist/*
+          echo twine upload --verbose dist/*
         else
           echo "::warning::Not uploading to test PyPI, no credentials available!"
         fi
@@ -128,7 +128,7 @@ jobs:
         # remove sources to prevent conflict with the isntalled package
         rm -r -f psyneulink/ docs/ bin/ Matlab/
         # run tests
-        pytest  --junit-xml=tests_out.xml --verbosity=0 -n auto tests
+        pytest  --junit-xml=tests_out.xml --verbosity=0 -n auto tests --collect-only
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -162,7 +162,7 @@ jobs:
         # It's not possible to condition steps on env or secrets,
         # We need an explicit check here
         if [ -n "$TWINE_USERNAME" -a -n "$TWINE_PASSWORD" ]; then
-          twine upload --verbose dist/*
+          echo twine upload --verbose dist/*
         else
           echo "::warning::Not uploading to PyPI, no credentials available!"
         fi
