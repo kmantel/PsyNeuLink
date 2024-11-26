@@ -2110,7 +2110,22 @@ class Port_Base(Port):
     def _execute(self, variable=None, context=None, runtime_params=None):
         if variable is None:
             if hasattr(self, DEFAULT_INPUT) and self.default_input == DEFAULT_VARIABLE:
-                return copy_parameter_value(self.defaults.variable)
+                variable = copy_parameter_value(self.defaults.variable)
+                # TransformFunction changes the shape from variable ->
+                # value in some way. Assume that when default_input
+                # given, the variable is reshapable to the right
+                # value shape
+                if isinstance(self.function, TransformFunction):
+                    try:
+                        variable = np.reshape(variable, self.defaults.value.shape)
+                    except ValueError as e:
+                        raise PortError(
+                            f"{self}: When default_input is used, the Port's default"
+                            " variable must be numpy-reshapable to its default value."
+                            f"\n\tdefault variable: {self.defaults.variable}"
+                            f"\n\tdefault value: {self.defaults.value}"
+                        ) from e
+                return variable
 
             variable = self._get_variable_from_projections(context)
 
