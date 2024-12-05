@@ -960,6 +960,7 @@ class PytorchMechanismWrapper():
                 proj_wrapper._curr_sender_value = proj_wrapper.sender.output[proj_wrapper._value_idx]
             else:
                 proj_wrapper._curr_sender_value = torch.tensor(proj_wrapper.default_value)
+            proj_wrapper._curr_sender_value = torch.atleast_1d(proj_wrapper._curr_sender_value)
 
         # Specific port is specified
         # FIX: USING _port_idx TO INDEX INTO sender.value GETS IT WRONG IF THE MECHANISM HAS AN OUTPUT PORT
@@ -986,15 +987,23 @@ class PytorchMechanismWrapper():
         return res
 
     def execute_input_ports(self, variable):
+        from psyneulink.core.components.functions.nonstateful.transformfunctions import TransformFunction
+
         if not isinstance(variable, torch.Tensor):
             try:
                 variable = torch.stack(variable)
             except (RuntimeError, ValueError):
                 pass
 
-        res = [
-            self.input_ports[i].function(variable[i]) for i in range(len(self.input_ports))
-        ]
+        res = []
+        for i in range(len(self.input_ports)):
+            v = variable[i]
+            if isinstance(self.input_ports[i]._pnl_function, TransformFunction):
+                # atleast_2d to account for input port dimension reduction
+                v = torch.atleast_2d(v)
+
+            res.append(self.input_ports[i].function(v))
+
         try:
             res = torch.stack(res)
         except (RuntimeError, TypeError):
