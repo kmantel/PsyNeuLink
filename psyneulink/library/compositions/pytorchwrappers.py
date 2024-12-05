@@ -995,6 +995,9 @@ class PytorchMechanismWrapper():
             except (RuntimeError, ValueError):
                 pass
 
+        # must iterate over at least 1d input per port
+        variable = torch.atleast_2d(variable)
+
         res = []
         for i in range(len(self.input_ports)):
             v = variable[i]
