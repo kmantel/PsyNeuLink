@@ -3590,10 +3590,10 @@ class SoftMax(TransferFunction):
                 # Mask elements of input below threshold
                 _mask = (torch.abs(_input) > mask_threshold)
                 # Subtract off the max value in the input to eliminate extreme values, exponentiate, and apply mask
-                masked_exp = _mask * torch.exp(gain * (_input - torch.max(_input, 0, keepdim=True)[0]))
+                masked_exp = _mask * torch.exp(gain * (_input - torch.max(_input, -1, keepdim=True)[0]))
                 if not (masked_exp).any():
                     return masked_exp
-                return masked_exp / torch.sum(masked_exp, 0, keepdim=True)
+                return masked_exp / torch.sum(masked_exp, -1, keepdim=True)
             # Return the function
             return pytorch_thresholded_softmax
 
