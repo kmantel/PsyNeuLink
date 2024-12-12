@@ -3153,6 +3153,7 @@ class SoftMax(TransferFunction):
         output = ALL
         per_item = Parameter(True, pnl_internal=True)
         one_hot_function = Parameter(None, stateful=False, loggable=False)
+        axis = Parameter(-1, aliases='dim')
 
         def _validate_gain(self, gain):
             if is_numeric_scalar(gain):
@@ -3208,6 +3209,7 @@ class SoftMax(TransferFunction):
                  adapt_entropy_weighting: Optional[ValidParamSpecType] = None,
                  output=None,
                  per_item=None,
+                 axis: Optional[int] = -1,
                  params: Optional[Mapping] = None,
                  owner=None,
                  prefs:  Optional[ValidPrefSet] = None):
@@ -3232,6 +3234,7 @@ class SoftMax(TransferFunction):
             adapt_base=adapt_base,
             adapt_entropy_weighting=adapt_entropy_weighting,
             per_item=per_item,
+            axis=axis,
             output=output,
             one_hot_function=one_hot_function,
             params=params,
@@ -3261,12 +3264,13 @@ class SoftMax(TransferFunction):
 
         return np.asarray(variable)
 
-    def apply_softmax(self, input_value, gain, mask_threshold, output_type):
+    def apply_softmax(self, input_value, gain, mask_threshold, output_type, context):
+        axis = self._get_current_parameter_value('axis', context)
 
         # Modulate input_value by gain
         v = gain * input_value
         # Shift by max to avoid extreme values:
-        v = v - np.max(v)
+        v = v - np.max(v, axis=axis)
         # Exponentiate
         v = np.exp(v)
         # Threshold if specified:
@@ -3277,7 +3281,7 @@ class SoftMax(TransferFunction):
             # If v is all zeros, avoid divide by zero in normalize and return all zeros for softmax
             sm = v
         else:
-            sm = v / np.sum(v, axis=0)
+            sm = v / np.sum(v, axis=axis)
 
         # Generate one-hot encoding based on selected output_type
         if output_type in {ARG_MAX, ARG_MAX_INDICATOR, MAX_VAL, MAX_INDICATOR}:
@@ -3323,10 +3327,10 @@ class SoftMax(TransferFunction):
         if per_item and len(np.shape(variable)) > 1:
             output = []
             for item in variable:
-                output.append(self.apply_softmax(item, gain, mask_threshold, output_type))
+                output.append(self.apply_softmax(item, gain, mask_threshold, output_type, context))
             output = convert_all_elements_to_np_array(output)
         else:
-            output = self.apply_softmax(variable, gain, mask_threshold, output_type)
+            output = self.apply_softmax(variable, gain, mask_threshold, output_type, context)
 
         return self.convert_output_type(output)
 
@@ -3340,12 +3344,13 @@ class SoftMax(TransferFunction):
         base = self._get_current_parameter_value('adapt_base', context)
         entropy_weighting = self._get_current_parameter_value('adapt_entropy_weighting', context)
         entropy_weighting = np.log(len(v)) * entropy_weighting
+        axis = self._get_current_parameter_value('axis', context)
 
         v = np.squeeze(v)
         gain = scale * (base +
                         (entropy_weighting *
                          np.log(
-                             -1 * np.sum((1 / (1 + np.exp(-1 * v))) * np.log(1 / (1 + np.exp(-1 * v)))))))
+                             -1 * np.sum((1 / (1 + np.exp(-1 * v))) * np.log(1 / (1 + np.exp(-1 * v))), axis=axis))))
         return gain
 
 
@@ -3581,34 +3586,36 @@ class SoftMax(TransferFunction):
     def _gen_pytorch_fct(self, device, context=None):
         gain = self._get_pytorch_fct_param_value('gain', device, context)
         mask_threshold = self._get_pytorch_fct_param_value('mask_threshold', device, context)
+        axis = self._get_pytorch_fct_param_value('axis', device, context)
 
         if isinstance(gain, str) and gain == ADAPTIVE:
-            return lambda x: (torch.softmax(self._gen_pytorch_adapt_gain_fct(device, context)(x) * x, -1))
+            return lambda x: (torch.softmax(self._gen_pytorch_adapt_gain_fct(device, context)(x) * x, dim=axis))
 
         elif mask_threshold:
             def pytorch_thresholded_softmax(_input: torch.Tensor) -> torch.Tensor:
                 # Mask elements of input below threshold
                 _mask = (torch.abs(_input) > mask_threshold)
                 # Subtract off the max value in the input to eliminate extreme values, exponentiate, and apply mask
-                masked_exp = _mask * torch.exp(gain * (_input - torch.max(_input, -1, keepdim=True)[0]))
+                masked_exp = _mask * torch.exp(gain * (_input - torch.max(_input, dim=axis, keepdim=True)[0]))
                 if (masked_exp == 0).all():
                     return masked_exp
-                return masked_exp / torch.sum(masked_exp, -1, keepdim=True)
+                return masked_exp / torch.sum(masked_exp, dim=axis, keepdim=True)
             # Return the function
             return pytorch_thresholded_softmax
 
         else:
-            return lambda x: (torch.softmax(gain * x, -1))
+            return lambda x: (torch.softmax(gain * x, dim=axis))
 
     def _gen_pytorch_adapt_gain_fct(self, device, context=None):
         scale = self._get_pytorch_fct_param_value('adapt_scale', device, context)
         base = self._get_pytorch_fct_param_value('adapt_base', device, context)
         entropy_weighting = self._get_pytorch_fct_param_value('adapt_entropy_weighting', device, context)
+        axis = self._get_pytorch_fct_param_value('axis', device, context)
         # v = torch.squeeze(v)
         return lambda x : scale * (base +
                                    (entropy_weighting * len(x) *
                                     torch.log(-1 * torch.sum((1 / (1 + torch.exp(-1 * x)))
-                                                             * torch.log(1 / (1 + torch.exp(-1 * x)))))))
+                                                             * torch.log(1 / (1 + torch.exp(-1 * x))), dim=axis))))
 
 
 # **********************************************************************************************************************
