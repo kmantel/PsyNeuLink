@@ -1514,7 +1514,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                      "torch_trained_outputs", "torch_targets", "torch_losses",
                      # should be added to relevant _gen_llvm_function... when aug:
                      # SoftMax:
-                     'mask_threshold', 'adapt_scale', 'adapt_base', 'adapt_entropy_weighting',
+                     'mask_threshold', 'adapt_scale', 'adapt_base', 'adapt_entropy_weighting', 'axis',
                      # LCAMechanism
                      "mask"
                      }

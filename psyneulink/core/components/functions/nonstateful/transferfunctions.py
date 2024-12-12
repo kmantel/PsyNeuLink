@@ -88,7 +88,7 @@ from psyneulink.core.components.functions.nonstateful.selectionfunctions import 
 from psyneulink.core.components.functions.stateful.integratorfunctions import SimpleIntegrator
 from psyneulink.core.components.shellclasses import Projection
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
-from psyneulink.core.globals.utilities import is_numeric_scalar
+from psyneulink.core.globals.utilities import is_numeric_scalar, try_extract_0d_array_item
 from psyneulink.core.globals.keywords import \
     (ADAPTIVE, ADDITIVE_PARAM, ALL, ANGLE_FUNCTION, BIAS, BINOMIAL_DISTORT_FUNCTION, DROPOUT_FUNCTION,
      EXPONENTIAL_FUNCTION, GAIN, GAUSSIAN_DISTORT_FUNCTION, GAUSSIAN_FUNCTION,
@@ -2895,6 +2895,7 @@ class Dropout(TransferFunction):  #
 # **********************************************************************************************************************
 
 softmax_modes = {ALL, ARG_MAX, ARG_MAX_INDICATOR, MAX_VAL, MAX_INDICATOR, PROB, PROB_INDICATOR}
+SOFTMAX_DEFAULT_AXIS = -1
 
 
 class SoftMax(TransferFunction):
@@ -3153,6 +3154,7 @@ class SoftMax(TransferFunction):
         output = ALL
         per_item = Parameter(True, pnl_internal=True)
         one_hot_function = Parameter(None, stateful=False, loggable=False)
+        axis = Parameter(SOFTMAX_DEFAULT_AXIS, aliases='dim')
 
         def _validate_gain(self, gain):
             if is_numeric_scalar(gain):
@@ -3197,6 +3199,11 @@ class SoftMax(TransferFunction):
             if output not in softmax_modes:
                 return 'not one of {0}'.format(softmax_modes)
 
+        def _validate_axis(self, axis):
+            axis = try_extract_0d_array_item(axis)
+            if not isinstance(axis, int):
+                return 'must be an integer'
+
     @check_user_specified
     @beartype
     def __init__(self,
@@ -3208,6 +3215,7 @@ class SoftMax(TransferFunction):
                  adapt_entropy_weighting: Optional[ValidParamSpecType] = None,
                  output=None,
                  per_item=None,
+                 axis: Optional[int] = -1,
                  params: Optional[Mapping] = None,
                  owner=None,
                  prefs:  Optional[ValidPrefSet] = None):
@@ -3232,6 +3240,7 @@ class SoftMax(TransferFunction):
             adapt_base=adapt_base,
             adapt_entropy_weighting=adapt_entropy_weighting,
             per_item=per_item,
+            axis=axis,
             output=output,
             one_hot_function=one_hot_function,
             params=params,
@@ -3261,23 +3270,34 @@ class SoftMax(TransferFunction):
 
         return np.asarray(variable)
 
-    def apply_softmax(self, input_value, gain, mask_threshold, output_type):
+    def apply_softmax(self, input_value, gain, mask_threshold, output_type, context):
+        axis = self._get_current_parameter_value('axis', context)
+
+        # result of np.sum or np.max along an axis needs to be
+        # broadcastable to the original shape. matching result shape to
+        # original except for *axis* allows it to apply arithmetic ops
+        # to each element along `axis`
+        axis_op_shape = (
+            *input_value.shape[:axis],
+            1,
+            *input_value.shape[max(axis, len(input_value.shape) - 1) + 1:],
+        )
 
         # Modulate input_value by gain
         v = gain * input_value
         # Shift by max to avoid extreme values:
-        v = v - np.max(v)
+        v = v - np.max(v, axis=axis).reshape(axis_op_shape)
         # Exponentiate
         v = np.exp(v)
         # Threshold if specified:
         if mask_threshold:
             v = v * np.where(input_value > mask_threshold, v, 0)
         # Normalize (to sum to 1)
-        if not any(v):
+        if (v == 0).all():
             # If v is all zeros, avoid divide by zero in normalize and return all zeros for softmax
             sm = v
         else:
-            sm = v / np.sum(v, axis=0)
+            sm = v / np.sum(v, axis=axis).reshape(axis_op_shape)
 
         # Generate one-hot encoding based on selected output_type
         if output_type in {ARG_MAX, ARG_MAX_INDICATOR, MAX_VAL, MAX_INDICATOR}:
@@ -3323,10 +3343,10 @@ class SoftMax(TransferFunction):
         if per_item and len(np.shape(variable)) > 1:
             output = []
             for item in variable:
-                output.append(self.apply_softmax(item, gain, mask_threshold, output_type))
+                output.append(self.apply_softmax(item, gain, mask_threshold, output_type, context))
             output = convert_all_elements_to_np_array(output)
         else:
-            output = self.apply_softmax(variable, gain, mask_threshold, output_type)
+            output = self.apply_softmax(variable, gain, mask_threshold, output_type, context)
 
         return self.convert_output_type(output)
 
@@ -3340,12 +3360,12 @@ class SoftMax(TransferFunction):
         base = self._get_current_parameter_value('adapt_base', context)
         entropy_weighting = self._get_current_parameter_value('adapt_entropy_weighting', context)
         entropy_weighting = np.log(len(v)) * entropy_weighting
+        axis = self._get_current_parameter_value('axis', context)
 
-        v = np.squeeze(v)
         gain = scale * (base +
                         (entropy_weighting *
                          np.log(
-                             -1 * np.sum((1 / (1 + np.exp(-1 * v))) * np.log(1 / (1 + np.exp(-1 * v)))))))
+                             -1 * np.sum((1 / (1 + np.exp(-1 * v))) * np.log(1 / (1 + np.exp(-1 * v))), axis=axis))))
         return gain
 
 
@@ -3374,6 +3394,7 @@ class SoftMax(TransferFunction):
                 f"Derivative of SoftMax function for '{self.owner.name}' is not defined when output is 0."
 
         per_item = self._get_current_parameter_value(PER_ITEM, context)
+        axis = self._get_current_parameter_value('axis', context)
         if not per_item:
             output = [output]
 
@@ -3400,7 +3421,7 @@ class SoftMax(TransferFunction):
                 # Get the element of output returned as non-zero (max val) when output_type is not ALL
                 # IMPLEMENTATION NOTE:
                 #    if there is a tie for max, this chooses the item in sm with the lowest index in sm:
-                index_of_max = int(np.where(sm == np.max(sm))[-1][0])
+                index_of_max = int(np.where(sm == np.max(sm, axis=axis))[-1][0])
                 #    the following would randomly choose a value in case of a tie,
                 #    but may cause problems with compilation:
                 # index_of_max = np.where(sm == np.max(sm))[0]
@@ -3563,6 +3584,11 @@ class SoftMax(TransferFunction):
         return builder
 
     def _gen_llvm_function_body(self, ctx, builder, params, state, arg_in, arg_out, output_type=None, *, tags:frozenset):
+        if self.axis != SOFTMAX_DEFAULT_AXIS:
+            warnings.warn(
+                f'Axis of SoftMax is not implemented in LLVM execution mode ({self.axis})'
+            )
+
         output_type = self.output if output_type is None else output_type
         if "derivative" in tags or "derivative_out" in tags:
             return self._gen_llvm_function_derivative_body(ctx, builder, params, state, arg_in, arg_out, tags=tags)
@@ -3581,34 +3607,36 @@ class SoftMax(TransferFunction):
     def _gen_pytorch_fct(self, device, context=None):
         gain = self._get_pytorch_fct_param_value('gain', device, context)
         mask_threshold = self._get_pytorch_fct_param_value('mask_threshold', device, context)
+        axis = try_extract_0d_array_item(self._get_current_parameter_value('axis', context))
 
         if isinstance(gain, str) and gain == ADAPTIVE:
-            return lambda x: (torch.softmax(self._gen_pytorch_adapt_gain_fct(device, context)(x) * x, -1))
+            return lambda x: (torch.softmax(self._gen_pytorch_adapt_gain_fct(device, context)(x) * x, dim=axis))
 
         elif mask_threshold:
             def pytorch_thresholded_softmax(_input: torch.Tensor) -> torch.Tensor:
                 # Mask elements of input below threshold
                 _mask = (torch.abs(_input) > mask_threshold)
                 # Subtract off the max value in the input to eliminate extreme values, exponentiate, and apply mask
-                masked_exp = _mask * torch.exp(gain * (_input - torch.max(_input, -1, keepdim=True)[0]))
+                masked_exp = _mask * torch.exp(gain * (_input - torch.max(_input, dim=axis, keepdim=True)[0]))
                 if (masked_exp == 0).all():
                     return masked_exp
-                return masked_exp / torch.sum(masked_exp, -1, keepdim=True)
+                return masked_exp / torch.sum(masked_exp, dim=axis, keepdim=True)
             # Return the function
             return pytorch_thresholded_softmax
 
         else:
-            return lambda x: (torch.softmax(gain * x, -1))
+            return lambda x: (torch.softmax(gain * x, dim=axis))
 
     def _gen_pytorch_adapt_gain_fct(self, device, context=None):
         scale = self._get_pytorch_fct_param_value('adapt_scale', device, context)
         base = self._get_pytorch_fct_param_value('adapt_base', device, context)
         entropy_weighting = self._get_pytorch_fct_param_value('adapt_entropy_weighting', device, context)
+        axis = try_extract_0d_array_item(self._get_current_parameter_value('axis', context))
         # v = torch.squeeze(v)
         return lambda x : scale * (base +
                                    (entropy_weighting * len(x) *
                                     torch.log(-1 * torch.sum((1 / (1 + torch.exp(-1 * x)))
-                                                             * torch.log(1 / (1 + torch.exp(-1 * x)))))))
+                                                             * torch.log(1 / (1 + torch.exp(-1 * x))), dim=axis))))
 
 
 # **********************************************************************************************************************
