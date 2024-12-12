@@ -3267,21 +3267,31 @@ class SoftMax(TransferFunction):
     def apply_softmax(self, input_value, gain, mask_threshold, output_type, context):
         axis = self._get_current_parameter_value('axis', context)
 
+        # result of np.sum or np.max along an axis needs to be
+        # broadcastable to the original shape. matching result shape to
+        # original except for *axis* allows it to apply arithmetic ops
+        # to each element along `axis`
+        axis_op_shape = (
+            *input_value.shape[:axis],
+            1,
+            *input_value.shape[max(axis, len(input_value.shape) - 1) + 1:],
+        )
+
         # Modulate input_value by gain
         v = gain * input_value
         # Shift by max to avoid extreme values:
-        v = v - np.max(v, axis=axis)
+        v = v - np.max(v, axis=axis).reshape(axis_op_shape)
         # Exponentiate
         v = np.exp(v)
         # Threshold if specified:
         if mask_threshold:
             v = v * np.where(input_value > mask_threshold, v, 0)
         # Normalize (to sum to 1)
-        if not any(v):
+        if (v == 0).all():
             # If v is all zeros, avoid divide by zero in normalize and return all zeros for softmax
             sm = v
         else:
-            sm = v / np.sum(v, axis=axis)
+            sm = v / np.sum(v, axis=axis).reshape(axis_op_shape)
 
         # Generate one-hot encoding based on selected output_type
         if output_type in {ARG_MAX, ARG_MAX_INDICATOR, MAX_VAL, MAX_INDICATOR}:
@@ -3346,7 +3356,6 @@ class SoftMax(TransferFunction):
         entropy_weighting = np.log(len(v)) * entropy_weighting
         axis = self._get_current_parameter_value('axis', context)
 
-        v = np.squeeze(v)
         gain = scale * (base +
                         (entropy_weighting *
                          np.log(
@@ -3379,6 +3388,7 @@ class SoftMax(TransferFunction):
                 f"Derivative of SoftMax function for '{self.owner.name}' is not defined when output is 0."
 
         per_item = self._get_current_parameter_value(PER_ITEM, context)
+        axis = self._get_current_parameter_value('axis', context)
         if not per_item:
             output = [output]
 
@@ -3405,7 +3415,7 @@ class SoftMax(TransferFunction):
                 # Get the element of output returned as non-zero (max val) when output_type is not ALL
                 # IMPLEMENTATION NOTE:
                 #    if there is a tie for max, this chooses the item in sm with the lowest index in sm:
-                index_of_max = int(np.where(sm == np.max(sm))[-1][0])
+                index_of_max = int(np.where(sm == np.max(sm, axis=axis))[-1][0])
                 #    the following would randomly choose a value in case of a tie,
                 #    but may cause problems with compilation:
                 # index_of_max = np.where(sm == np.max(sm))[0]
