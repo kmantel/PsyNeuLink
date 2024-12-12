@@ -17,7 +17,7 @@ import numpy as np
 
 from enum import Enum, auto
 
-from psyneulink.core.components.functions.nonstateful.transformfunctions import LinearCombination, PRODUCT, SUM
+from psyneulink.core.components.functions.nonstateful.transformfunctions import PRODUCT, SUM
 from psyneulink.core.components.functions.stateful.integratorfunctions import IntegratorFunction
 from psyneulink.core.components.functions.stateful import StatefulFunction
 from psyneulink.core.components.mechanisms.processing.transfermechanism import TransferMechanism
@@ -1023,7 +1023,6 @@ class PytorchMechanismWrapper():
             If fct_has_mult_args is True, treat each item in variable as an arg to the function
             If False, compute function for each item in variable and return results in a list
             """
-            from psyneulink.core.components.functions.nonstateful.transformfunctions import TransformFunction
             if fct_has_mult_args:
                 res = function(*variable)
             # variable is ragged
@@ -1031,10 +1030,7 @@ class PytorchMechanismWrapper():
                 res = [function(variable[i]) for i in range(len(variable))]
             else:
                 res = function(variable)
-            # TransformFunction can reduce output to single item from
-            # multi-item input
-            if isinstance(function._pnl_function, TransformFunction):
-                res = res.unsqueeze(0)
+            res = torch.atleast_2d(res)
             return res
 
         # If mechanism has an integrator_function and integrator_mode is True,
