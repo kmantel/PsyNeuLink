@@ -3599,22 +3599,22 @@ class SoftMax(TransferFunction):
         axis = self._get_pytorch_fct_param_value('axis', device, context)
 
         if isinstance(gain, str) and gain == ADAPTIVE:
-            return lambda x: (torch.softmax(self._gen_pytorch_adapt_gain_fct(device, context)(x) * x, dim=axis))
+            return lambda x: (torch.softmax(self._gen_pytorch_adapt_gain_fct(device, context)(x) * x, axis))
 
         elif mask_threshold:
             def pytorch_thresholded_softmax(_input: torch.Tensor) -> torch.Tensor:
                 # Mask elements of input below threshold
                 _mask = (torch.abs(_input) > mask_threshold)
                 # Subtract off the max value in the input to eliminate extreme values, exponentiate, and apply mask
-                masked_exp = _mask * torch.exp(gain * (_input - torch.max(_input, dim=axis, keepdim=True)[0]))
+                masked_exp = _mask * torch.exp(gain * (_input - torch.max(_input, axis, keepdim=True)[0]))
                 if (masked_exp == 0).all():
                     return masked_exp
-                return masked_exp / torch.sum(masked_exp, dim=axis, keepdim=True)
+                return masked_exp / torch.sum(masked_exp, axis, keepdim=True)
             # Return the function
             return pytorch_thresholded_softmax
 
         else:
-            return lambda x: (torch.softmax(gain * x, dim=axis))
+            return lambda x: (torch.softmax(gain * x, axis))
 
     def _gen_pytorch_adapt_gain_fct(self, device, context=None):
         scale = self._get_pytorch_fct_param_value('adapt_scale', device, context)
