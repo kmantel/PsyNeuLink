@@ -459,13 +459,13 @@ class TestRecurrentTransferMechanismMatrix:
         assert "must be square" in str(error_text.value)
 
     def test_recurrent_mech_matrix_3d(self):
-        with pytest.raises(FunctionError) as error_text:
-            R = RecurrentTransferMechanism(
-                name='R',
-                input_shapes=2,
-                matrix=[[[1, 3], [2, 4]], [[5, 7], [6, 8]]]
-            )
-        assert "more than 2d" in str(error_text.value)
+        matrix = [[[1, 3], [2, 4]], [[5, 7], [6, 8]]]
+        R = RecurrentTransferMechanism(
+            name='R',
+            input_shapes=2,
+            matrix=matrix
+        )
+        np.testing.assert_array_equal(R.defaults.matrix, matrix)
 
 
 class TestRecurrentTransferMechanismFunction:
