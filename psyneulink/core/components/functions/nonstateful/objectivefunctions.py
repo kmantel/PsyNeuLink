@@ -207,6 +207,9 @@ class Stability(ObjectiveFunction):
         transfer_fct = Parameter(None, stateful=False, loggable=False)
         normalize = FunctionParameter(False, function_name='metric_fct')
 
+        def _parse_variable(self, variable):
+            return np.atleast_1d(np.squeeze(variable))
+
     @check_user_specified
     @beartype
     def __init__(self,
@@ -340,18 +343,17 @@ class Stability(ObjectiveFunction):
         from psyneulink.core.components.ports.parameterport import ParameterPort
 
         matrix = self.parameters.matrix._get(context)
-        squeezed_var = np.squeeze(self.defaults.variable)
 
         if isinstance(matrix, MappingProjection):
             matrix = matrix._parameter_ports[MATRIX]
         # elif isinstance(matrix, ParameterPort):
         #     pass
         else:
-            matrix = get_matrix(matrix, squeezed_var, squeezed_var)
+            matrix = get_matrix(matrix, self.defaults.variable, self.defaults.variable)
 
         self.parameters.matrix._set(matrix, context)
 
-        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, squeezed_var, squeezed_var)
+        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, self.defaults.variable, self.defaults.variable)
 
         default_variable = [self.defaults.variable,
                             self.defaults.variable]
@@ -376,9 +378,7 @@ class Stability(ObjectiveFunction):
 
         # this mirrors the transformation in _function
         # it is a hack, and a general solution should be found
-        new_default_variable = convert_all_elements_to_np_array(new_default_variable)
-        squeezed_var = np.squeeze(new_default_variable)
-        size = safe_len(np.squeeze(new_default_variable))
+        new_default_variable = self.parameters._parse_variable(new_default_variable)
         matrix = self.parameters.matrix._get(context)
 
         if isinstance(matrix, MappingProjection):
@@ -386,11 +386,11 @@ class Stability(ObjectiveFunction):
         elif isinstance(matrix, ParameterPort):
             pass
         else:
-            matrix = get_matrix(copy_parameter_value(self.defaults.matrix), squeezed_var, squeezed_var)
+            matrix = get_matrix(copy_parameter_value(self.defaults.matrix), new_default_variable, new_default_variable)
 
         self.parameters.matrix._set(matrix, context)
 
-        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, squeezed_var, squeezed_var)
+        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, new_default_variable, new_default_variable)
 
         super()._update_default_variable(new_default_variable, context)
 
@@ -453,11 +453,8 @@ class Stability(ObjectiveFunction):
 
         """
 
-        # MODIFIED 6/12/19 NEW: [JDC]
-        variable = np.array(variable)
-        if variable.ndim > 1:
-            variable = np.squeeze(variable)
-        # MODIFIED 6/12/19 END
+        # enforces squeezed 1d array
+        variable = self.parameters._parse_variable(variable)
 
         matrix = self._get_current_parameter_value(MATRIX, context)
         if matrix is None:
