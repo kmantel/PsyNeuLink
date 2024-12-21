@@ -2744,3 +2744,16 @@ def _validate_np_tensordot_args(a, b, axes=2):
         reason = f"axes pairs (a,b) {reason}"
     if not equal:
         raise ValueError(f'shape-mismatch for sum: {reason}')
+
+
+def apply_as_batch_array(func, arr, result=None, nonbatch_dims=2):
+    nonbatch_dims = abs(nonbatch_dims)
+    if result is None:
+        result = np.empty_like(arr)
+    elif isinstance(result, tuple):
+        result = np.empty(result)
+
+    for indices in np.ndindex(arr.shape[:-nonbatch_dims]):
+        result[indices] = func(arr[indices])
+
+    return result
