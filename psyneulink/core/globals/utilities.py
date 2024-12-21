@@ -2733,18 +2733,3 @@ def _validate_np_tensordot_args(a, b, axes=2):
         reason = f"axes pairs (a,b) {reason}"
     if not equal:
         raise ValueError(f'shape-mismatch for sum: {reason}')
-
-
-def diagonal_matrix(v, batch=True):
-    if batch:
-        return np.eye(*v.shape[-2:])
-    else:
-        res = np.zeros_like(v)
-
-        for i in range(v.ndim):
-            try:
-                res[v.ndim * (i,)] = 1
-            except IndexError:
-                pass
-
-        return res

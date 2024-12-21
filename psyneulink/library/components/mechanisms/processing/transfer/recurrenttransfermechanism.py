@@ -217,7 +217,7 @@ from psyneulink.core.globals.parameters import Parameter, ParameterNoValueError,
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.registry import register_instance, remove_instance_from_registry
 from psyneulink.core.globals.socket import ConnectionInfo
-from psyneulink.core.globals.utilities import NumericCollections, ValidParamSpecType, diagonal_matrix, safe_len
+from psyneulink.core.globals.utilities import NumericCollections, ValidParamSpecType, safe_len
 from psyneulink.core.scheduling.condition import Condition, WhenFinished
 from psyneulink.core.scheduling.time import TimeScale
 from psyneulink.library.components.mechanisms.modulatory.learning.autoassociativelearningmechanism import \
@@ -262,7 +262,7 @@ def _recurrent_transfer_mechanism_matrix_getter(owning_component=None, context=N
 
 def _get_auto_hetero_from_matrix(matrix):
     matrix = matrix.copy()
-    auto = diagonal_matrix(matrix)
+    auto = np.diagonal(matrix, axis1=-1, axis2=-2)
 
     np.fill_diagonal(matrix, 0)
     hetero = matrix
