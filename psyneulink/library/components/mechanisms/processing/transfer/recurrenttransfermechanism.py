@@ -262,7 +262,7 @@ def _recurrent_transfer_mechanism_matrix_getter(owning_component=None, context=N
 
 def _get_auto_hetero_from_matrix(matrix):
     matrix = matrix.copy()
-    auto = np.diagonal(matrix, axis1=-1, axis2=-2)
+    auto = np.diagonal(matrix, axis1=-1, axis2=-2).copy()
 
     np.fill_diagonal(matrix, 0)
     hetero = matrix
