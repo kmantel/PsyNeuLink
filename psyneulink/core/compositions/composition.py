@@ -13345,7 +13345,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if convert_to_np_array(input_value, dimension=2).shape == var_shape:
             return "homogeneous"
         # input_value ports have different lengths
-        elif var and len(var_shape) == 1 and isinstance(var[0], (list, np.ndarray)):
+        elif var is not None and len(var_shape) == 1 and isinstance(var[0], (list, np.ndarray)):
             for i in range(len(input_value)):
                 if len(input_value[i]) != len(var[i]):
                     return False
