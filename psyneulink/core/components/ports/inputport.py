@@ -1441,10 +1441,6 @@ class InputPort(Port_Base):
     def socket_width(self):
         return self.defaults.variable.shape[-1]
 
-    @property
-    def socket_shape_template(self):
-        return np.zeros(self.socket_shape)
-
     # must be at least 1d. list of incoming projections
     @property
     def socket_shape(self):

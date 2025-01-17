@@ -979,6 +979,14 @@ class ParameterPort(Port_Base):
         raise ParameterPortError("PROGRAM ERROR: Attempt to assign {} to {}; {}s cannot accept {}s".
                                   format(PATHWAY_PROJECTION, self.name, PARAMETER_PORT, PATHWAY_PROJECTION))
 
+    # must be at least 1d. list of incoming projections
+    @property
+    def socket_shape(self):
+        if self.defaults.variable.ndim > 1:
+            return self.defaults.variable[0].shape
+        else:
+            return self.defaults.variable.shape
+
 
 def _instantiate_parameter_ports(owner, function=None, context=None):
     """Call _instantiate_parameter_port for all modulable parameters to instantiate ParameterPorts for them
