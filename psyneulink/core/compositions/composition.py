@@ -6744,6 +6744,22 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         else:
             self._pre_existing_pathway_components[PROJECTIONS].append(projection)
 
+        dim_warning_mech_exclude_classes = (ObjectiveMechanism, ControlMechanism, CompositionInterfaceMechanism)
+        if (
+            (projection.sender.socket_dim > 2 or projection.receiver.socket_dim > 2)
+            and projection.matrix.base.ndim == 2
+            and not projection.parameters.matrix._user_specified
+            and not isinstance(sender_mechanism, dim_warning_mech_exclude_classes)
+            and not isinstance(receiver_mechanism, dim_warning_mech_exclude_classes)
+        ):
+            warnings.warn(
+                f"{projection} was auto-assigned a 2D matrix {projection.defaults.matrix}"
+                " while its sender or receiver is higher than 2D. This projection won't be"
+                " learnable. To allow learning for this projection, specify a matrix of the"
+                " appropriate higher-dimension shape."
+            )
+            self.warned_about_unlearnable_identity_matrices = True
+
         self.needs_update_graph = True
         self.needs_update_graph_processing = True
         self.needs_update_scheduler = True
