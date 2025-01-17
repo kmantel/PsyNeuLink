@@ -2307,6 +2307,19 @@ class Port_Base(Port):
         else:
             return self.name
 
+    @property
+    @abc.abstractmethod
+    def socket_shape(self):
+        pass
+
+    @property
+    def socket_shape_template(self):
+        return np.zeros(self.socket_shape)
+
+    @property
+    def socket_dim(self):
+        return len(self.socket_shape)
+
     def _assign_default_port_Name(self):
         return False
 
