@@ -4540,6 +4540,23 @@ class TestRun:
                 outer_comp.results, [[[[[0.52497918747894]]], [[[0.52497918747894]]]]]
             )
 
+        @pytest.mark.parametrize(
+            'shape_a, shape_b, shape_c, input, results',
+            [],
+        )
+        def test_three_node_linear_varying_shapes(
+            self, shape_a, shape_b, shape_c, input, results
+        ):
+            A = ProcessingMechanism(
+                name="A", default_variable=np.zeros(shape_a), function=AdaptiveIntegrator(rate=0.1)
+            )
+            B = ProcessingMechanism(
+                name="B", default_variable=np.zeros(shape_b), function=Linear
+            )
+            C = ProcessingMechanism(
+                name="C", default_variable=np.zeros(shape_c), function=Logistic
+            )
+
 
 class TestCallBeforeAfterTimescale:
 
