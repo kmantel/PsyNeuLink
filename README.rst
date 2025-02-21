@@ -46,7 +46,7 @@ It is:
 
  ..
 
- - *computationally general* -- it can be used to implement, seamlessly integrate, and simulate interactions among
+ - *computationally general* -- it can be used to implement, seamlessly integrate, and simulate interactions among
    disparate components that vary in their granularity of representation and function (from individual neurons or
    neural populations to functional subsystems and abstract cognitive functions) and at any time scale of execution.
 
