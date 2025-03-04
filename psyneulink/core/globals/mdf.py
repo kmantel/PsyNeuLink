@@ -1448,6 +1448,7 @@ def generate_script_from_mdf(model_input, outfile=None):
         'dill': 'dill',
         'numpy': 'np'
     }
+    module_full_name_mapping = {v: k for k, v in module_friendly_name_mapping.items()}
 
     potential_module_names = set()
     module_names = set()
@@ -1463,6 +1464,11 @@ def generate_script_from_mdf(model_input, outfile=None):
             potential_module_names.update(cs_potential_names)
 
         for module in potential_module_names:
+            try:
+                module = module_full_name_mapping[module]
+            except KeyError:
+                pass
+
             if module not in component_identifiers:
                 try:
                     exec(f'import {module}')
