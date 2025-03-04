@@ -109,8 +109,8 @@ def read_defined_model_script(filename):
 
 
 def get_loaded_model_state(model_input: str):
-    _globals = copy.copy(globals())
-    _locals = copy.copy(locals())
+    _globals = {}
+    _locals = {}
 
     exec(model_input, _globals, _locals)
 
