@@ -4143,7 +4143,10 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             # IntEnum gets treated as int
             elif isinstance(value, (Enum, types.SimpleNamespace)):
                 value = str(value)
-            elif not isinstance(value, (float, int, str, bool, mdf.Base, type(None), np.ndarray)):
+            elif (
+                not isinstance(value, (float, int, str, bool, mdf.Base, type(None), np.ndarray))
+                and not is_array_like(value)
+            ):
                 value = str(value)
 
             return value
