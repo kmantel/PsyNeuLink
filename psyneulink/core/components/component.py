@@ -4136,7 +4136,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
                     value = str(value)
             elif isinstance(value, SampleIterator):
-                value = f'{value.__class__.__name__}({repr(value.specification)})'
+                spec = repr(parse_parameter_value(value.specification))
+                value = f'{value.__class__.__name__}({spec})'
             elif value is NotImplemented:
                 value = None
             # IntEnum gets treated as int
