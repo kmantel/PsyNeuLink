@@ -12,7 +12,7 @@
 
 .. |logo| image:: _static/PsyNeuLink_logo_no_text.svg
     :width: 20%
-    :target: http://psyneulink.org
+    :target: https://psyneulink.org
 
 Welcome to PsyNeuLink |logo|
 ============================
@@ -115,11 +115,11 @@ it is presently less well suited to efforts involving massively large computatio
 Other packages currently better suited to such applications are:
 `Emergent <https://grey.colorado.edu/emergent/index.php/Main_Page>`_ for biologically-inspired neural network models
 `Pytorch <https://pytorch.org>`_ and `TensorFlow <https://www.tensorflow.org>`_ (for deep learning models);
-`HDDM <http://ski.clps.brown.edu/hddm_docs/>`_ (for Drift Diffusion Models);
-`ACT-R <http://act-r.psy.cmu.edu>`_ (for production system models);
-`Genesis <http://www.genesis-sim.org>`_,
+`HDDM <https://ski.clps.brown.edu/hddm_docs/>`_ (for Drift Diffusion Models);
+`ACT-R <https://act-r.psy.cmu.edu>`_ (for production system models);
+`Genesis <https://www.genesis-sim.org>`_,
 `Neuron <https://www.neuron.yale.edu/neuron/>`_,
-and `Nengo <http://www.nengo.ca>`_  (for biophysically-realistic models of neuronal function).
+and `Nengo <https://www.nengo.ca>`_  (for biophysically-realistic models of neuronal function).
 
 These packages are good for elaborate and detailed models of a particular form. In contrast, the focus in designing
 PsyNeuLink has been to make it as flexible and easy to use as possible, with the ability to integrate components
@@ -129,14 +129,14 @@ interpreted vs. compiled).
 
 That said, priorities for ongoing development of PsyNeuLink are:
     i) acceleration, using just-in-time compilation methods and parallelization
-       (see `Compilation`, and `Vesely et al., 2022 <http://www.cs.yale.edu/homes/abhishek/jvesely-cgo22.pdf>`_);
+       (see `Compilation`, and `Vesely et al., 2022 <https://www.cs.yale.edu/homes/abhishek/jvesely-cgo22.pdf>`_);
     ii) enhancement of the API to facilitate wrapping modules from other packages for integration into the PsyNeuLink
         environment (examples currently exist for `Pytorch <https://pytorch.org>`_ ) and translating into a standard
         `Model Description Format (MDF) <https://github.com/ModECI/MDF>`_;
     iii) integration of tools for parameter estimation, model comparison and data fitting
          (see `ParameterEstimationComposition`); and
     iv) a graphic interface for the construction of models and realtime display of their execution
-        (see `PsyNeuLinkView <http://www.psyneuln.deptcpanel.princeton.edu/psyneulink-view-2/>`_).
+        (see `PsyNeuLinkView <https://www.psyneuln.deptcpanel.princeton.edu/psyneulink-view-2/>`_).
 
 
 .. _Overview:
