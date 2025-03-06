@@ -30,7 +30,7 @@ jobs:
       shell: bash
       run: |
         # We don't care about the python version used.
-        pip install setuptools wheel
+        pip install --upgrade setuptools wheel
         python setup.py sdist
         python setup.py bdist_wheel
         cd dist
@@ -48,8 +48,8 @@ jobs:
       shell: bash
       run: |
         # Include implicit dependency on setuptools{,-rust} and preinstall wheel
-        pip install setuptools setuptools-rust wheel
-        pip install twine
+        pip install --upgrade setuptools setuptools-rust wheel
+        pip install --upgrade twine
 
     - name: Validate dist files
       shell: bash
