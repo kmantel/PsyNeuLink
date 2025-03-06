@@ -25,12 +25,16 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install setup dependencies
+      shell: bash
+      run: |
+        pip install --upgrade setuptools wheel twine
+
     - name: Create Python Dist files
       id: create_dist
       shell: bash
       run: |
         # We don't care about the python version used.
-        pip install --upgrade setuptools wheel
         python setup.py sdist
         python setup.py bdist_wheel
         cd dist
@@ -43,13 +47,6 @@ jobs:
         name: Python-dist-files
         path: dist/
         retention-days: 1
-
-    - name: Install setup dependencies
-      shell: bash
-      run: |
-        # Include implicit dependency on setuptools{,-rust} and preinstall wheel
-        pip install --upgrade setuptools setuptools-rust wheel
-        pip install --upgrade twine
 
     - name: Validate dist files
       shell: bash
@@ -157,9 +154,7 @@ jobs:
     - name: Install setup dependencies
       shell: bash
       run: |
-        # Include implicit dependency on setuptools{,-rust} and preinstall wheel
-        pip install setuptools setuptools-rust wheel
-        pip install twine
+        pip install --upgrade twine
 
     - name: Validate dist files
       shell: bash
