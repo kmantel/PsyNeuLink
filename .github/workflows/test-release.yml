@@ -28,15 +28,14 @@ jobs:
     - name: Install setup dependencies
       shell: bash
       run: |
-        pip install --upgrade setuptools wheel twine
+        pip install build twine
 
     - name: Create Python Dist files
       id: create_dist
       shell: bash
       run: |
         # We don't care about the python version used.
-        python setup.py sdist
-        python setup.py bdist_wheel
+        python -m build -v
         cd dist
         echo "sdist=$(ls *.tar.gz)" >> $GITHUB_OUTPUT
         echo "wheel=$(ls *.whl)" >> $GITHUB_OUTPUT
@@ -154,7 +153,7 @@ jobs:
     - name: Install setup dependencies
       shell: bash
       run: |
-        pip install --upgrade twine
+        pip install twine
 
     - name: Validate dist files
       shell: bash
