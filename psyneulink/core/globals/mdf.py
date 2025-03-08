@@ -79,6 +79,7 @@ PsyNeuLink is capable of re-importing models exported by PsyNeuLink in
 either form.
 """
 
+import abc
 import ast
 import base64
 import binascii
@@ -130,7 +131,16 @@ class MDFError(Exception):
     pass
 
 
-class MDFSerializable:
+class Serializable:
+    @property
+    @abc.abstractmethod
+    def to_dict(self):
+        pass
+
+    # TODO: implement from_dict
+
+
+class MDFSerializable(Serializable):
     @property
     def json_summary(self):
         return self.as_mdf_model().to_json()
@@ -138,6 +148,11 @@ class MDFSerializable:
     @property
     def yaml_summary(self):
         return self.as_mdf_model().to_yaml()
+
+    @property
+    def to_dict(self):
+        # allow errors to escape
+        return json.loads(self.as_mdf_model().to_json())
 
 
 # leaving this due to instructions in test_documentation_models

@@ -526,7 +526,7 @@ from psyneulink._typing import Iterable, Union
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.globals.context import \
     Context, ContextError, ContextFlags, INITIALIZATION_STATUS_FLAGS, _get_time, handle_external_context
-from psyneulink.core.globals.mdf import MDFSerializable
+from psyneulink.core.globals.mdf import MDFSerializable, Serializable
 from psyneulink.core.globals.keywords import \
     CONTEXT, CONTROL_PROJECTION, DEFERRED_INITIALIZATION, DETERMINISTIC, EXECUTE_UNTIL_FINISHED, \
     FUNCTION, FUNCTION_PARAMS, INIT_FULL_EXECUTE_METHOD, INPUT_PORTS, \
@@ -4135,9 +4135,14 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                         pass
 
                     value = str(value)
+            elif isinstance(value, Serializable):
+                value = {
+                    'type': type(value),
+                    'args': value.to_dict()
+                }
             elif isinstance(value, SampleIterator):
-                spec = repr(parse_parameter_value(value.specification))
-                value = f'{value.__class__.__name__}({spec})'
+                # no
+                value = value.specification
             elif value is NotImplemented:
                 value = None
             # IntEnum gets treated as int

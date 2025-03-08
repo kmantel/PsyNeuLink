@@ -19,6 +19,7 @@ from abc import ABCMeta
 from collections.abc import Iterator
 from decimal import Decimal, getcontext
 from inspect import isclass
+from psyneulink.core.globals.mdf import Serializable
 from psyneulink.core.globals.utilities import is_numeric_scalar, try_extract_0d_array_item
 
 import numpy as np
@@ -76,7 +77,7 @@ class SampleMeta(ABCMeta):
         super().__init__(*args, **kwargs)
 
 
-class SampleSpec(metaclass=SampleMeta):
+class SampleSpec(Serializable, metaclass=SampleMeta):
     """
     SampleSpec(      \
     start=None,      \
@@ -250,6 +251,12 @@ class SampleSpec(metaclass=SampleMeta):
         params_str = ", ".join([f"{k}={repr(getattr(self, k))}" for k in params_list if getattr(self, k) is not None])
         return f"SampleSpec({params_str})"
 
+    @property
+    def to_dict(self):
+        return {
+            'start', 'stop', 'step', 'num', 'function', 'precision', 'custom_spec', ...
+        }
+
 
 allowable_specs = (tuple, list, np.array, range, np.arange, callable, SampleSpec)
 def is_sample_spec(spec):
@@ -258,7 +265,7 @@ def is_sample_spec(spec):
     return False
 
 
-class SampleIterator(Iterator, metaclass=SampleMeta):
+class SampleIterator(Iterator, Serializable, metaclass=SampleMeta):
     """
     SampleIterator(               \
     specification                 \
@@ -476,3 +483,7 @@ class SampleIterator(Iterator, metaclass=SampleMeta):
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, self.specification)
+
+    @property
+    def to_dict(self):
+        return {'specification': self.specification}
