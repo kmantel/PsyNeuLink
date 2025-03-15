@@ -887,13 +887,13 @@ class Function_Base(Function):
 
         extra_noise_functions = []
 
-        self_model = self.as_mdf_model()
+        self_model = self.to_mdf()
 
         def handle_noise(noise):
             if is_instance_or_subclass(noise, Component):
                 if inspect.isclass(noise) and issubclass(noise, Component):
                     noise = noise()
-                noise_func_model = noise.as_mdf_model()
+                noise_func_model = noise.to_mdf()
                 extra_noise_functions.append(noise_func_model)
                 return noise_func_model.id
             elif isinstance(noise, (list, np.ndarray)):
@@ -945,7 +945,7 @@ class Function_Base(Function):
 
         return self_model.id
 
-    def as_mdf_model(self):
+    def to_mdf(self):
         import modeci_mdf.mdf as mdf
         import modeci_mdf.functions.standard as mdf_functions
 

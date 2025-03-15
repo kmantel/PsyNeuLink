@@ -1233,8 +1233,8 @@ class Logistic(DeterministicTransferFunction):  # ------------------------------
         offset = self._get_pytorch_fct_param_value('offset', device, context)
         return lambda x: scale / (1 + torch.exp(-gain * (x + bias))) + offset
 
-    def as_mdf_model(self):
-        model = super().as_mdf_model()
+    def to_mdf(self):
+        model = super().to_mdf()
 
         # x_0 is included in bias in MDF logistic
         self._set_mdf_arg(model, 'bias', np.array(model.args['bias'] - model.args['x_0']))

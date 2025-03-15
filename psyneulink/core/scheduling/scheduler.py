@@ -163,15 +163,15 @@ class Scheduler(graph_scheduler.Scheduler, MDFSerializable):
             skip_environment_state_update_time_increment=skip_trial_time_increment,
         )
 
-    def as_mdf_model(self):
+    def to_mdf(self):
         import modeci_mdf.mdf as mdf
 
         return mdf.ConditionSet(
             node_specific={
-                parse_valid_identifier(n.name): self.conditions[n].as_mdf_model() for n in self.nodes if n in self.conditions
+                parse_valid_identifier(n.name): self.conditions[n].to_mdf() for n in self.nodes if n in self.conditions
             },
             termination={
-                str.lower(k.name): v.as_mdf_model() for k, v in self.termination_conds.items()
+                str.lower(k.name): v.to_mdf() for k, v in self.termination_conds.items()
             },
         )
 

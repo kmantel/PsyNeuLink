@@ -1291,7 +1291,7 @@ class OutputPort(Port_Base):
             label_dictionary = {}
         return self._get_value_label(label_dictionary, self.owner.output_ports, context=context)
 
-    def as_mdf_model(self):
+    def to_mdf(self):
         import modeci_mdf.mdf as mdf
 
         owner_func_name = parse_valid_identifier(f'{self.owner.name}_{self.owner.function.name}')

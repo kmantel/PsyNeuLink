@@ -60,7 +60,7 @@ except AttributeError:
     pass
 else:
     class ConditionBase(graph_scheduler.condition.ConditionBase, MDFSerializable):
-        def as_mdf_model(self):
+        def to_mdf(self):
             raise graph_scheduler.ConditionError(
                 f'MDF support not yet implemented for {type(self)}'
             )
@@ -137,7 +137,7 @@ class Condition(*condition_class_parents, MDFSerializable):
             **kwargs
         )
 
-    def as_mdf_model(self):
+    def to_mdf(self):
         import modeci_mdf.mdf as mdf
         from psyneulink.core.components.component import Component
 
@@ -145,7 +145,7 @@ class Condition(*condition_class_parents, MDFSerializable):
             if isinstance(arg, Component):
                 return parse_valid_identifier(arg.name)
             elif isinstance(arg, Condition):
-                return arg.as_mdf_model()
+                return arg.to_mdf()
             elif (
                 isinstance(arg, np.number)
                 or (isinstance(arg, np.ndarray) and arg.ndim == 0)
@@ -181,7 +181,7 @@ class Condition(*condition_class_parents, MDFSerializable):
                     if isinstance(a, Component):
                         a = parse_valid_identifier(a.name)
                     elif isinstance(a, Condition):
-                        a = a.as_mdf_model()
+                        a = a.to_mdf()
                     args_list.append(a)
                 extra_args[name] = args_list
 
@@ -364,8 +364,8 @@ class Threshold(graph_scheduler.condition._DependencyValidation, Condition):
             rtol=rtol,
         )
 
-    def as_mdf_model(self):
-        m = super().as_mdf_model()
+    def to_mdf(self):
+        m = super().to_mdf()
 
         if self.parameter == 'value':
             m.kwargs['parameter'] = f'{self.dependency.name}_OutputPort_0'

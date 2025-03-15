@@ -4092,11 +4092,11 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     value = parse_valid_identifier(value.name)
                 else:
                     try:
-                        value = value.as_mdf_model(simple_edge_format=False)
+                        value = value.to_mdf(simple_edge_format=False)
                     except TypeError as e:
                         if "got an unexpected keyword argument 'simple_edge_format'" not in str(e):
                             raise
-                        value = value.as_mdf_model()
+                        value = value.to_mdf()
             elif isinstance(value, ComponentsMeta):
                 value = value.__name__
             elif isinstance(value, (type, types.BuiltinFunctionType)):
@@ -4290,6 +4290,14 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             pass
 
         model.args[arg] = value
+
+    def to_mdf(self):
+        """Creates a ModECI MDF object representing this Component
+
+        Returns:
+            modeci_mdf.MdfBase: a ModECI object representing this Component
+        """
+        return NotImplemented
 
     def _add_to_composition(self, composition):
         self.compositions.add(composition)

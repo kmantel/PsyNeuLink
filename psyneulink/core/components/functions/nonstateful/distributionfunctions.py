@@ -54,8 +54,8 @@ __all__ = [
 class DistributionFunction(Function_Base):
     componentType = DIST_FUNCTION_TYPE
 
-    def as_mdf_model(self):
-        model = super().as_mdf_model()
+    def to_mdf(self):
+        model = super().to_mdf()
         self._set_mdf_arg(model, 'shape', self.defaults.variable.shape)
         return model
 

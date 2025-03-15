@@ -1855,8 +1855,8 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         super()._update_default_variable(new_default_variable, context=context)
 
-    def as_mdf_model(self):
-        model = super().as_mdf_model()
+    def to_mdf(self):
+        model = super().to_mdf()
         function_model = [
             f for f in model.functions
             if f.id == f'{model.id}_{parse_valid_identifier(self.function.name)}'

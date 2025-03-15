@@ -693,11 +693,11 @@ class UserDefinedFunction(Function_Base):
         builder.position_at_start(post_block)
         return builder
 
-    def as_mdf_model(self):
+    def to_mdf(self):
         import math
         import modeci_mdf.functions.standard
 
-        model = super().as_mdf_model()
+        model = super().to_mdf()
         ext_function_str = None
 
         if self.custom_function in [

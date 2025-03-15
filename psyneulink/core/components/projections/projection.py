@@ -1162,7 +1162,7 @@ class Projection_Base(Projection):
             {'variable'}
         )
 
-    def as_mdf_model(self, simple_edge_format=True):
+    def to_mdf(self, simple_edge_format=True):
         import modeci_mdf.mdf as mdf
 
         from psyneulink.core.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
@@ -1222,7 +1222,7 @@ class Projection_Base(Projection):
                 function=self.function
             )
             edge_function = edge_node.function
-            edge_node = edge_node.as_mdf_model()
+            edge_node = edge_node.to_mdf()
 
             func_model = [f for f in edge_node.functions if f.id == parse_valid_identifier(f'{edge_node.id}_{edge_function.name}')][0]
             var_name = _get_variable_parameter_name(edge_function)
@@ -1262,7 +1262,7 @@ class Projection_Base(Projection):
         else:
             metadata = self._mdf_metadata
             try:
-                metadata[MODEL_SPEC_ID_METADATA]['functions'] = mdf.Function.to_dict(self.function.as_mdf_model())
+                metadata[MODEL_SPEC_ID_METADATA]['functions'] = mdf.Function.to_dict(self.function.to_mdf())
             except AttributeError:
                 # projection is in deferred init, special handling here?
                 pass

@@ -4232,7 +4232,7 @@ class Mechanism_Base(Mechanism):
             self.parameter_ports,
         ))
 
-    def as_mdf_model(self):
+    def to_mdf(self):
         import modeci_mdf.mdf as mdf
         from psyneulink.core.globals.mdf import _get_id_for_mdf_port
 
@@ -4301,7 +4301,7 @@ class Mechanism_Base(Mechanism):
                     )
                 )
             else:
-                ip_model = ip.as_mdf_model()
+                ip_model = ip.to_mdf()
                 ip_model.id = f'{parse_valid_identifier(self.name)}_{ip_model.id}'
 
                 model.input_ports.append(ip_model)
@@ -4315,7 +4315,7 @@ class Mechanism_Base(Mechanism):
             output_ports = []
 
         for op in output_ports:
-            op_model = op.as_mdf_model()
+            op_model = op.to_mdf()
             op_model.id = f'{parse_valid_identifier(self.name)}_{op_model.id}'
 
             model.output_ports.append(op_model)

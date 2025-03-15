@@ -442,7 +442,7 @@ def test_generate_script_from_mdf(filename, composition_name, fmt, tmp_path):
 
 _reason_no_default = 'cannot be instantiated with no arguments'
 _reason_abstract = 'is an abstract/shell class'
-_test_as_mdf_model_defaults_excluded_classes = {
+_test_to_mdf_defaults_excluded_classes = {
     pnl.ControlSignal: _reason_no_default,
     pnl.DefaultControlMechanism: _reason_abstract,
     pnl.GatingSignal: _reason_no_default,
@@ -464,17 +464,17 @@ _test_as_mdf_model_defaults_excluded_classes = {
         [
             *(
                 set(pytest.helpers.get_all_subclasses(include_abstract=False))
-                - _test_as_mdf_model_defaults_excluded_classes.keys()
+                - _test_to_mdf_defaults_excluded_classes.keys()
             ),
         ],
         key=str
     )
     + [
         pytest.param(cls_, marks=pytest.mark.xfail(reason=reason or ''))
-        for cls_, reason in _test_as_mdf_model_defaults_excluded_classes.items()
+        for cls_, reason in _test_to_mdf_defaults_excluded_classes.items()
     ],
 )
-def test_as_mdf_model_defaults(class_):
+def test_to_mdf_defaults(class_):
     try:
         c = class_()
     except TypeError as e:
@@ -485,4 +485,4 @@ def test_as_mdf_model_defaults(class_):
     except (pnl.ShellClassError, NotImplementedError):
         pytest.skip(reason=_reason_abstract)
 
-    c.as_mdf_model()
+    c.to_mdf()

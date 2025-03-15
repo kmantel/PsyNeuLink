@@ -13134,8 +13134,8 @@ _
 
     # endregion LLVM
 
-    def as_mdf_model(self, simple_edge_format=True):
-        """Creates a ModECI MDF Model representing this Composition
+    def to_mdf(self, simple_edge_format=True):
+        """Creates a ModECI MDF Graph representing this Composition
 
         Args:
             simple_edge_format (bool, optional): If True, any
@@ -13145,7 +13145,8 @@ _
             model less accurately. Defaults to True.
 
         Returns:
-            modeci_mdf.Model: a ModECI Model representing this Composition
+            modeci_mdf.Graph: a ModECI Graph representing this
+            Composition
         """
         import modeci_mdf.mdf as mdf
 
@@ -13174,7 +13175,7 @@ _
 
         for n in list(self.nodes) + additional_nodes:
             if not isinstance(n, CompositionInterfaceMechanism):
-                nodes_dict[parse_valid_identifier(n.name)] = n.as_mdf_model()
+                nodes_dict[parse_valid_identifier(n.name)] = n.to_mdf()
 
             # consider making this more general in the future
             try:
@@ -13187,9 +13188,9 @@ _
             # and projections to things outside this composition
             if is_included_projection(p):
                 try:
-                    pre_edge, edge_node, post_edge = p.as_mdf_model(simple_edge_format)
+                    pre_edge, edge_node, post_edge = p.to_mdf(simple_edge_format)
                 except TypeError:
-                    edges = [p.as_mdf_model(simple_edge_format)]
+                    edges = [p.to_mdf(simple_edge_format)]
                 else:
                     nodes_dict[edge_node.id] = edge_node
                     edges = [pre_edge, post_edge]
@@ -13201,11 +13202,11 @@ _
                 for e in edges:
                     projections_dict[e.id] = e
 
-        metadata[MODEL_SPEC_ID_METADATA]['controller'] = self.controller.as_mdf_model() if self.controller is not None else None
+        metadata[MODEL_SPEC_ID_METADATA]['controller'] = self.controller.to_mdf() if self.controller is not None else None
 
         graph = mdf.Graph(
             id=self_identifier,
-            conditions=self.scheduler.as_mdf_model(),
+            conditions=self.scheduler.to_mdf(),
             **self._mdf_model_parameters,
             **metadata
         )
@@ -13217,6 +13218,22 @@ _
             graph.edges.append(proj)
 
         return graph
+
+    def as_mdf_model(self, simple_edge_format=True):
+        """Creates a ModECI MDF Model containing this Composition
+
+        Args:
+            simple_edge_format (bool, optional): If True, any
+            `Projection` with a non-identity matrix is constructed as an
+            `mdf.Node` with two identity `mdf.Edge`s. This is compatible
+            with standard MDF execution, but represents the PsyNeuLink
+            model less accurately. Defaults to True.
+
+        Returns:
+            modeci_mdf.Model: a ModECI Model containing this Composition
+        """
+        from psyneulink.core.globals.mdf import get_mdf_model
+        return get_mdf_model(self, simple_edge_format=simple_edge_format)
 
     # ******************************************************************************************************************
     # region ----------------------------------- PROPERTIES ------------------------------------------------------------

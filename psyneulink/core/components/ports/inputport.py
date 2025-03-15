@@ -1516,7 +1516,7 @@ class InputPort(Port_Base):
 
         return Port_Base._get_port_function_value(owner=owner, function=function, variable=variable)
 
-    def as_mdf_model(self):
+    def to_mdf(self):
         import modeci_mdf.mdf as mdf
 
         return mdf.InputPort(
