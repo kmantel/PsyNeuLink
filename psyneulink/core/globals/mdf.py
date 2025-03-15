@@ -1381,7 +1381,9 @@ def generate_script_from_json(model_input, outfile=None):
 
 def generate_script_from_mdf(model_input, outfile=None):
     """
-        Generate a Python script from MDF model **model_input**
+        Generate a Python script from MDF model **model_input** as a
+        modeci_mdf.Model object, json or yaml string, or a file
+        containing json or yaml
 
         .. warning::
            Use of `generate_script_from_mdf` to generate a Python script from a model without taking proper precautions
@@ -1392,7 +1394,7 @@ def generate_script_from_mdf(model_input, outfile=None):
         Arguments
         ---------
 
-            model_input : modeci_mdf.Model
+            model_input : Union[modeci_mdf.Model, str]
 
         Returns
         -------
@@ -1415,18 +1417,21 @@ def generate_script_from_mdf(model_input, outfile=None):
 
         return names
 
-    # accept either json string or filename
-    try:
-        model = load_mdf(model_input)
-    except (FileNotFoundError, OSError, ValueError):
+    if isinstance(model_input, mdf.Model):
+        model = model_input
+    else:
+        # accept either json string or filename
         try:
-            model = mdf.Model.from_json(model_input)
-        except json.decoder.JSONDecodeError:
-            # assume yaml
-            # delete=False because of problems with reading file on windows
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
-                f.write(model_input)
-                model = load_mdf(f.name)
+            model = load_mdf(model_input)
+        except (FileNotFoundError, OSError, ValueError):
+            try:
+                model = mdf.Model.from_json(model_input)
+            except json.decoder.JSONDecodeError:
+                # assume yaml
+                # delete=False because of problems with reading file on windows
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
+                    f.write(model_input)
+                    model = load_mdf(f.name)
 
     imports_str = ''
     comp_strs = []
