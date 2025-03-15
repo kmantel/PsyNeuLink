@@ -380,7 +380,7 @@ def _parse_parameter_value(value, component_identifiers=None, name=None, parent_
     exec('import numpy')
     try:
         pnl_type = _parse_component_type(value)
-    except (AttributeError, TypeError, MDFError):
+    except (AttributeError, IndexError, TypeError, MDFError):
         # ignore parameters that aren't components
         pnl_type = None
 
