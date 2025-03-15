@@ -13138,8 +13138,11 @@ _
         """Creates a ModECI MDF Model representing this Composition
 
         Args:
-            simple_edge_format (bool, optional): If True, Projections
-            with non-identity matrices are constructed as . Defaults to True.
+            simple_edge_format (bool, optional): If True, any
+            `Projection` with a non-identity matrix is constructed as an
+            `mdf.Node` with two identity `mdf.Edge`s. This is compatible
+            with standard MDF execution, but represents the PsyNeuLink
+            model less accurately. Defaults to True.
 
         Returns:
             modeci_mdf.Model: a ModECI Model representing this Composition
