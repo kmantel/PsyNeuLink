@@ -4950,7 +4950,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
             # # Finally, check for any deferred_init Projections
             invalid_aux_components.extend([p for p in node.projections
-                                           if p._initialization_status & ContextFlags.DEFERRED_INIT])
+                                           if p.initialization_status & ContextFlags.DEFERRED_INIT])
 
         return invalid_aux_components
 
@@ -6301,7 +6301,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         #   then re-specify it so that the proper routing can be instantiated between those Compositions
         # Note: restrict to PathwayProjections, since routing of ModulatoryProjections is handled separately.
         elif (isinstance(projection, PathwayProjection_Base)
-              and projection._initialization_status is ContextFlags.INITIALIZED):
+              and projection.initialization_status is ContextFlags.INITIALIZED):
             sender_node = projection.sender.owner
             receiver_node = projection.receiver.owner
             # If sender or receiver is in a nested Node
@@ -6826,7 +6826,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             and proj.sender.owner.learning_timing is LearningTiming.EXECUTION_PHASE
                             and proj.receiver.owner in self.projections):
                         continue
-                    proj_deferred = proj._initialization_status & ContextFlags.DEFERRED_INIT
+                    proj_deferred = proj.initialization_status & ContextFlags.DEFERRED_INIT
                     proj_name = proj._name if proj_deferred else proj.name
                     if proj in node.afferents:
                         first_item = '' if proj_deferred else f" (to '{node.name}'"
@@ -7580,7 +7580,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 possible_default_proj_spec = [proj_spec for proj_spec in all_proj_specs
                                               if (is_matrix(proj_spec)
                                                   or (isinstance(proj_spec, Projection)
-                                                      and proj_spec._initialization_status & ContextFlags.DEFERRED_INIT
+                                                      and proj_spec.initialization_status & ContextFlags.DEFERRED_INIT
                                                       and proj_spec._init_args[SENDER] is None
                                                       and proj_spec._init_args[RECEIVER] is None))]
                 # Validate that there is no more than one default Projection specification
@@ -7683,7 +7683,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                 # FIX 4/9/22 - TEST FOR DEFERRED INIT HERE (THAT IS NOT A default_proj_spec)
                                 #              IF JUST SENDER OR RECEIVER, TREAT AS PER PORTS BELOW
                                 # Validate that Projection is between a Node in senders and one in receivers
-                                if proj._initialization_status & ContextFlags.DEFERRED_INIT:
+                                if proj.initialization_status & ContextFlags.DEFERRED_INIT:
                                     sender_node = senders[0]
                                     receiver_node = receivers[0]
                                 else:
