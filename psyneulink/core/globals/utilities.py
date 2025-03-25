@@ -2067,7 +2067,7 @@ def contains_type(
     except AttributeError:
         pass
     else:
-        if dtype.kind in 'biufc':  # numeric or boolean type
+        if dtype.kind not in 'OV':  # not object or void dtype
             return dtype == typ
 
     try:
