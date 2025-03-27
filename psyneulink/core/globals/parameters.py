@@ -363,6 +363,8 @@ class ParameterNoValueError(ParameterError):
 
 class ParameterInvalidSourceError(ParameterError):
     def __init__(self, param=None, detail=None):
+        from psyneulink.core.components.component import ComponentsMeta
+
         if detail is None:
             try:
                 owner = param._owner._owner
@@ -377,8 +379,12 @@ class ParameterInvalidSourceError(ParameterError):
             else:
                 if attr_val is None:
                     detail = f"'{attr_name}' is None"
+                elif not hasattr(attr_val, param.shared_parameter_name):
+                    detail = f"'{attr_name}' {attr_val} has no attribute '{param.shared_parameter_name}'"
+                elif isinstance(attr_val, ComponentsMeta):
+                    detail = f"'{attr_name}' {attr_val} is not yet instantiated"
                 else:
-                    detail = f"'{attr_name}' has no attribute '{param.shared_parameter_name}'"
+                    detail = f"'{attr_name}' {attr_val} unspecified error"
         message = "Invalid source for {0} '{1}'{2}: {3}".format(
             type(param).__name__,
             param.name,
@@ -2210,19 +2216,26 @@ class SharedParameter(Parameter):
 
     @property
     def source(self):
+        from psyneulink.core.components.component import Component, ComponentsMeta
+
         try:
-            obj = getattr(self._owner._owner.parameters, self.attribute_name)
+            owning_component = self._owner._owner
+        except AttributeError:
+            return None
+
+        try:
+            obj = getattr(owning_component.parameters, self.attribute_name)
             if obj.stateful:
                 raise ParameterError(
                     f'Parameter {type(obj._owner._owner).__name__}.{self.attribute_name}'
                     f' is the target object of {type(self).__name__}'
-                    f' {type(self._owner._owner).__name__}.{self.name} and'
+                    f' {type(owning_component).__name__}.{self.name} and'
                     f' cannot be stateful.'
                 )
             obj = obj.values[None]
         except AttributeError:
             try:
-                obj = getattr(self._owner._owner, self.attribute_name)
+                obj = getattr(owning_component, self.attribute_name)
             except AttributeError:
                 return None
         except KeyError:
@@ -2232,7 +2245,16 @@ class SharedParameter(Parameter):
             # stateful or loggable) and when either self._owner._owner
             # is a type or is in the process of instantiating a
             # Parameter for an instance of a Component
-            obj = getattr(self._owner._owner.defaults, self.attribute_name)
+            # obj = getattr(self._owner._owner.defaults, self.attribute_name)
+            return None
+
+        if (
+            isinstance(owning_component, Component)
+            and isinstance(obj, ComponentsMeta)
+        ):
+            # don't mix Parameters on instantiated objects with
+            # those on classes
+            return None
 
         try:
             obj = getattr(obj.parameters, self.shared_parameter_name)
