@@ -351,20 +351,19 @@ class ParameterError(Exception):
 
 
 class ParameterNoValueError(ParameterError):
-    def __init__(self, param=None, execution_id=None, message=None):
-        if message is None:
-            message = "{0} '{1}'{2} has no value for execution_id {3}".format(
-                type(param).__name__,
-                param.name,
-                param._owner_string,
-                execution_id if not isinstance(execution_id, str) else f"'{execution_id}'"
-            )
+    def __init__(self, param=None, execution_id=None):
+        message = "{0} '{1}'{2} has no value for execution_id {3}".format(
+            type(param).__name__,
+            param.name,
+            param._owner_string,
+            execution_id if not isinstance(execution_id, str) else f"'{execution_id}'"
+        )
         super().__init__(message)
 
 
 class ParameterInvalidSourceError(ParameterError):
-    def __init__(self, param=None, message=None):
-        if message is None:
+    def __init__(self, param=None, detail=None):
+        if detail is None:
             try:
                 owner = param._owner._owner
             except AttributeError as e:
@@ -380,12 +379,12 @@ class ParameterInvalidSourceError(ParameterError):
                     detail = f"'{attr_name}' is None"
                 else:
                     detail = f"'{attr_name}' has no attribute '{param.shared_parameter_name}'"
-            message = "Invalid source for {0} '{1}'{2}: {3}".format(
-                type(param).__name__,
-                param.name,
-                param._owner_string,
-                detail
-            )
+        message = "Invalid source for {0} '{1}'{2}: {3}".format(
+            type(param).__name__,
+            param.name,
+            param._owner_string,
+            detail
+        )
         super().__init__(message)
 
 
@@ -2067,9 +2066,22 @@ def _SharedParameter_default_getter(self, context=None):
         raise
 
 
+# TODO: rewrite as a "validation" method before any setter is called.
+# the validation should always occur even if a sharedparameter setter is
+# overridden (?)
 def _SharedParameter_default_setter(self, value, owning_component=None, context=None):
+    from psyneulink.core.components.component import Component, ComponentsMeta
+
     if self.source is None:
         raise ParameterInvalidSourceError(self)
+
+    if (
+        self.source is not None
+        and isinstance(self._owner._owner, Component)
+        and isinstance(self.source._owner._owner, ComponentsMeta)
+    ):
+        assert False, f'Instance to class {self._owner._owner} -> {self.source._owner._owner}'
+        raise ParameterInvalidSourceError(self, detail=f'Instance to class {self._owner._owner} -> {self.source._owner._owner}')
 
     return self.source._set(value, context)
 
