@@ -1453,8 +1453,13 @@ class Parameter(ParameterBase):
             try:
                 return self.values[execution_id]
             except KeyError as e:
-                logger.error('Parameter \'{0}\' has no value for execution_id {1}'.format(self.name, execution_id))
                 if self.fallback_default:
+                    default = self.default_value
+                    logger.error(
+                        'Parameter \'{0}\' has no value for execution_id {1}. Using default {2}'.format(
+                            self.name, execution_id, default
+                        )
+                    )
                     return self.default_value
                 else:
                     # return None

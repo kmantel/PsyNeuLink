@@ -1416,9 +1416,12 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         def _is_compilation_state(p):
             # FIXME: This should use defaults instead of 'p.get'
-            return p.name not in blacklist and \
-                   (p.name in whitelist or isinstance(p.get(), Component)) and \
-                   self._is_compilable_param(p)
+            return (
+                p.name not in blacklist
+                # check before p.get to avoid possible SharedParameter exceptions
+                and self._is_compilable_param(p)
+                and (p.name in whitelist or isinstance(p.get(), Component))
+            )
 
         return filter(_is_compilation_state, self.parameters)
 
