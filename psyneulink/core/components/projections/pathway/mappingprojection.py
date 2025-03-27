@@ -317,6 +317,19 @@ class MappingError(ProjectionError):
     pass
 
 
+def _mapping_projection_matrix_getter(owning_component=None, context=None):
+    return owning_component.function.parameters.matrix.get(context)
+
+
+def _mapping_projection_matrix_setter(value, owning_component=None, context=None):
+    owning_component.function.parameters.matrix.set(value, context)
+    # KDM 11/13/18: not sure that below is correct to do here, probably is better to do this in a "reset" type
+    # method but this is needed for Kalanthroff model to work correctly (though untested, it is in Scripts/Models)
+    owning_component.parameter_ports["matrix"].function.parameters.previous_value.set(value, context)
+
+    return value
+
+
 class MappingProjection(PathwayProjection_Base):
     """
     MappingProjection(         \
@@ -415,6 +428,7 @@ class MappingProjection(PathwayProjection_Base):
         function = Parameter(MatrixTransform, stateful=False, loggable=False)
         matrix = FunctionParameter(
             DEFAULT_MATRIX,
+            setter=_mapping_projection_matrix_setter
         )
 
     classPreferenceLevel = PreferenceLevel.TYPE
