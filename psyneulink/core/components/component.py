@@ -537,8 +537,18 @@ from psyneulink.core.globals.keywords import \
     MODULATORY_SPEC_KEYWORDS, NAME, OUTPUT_PORTS, OWNER, PARAMS, PREFS_ARG, \
     RANDOM, RESET_STATEFUL_FUNCTION_WHEN, INPUT_SHAPES, VALUE, VARIABLE, SHARED_COMPONENT_TYPES
 from psyneulink.core.globals.log import LogCondition
-from psyneulink.core.globals.parameters import \
-    Defaults, SharedParameter, Parameter, ParameterAlias, ParameterError, ParametersBase, check_user_specified, copy_parameter_value, is_array_like
+from psyneulink.core.globals.parameters import (
+    Defaults,
+    Parameter,
+    ParameterAlias,
+    ParameterError,
+    ParameterInvalidSourceError,
+    ParametersBase,
+    SharedParameter,
+    check_user_specified,
+    copy_parameter_value,
+    is_array_like,
+)
 from psyneulink.core.globals.preferences.basepreferenceset import BasePreferenceSet, VERBOSE_PREF
 from psyneulink.core.globals.preferences.preferenceset import \
     PreferenceLevel, PreferenceSet, _assign_prefs
@@ -2370,8 +2380,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
             # set default to None context to ensure it exists
             if (
-                p._get(context) is None and p.getter is None
-                or context.execution_id not in p.values
+                context.execution_id not in p.values
+                or (p._get(context) is None and p.getter is None)
             ):
                 if p._user_specified:
                     val = param_defaults[p.name]
@@ -3336,7 +3346,13 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         self._instantiate_value(context)
 
         for p in self.parameters._in_dependency_order:
-            val = p._get(context)
+            try:
+                val = p._get(context)
+            except ParameterError as e:
+                if not str(e).startswith('Invalid source for'):
+                    raise
+                continue
+
             if (
                 not p.reference
                 and isinstance(val, Function)
@@ -4394,7 +4410,11 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # store all Components in Parameters to be used in
         # _dependent_components for _initialize_from_context
         for p in self.parameters:
-            param_value = p._get(context)
+            try:
+                param_value = p._get(context)
+            except ParameterInvalidSourceError:
+                continue
+
             try:
                 param_value = param_value.__self__
             except AttributeError:

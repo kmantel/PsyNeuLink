@@ -350,6 +350,45 @@ class ParameterError(Exception):
     pass
 
 
+class ParameterNoValueError(ParameterError):
+    def __init__(self, param=None, execution_id=None, message=None):
+        if message is None:
+            message = "{0} '{1}'{2} has no value for execution_id {3}".format(
+                type(param).__name__,
+                param.name,
+                param._owner_string,
+                execution_id if not isinstance(execution_id, str) else f"'{execution_id}'"
+            )
+        super().__init__(message)
+
+
+class ParameterInvalidSourceError(ParameterError):
+    def __init__(self, param=None, message=None):
+        if message is None:
+            try:
+                owner = param._owner._owner
+            except AttributeError as e:
+                raise AssertionError() from e
+
+            attr_name = param.attribute_name
+            try:
+                attr_val = getattr(owner, attr_name)
+            except AttributeError:
+                detail = f"has no attribute '{attr_name}'"
+            else:
+                if attr_val is None:
+                    detail = f"'{attr_name}' is None"
+                else:
+                    detail = f"'{attr_name}' has no attribute '{param.shared_parameter_name}'"
+            message = "Invalid source for {0} '{1}'{2}: {3}".format(
+                type(param).__name__,
+                param.name,
+                param._owner_string,
+                detail
+            )
+        super().__init__(message)
+
+
 def _get_prefixed_method(obj, prefix, name, sep=''):
     try:
         return getattr(obj, f'{prefix}{sep}{name}')
@@ -517,6 +556,32 @@ def is_array_like(obj: typing.Any) -> bool:
     return hasattr(obj, 'dtype')
 
 
+def _owner_string(param_obj):
+    # Parameter or ParametersTemplate
+    try:
+        param_owner = param_obj._owner
+    except AttributeError:
+        return ''
+
+    # Parameter only (bypass its ParametersTemplate _owner)
+    try:
+        param_owner = param_owner._owner
+    except AttributeError:
+        pass
+
+    if isinstance(param_owner, type):
+        owner_string = f' of {param_owner}'
+    else:
+        owner_string = f' of {param_owner.name}'
+
+        if hasattr(param_owner, 'owner') and param_owner.owner:
+            owner_string += f' for {param_owner.owner.name}'
+            if hasattr(param_owner.owner, 'owner') and param_owner.owner.owner:
+                owner_string += f' of {param_owner.owner.owner.name}'
+
+    return owner_string
+
+
 # used in Parameter._set_value. Parameter names where a change in
 # shape/type should cause deletion of corresponding compiled structs
 # even if the values are not synced
@@ -652,6 +717,10 @@ class ParametersTemplate:
         except TypeError:
             self._owner_ref = value
 
+    @property
+    def _owner_string(self):
+        return _owner_string(self)
+
     def _dependency_order_key(self, names=False):
         """
         Args:
@@ -757,6 +826,10 @@ class ParameterBase(types.SimpleNamespace):
 
     def __hash__(self):
         return object.__hash__(self)
+
+    @property
+    def _owner_string(self):
+        return _owner_string(self)
 
 
 class Parameter(ParameterBase):
@@ -1374,12 +1447,13 @@ class Parameter(ParameterBase):
         else:
             try:
                 return self.values[execution_id]
-            except KeyError:
-                logger.info('Parameter \'{0}\' has no value for execution_id {1}'.format(self.name, execution_id))
+            except KeyError as e:
+                logger.error('Parameter \'{0}\' has no value for execution_id {1}'.format(self.name, execution_id))
                 if self.fallback_default:
                     return self.default_value
                 else:
-                    return None
+                    # return None
+                    raise ParameterNoValueError(self, execution_id) from e
 
     @handle_external_context()
     def get_previous(
@@ -1559,7 +1633,7 @@ class Parameter(ParameterBase):
                 **kwargs,
                 'compilation_sync':compilation_sync,
             }
-            value = call_with_pruned_args(self.setter, value, context=context, **kwargs)
+            value = call_with_pruned_args(self.setter, value=value, context=context, **kwargs)
 
         self._set_value(
             value,
@@ -1662,6 +1736,9 @@ class Parameter(ParameterBase):
             pass
 
         self.clear_log(context.execution_id)
+
+    def _has_value(self, context: Context):
+        return context.execution_id in self.values
 
     def _log_value(self, value, context=None):
         # manual logging
@@ -1962,6 +2039,41 @@ class ParameterAlias(ParameterBase, metaclass=_ParameterAliasMeta):
             self._source = value
 
 
+def _unset_source_error(shared_param_obj):
+    attr = getattr(shared_param_obj._owner._owner, shared_param_obj.attribute_name, None)
+    if attr is None:
+        detail = shared_param_obj.attribute_name
+    else:
+        source_str = f'{shared_param_obj.attribute_name}.{shared_param_obj.shared_parameter_name}'
+
+    return ParameterError(
+        'Invalid source for {0} {1}{2}: {3} is None'.format(
+            type(shared_param_obj).__name__,
+            shared_param_obj.name,
+            shared_param_obj._owner_string,
+            source_str
+
+        )
+    )
+
+
+def _SharedParameter_default_getter(self, context=None):
+    if self.source is None:
+        raise ParameterInvalidSourceError(self)
+
+    try:
+        return self.source._get(context)
+    except (TypeError, IndexError):
+        raise
+
+
+def _SharedParameter_default_setter(self, value, owning_component=None, context=None):
+    if self.source is None:
+        raise ParameterInvalidSourceError(self)
+
+    return self.source._set(value, context)
+
+
 class SharedParameter(Parameter):
     """
         A Parameter that is not a "true" Parameter of a Component but a
@@ -2024,8 +2136,8 @@ class SharedParameter(Parameter):
         attribute_name=None,
         shared_parameter_name=None,
         primary=False,
-        getter=None,
-        setter=None,
+        getter=_SharedParameter_default_getter,
+        setter=_SharedParameter_default_setter,
         **kwargs
     ):
 
@@ -2039,24 +2151,6 @@ class SharedParameter(Parameter):
             _source_exists=False,
             **kwargs
         )
-
-        if getter is None:
-            def getter(self, context=None):
-                try:
-                    return self.source._get(context)
-                except (AttributeError, TypeError, IndexError):
-                    return None
-
-            self.getter = getter
-
-        if setter is None:
-            def setter(value, self, context=None):
-                try:
-                    return self.source._set(value, context)
-                except AttributeError:
-                    return None
-
-            self.setter = setter
 
     def __getattr__(self, attr):
         try:
@@ -2288,22 +2382,8 @@ class ParametersBase(ParametersTemplate):
         self._initializing = False
 
     def _throw_attr_error(self, attr):
-        try:
-            param_owner = self._owner
-            if isinstance(param_owner, type):
-                owner_string = f' of {param_owner}'
-            else:
-                owner_string = f' of {param_owner.name}'
-
-            if hasattr(param_owner, 'owner') and param_owner.owner:
-                owner_string += f' for {param_owner.owner.name}'
-                if hasattr(param_owner.owner, 'owner') and param_owner.owner.owner:
-                    owner_string += f' of {param_owner.owner.owner.name}'
-        except AttributeError:
-            owner_string = ''
-
         raise AttributeError(
-            f"No attribute '{attr}' exists in the parameter hierarchy{owner_string}."
+            f"No attribute '{attr}' exists in the parameter hierarchy{self._owner_string}."
         ) from None
 
     def __getattr__(self, attr):
