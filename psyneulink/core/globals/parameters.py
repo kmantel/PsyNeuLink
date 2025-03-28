@@ -1643,7 +1643,7 @@ class Parameter(ParameterBase):
                 **kwargs,
                 'compilation_sync':compilation_sync,
             }
-            value = call_with_pruned_args(self.setter, value=value, context=context, **kwargs)
+            value = call_with_pruned_args(self.setter, value, context=context, **kwargs)
 
         self._set_value(
             value,
@@ -2080,7 +2080,7 @@ def _SharedParameter_default_getter(self, context=None):
 # TODO: rewrite as a "validation" method before any setter is called.
 # the validation should always occur even if a sharedparameter setter is
 # overridden (?)
-def _SharedParameter_default_setter(self, value, owning_component=None, context=None):
+def _SharedParameter_default_setter(value, self, owning_component=None, context=None):
     from psyneulink.core.components.component import Component, ComponentsMeta
 
     if self.source is None:

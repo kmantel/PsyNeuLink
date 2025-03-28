@@ -1016,7 +1016,10 @@ def _memory_getter(owning_component=None, context=None)->list:
 
 def field_weights_setter(field_weights, owning_component=None, context=None):
     # FIX: ALLOW DICTIONARY WITH FIELD NAME AND WEIGHT
-    if owning_component.field_weights is None:
+    if (
+        not owning_component.parameters.field_weights._has_value(context)
+        or owning_component.parameters.field_weights._get(context) is None
+    ):
         return field_weights
     elif len(field_weights) != len(owning_component.field_weights):
         raise EMCompositionError(f"The number of field_weights ({len(field_weights)}) must match the number of fields "
@@ -1692,12 +1695,15 @@ class EMComposition(AutodiffComposition):
         # Construct memory --------------------------------------------------------------------------------
 
         memory_fill = memory_fill or 0 # FIX: GET RID OF THIS ONCE IMPLEMENTED AS A Parameter
-        self._validate_memory_specs(memory_template,
-                                    memory_capacity,
-                                    memory_fill,
-                                    field_weights,
-                                    field_names,
-                                    name)
+        self._validate_memory_specs(
+            memory_template,
+            memory_capacity,
+            memory_fill,
+            field_weights,
+            field_names,
+            name,
+            learn_field_weights,
+        )
 
         memory_template, memory_capacity = self._parse_memory_template(memory_template,
                                                                        memory_capacity,
@@ -1843,7 +1849,7 @@ class EMComposition(AutodiffComposition):
     # ***********************************  Memory Construction Methods  ***********************************************
     # *****************************************************************************************************************
     #region
-    def _validate_memory_specs(self, memory_template, memory_capacity, memory_fill, field_weights, field_names, name):
+    def _validate_memory_specs(self, memory_template, memory_capacity, memory_fill, field_weights, field_names, name, learn_field_weights):
         """Validate the memory_template, field_weights, and field_names arguments
         """
 
@@ -1879,8 +1885,8 @@ class EMComposition(AutodiffComposition):
                                      f"must be a float, int or len tuple of ints and/or floats.")
 
         # If learn_field_weights is a list of bools, it must match the len of 1st dimension (axis 0) of memory_template:
-        if isinstance(self.learn_field_weights, list) and len(self.learn_field_weights) != num_fields:
-            raise EMCompositionError(f"The number of items ({len(self.learn_field_weights)}) in the "
+        if isinstance(learn_field_weights, list) and len(learn_field_weights) != num_fields:
+            raise EMCompositionError(f"The number of items ({len(learn_field_weights)}) in the "
                                      f"'learn_field_weights' arg for {name} must match the number of "
                                      f"fields in memory ({num_fields}).")
 
