@@ -1617,6 +1617,11 @@ class Mechanism_Base(Mechanism):
             structural=True,
         )
 
+        def _parse_variable(self, variable):
+            if variable is None:
+                return None
+            return convert_to_np_array(variable, dimension=2)
+
         def _parse_input_ports(self, input_ports):
             if input_ports is None:
                 return input_ports
