@@ -2390,7 +2390,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
             # set default to None context to ensure it exists
             if (
-                context.execution_id not in p.values
+                not p._has_value(context)
                 or (p._get(context) is None and p.getter is None)
             ):
                 if p._user_specified:
