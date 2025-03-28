@@ -1455,7 +1455,7 @@ class Parameter(ParameterBase):
             except KeyError as e:
                 if self.fallback_default:
                     default = self.default_value
-                    logger.error(
+                    logger.info(
                         'Parameter \'{0}\' has no value for execution_id {1}. Using default {2}'.format(
                             self.name, execution_id, default
                         )

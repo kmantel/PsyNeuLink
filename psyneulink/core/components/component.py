@@ -1048,7 +1048,14 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                                     pnl_internal=True)
         is_finished_flag = Parameter(True, loggable=False, stateful=True)
         execute_until_finished = Parameter(True, pnl_internal=True)
-        num_executions = Parameter(Time(), read_only=True, modulable=False, loggable=False, pnl_internal=True)
+        num_executions = Parameter(
+            Time(),
+            read_only=True,
+            modulable=False,
+            loggable=False,
+            fallback_default=True,
+            pnl_internal=True
+        )
         num_executions_before_finished = Parameter(0, read_only=True, modulable=False, pnl_internal=True)
         max_executions_before_finished = Parameter(1000, modulable=False, pnl_internal=True)
 
