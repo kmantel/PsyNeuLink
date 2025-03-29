@@ -1265,7 +1265,7 @@ class InputPort(Port_Base):
 
                         # Try to get matrix for projection
                         try:
-                            sender_dim = np.array(projection_spec.port.value).ndim
+                            sender_dim = np.array(projection_spec.port.defaults.value).ndim
                         except AttributeError as e:
                             if (isinstance(projection_spec.port, type) or
                                      projection_spec.port.initialization_status == ContextFlags.DEFERRED_INIT):

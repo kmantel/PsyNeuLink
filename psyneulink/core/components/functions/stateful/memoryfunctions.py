@@ -402,7 +402,7 @@ def _distance_field_weights_setter(value, owning_component=None, context=None):
         variable = owning_component.variable
     distance_function = owning_component.parameters.distance_function._get(context)
     current_field_weights = (owning_component.parameters.distance_field_weights._get(context)
-                             if owning_component.parameters.distance_field_weights._get(context) is not None
+                             if owning_component.parameters.distance_field_weights._get(context, fallback_value=None) is not None
                              else owning_component.defaults.distance_field_weights)
 
     # If assignment is same as current distance_field_weights, skip

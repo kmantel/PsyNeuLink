@@ -3909,7 +3909,7 @@ class Mechanism_Base(Mechanism):
                                               category=category,
                                               component=port)
 
-        self.defaults.variable = self.input_values
+        self._update_default_variable(self._handle_default_variable(input_ports=self.input_ports))
 
     def _delete_mechanism(mechanism):
         mechanism.remove_ports(mechanism.input_ports)
