@@ -1425,6 +1425,12 @@ class Parameter(ParameterBase):
 
                 context : Context, execution_id, Composition
                     the context for which the value is stored; if a Composition, uses **context**.default_execution_id
+
+                fallback_value:
+                    If used, this value will not be set to the
+                    Parameter. `Parameter.set` must be called explicitly
+                    to do so.
+
                 kwargs
                     any additional arguments to be passed to this `Parameter`'s `getter` if it exists
         """
