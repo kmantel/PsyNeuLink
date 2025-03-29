@@ -43,10 +43,26 @@ from psyneulink.core.components.functions.nonstateful.selectionfunctions import 
 from psyneulink.core.components.functions.nonstateful.transferfunctions import SoftMax
 from psyneulink.core.components.functions.stateful.integratorfunctions import StatefulFunction
 from psyneulink.core.globals.context import handle_external_context
-from psyneulink.core.globals.keywords import \
-    ADDITIVE_PARAM, BUFFER_FUNCTION, MEMORY_FUNCTION, COSINE, \
-    ContentAddressableMemory_FUNCTION, DictionaryMemory_FUNCTION, \
-    MIN_INDICATOR, MIN_VAL, MULTIPLICATIVE_PARAM, NEWEST, NOISE, OLDEST, OVERWRITE, RATE, RANDOM, SINGLE, WEIGHTED
+from psyneulink.core.globals.keywords import (
+    ADDITIVE_PARAM,
+    BUFFER_FUNCTION,
+    MEMORY_FUNCTION,
+    COSINE,
+    ContentAddressableMemory_FUNCTION,
+    DictionaryMemory_FUNCTION,
+    MIN_INDICATOR,
+    MIN_VAL,
+    MULTIPLICATIVE_PARAM,
+    NEWEST,
+    NOISE,
+    OLDEST,
+    OVERWRITE,
+    RATE,
+    RANDOM,
+    SINGLE,
+    WEIGHTED,
+    DEFAULT,
+)
 from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.utilities import \
@@ -1188,7 +1204,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         )
         max_entries = Parameter(1000)
         random_state = Parameter(None, loggable=False, getter=_random_state_getter, dependencies='seed')
-        seed = Parameter(DEFAULT_SEED(), modulable=True, fallback_default=True, setter=_seed_setter)
+        seed = Parameter(DEFAULT_SEED(), modulable=True, fallback_value=DEFAULT, setter=_seed_setter)
         distance_function = Parameter(Distance(metric=COSINE), stateful=False, loggable=False)
         selection_function = Parameter(OneHot(mode=MIN_INDICATOR), stateful=False, loggable=False, dependencies='distance_function')
         distance = Parameter(0, stateful=True, read_only=True)
@@ -2249,7 +2265,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
         )
         max_entries = Parameter(1000)
         random_state = Parameter(None, loggable=False, getter=_random_state_getter, dependencies='seed')
-        seed = Parameter(DEFAULT_SEED(), modulable=True, fallback_default=True, setter=_seed_setter)
+        seed = Parameter(DEFAULT_SEED(), modulable=True, fallback_value=DEFAULT, setter=_seed_setter)
 
         distance_function = Parameter(Distance(metric=COSINE), stateful=False, loggable=False)
         selection_function = Parameter(OneHot(mode=MIN_INDICATOR), stateful=False, loggable=False)

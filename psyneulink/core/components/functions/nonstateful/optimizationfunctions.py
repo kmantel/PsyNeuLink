@@ -49,9 +49,10 @@ from psyneulink.core.components.functions.function import (
 )
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
 from psyneulink.core.globals.defaults import MPI_IMPLEMENTATION
-from psyneulink.core.globals.keywords import \
-    BOUNDS, GRADIENT_OPTIMIZATION_FUNCTION, GRID_SEARCH_FUNCTION, GAUSSIAN_PROCESS_FUNCTION, \
-    OPTIMIZATION_FUNCTION_TYPE, OWNER, VALUE
+from psyneulink.core.globals.keywords import (
+    BOUNDS, GRADIENT_OPTIMIZATION_FUNCTION, GRID_SEARCH_FUNCTION, GAUSSIAN_PROCESS_FUNCTION,
+    OPTIMIZATION_FUNCTION_TYPE, OWNER, VALUE, DEFAULT,
+)
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.sampleiterator import SampleIterator
 from psyneulink.core.globals.utilities import call_with_pruned_args, convert_to_np_array
@@ -1607,7 +1608,7 @@ class GridSearch(OptimizationFunction):
         save_samples = Parameter(False, pnl_internal=True)
         save_values = Parameter(False, pnl_internal=True)
         random_state = Parameter(None, loggable=False, getter=_random_state_getter, dependencies='seed')
-        seed = Parameter(DEFAULT_SEED(), modulable=True, fallback_default=True, setter=_seed_setter)
+        seed = Parameter(DEFAULT_SEED(), modulable=True, fallback_value=DEFAULT, setter=_seed_setter)
         select_randomly_from_optimal_values = Parameter(False)
 
         direction = MAXIMIZE
