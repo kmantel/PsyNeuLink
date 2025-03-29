@@ -3090,7 +3090,13 @@ from psyneulink.core.globals.keywords import \
      SAMPLE, SENDER, SHADOW_INPUTS, SOFT_CLAMP, SUM, SYNCH_WITH_PNL_OPTIONS,
      TARGET, TARGET_MECHANISM, TEXT, VARIABLE, WEIGHT, OWNER_MECH)
 from psyneulink.core.globals.log import CompositionLog, LogCondition
-from psyneulink.core.globals.parameters import Parameter, ParametersBase, check_user_specified, copy_parameter_value
+from psyneulink.core.globals.parameters import (
+    Parameter,
+    ParameterNoValueError,
+    ParametersBase,
+    check_user_specified,
+    copy_parameter_value,
+)
 from psyneulink.core.globals.preferences.basepreferenceset import BasePreferenceSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel, _assign_prefs
 from psyneulink.core.globals.registry import register_category
@@ -13319,8 +13325,9 @@ _
         if from_parameter is None:
             self._compilation_data.execution.delete(context)
         else:
-            execution_dict = self._compilation_data.execution.get(context)
-            if execution_dict is None:
+            try:
+                execution_dict = self._compilation_data.execution._get(context)
+            except ParameterNoValueError:
                 return
 
             param_owner = from_parameter._owner._owner
