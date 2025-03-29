@@ -13325,9 +13325,8 @@ _
         if from_parameter is None:
             self._compilation_data.execution.delete(context)
         else:
-            try:
-                execution_dict = self._compilation_data.execution._get(context)
-            except ParameterNoValueError:
+            execution_dict = self._compilation_data.execution._get(context, fallback_value=None)
+            if execution_dict is None:
                 return
 
             param_owner = from_parameter._owner._owner
