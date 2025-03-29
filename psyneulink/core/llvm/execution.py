@@ -22,7 +22,6 @@ import weakref
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.globals.context import Context
-from psyneulink.core.globals.parameters import ParameterNoValueError
 
 from . import builder_context, jit_engine, scheduler
 from .debug import debug_env
@@ -313,9 +312,8 @@ class CompExecution(CUDAExecution):
 
     @staticmethod
     def get(composition, context:Context, additional_tags=frozenset()):
-        try:
-            executions = composition._compilation_data.execution._get(context)
-        except ParameterNoValueError:
+        executions = composition._compilation_data.execution._get(context, fallback_value=None)
+        if executions is None:
             executions = dict()
             composition._compilation_data.execution._set(executions, context)
 
