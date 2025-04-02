@@ -396,7 +396,6 @@ Class Reference
 """
 import abc
 import inspect
-import itertools
 import warnings
 from collections import namedtuple, defaultdict
 
