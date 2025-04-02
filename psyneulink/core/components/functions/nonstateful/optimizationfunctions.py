@@ -451,7 +451,7 @@ class OptimizationFunction(Function_Base):
         if search_termination_function is None:
             self._unspecified_args.append(SEARCH_TERMINATION_FUNCTION)
 
-        if search_space:
+        if search_space and randomization_dimension is not None:
             # Make randomization dimension of search_space last for standardization of treatment
             search_space.append(search_space.pop(search_space.index(randomization_dimension)))
             randomization_dimension = len(search_space)
