@@ -1152,6 +1152,8 @@ class Projection_Base(Projection):
             res.extend(self.parameter_ports)
         except AttributeError:
             pass
+        if self.sender is not None:
+            res.append(self.sender)
         return res
 
     @property

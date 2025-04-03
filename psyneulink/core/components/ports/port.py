@@ -2436,10 +2436,6 @@ class Port_Base(Port):
             res.extend(self.all_afferents)
         except AttributeError:
             pass
-        # try:
-        #     res.extend(self.all_afferents)
-        # except AttributeError:
-        #     pass
         return res
 
 

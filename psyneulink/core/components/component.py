@@ -4458,9 +4458,11 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 self._parameter_components.add(param_value)
 
     @property
-    def _dependent_components(self):
+    def _dependent_components(self) -> Iterable['Component']:
         """
-            Returns a set of Components that will be executed if this Component is executed
+            Returns:
+                Components that must have values in a given Context for
+                this Component to execute in that Context
         """
         return list(self._parameter_components)
 
