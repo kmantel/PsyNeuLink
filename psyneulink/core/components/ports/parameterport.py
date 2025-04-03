@@ -1071,7 +1071,7 @@ def _instantiate_parameter_ports(owner, function=None, context=None):
         res = obj
         for p in param_list[0:index + 1]:
             param = getattr(res.parameters, p)
-            func = param._get(context)
+            func = param._get(context, fallback_value=None)
 
             if func is None:
                 func = param.default_value
