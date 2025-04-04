@@ -11707,18 +11707,24 @@ _
         self._check_nested_target_mechs()
         context.execution_phase = execution_phase_at_entry
 
+        if minibatch_size is None:
+            minibatch_size = self.parameters.minibatch_size._get(
+                context, fallback_value=DEFAULT
+            )
+
+        if optimizations_per_minibatch is None:
+            optimizations_per_minibatch = self.parameters.optimizations_per_minibatch._get(
+                context, fallback_value=DEFAULT
+            )
+
         result = runner.run_learning(
             inputs=inputs,
             targets=targets,
             num_trials=num_trials,
             epochs=epochs,
             learning_rate=learning_rate,
-            minibatch_size=minibatch_size
-                            or self.parameters.minibatch_size._get(context)
-                            or self.parameters.minibatch_size.default_value,
-            optimizations_per_minibatch=optimizations_per_minibatch
-                                        or self.parameters.optimizations_per_minibatch._get(context)
-                                        or self.parameters.optimizations_per_minibatch.default_value,
+            minibatch_size=minibatch_size,
+            optimizations_per_minibatch=optimizations_per_minibatch,
             patience=patience,
             min_delta=min_delta,
             randomize_minibatches=randomize_minibatches,
