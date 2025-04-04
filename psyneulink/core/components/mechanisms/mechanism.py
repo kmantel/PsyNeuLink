@@ -3824,7 +3824,7 @@ class Mechanism_Base(Mechanism):
         return {INPUT_PORTS: instantiated_input_ports,
                 OUTPUT_PORTS: instantiated_output_ports}
 
-    @handle_external_context(execution_id=REMOVE_PORTS)
+    @handle_external_context()
     @beartype
     def remove_ports(self, ports, context):
         """
@@ -3910,15 +3910,7 @@ class Mechanism_Base(Mechanism):
                                               category=category,
                                               component=port)
 
-        if len(self.input_ports) == 0:
-            # execute generally breaks with no input_ports
-            self.defaults.variable = np.array([[]])
-            self.defaults.value = np.array([[]])
-        else:
-            self._update_default_variable(
-                self._handle_default_variable(input_ports=self.input_ports),
-                context=context
-            )
+        self.defaults.variable = self.input_values
 
     def _delete_mechanism(mechanism):
         mechanism.remove_ports(mechanism.input_ports)
