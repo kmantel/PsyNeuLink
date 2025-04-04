@@ -406,7 +406,7 @@ from beartype import beartype
 from psyneulink._typing import Optional, Union, Type, Literal, Any, Dict, Tuple
 
 from psyneulink.core import llvm as pnlvm
-from psyneulink.core.components.component import ComponentError
+from psyneulink.core.components.component import ComponentError, Component
 from psyneulink.core.components.functions.function import get_matrix, ValidMatrixSpecType
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.core.components.functions.nonstateful.transformfunctions import MatrixTransform
@@ -1152,7 +1152,7 @@ class Projection_Base(Projection):
             res.extend(self.parameter_ports)
         except AttributeError:
             pass
-        if self.sender is not None:
+        if isinstance(self.sender, Component):
             res.append(self.sender)
         return res
 
