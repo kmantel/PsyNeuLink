@@ -226,8 +226,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
                  dtype=None,
                  subclass_components=None,
                  context=None,
-        base_context=Context(execution_id=None),
-    ):
+                 base_context=Context(execution_id=None),
+                 ):
 
         super(PytorchCompositionWrapper, self).__init__()
 
@@ -549,8 +549,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
                              outer_comp_pytorch_rep,
                              access,
                              context,
-        base_context=Context(execution_id=None),
-    ) -> tuple:
+                             base_context=Context(execution_id=None),
+                             ) -> tuple:
         proj_sndr_wrapper = None
         proj_rcvr_wrapper = None
         use = [LEARNING, SYNCH]
