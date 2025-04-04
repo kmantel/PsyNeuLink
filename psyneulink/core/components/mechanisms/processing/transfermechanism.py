@@ -912,7 +912,7 @@ def _clip_setter(value, owning_component=None, context=None):
         comp_function = None
 
     if (value is not None
-            and owning_component.function
+            and comp_function
             and hasattr(comp_function, 'range')
             and comp_function.range is not None
             and isinstance(comp_function.range, tuple)
