@@ -509,8 +509,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
                                                                  self,
                                                                  ENTER_NESTED,
                                                                  context,
-                    base_context,
-                )
+                                                         base_context,
+                                                         )
             )
             if proj_sndr_wrapper is None:
                 proj_sndr_wrapper = self.nodes_map[sndr_mech]
@@ -588,8 +588,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
             except DuplicateProjectionError:
                 direct_proj = [proj for proj in projection.sender.efferents
                                if proj.receiver is destination_rcvr_port][0]
-
-            direct_proj._initialize_from_context(context, base_context)
+            else:
+                direct_proj._initialize_from_context(context, base_context)
 
             if direct_proj not in self.projection_wrappers:
                 proj_wrapper = PytorchProjectionWrapper(projection=direct_proj,
@@ -631,8 +631,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
             except DuplicateProjectionError:
                 direct_proj = [proj for proj in projection.receiver.path_afferents
                                if proj.sender is source_sndr_port][0]
-
-            direct_proj._initialize_from_context(context, base_context)
+            else:
+                direct_proj._initialize_from_context(context, base_context)
 
             if direct_proj not in self.projection_wrappers:
                 proj_wrapper = PytorchProjectionWrapper(projection=direct_proj,
