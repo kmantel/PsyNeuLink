@@ -882,7 +882,7 @@ class TransferError(MechanismError):
 
 def _integrator_mode_setter(value, owning_component=None, context=None, *, compilation_sync=False):
     if value and not compilation_sync:
-        if not owning_component.parameters.integrator_mode._has_value(context):
+        if not owning_component.parameters.integrator_mode._get(context, fallback_value=None):
             # when first creating parameters, integrator_function is not
             # instantiated yet
             if (

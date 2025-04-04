@@ -715,6 +715,7 @@ class EpisodicMemoryMechanism(ProcessingMechanism_Base):
         """Return function's memory attribute"""
         try:
             return self.function.memory
-        except:
+        except Exception as e:
+            raise
             raise EpisodicMemoryMechanismError(f"Function of {self.name} ({self.function.name}) "
                                                f"has no `memory attribute")

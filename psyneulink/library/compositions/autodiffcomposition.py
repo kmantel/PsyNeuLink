@@ -1086,7 +1086,7 @@ class AutodiffComposition(Composition):
         """Builds a Pytorch representation of the AutodiffComposition"""
         if self.scheduler is None:
             self.scheduler = Scheduler(graph=self.graph_processing)
-        if self.parameters.pytorch_representation._get(context=context) is None or refresh:
+        if refresh or self.parameters.pytorch_representation._get(context=context, fallback_value=None) is None:
             model = self.pytorch_composition_wrapper_type(composition=self,
                                                           device=self.device,
                                                           context=context,

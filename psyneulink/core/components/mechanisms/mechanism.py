@@ -4257,7 +4257,7 @@ class Mechanism_Base(Mechanism):
             model.parameters.append(mdf.Parameter(id=name, value=val))
 
         if (
-            self.input_ports is None
+            self.parameters.input_ports.get(fallback_value=None) is None
             and self.initialization_status is ContextFlags.DEFERRED_INIT
         ):
             input_ports = []
