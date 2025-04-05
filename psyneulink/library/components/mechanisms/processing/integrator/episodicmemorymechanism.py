@@ -617,6 +617,13 @@ class EpisodicMemoryMechanism(ProcessingMechanism_Base):
 
         super()._instantiate_input_ports(input_ports=input_ports, context=context)
 
+    def _instantiate_function(self, function, function_params, context):
+        """Assign memory to function if specified in Mechanism's constructor"""
+        memory = self.parameters.memory._get(context)
+        if memory is not None:
+            function.reset(memory)
+        super()._instantiate_function(function, function_params, context)
+
     def _instantiate_output_ports(self, context=None):
         """Generate OutputPorts with names specified and values with shapes equal to corresponding InputPorts
 
