@@ -4256,14 +4256,14 @@ class Mechanism_Base(Mechanism):
         for name, val in self._mdf_model_parameters[self._model_spec_id_parameters].items():
             model.parameters.append(mdf.Parameter(id=name, value=val))
 
+        input_ports = self.parameters.input_ports.get(fallback_value=None)
         if (
-            self.parameters.input_ports.get(fallback_value=None) is None
+            input_ports is None
             and self.initialization_status is ContextFlags.DEFERRED_INIT
         ):
             input_ports = []
             primary_input_port = None
         else:
-            input_ports = self.input_ports
             primary_input_port = self.input_ports[0]
 
         primary_function_input_ids = []
@@ -4319,7 +4319,7 @@ class Mechanism_Base(Mechanism):
                 model.input_ports.append(ip_model)
                 primary_function_input_ids.append(ip_model.id)
 
-        output_ports = self.output_ports
+        output_ports = self.parameters.output_ports.get(fallback_value=None)
         if (
             output_ports is None
             and self.initialization_status is ContextFlags.DEFERRED_INIT
@@ -4340,11 +4340,12 @@ class Mechanism_Base(Mechanism):
         else:
             primary_function_input_id = f"numpy.array([{', '.join(primary_function_input_ids)}])"
 
+        function = self.parameters.function.get(fallback_value=None)
         if (
-            self.function is not None
-            or self.initialization_status is not ContextFlags.DEFERRED_INIT
+            function is not None
+            and self.initialization_status is not ContextFlags.DEFERRED_INIT
         ):
-            self.function._assign_to_mdf_model(model, primary_function_input_id)
+            function._assign_to_mdf_model(model, primary_function_input_id)
 
         return model
 
