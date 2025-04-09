@@ -1441,14 +1441,24 @@ class AutodiffComposition(Composition):
               retain_torch_trained_outputs:Optional[LEARNING_SCALE_LITERALS]=NotImplemented,
               retain_torch_targets:Optional[LEARNING_SCALE_LITERALS]=NotImplemented,
               retain_torch_losses:Optional[LEARNING_SCALE_LITERALS]=NotImplemented,
-              **kwargs)->list:
+              context: Context = None,
+              base_context: Context = Context(execution_id=None),
+              skip_initialization: bool = False,
+              **kwargs
+    )->list:
         """Override to handle synch and retain args
         Note: defaults for synch and retain args are set to NotImplemented, so that the user can specify None if
               they want to locally override the default values for the AutodiffComposition (see docstrings for run()
               and _parse_synch_and_retain_args() for additonal details).
         """
-
-        context = kwargs[CONTEXT]
+        if (
+            not skip_initialization
+            and (
+                context is None
+                or ContextFlags.SIMULATION_MODE not in context.runmode
+            )
+        ):
+            self._initialize_from_context(context, base_context, override=False)
 
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
@@ -1484,6 +1494,7 @@ class AutodiffComposition(Composition):
                                               retain_torch_trained_outputs,
                                               retain_torch_targets,
                                               retain_torch_losses,
+                                              context=context,
                                               **kwargs))
 
         if execution_mode == pnlvm.ExecutionMode.PyTorch and not torch_available:
@@ -1495,6 +1506,9 @@ class AutodiffComposition(Composition):
                              synch_with_pnl_options=synch_with_pnl_options,
                              retain_in_pnl_options=retain_in_pnl_options,
                              execution_mode=execution_mode,
+                             context=context,
+                             base_context=base_context,
+                             skip_initialization=skip_initialization,
                              **kwargs)
 
     def _parse_synch_and_retain_args(self,
@@ -1505,6 +1519,7 @@ class AutodiffComposition(Composition):
                                      retain_torch_trained_outputs:Optional[LEARNING_SCALE_LITERALS],
                                      retain_torch_targets:Optional[LEARNING_SCALE_LITERALS],
                                      retain_torch_losses:Optional[LEARNING_SCALE_LITERALS],
+                                     context: Context = None,
                                      **kwargs
                                      )->tuple:
         # Remove args from kwargs in case called from run() (won't be there if called from learn()
@@ -1556,7 +1571,6 @@ class AutodiffComposition(Composition):
                                                f"use 'MINIBATCH' for the {arg_args} to avoid this warning.")
 
         # Package options for synching and tracking into dictionaries as arguments to learning and exec methods
-        context = kwargs[CONTEXT]
         synch_with_pnl_options = {MATRIX_WEIGHTS: synch_projection_matrices_with_torch
                                                   or self.parameters.synch_projection_matrices_with_torch._get(context),
                                   NODE_VARIABLES: synch_node_variables_with_torch

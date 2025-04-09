@@ -2730,11 +2730,28 @@ class EMComposition(AutodiffComposition):
             self.retrieved_nodes[i].path_afferents[0].parameters.matrix.set(field_memories, context)
 
     @handle_external_context()
-    def learn(self, *args, **kwargs)->list:
+    def learn(
+        self,
+        *args,
+        context: Optional[Context] = None,
+        base_context: Context = Context(execution_id=None),
+        skip_initialization: bool = False,
+        **kwargs
+    ) -> list:
         """Override to check for inappropriate use of ARG_MAX or PROBABILISTIC options for retrieval with learning"""
-        softmax_choice = self.parameters.softmax_choice.get(kwargs[CONTEXT])
+
+        if (
+            not skip_initialization
+            and (
+                context is None
+                or ContextFlags.SIMULATION_MODE not in context.runmode
+            )
+        ):
+            self._initialize_from_context(context, base_context, override=False)
+
+        softmax_choice = self.parameters.softmax_choice.get(context)
         use_gating_for_weighting = self._use_gating_for_weighting
-        enable_learning = self.parameters.enable_learning.get(kwargs[CONTEXT])
+        enable_learning = self.parameters.enable_learning.get(context)
 
         if use_gating_for_weighting and enable_learning:
             raise EMCompositionError(f"Field weights cannot be learned when 'use_gating_for_weighting' is True; "
@@ -2744,7 +2761,13 @@ class EMComposition(AutodiffComposition):
             raise EMCompositionError(f"The ARG_MAX and PROBABILISTIC options for the 'softmax_choice' arg "
                                      f"of '{self.name}' cannot be used during learning; change to WEIGHTED_AVG.")
 
-        return super().learn(*args, **kwargs)
+        return super().learn(
+            *args,
+            context=context,
+            base_context=base_context,
+            skip_initialization=skip_initialization,
+            **kwargs,
+        )
 
     def _get_execution_mode(self, execution_mode):
         """Parse execution_mode argument and return a valid execution mode for the learn() method"""

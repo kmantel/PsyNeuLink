@@ -11344,6 +11344,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                        context=context)
 
                 try:
+                    # storing this for pytorch_representation in
+                    # gen_autodiffcomp_exec instead of changing all
+                    # signatures of _comp_ex.[cuda_]run below to pass
+                    # context through.
+                    # TODO: consider if pytorch_representation can
+                    # simply be stateful=False
+                    self._context_for_pytorch = context
+
                     comp_ex_tags = frozenset({"learning"}) if self._is_learning(context) else frozenset()
                     _comp_ex = pnlvm.CompExecution.get(self, context, additional_tags=comp_ex_tags)
                     if execution_mode.is_cpu_compiled():
@@ -11356,6 +11364,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # Update the parameter for results
                     self.parameters.results._set(convert_to_np_array(results), context)
                     self._propagate_most_recent_context(context)
+                    del self._context_for_pytorch
 
                     report(self,
                            [COMPILED_REPORT, PROGRESS_REPORT],
@@ -11565,6 +11574,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             call_after_minibatch=None,
             context: Optional[Context] = None,
             *args,
+            base_context: Context = Context(execution_id=None),
+            skip_initialization: bool = False,
             **kwargs
     )->list:
         """
@@ -11689,6 +11700,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         """
         from psyneulink.library.compositions import CompositionRunner
         from psyneulink.library.compositions import AutodiffComposition
+
+        if (
+            not skip_initialization
+            and (
+                context is None
+                or ContextFlags.SIMULATION_MODE not in context.runmode
+            )
+        ):
+            self._initialize_from_context(context, base_context, override=False)
+
         runner = CompositionRunner(self)
 
         # Non-Python (i.e. PyTorch and LLVM) learning modes only supported for AutodiffComposition
@@ -11728,6 +11749,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             call_after_minibatch=call_after_minibatch,
             context=context,
             execution_mode=execution_mode,
+            skip_initialization=skip_initialization,
             *args, **kwargs)
 
         context.remove_flag(ContextFlags.LEARNING_MODE)
