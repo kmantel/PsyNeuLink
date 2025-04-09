@@ -11708,14 +11708,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         context.execution_phase = execution_phase_at_entry
 
         if minibatch_size is None:
-            minibatch_size = self.parameters.minibatch_size._get(
-                context, fallback_value=DEFAULT
-            )
+            minibatch_size = self.parameters.minibatch_size._get(context)
 
         if optimizations_per_minibatch is None:
-            optimizations_per_minibatch = self.parameters.optimizations_per_minibatch._get(
-                context, fallback_value=DEFAULT
-            )
+            optimizations_per_minibatch = self.parameters.optimizations_per_minibatch._get(context)
 
         result = runner.run_learning(
             inputs=inputs,
