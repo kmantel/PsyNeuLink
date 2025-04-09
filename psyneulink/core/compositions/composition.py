@@ -5988,15 +5988,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 for input_port in cim.input_ports
             ]
 
-            if len(cim.input_ports) == 0:
-                # execute generally breaks with no input_ports
-                cim.defaults.variable = np.array([[]])
-                cim.defaults.value = np.array([[]])
-            else:
-                cim._update_default_variable(
-                    cim._handle_default_variable(input_ports=cim.input_ports),
-                    context=context
-                )
+            try:
+                cim._update_default_variable(new_default_variable, context)
+            except MechanismError as e:
+
+                if 'number of input_ports (0)' not in str(e):
+                    raise
+                # else:
+                # no input ports in CIM, so assume Composition is blank
+
 
             context.execution_id = orig_eid
             context.string = context_string
