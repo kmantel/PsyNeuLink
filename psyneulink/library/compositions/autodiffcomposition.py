@@ -368,7 +368,8 @@ else:
     from psyneulink.library.compositions.pytorchwrappers import PytorchCompositionWrapper
     from psyneulink.library.compositions.pytorchshowgraph import PytorchShowGraph
 
-from psyneulink._typing import Mapping, Optional
+from psyneulink._typing import Iterable, Mapping, Optional
+from psyneulink.core.components.component import Component
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.core.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
 from psyneulink.core.components.mechanisms.modulatory.modulatorymechanism import ModulatoryMechanism_Base
@@ -2159,3 +2160,15 @@ class AutodiffComposition(Composition):
     def show_graph(self, *args, **kwargs):
         """Override to use PytorchShowGraph if show_pytorch is True"""
         return self._show_graph.show_graph(*args, **kwargs)
+
+    @property
+    def _dependent_components(self) -> Iterable[Component]:
+        res = super()._dependent_components
+
+        # NOTE: _dependent_components should possibly be reworked to be
+        # a context-dependent method
+        for pytorch_repr in self.parameters.pytorch_representation.values.values():
+            if pytorch_repr is not None:
+                res.extend([w.projection for w in pytorch_repr.projection_wrappers])
+
+        return res

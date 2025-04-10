@@ -1134,10 +1134,14 @@ class Projection_Base(Projection):
 
     @property
     def _dependent_components(self):
-        return list(itertools.chain(
-            super()._dependent_components,
-            self.parameter_ports,
-        ))
+        res = super()._dependent_components
+        try:
+            res.extend(self.parameter_ports)
+        except AttributeError:
+            pass
+        if self.sender is not None:
+            res.append(self.sender)
+        return res
 
     @property
     def feedback(self):
