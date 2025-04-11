@@ -2414,8 +2414,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
             # set default to None context to ensure it exists
             if (
-                not p._has_value(context)
-                or (p._get(context) is None and p.getter is None)
+                p._get(context, fallback_value=None) is None and p.getter is None
+                or context.execution_id not in p.values
             ):
                 if p._user_specified:
                     val = param_defaults[p.name]

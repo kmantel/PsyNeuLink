@@ -1111,7 +1111,12 @@ from psyneulink.core.globals.keywords import \
     NAME, OUTPUT, OUTPUT_LABELS_DICT, OUTPUT_PORT, OUTPUT_PORT_PARAMS, OUTPUT_PORTS, OWNER_EXECUTION_COUNT, OWNER_VALUE, \
     PARAMETER_PORT, PARAMETER_PORT_PARAMS, PARAMETER_PORTS, PROJECTIONS, REFERENCE_VALUE, RESULT, \
     TARGET_LABELS_DICT, VALUE, VARIABLE, WEIGHT, MODEL_SPEC_ID_MDF_VARIABLE, MODEL_SPEC_ID_INPUT_PORT_COMBINATION_FUNCTION
-from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
+from psyneulink.core.globals.parameters import (
+    Parameter,
+    ParameterNoValueError,
+    check_user_specified,
+    copy_parameter_value,
+)
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import register_category, remove_instance_from_registry
 from psyneulink.core.globals.utilities import \
@@ -1140,7 +1145,7 @@ class MechParamsDict(UserDict):
 def _input_port_variables_getter(owning_component=None, context=None):
     try:
         return convert_all_elements_to_np_array([input_port.parameters.variable._get(context) for input_port in owning_component.input_ports])
-    except (AttributeError, TypeError):
+    except (AttributeError, ParameterNoValueError, TypeError):
         return None
 
 

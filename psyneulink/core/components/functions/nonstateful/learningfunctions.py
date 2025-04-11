@@ -46,7 +46,7 @@ from psyneulink.core.globals.keywords import (
     KOHONEN_FUNCTION, GAUSSIAN, LINEAR, EXPONENTIAL, HEBBIAN_FUNCTION, RL_FUNCTION, BACKPROPAGATION_FUNCTION,
     MATRIX, Loss, DEFAULT,
 )
-from psyneulink.core.globals.parameters import Parameter, check_user_specified
+from psyneulink.core.globals.parameters import Parameter, ParameterNoValueError, check_user_specified
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.utilities import convert_all_elements_to_np_array, is_numeric, scalar_distance, convert_to_np_array, all_within_range, safe_len, is_numeric_scalar
 
@@ -1706,21 +1706,21 @@ class ContrastiveHebbian(LearningFunction):  # ---------------------------------
 def _activation_input_getter(owning_component=None, context=None):
     try:
         return owning_component.parameters.variable._get(context)[LEARNING_ACTIVATION_INPUT]
-    except (AttributeError, TypeError):
+    except (AttributeError, ParameterNoValueError, TypeError):
         return None
 
 
 def _activation_output_getter(owning_component=None, context=None):
     try:
         return owning_component.parameters.variable._get(context)[LEARNING_ACTIVATION_OUTPUT]
-    except (AttributeError, TypeError):
+    except (AttributeError, ParameterNoValueError, TypeError):
         return None
 
 
 def _error_signal_getter(owning_component=None, context=None):
     try:
         return owning_component.parameters.variable._get(context)[LEARNING_ERROR_OUTPUT]
-    except (AttributeError, TypeError):
+    except (AttributeError, ParameterNoValueError, TypeError):
         return None
 
 

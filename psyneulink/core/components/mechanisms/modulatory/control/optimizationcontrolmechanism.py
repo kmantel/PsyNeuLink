@@ -1231,7 +1231,7 @@ class OptimizationControlMechanismError(ControlMechanismError):
 def _control_allocation_search_space_getter(owning_component=None, context=None):
     search_space = owning_component.parameters.search_space._get(context)
     if search_space is None:
-        return [c.parameters.allocation_samples._get(context) for c in owning_component.control_signals]
+        return [c.parameters.allocation_samples._get(context, fallback_value=None) for c in owning_component.control_signals]
     else:
         return search_space
 
