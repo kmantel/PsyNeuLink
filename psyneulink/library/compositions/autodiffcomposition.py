@@ -1451,15 +1451,6 @@ class AutodiffComposition(Composition):
               they want to locally override the default values for the AutodiffComposition (see docstrings for run()
               and _parse_synch_and_retain_args() for additonal details).
         """
-        if (
-            not skip_initialization
-            and (
-                context is None
-                or ContextFlags.SIMULATION_MODE not in context.runmode
-            )
-        ):
-            self._initialize_from_context(context, base_context, override=False)
-
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
 
