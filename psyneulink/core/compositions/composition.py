@@ -11349,7 +11349,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # signatures of _comp_ex.[cuda_]run below to pass
                     # context through.
                     # TODO: consider if pytorch_representation can
-                    # simply be stateful=False
+                    # simply be stateful=False and manage its own
+                    # contexts/Parameter values as needed
                     self._context_for_pytorch = context
 
                     comp_ex_tags = frozenset({"learning"}) if self._is_learning(context) else frozenset()
@@ -11364,6 +11365,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # Update the parameter for results
                     self.parameters.results._set(convert_to_np_array(results), context)
                     self._propagate_most_recent_context(context)
+
                     del self._context_for_pytorch
 
                     report(self,
