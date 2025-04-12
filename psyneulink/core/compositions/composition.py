@@ -12020,6 +12020,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
                 is_simulation = (context is not None and ContextFlags.SIMULATION_MODE in context.runmode)
 
+                self._context_for_pytorch = context
+
                 _comp_ex = pnlvm.CompExecution.get(self, context)
 
                 if execution_mode & pnlvm.ExecutionMode._Exec:
@@ -12053,6 +12055,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 else:
                     assert False, "Unsupported execution mode: {}".format(execution_mode)
 
+                del self._context_for_pytorch
 
             # Generate first frame of animation without any active_items
             if self._animate is not False:
