@@ -3831,7 +3831,7 @@ class Mechanism_Base(Mechanism):
 
     @handle_external_context()
     @beartype
-    def remove_ports(self, ports, context):
+    def remove_ports(self, ports, context=REMOVE_PORTS):
         """
         remove_ports(ports)
 
@@ -3915,7 +3915,7 @@ class Mechanism_Base(Mechanism):
                                               category=category,
                                               component=port)
 
-        self.defaults.variable = [ip.parameters.value._get(context) for ip in self.input_ports]
+        self.defaults.variable = self.input_values
 
     def _delete_mechanism(mechanism):
         mechanism.remove_ports(mechanism.input_ports)
