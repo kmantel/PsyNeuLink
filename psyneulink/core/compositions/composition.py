@@ -11344,15 +11344,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                        context=context)
 
                 try:
-                    # storing this for pytorch_representation in
-                    # gen_autodiffcomp_exec instead of changing all
-                    # signatures of _comp_ex.[cuda_]run below to pass
-                    # context through.
-                    # TODO: consider if pytorch_representation can
-                    # simply be stateful=False and manage its own
-                    # contexts/Parameter values as needed
-                    self._context_for_pytorch = context
-
                     comp_ex_tags = frozenset({"learning"}) if self._is_learning(context) else frozenset()
                     _comp_ex = pnlvm.CompExecution.get(self, context, additional_tags=comp_ex_tags)
                     if execution_mode.is_cpu_compiled():
@@ -11365,8 +11356,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # Update the parameter for results
                     self.parameters.results._set(convert_to_np_array(results), context)
                     self._propagate_most_recent_context(context)
-
-                    del self._context_for_pytorch
 
                     report(self,
                            [COMPILED_REPORT, PROGRESS_REPORT],
@@ -12020,8 +12009,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
                 is_simulation = (context is not None and ContextFlags.SIMULATION_MODE in context.runmode)
 
-                self._context_for_pytorch = context
-
                 _comp_ex = pnlvm.CompExecution.get(self, context)
 
                 if execution_mode & pnlvm.ExecutionMode._Exec:
@@ -12054,8 +12041,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
                 else:
                     assert False, "Unsupported execution mode: {}".format(execution_mode)
-
-                del self._context_for_pytorch
 
             # Generate first frame of animation without any active_items
             if self._animate is not False:
