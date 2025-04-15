@@ -1,3 +1,4 @@
+import os
 import sys
 
 import numpy as np
@@ -9,6 +10,16 @@ from psyneulink.core.compositions.report import ReportOutput, ReportProgress, Re
 
 @pytest.mark.skipif(sys.platform == 'win32', reason="<Incompatible UDF-8 formatting of rich Console output>")
 class TestReport():
+    @pytest.fixture(autouse=True)
+    def set_terminal_width(self):
+        cols = 'COLUMNS'
+        orig = os.environ.get(cols)
+        os.environ.update({cols: '80'})
+        yield
+        if orig is None:
+            del os.environ[cols]
+        else:
+            os.environ.update({cols: orig})
 
     def test_reportOutputPref_true(self, capsys):
 
@@ -170,6 +181,7 @@ class TestReport():
     # FIX: SOME OF THESE MAY NEED TO BE MODIFIED AFTER A BUG IS FIXED IN WHICH A NESTED COMPOSITION CONTINUES TO
     #      INCREMENT ITS TRIAL COUNT OVER SEQUENTIAL EXECUTIONS OF THE OUTER COMPOSITION
     #      (SINCE IT IS CALLED USING execute() RATHER run(), THAT WOULD RESET ITS COUNT ON EACH CALL).
+
     def test_nested_comps_and_sims_basic(self):
         """Test output and progress reports for execution of simulations by controller in both an outer and nested
         composition, using input dictionary, generator instance and generator function.
