@@ -1153,8 +1153,8 @@ class Projection_Base(Projection):
             res.extend(self.parameter_ports)
         except AttributeError:
             pass
-        if isinstance(self.sender, Component):
-            res.append(self.sender)
+        # if isinstance(self.sender, Component):
+        #     res.append(self.sender)
         return res
 
     @property
