@@ -406,7 +406,7 @@ from beartype import beartype
 from psyneulink._typing import Optional, Union, Type, Literal, Any, Dict, Tuple
 
 from psyneulink.core import llvm as pnlvm
-from psyneulink.core.components.component import ComponentError
+from psyneulink.core.components.component import Component, ComponentError
 from psyneulink.core.components.functions.function import get_matrix, ValidMatrixSpecType
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.core.components.functions.nonstateful.transformfunctions import MatrixTransform
@@ -1134,10 +1134,14 @@ class Projection_Base(Projection):
 
     @property
     def _dependent_components(self):
-        return list(itertools.chain(
-            super()._dependent_components,
-            self.parameter_ports,
-        ))
+        res = super()._dependent_components
+        try:
+            res.extend(self.parameter_ports)
+        except AttributeError:
+            pass
+        if isinstance(self.sender, Component):
+            res.append(self.sender)
+        return res
 
     @property
     def feedback(self):
