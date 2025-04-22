@@ -887,12 +887,11 @@ class ParameterEstimationComposition(Composition):
         return ocm
 
     @handle_external_context()
-    def run(self, *args, **kwargs):
+    def run(self, *args, context=None, **kwargs):
         # Clear any old results from the composition
         if self.results is not None:
             self.results = []
 
-        context = kwargs.get("context", None)
         self._assign_execution_ids(context)
 
         # Before we do anything, clear any compilation structures that have been generated. This is a workaround to
