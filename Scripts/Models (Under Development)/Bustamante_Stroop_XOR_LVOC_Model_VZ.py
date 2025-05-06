@@ -20,6 +20,7 @@ using a version of the `Learned Value of Control Model
 
 import numpy as np
 import psyneulink as pnl
+import pathlib
 
 # from build_stimuli_VZ import xor_dict
 from build_input import xor_dict
@@ -251,10 +252,10 @@ print(task_decision.log.csv())
 # # print(word_task.log.csv())
 
 
-file_lvoc = open("lvoc_5_29.csv", 'w')
+file_lvoc = open(pathlib.Path(__file__).parent.joinpath("lvoc_5_29.csv"), 'w')
 file_lvoc.write(lvoc.log.csv())
 file_lvoc.close()
 
-file_task = open("task_5_29.csv", 'w')
+file_task = open(pathlib.Path(__file__).parent.joinpath("task_5_29.csv"), 'w')
 file_task.write(task_decision.log.csv())
 file_task.close()

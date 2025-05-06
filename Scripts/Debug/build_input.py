@@ -7,6 +7,7 @@
 # % python builddict.py LVOC_XOR_stimuli.csv 8
 #-------------------------------------------------------------------
 
+import pathlib
 from sys import argv
 from pandas import DataFrame, read_csv
 
@@ -61,7 +62,7 @@ def emptyStructs(color_stim, word_stim, color_task,
 
 
 # TODO add extra col for trial # & only use last 200
-df = read_csv("LVOC_XOR_stimuli.csv", usecols=[0,1,3,4,5,6])
+df = read_csv(pathlib.Path(__file__).parent.joinpath("LVOC_XOR_stimuli.csv"), usecols=[0,1,3,4,5,6])
 
 # initialize fields
 color_stim = []
@@ -108,4 +109,3 @@ xor_dict.append([color_stim, word_stim, color_task,
 			word_task, reward, freq, trial_type])
 
 # print(xor_dict)
-

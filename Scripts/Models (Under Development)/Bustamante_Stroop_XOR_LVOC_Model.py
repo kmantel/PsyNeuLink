@@ -202,11 +202,11 @@ print(lvoc.log.csv())
 # # print(word_task.log.csv())
 # print(word_task.log.nparray())
 
-# file_lvoc = open("LVOC_200_LOG.csv", 'w')
+# file_lvoc = open(pathlib.Path(__file__).parent.joinpath("LVOC_200_LOG.csv"), 'w')
 # file_lvoc.write(lvoc.log.csv())
 # file_lvoc.close()
 
-# file_task = open("LVOC_200_TASK.csv", 'w')
+# file_task = open(pathlib.Path(__file__).parent.joinpath("LVOC_200_TASK.csv"), 'w')
 # # file_task.write(task_decision.log.csv())
 # file_task.close()
 
