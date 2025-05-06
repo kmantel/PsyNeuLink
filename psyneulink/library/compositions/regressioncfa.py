@@ -88,9 +88,14 @@ from psyneulink.core.components.ports.modulatorysignals.controlsignal import Con
 from psyneulink.core.components.ports.port import _parse_port_spec
 from psyneulink.core.compositions.compositionfunctionapproximator import CompositionFunctionApproximator, CompositionFunctionApproximatorError
 from psyneulink.core.globals.keywords import ALL, CONTROL_SIGNALS, DEFAULT_VARIABLE, VARIABLE
-from psyneulink.core.globals.parameters import Parameter, check_user_specified
-from psyneulink.core.globals.context import Context
-from psyneulink.core.globals.utilities import get_deepcopy_with_shared, powerset, tensor_power
+from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
+from psyneulink.core.globals.context import Context, handle_external_context
+from psyneulink.core.globals.utilities import (
+    get_deepcopy_with_shared,
+    powerset,
+    tensor_power,
+    convert_all_elements_to_np_array,
+)
 
 __all__ = ['PREDICTION_TERMS', 'PV', 'RegressionCFA']
 
@@ -295,16 +300,19 @@ class RegressionCFA(CompositionFunctionApproximator):
         """
 
         prediction_terms = self.prediction_terms
-        self.prediction_vector = self.PredictionVector(features_array, control_signals, prediction_terms)
+        features_array = convert_all_elements_to_np_array(features_array)  # converts to numeric dtype if possible
+        self.prediction_vector = self.PredictionVector(features_array, control_signals, prediction_terms, context)
 
         # Assign parameters to update_weights
-        update_weights_default_variable = [self.prediction_vector.vector, np.zeros(1)]
+        update_weights_default_variable = convert_all_elements_to_np_array([
+            self.prediction_vector.vector, np.zeros(1)
+        ])
         if isinstance(self.update_weights, type):
             self.update_weights = \
                 self.update_weights(default_variable=update_weights_default_variable)
             self._update_parameter_components(context)
         else:
-            self.update_weights.reset({DEFAULT_VARIABLE: update_weights_default_variable})
+            self.update_weights.reset(update_weights_default_variable)
 
     def adapt(self, feature_values, control_allocation, net_outcome, context=None):
         """Update `regression_weights <RegressionCFA.regression_weights>` so as to improve prediction of
@@ -368,17 +376,30 @@ class RegressionCFA(CompositionFunctionApproximator):
             #      I.E., AVERAGE WEIGHTS AND THEN OPTIMIZE OR OPTIMZE FOR EACH SAMPLE OF WEIGHTS AND THEN AVERAGE?
             weights = self.parameters.regression_weights._get(context)
 
-            v = np.array([])
-            w = np.array([])
+            _gradient_mode = getattr(context, '_gradient_mode', False)
+            if _gradient_mode:
+                import torch
+                v = torch.tensor([], requires_grad=True, dtype=weights.dtype)
+                w = torch.tensor([], requires_grad=True, dtype=weights.dtype)
+            else:
+                v = np.array([])
+                w = np.array([])
             # Concatenate values for each prediction term, and same for corresponding weights
             for term_label, term_value in term_values_dict.items():
                 if term_label in terms:
                     pv_enum_val = term_label.value
                     item_idx = prediction_vector.idx[pv_enum_val]
-                    v = np.append(v, term_value.reshape(-1))
-                    w = np.append(w, weights[item_idx])
+                    if _gradient_mode:
+                        v = torch.cat((v, term_value.reshape(-1).to(weights.dtype)), 0)
+                        w = torch.cat((w, weights[item_idx]), 0)
+                    else:
+                        v = np.append(v, term_value.reshape(-1))
+                        w = np.append(w, weights[item_idx])
             # Get predicted outcome for this estimate and add to sum over estimates
-            predicted_outcome += np.dot(v,w)
+            if _gradient_mode:
+                predicted_outcome += torch.dot(v, w)
+            else:
+                predicted_outcome += np.dot(v, w)
 
         # Compute average over estimates
         predicted_outcome/=num_estimates
@@ -445,15 +466,15 @@ class RegressionCFA(CompositionFunctionApproximator):
 
         _deepcopy_shared_keys = ['control_signal_functions', '_compute_costs']
 
-        def __init__(self, feature_values, control_signals, specified_terms):
+        @handle_external_context()
+        def __init__(self, feature_values, control_signals, specified_terms, context=None):
 
             # Get variable for control_signals specified in constructor
             control_allocation = []
             for c in control_signals:
                 if isinstance(c, ControlSignal):
-                    try:
-                        v = c.variable
-                    except:
+                    v = c.parameters.variable._get(context)
+                    if v is None:
                         v = c.defaults.variable
                 elif isinstance(c, type):
                     if issubclass(c, ControlSignal):
@@ -466,7 +487,7 @@ class RegressionCFA(CompositionFunctionApproximator):
                                                       context=Context(string='RegressionCFA.__init__'))
                     v = port_spec_dict[VARIABLE]
                     v = v or ControlSignal.defaults.variable
-                control_allocation.append(v)
+                control_allocation.append(copy_parameter_value(v))
             # Get primary function and compute_costs function for each ControlSignal (called in compute_terms)
             self.control_signal_functions = [c.function for c in control_signals]
             self._compute_costs = [c.compute_costs for c in control_signals]
@@ -608,7 +629,7 @@ class RegressionCFA(CompositionFunctionApproximator):
             # if reference_variable is not None:
             #     self.reference_variable = reference_variable
 
-            if feature_values is not None:
+            if feature_values is not None and not isinstance(feature_values, dict):
                 self.terms[PV.F.value] = np.array(feature_values)
             # FIX: 11/9/19 LOCALLY MANAGE STATEFULNESS OF ControlSignals AND costs
             computed_terms = self.compute_terms(np.array(variable), context=context)
@@ -636,7 +657,18 @@ class RegressionCFA(CompositionFunctionApproximator):
             computed_terms[PV.F] = f = self.terms[PV.F.value]
 
             # Compute value of each control_signal from its variable
-            c = np.zeros((len(control_allocation), ))
+            if getattr(context, '_gradient_mode', False):
+                import torch
+                computed_terms[PV.F] = torch.tensor(computed_terms[PV.F].astype(float), requires_grad=True)
+                c = torch.zeros((len(control_allocation), ))
+                costs = torch.zeros((len(control_allocation),))
+            else:
+                c = np.zeros((len(control_allocation), ))
+                costs = np.zeros((len(control_allocation),))
+
+            if getattr(context, '_gradient_mode', False):
+                control_allocation = torch.as_tensor(control_allocation)
+
             for i, var in enumerate(control_allocation):
                 c[i] = self.control_signal_functions[i](var, context=context).item()
             computed_terms[PV.C] = c
@@ -645,7 +677,6 @@ class RegressionCFA(CompositionFunctionApproximator):
             if PV.COST in terms:
                 # computed_terms[PV.COST] = -(np.exp(0.25*c-3))
                 # computed_terms[PV.COST] = -(np.exp(0.25*c-3) + (np.exp(0.25*np.abs(c-self.control_signal_change)-3)))
-                costs = np.zeros((len(control_allocation),))
                 for i, val in enumerate(c):
                     # MODIFIED 11/9/18 OLD:
                     costs[i] = -(self._compute_costs[i](val, context=context))
@@ -654,18 +685,33 @@ class RegressionCFA(CompositionFunctionApproximator):
                     # MODIFIED 11/9/18 END
                 computed_terms[PV.COST] = costs
 
+            if getattr(context, '_gradient_mode', False):
+                def tensordot(*args, axes=None, **kwargs):
+                    return torch.tensordot(*args, dims=axes, **kwargs)
+
+                def cnv(a):
+                    try:
+                        return torch.as_tensor(a)
+                    except ValueError:
+                        return torch.stack(a)
+                f = torch.tensor(convert_all_elements_to_np_array(f), requires_grad=True, dtype=c.dtype)
+                c = torch.as_tensor(c)
+            else:
+                tensordot = np.tensordot
+                cnv = np.array
+
             # Compute terms interaction that are used
             if any(term in terms for term in [PV.FF, PV.FFC, PV.FFCC]):
-                computed_terms[PV.FF] = ff = np.array(tensor_power(f, range(2, self.num[PV.F.value] + 1)))
+                computed_terms[PV.FF] = ff = cnv(tensor_power(f, range(2, self.num[PV.F.value] + 1)))
             if any(term in terms for term in [PV.CC, PV.FCC, PV.FFCC]):
-                computed_terms[PV.CC] = cc = np.array(tensor_power(c, range(2, self.num[PV.C.value] + 1)))
+                computed_terms[PV.CC] = cc = cnv(tensor_power(c, range(2, self.num[PV.C.value] + 1)))
             if any(term in terms for term in [PV.FC, PV.FCC, PV.FFCC]):
-                computed_terms[PV.FC] = np.tensordot(f, c, axes=0)
+                computed_terms[PV.FC] = tensordot(f, c, axes=0)
             if any(term in terms for term in [PV.FFC, PV.FFCC]):
-                computed_terms[PV.FFC] = np.tensordot(ff, c, axes=0)
+                computed_terms[PV.FFC] = tensordot(ff, c, axes=0)
             if any(term in terms for term in [PV.FCC, PV.FFCC]):
-                computed_terms[PV.FCC] = np.tensordot(f,cc,axes=0)
+                computed_terms[PV.FCC] = tensordot(f,cc,axes=0)
             if PV.FFCC in terms:
-                computed_terms[PV.FFCC] = np.tensordot(ff,cc,axes=0)
+                computed_terms[PV.FFCC] = tensordot(ff,cc,axes=0)
 
             return computed_terms

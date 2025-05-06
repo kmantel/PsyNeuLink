@@ -1109,7 +1109,12 @@ class ControlSignal(ModulatorySignal):
             self.parameters.duration_cost._set(duration_cost, context)
 
         # add second dimension because Reduce function uses axis=1
-        all_costs = convert_all_elements_to_np_array([[intensity_cost, adjustment_cost, duration_cost]])
+        all_costs = [[intensity_cost, adjustment_cost, duration_cost]]
+        if getattr(context, '_gradient_mode', False):
+            import torch
+            all_costs = torch.tensor(all_costs, requires_grad=True)
+        else:
+            all_costs = convert_all_elements_to_np_array(all_costs)
 
         # Combine the costs. Convert to a float because reRedcu
         combined_cost = float(self.combine_costs_function(all_costs, context=context).item())

@@ -4490,6 +4490,8 @@ class TransferWithCosts(TransferFunction):
 
         # Compute current intensity
         intensity = self.parameters.transfer_fct._get(context)(variable, context=context)
+        if getattr(context, '_gradient_mode', False):
+            intensity = torch.as_tensor(intensity)
 
         # THEN, DEAL WITH COSTS
         # Note: only compute costs that are enabled;  others are left as None, or with their value when last enabled.
@@ -4515,9 +4517,9 @@ class TransferWithCosts(TransferFunction):
             if enabled_cost_functions & CostFunctions.ADJUSTMENT:
                 # Compute intensity change
                 try:
-                    intensity_change = np.abs(intensity - self.parameters.intensity._get(context))
+                    intensity_change = abs(intensity - self.parameters.intensity._get(context))
                 except TypeError:
-                    intensity_change = np.zeros_like(self.parameters_intensity._get(context))
+                    intensity_change = np.zeros_like(self.parameters.intensity._get(context))
                 # Execute adjustment_cost function
                 adjustment_cost = self.adjustment_cost_fct(intensity_change, context=context)
                 self.parameters.adjustment_cost._set(adjustment_cost, context)
@@ -4537,7 +4539,11 @@ class TransferWithCosts(TransferFunction):
             self.parameters.combined_costs._set(combined_costs, context)
 
         # Store current intensity
-        self.parameters.intensity._set(copy_parameter_value(intensity), context)
+        try:
+            cur_intensity = copy_parameter_value(intensity)
+        except RuntimeError:
+            cur_intensity = intensity
+        self.parameters.intensity._set(cur_intensity, context)
 
         return intensity
 

@@ -390,6 +390,14 @@ def is_numeric_or_none(x):
 
 
 def is_numeric(x):
+    dtype = getattr(x, 'dtype', None)
+    if dtype is not None:
+        try:
+            if dtype.kind in {'i', 'f', 'c', 'u'}:
+                return True
+        except AttributeError:
+            if torch is not None and isinstance(x, torch.Tensor):
+                return True
     return iscompatible(x, **{kwCompatibilityNumeric:True, kwCompatibilityLength:0})
 
 
@@ -637,6 +645,17 @@ def iscompatible(candidate, reference=None, **kargs):
                 # Matrices can't be checked recursively, so convert to array
                 if isinstance(value, np.matrix):
                     value = value.A
+
+                try:
+                    if value.dtype.kind in {'i', 'f', 'c', 'u'}:
+                        return True
+                except AttributeError:
+                    pass
+
+                # torch tensor only has numeric dtypes
+                if isinstance(value, torch.Tensor):
+                    return True
+
                 if isinstance(value, (list, np.ndarray)) and not is_numeric_scalar(value):
                     try:
                         if value.ndim == 0:
@@ -713,6 +732,14 @@ def powerset(iterable):
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
+
+def tensordot(a, b, axes=2, **kwargs):
+    try:
+        return torch.tensordot(a, b, dims=axes, **kwargs)
+    except AttributeError:
+        return np.tensordot(a, b, axes=axes)
+
+
 @beartype
 def tensor_power(items, levels: Optional[range] = None, flat=False):
     """return tensor product for all members of powerset of items
@@ -734,19 +761,25 @@ def tensor_power(items, levels: Optional[range] = None, flat=False):
                              "exceeds max for items specified ({})".
                              format(min_spec, max_spec + 1, repr('levels'), max_levels + 1))
 
+    try:
+        arr_typ = type(ps[0])
+    except IndexError:
+        return []
+
     pp = []
     for s in ps:
         order = len(s)
         if order not in list(levels):
             continue
         if order==1:
-            pp.append(np.array(s[0]))
+            pp.append(arr_typ(s[0]))
         else:
             i = 0
-            tp = np.tensordot(s[i],s[i + 1],axes=0)
+
+            tp = tensordot(s[i], s[i + 1], axes=0)
             i += 2
             while i < order:
-                tp = np.tensordot(tp, s[i], axes=0)
+                tp = tensordot(tp, s[i], axes=0)
                 i += 1
             if flat is True:
                 pp.extend(tp.reshape(-1))

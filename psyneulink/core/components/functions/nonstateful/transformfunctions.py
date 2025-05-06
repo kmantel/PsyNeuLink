@@ -926,15 +926,28 @@ class Reduce(TransformFunction):  # --------------------------------------------
         if weights is not None:
             variable = variable * weights
 
+        _gradient_mode = getattr(context, '_gradient_mode', False)
+        if _gradient_mode:
+            variable = torch.atleast_2d(torch.as_tensor(variable))
+        else:
+            variable = np.atleast_2d(variable)
         # Calculate using relevant aggregation operation and return
         if operation == SUM:
             # result = np.sum(np.atleast_2d(variable), axis=0) * scale + offset
-            result = np.sum(np.atleast_2d(variable), axis=1) * scale + offset
+            if _gradient_mode:
+                op = lambda x, axis: torch.sum(x, dim=(axis,))
+            else:
+                op = np.sum
         elif operation == PRODUCT:
-            result = np.prod(np.atleast_2d(variable), axis=1) * scale + offset
+            if _gradient_mode:
+                op = lambda x, axis: torch.prod(x, dim=(axis,))
+            else:
+                op = np.prod
         else:
             raise FunctionError("Unrecognized operator ({0}) for Reduce function".
                                 format(self._get_current_parameter_value(OPERATION, context)))
+
+        result = op(variable, axis=1) * scale + offset
 
         return self.convert_output_type(result)
 

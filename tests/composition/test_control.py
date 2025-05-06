@@ -1842,10 +1842,10 @@ class TestControlMechanisms:
         assert len(lvoc.input_ports) == 5
 
     @pytest.mark.pytorch
-    @pytest.mark.xfail(
-        strict=False,
-        reason='operation incompatiblilty between torch tensor and numpy array',
-    )
+    # @pytest.mark.xfail(
+    #     strict=False,
+    #     reason='operation incompatiblilty between torch tensor and numpy array',
+    # )
     def test_lvoc_features_function(self):
         m1 = pnl.TransferMechanism(input_ports=["InputPort A", "InputPort B"])
         m2 = pnl.TransferMechanism()

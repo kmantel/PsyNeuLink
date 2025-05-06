@@ -854,14 +854,14 @@ class BayesGLM(LearningFunction):
 
         return super()._handle_default_variable(default_variable=default_variable, input_shapes=input_shapes)
 
-    def initialize_priors(self):
+    def initialize_priors(self, variable=None):
         """Set the prior parameters (`mu_prior <BayesGLM.mu_prior>`, `Lamba_prior <BayesGLM.Lambda_prior>`,
         `gamma_shape_prior <BayesGLM.gamma_shape_prior>`, and `gamma_size_prior <BayesGLM.gamma_size_prior>`)
         to their initial (_0) values, and assign current (_n) values to the priors
         """
+        if variable is None:
+            variable = self.defaults.variable
 
-        variable = np.array(self.defaults.variable)
-        variable = self.defaults.variable
         if np.array(variable).dtype != object:
             variable = np.atleast_2d(variable)
 
@@ -894,12 +894,13 @@ class BayesGLM(LearningFunction):
     def reset(self, default_variable=None, context=None):
         # If variable passed during execution does not match default assigned during initialization,
         #    reassign default and re-initialize priors
+        new_default_variable = 0 * default_variable  # np.zeros works poorly with ragged arrays
         if default_variable is not None:
+            self.initialize_priors(new_default_variable)
             self._update_default_variable(
-                np.array([np.zeros_like(default_variable), np.zeros_like(default_variable)]),
+                new_default_variable,
                 context=context
             )
-            self.initialize_priors()
 
     def _function(
         self,

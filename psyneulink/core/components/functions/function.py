@@ -795,7 +795,8 @@ class Function_Base(Function):
         return value
 
     def convert_output_type(self, value, output_type=None):
-        value = convert_all_elements_to_np_array(value)
+        if torch is None or not isinstance(value, torch.Tensor):
+            value = convert_all_elements_to_np_array(value)
         if output_type is None:
             if not self.enable_output_type_conversion or self.output_type is None:
                 return value

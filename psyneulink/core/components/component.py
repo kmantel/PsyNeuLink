@@ -2850,7 +2850,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # Convert variable to np.ndarray
         # Note: this insures that variable will be AT LEAST 1D;  however, can also be higher:
         #       e.g., given a list specification of [[0],[0]], it will return a 2D np.array
-        variable = convert_to_np_array(variable, 1)
+        if not getattr(context, '_gradient_mode', False):
+            variable = convert_to_np_array(variable, 1)
 
         return variable
 

@@ -1275,14 +1275,17 @@ class GradientOptimization(OptimizationFunction):
             try:
                 # Need to wrap objective_function in a lambda to pass to grad because it needs to return a torch tensor
                 def func_wrapper(x, context):
-                    return torch.tensor(self.objective_function(x, context))
+                    return torch.as_tensor(self.objective_function(x, context))
 
                 # Get the gradient of the objective function with pytorch autograd
                 gradient_func = torch.func.grad(func_wrapper)
 
                 # We need to wrap the gradient function in a lambda as well because we need to convert back to numpy
                 def gradient_func_wrapper(x, context):
-                    return gradient_func(torch.from_numpy(x), context).detach().numpy()
+                    context._gradient_mode = True
+                    res = gradient_func(torch.from_numpy(x), context).detach().numpy()
+                    context._gradient_mode = False
+                    return res
 
                 self.parameters.gradient_function._set(gradient_func_wrapper, context)
 
@@ -1411,7 +1414,7 @@ class GradientOptimization(OptimizationFunction):
             # Start from initial value (sepcified by user in step_size arg)
             step_size = self.parameters.step_size.default_value
             self.parameters.step_size._set(step_size, context)
-        if self.annealing_function:
+        elif self.annealing_function:
             step_size = call_with_pruned_args(self.annealing_function, step_size, sample_num, context=context)
             self.parameters.step_size._set(step_size, context)
 

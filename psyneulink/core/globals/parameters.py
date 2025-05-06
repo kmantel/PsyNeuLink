@@ -1432,7 +1432,7 @@ class Parameter(ParameterBase):
         return call_with_pruned_args(self.setter, value, context=context, **kwargs)
 
     @handle_external_context()
-    def get(self, context=None, fallback_value=ParameterNoValueError, **kwargs):
+    def get(self, context=None, fallback_value=ParameterNoValueError, as_type=None, **kwargs):
         """
             Gets the value of this `Parameter` in the context of **context**
             If no context is specified, attributes on the associated `Component` will be used
@@ -1449,14 +1449,15 @@ class Parameter(ParameterBase):
                 kwargs
                     any additional arguments to be passed to this `Parameter`'s `getter` if it exists
         """
-        base_val = self._get(context, fallback_value, **kwargs)
-        if self._scalar_converted:
-            base_val = try_extract_0d_array_item(base_val)
-        if is_array_like(base_val):
-            base_val = copy_parameter_value(base_val)
+        base_val = self._get(context, fallback_value, as_type, **kwargs)
+        if as_type is None:
+            if self._scalar_converted:
+                base_val = try_extract_0d_array_item(base_val)
+            if is_array_like(base_val):
+                base_val = copy_parameter_value(base_val)
         return base_val
 
-    def _get(self, context=None, fallback_value=ParameterNoValueError, **kwargs):
+    def _get(self, context=None, fallback_value=ParameterNoValueError, as_type=None, **kwargs):
         if not self.stateful:
             execution_id = None
         else:
@@ -1473,10 +1474,10 @@ class Parameter(ParameterBase):
             value = self._call_getter(context, **kwargs)
             if self.stateful:
                 self._set_value(value, execution_id=execution_id, context=context)
-            return value
+            res = value
         else:
             try:
-                return self.values[execution_id]
+                res = self.values[execution_id]
             except KeyError as e:
                 if fallback_value is ParameterNoValueError:
                     fallback_value = self.fallback_value
@@ -1484,9 +1485,30 @@ class Parameter(ParameterBase):
                 if fallback_value is ParameterNoValueError:
                     raise ParameterNoValueError(self, execution_id) from e
                 elif fallback_value == DEFAULT:
-                    return self.default_value
+                    res = self.default_value
                 else:
-                    return fallback_value
+                    res = fallback_value
+
+        # temp hack gradient enable
+        if as_type is None and getattr(context, '_gradient_mode', None):
+            import torch
+            try:
+                res = torch.tensor(res, requires_grad=True)
+            except RuntimeError as e:
+                if 'of floating point and complex dtype can require gradients' in str(e):
+                    res = torch.tensor(res, dtype=float, requires_grad=True)
+            except TypeError:
+                pass
+        elif as_type is not None:
+            res = as_type(res)
+        else:
+            try:
+                res = res.detach().numpy()
+            except AttributeError:
+                # undo tensor gradient
+                pass
+
+        return res
 
     @handle_external_context()
     def get_previous(
@@ -1495,6 +1517,7 @@ class Parameter(ParameterBase):
         index: int = 1,
         range_start: int = None,
         range_end: int = None,
+        as_type=None,
     ):
         """
             Gets the value set before the current value of this
@@ -1555,14 +1578,29 @@ class Parameter(ParameterBase):
 
         if range_start is not None or range_end is not None:
             try:
-                return list(self.history[context.execution_id])[range_start:range_end]
+                res = list(self.history[context.execution_id])[range_start:range_end]
             except (KeyError, IndexError):
-                return None
+                res = None
         else:
             try:
-                return self.history[context.execution_id][index]
+                res = self.history[context.execution_id][index]
             except (KeyError, IndexError):
-                return None
+                res = None
+
+        # temp hack gradient enable
+        if as_type is None and getattr(context, '_gradient_mode', None):
+            import torch
+            try:
+                res = torch.tensor(res, requires_grad=True)
+            except RuntimeError as e:
+                if 'of floating point and complex dtype can require gradients' in str(e):
+                    res = torch.tensor(res, dtype=float, requires_grad=True)
+            except TypeError:
+                pass
+        elif as_type is not None:
+            res = as_type(res)
+
+        return res
 
     @handle_external_context()
     def get_delta(self, context=None):
@@ -1693,7 +1731,16 @@ class Parameter(ParameterBase):
             if execution_id in self.values:
                 value_for_history = self.values[execution_id]
                 if value_is_array_like:
-                    value_for_history = copy_parameter_value(value_for_history)
+                    try:
+                        value_for_history = copy_parameter_value(value_for_history)
+                    except RuntimeError as e:
+                        # torch tensor, we won't be overwriting it in place
+                        err = str(e)
+                        if (
+                            'Only Tensors created explicitly by the user (graph leaves) support the deepcopy' not in err
+                            and 'Cannot access storage of TensorWrapper' != err
+                        ):
+                            raise
 
                 try:
                     self.history[execution_id].append(value_for_history)
@@ -1706,7 +1753,17 @@ class Parameter(ParameterBase):
         if self.loggable:
             value_for_log = value
             if value_is_array_like:
-                value_for_log = copy_parameter_value(value)
+                try:
+                    value_for_log = copy_parameter_value(value)
+                except RuntimeError as e:
+                    # torch tensor, we won't be overwriting it in place
+                    err = str(e)
+                    if (
+                        'Only Tensors created explicitly by the user (graph leaves) support the deepcopy' not in err
+                        and 'Cannot access storage of TensorWrapper' != err
+                    ):
+                        raise
+
             # log value
             if not skip_log:
                 self._log_value(value_for_log, context)

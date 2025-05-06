@@ -71,7 +71,7 @@ def objective_function(v):
 
 def adj_cost_fct(v):
     from math import e
-    return e**(.25 * np.abs(v) - 1)
+    return e**(.25 * abs(v) - 1)
 
 color_stim = pnl.TransferMechanism(name='Color Stimulus', input_shapes=8)
 word_stim = pnl.TransferMechanism(name='Word Stimulus', input_shapes=8)
