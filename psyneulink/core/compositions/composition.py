@@ -4491,8 +4491,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                            f"assigned NodeRole.INPUT (since it does not receive any input).")
 
             elif role in unmodifiable_node_roles:
-                raise CompositionError(f"A Node assigned NodeRole.BIAS ('{node.name}') cannot also be "
-                                       f"assigned NodeRole.INPUT (since it does not receive any input).")
+                raise CompositionError(f"Attempt to assign {role} (to {node} of {self.name})"
+                                       f"that cannot be modified by user.")
 
         node_role_pair = (node, role)
         if node_role_pair not in self.required_node_roles:
