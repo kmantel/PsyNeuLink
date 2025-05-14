@@ -3165,6 +3165,7 @@ class OptimizationControlMechanism(ControlMechanism):
         if not self.agent_rep.parameters.retain_old_simulation_data._get():
             self.agent_rep._clean_up_as_agent_rep(sim_context, alt_controller=alt_controller)
 
+    @handle_external_context()
     def evaluate_agent_rep(self, control_allocation, context=None):
         """Call `evaluate <Composition.evaluate>` method of `agent_rep <OptimizationControlMechanism.agent_rep>`
 
