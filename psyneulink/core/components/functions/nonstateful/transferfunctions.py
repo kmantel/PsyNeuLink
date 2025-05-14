@@ -4515,7 +4515,8 @@ class TransferWithCosts(TransferFunction):
                 # Compute intensity change
                 try:
                     intensity_change = np.abs(intensity - self.parameters.intensity._get(context))
-                except TypeError:
+                except TypeError as e:
+                    raise AssertionError() from e
                     intensity_change = np.zeros_like(self.parameters_intensity._get(context))
                 # Execute adjustment_cost function
                 adjustment_cost = self.adjustment_cost_fct(intensity_change, context=context)
