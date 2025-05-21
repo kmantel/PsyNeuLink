@@ -26,6 +26,7 @@ import pathlib
 from build_input import xor_dict
 
 np.random.seed(0)
+pnl.core.globals.utilities.set_global_seed(0)
 
 def w_fct(stim, color_control):
     """function for word_task, to modulate strength of word reading based on 1-strength of color_naming ControlSignal"""

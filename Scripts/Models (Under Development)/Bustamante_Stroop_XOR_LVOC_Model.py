@@ -25,6 +25,7 @@ import psyneulink as pnl
 from build_stimuli_VZ import xor_dict
 
 np.random.seed(0)
+pnl.core.globals.utilities.set_global_seed(0)
 
 
 def w_fct(stim, color_control):
