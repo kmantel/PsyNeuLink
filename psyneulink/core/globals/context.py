@@ -91,6 +91,11 @@ from collections import defaultdict, namedtuple
 from queue import Queue
 
 import time as py_time  # "time" is declared below
+import numpy as np
+try:
+    import torch
+except ImportError:
+    torch = None
 from beartype import beartype
 
 from psyneulink._typing import Optional, Union, Literal, Set, List
@@ -332,7 +337,7 @@ class Context():
     """
 
     __name__ = 'Context'
-    _deepcopy_shared_keys = {'owner', 'composition', '_composition'}
+    _deepcopy_shared_keys = {'owner', 'composition', '_composition', '_numeric_lib'}
 
     def __init__(self,
                  owner=None,
@@ -380,6 +385,9 @@ class Context():
         self.execution_time = None
         self.string = string
         self.rpc_pipeline = rpc_pipeline
+
+        self._numeric_lib = np
+        self._gradient_mode = False
 
     __deepcopy__ = get_deepcopy_with_shared(_deepcopy_shared_keys)
 
@@ -541,6 +549,16 @@ class Context():
             return (attr & ~old) | new
 
         self._change_flags(old, new, operation=replace)
+
+    @property
+    def _gradient_mode(self):
+        if not torch:
+            raise ValueError('torch')
+        return self.__gradient_mode
+
+    @_gradient_mode.setter
+    def _gradient_mode(self, _gradient_mode):
+        self.__gradient_mode = _gradient_mode
 
 
 @beartype
