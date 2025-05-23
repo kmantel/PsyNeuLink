@@ -94,6 +94,7 @@ from psyneulink.core.globals.utilities import (
     get_deepcopy_with_shared,
     powerset,
     tensor_power,
+    tensordot,
     convert_all_elements_to_np_array,
 )
 
@@ -686,9 +687,6 @@ class RegressionCFA(CompositionFunctionApproximator):
                 computed_terms[PV.COST] = costs
 
             if getattr(context, '_gradient_mode', False):
-                def tensordot(*args, axes=None, **kwargs):
-                    return torch.tensordot(*args, dims=axes, **kwargs)
-
                 def cnv(a):
                     try:
                         return torch.as_tensor(a)
@@ -697,7 +695,6 @@ class RegressionCFA(CompositionFunctionApproximator):
                 f = torch.tensor(convert_all_elements_to_np_array(f), requires_grad=True, dtype=c.dtype)
                 c = torch.as_tensor(c)
             else:
-                tensordot = np.tensordot
                 cnv = np.array
 
             # Compute terms interaction that are used
