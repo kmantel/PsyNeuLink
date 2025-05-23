@@ -21,8 +21,8 @@ using a version of the `Learned Value of Control Model
 import numpy as np
 import psyneulink as pnl
 
-# from build_input import xor_dict
-from build_stimuli_VZ import xor_dict
+from build_input import xor_dict
+# from build_stimuli_VZ import xor_dict
 
 np.random.seed(0)
 pnl.core.globals.utilities.set_global_seed(0)
@@ -78,8 +78,8 @@ word_task.set_log_conditions('value')
 c = pnl.Composition(name='Stroop XOR Model')
 c.add_node(color_stim)
 c.add_node(word_stim)
-c.add_node(color_task, required_roles=pnl.NodeRole.ORIGIN)
-c.add_node(word_task, required_roles=pnl.NodeRole.ORIGIN)
+c.add_node(color_task, required_roles=pnl.NodeRole.INPUT)
+c.add_node(word_task, required_roles=pnl.NodeRole.INPUT)
 c.add_node(reward)
 c.add_node(task_decision)
 c.add_projection(sender=color_task, receiver=task_decision)
@@ -112,7 +112,7 @@ lvoc = pnl.OptimizationControlMechanism(
     control_signals=pnl.ControlSignal(
         modulates=[(pnl.SLOPE, color_task), ('color_control', word_task)],
         # function=pnl.ReLU,
-        function=pnl.Logistic,
+        transfer_function=pnl.Logistic,
         cost_options=[pnl.CostFunctions.INTENSITY, pnl.CostFunctions.ADJUSTMENT],
         intensity_cost_function=pnl.Exponential(rate=0.25, bias=-3),
         adjustment_cost_function=pnl.Exponential(rate=0.25, bias=-3),
