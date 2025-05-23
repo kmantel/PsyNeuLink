@@ -649,15 +649,16 @@ def iscompatible(candidate, reference=None, **kargs):
                 if isinstance(value, np.matrix):
                     value = value.A
 
-                try:
-                    if value.dtype.kind in {'i', 'f', 'c', 'u'}:
-                        return True
-                except AttributeError:
-                    pass
+                if safe_len(value) != 0:  # iscompatible considers empty arrays non-numeric
+                    try:
+                        if value.dtype.kind in {'i', 'f', 'c', 'u'}:
+                            return True
+                    except AttributeError:
+                        pass
 
-                # torch tensor only has numeric dtypes
-                if isinstance(value, torch.Tensor):
-                    return True
+                    # torch tensor only has numeric dtypes
+                    if isinstance(value, torch.Tensor):
+                        return True
 
                 if isinstance(value, (list, np.ndarray)) and not is_numeric_scalar(value):
                     try:
