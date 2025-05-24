@@ -178,9 +178,12 @@ jobs:
       run: |
           choco install --no-progress -y sumatrapdf.install
 
+    - name: install pytest
+      run: pip install pytest-durations
+
     - name: Test with pytest
       timeout-minutes: 180
-      run: pytest --junit-xml=tests_out.xml --verbosity=0 -n logical --capture=sys -o console_output_style=count ${{ matrix.extra-args }}
+      run: pytest --junit-xml=tests_out.xml --verbosity=0 -n logical --capture=sys -o console_output_style=count ${{ matrix.extra-args }} --pytest-durations=999999999
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
