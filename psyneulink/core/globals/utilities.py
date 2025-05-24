@@ -391,7 +391,10 @@ def is_numeric_or_none(x):
 
 def is_numeric(x):
     dtype = getattr(x, 'dtype', None)
-    if dtype is not None:
+    if (
+        dtype is not None
+        and safe_len(x) != 0  # iscompatible considers empty arrays non-numeric
+    ):
         try:
             if dtype.kind in {'i', 'f', 'c', 'u'}:
                 return True

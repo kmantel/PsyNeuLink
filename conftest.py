@@ -295,7 +295,7 @@ def patch_parameter_set_value_numeric_check():
     orig_parameter_set_value = psyneulink.core.globals.parameters.Parameter._set_value
 
     def check_numeric_set_value(self, value, **kwargs):
-        assert isinstance(value, np.ndarray) or (not is_numeric(value) and not isinstance(value, torch.Tensor)), (
+        assert isinstance(value, np.ndarray) or not is_numeric(value) or isinstance(value, torch.Tensor), (
             f'{self._owner._owner}.{self.name} is being set to a numeric value.'
             f' It must first be wrapped in a numpy array:\n\t{value}\n\t{type(value)}'
         )
