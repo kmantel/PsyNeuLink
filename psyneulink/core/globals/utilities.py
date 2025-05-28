@@ -2131,7 +2131,7 @@ def contains_type(
     except AttributeError:
         pass
     else:
-        if dtype.kind not in 'OV':  # not object or void dtype
+        if dtype.kind not in {'O', 'V'}:  # not object or void dtype
             if typ_is_tuple:
                 return any(dtype == dt for dt in typ_dtypes)
             else:
