@@ -2061,14 +2061,6 @@ def contains_type(
         Note: `isinstance(**arr**, **typ**)` should be used to check
         **arr** itself if needed
     """
-    try:
-        typ_dtypes = tuple(np.dtype(t) for t in typ)
-    except TypeError:
-        # typ_dtype = tuple(np.dtype)
-        typ_is_tuple = False
-    else:
-        typ_is_tuple = True
-
     # handle common numeric numpy array quickly
     try:
         dtype = arr.dtype
@@ -2076,10 +2068,12 @@ def contains_type(
         pass
     else:
         if dtype.kind not in {'O', 'V'}:  # not object or void dtype
-            if typ_is_tuple:
-                return any(dtype == dt for dt in typ_dtypes)
-            else:
+            try:
+                typ_dtypes = tuple(np.dtype(t) for t in typ)
+            except TypeError:
                 return dtype == np.dtype(typ)
+            else:
+                return any(dtype == dt for dt in typ_dtypes)
 
     try:
         arr_items = iter(arr)
