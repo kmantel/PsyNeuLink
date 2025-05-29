@@ -700,7 +700,7 @@ def handle_external_context(
         def wrapper(*args, context=None, **kwargs):
             eid = execution_id
 
-            if context is not None and not isinstance(context, Context):
+            if context is not None and not type(context) is Context:
                 try:
                     eid = context.default_execution_id
                 except AttributeError:
@@ -709,7 +709,7 @@ def handle_external_context(
             else:
                 try:
                     if args[context_arg_index] is not None:
-                        if isinstance(args[context_arg_index], Context):
+                        if type(args[context_arg_index]) is Context:
                             context = args[context_arg_index]
                         else:
                             try:
