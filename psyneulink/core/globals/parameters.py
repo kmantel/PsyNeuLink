@@ -651,7 +651,13 @@ class _ParamOwner:
             self._owner_ref = weakref.proxy(value)
         except TypeError:
             self._owner_ref = value
-        self._owner_string = _owner_string(self)
+        self.__owner_string = None
+
+    @property
+    def _owner_string(self):
+        if self.__owner_string is None:
+            self.__owner_string = _owner_string(self)
+        return self.__owner_string
 
 
 class ParametersTemplate(_ParamOwner):
