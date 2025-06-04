@@ -7481,11 +7481,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         `Pathway` :
             `Pathway` added to Composition.
         """
-        pathway = self._add_linear_processing_pathway(self, pathway, default_projection_matrix, name, context, *args)
+        pathway = self._add_linear_processing_pathway(pathway, default_projection_matrix, name, context, *args)
         self._analyze_graph(context)
         return pathway
 
-    def _add_linear_processing_pathway(self, pathway, default_projection_matrix, name, context, *args):
+    def _add_linear_processing_pathway(self, pathway, default_projection_matrix=None, name: str = None, context=None, *args):
         from psyneulink.core.compositions.pathway import Pathway, _is_node_spec, _is_pathway_entry_spec
         self._pre_existing_pathway_components = {NODES:[],
                                              PROJECTIONS:[]}

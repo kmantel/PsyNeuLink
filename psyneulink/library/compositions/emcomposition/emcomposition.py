@@ -2275,9 +2275,11 @@ class EMComposition(AutodiffComposition):
             # Query-specific pathways
             if not self.concatenate_queries:
                 if self.num_keys == 1:
-                    self.add_linear_processing_pathway([self.query_input_nodes[0],
+                    self._add_linear_processing_pathway([self.query_input_nodes[0],
                                                         self.match_nodes[0],
-                                                        self.softmax_node])
+                                                        self.softmax_node],
+                                                        context=context,
+                                                        )
                 else:
                     for i in range(self.num_keys):
                         pathway = [self.query_input_nodes[i],
@@ -2285,16 +2287,16 @@ class EMComposition(AutodiffComposition):
                                    self.combined_matches_node]
                         if self.weighted_match_nodes:
                             pathway.insert(2, self.weighted_match_nodes[i])
-                        self.add_linear_processing_pathway(pathway)
-                    self.add_linear_processing_pathway([self.combined_matches_node, self.softmax_node])
+                        self._add_linear_processing_pathway(pathway, context=context)
+                    self._add_linear_processing_pathway([self.combined_matches_node, self.softmax_node], context=context)
             # Query-concatenated pathways
             else:
                 for i in range(self.num_keys):
                     pathway = [self.query_input_nodes[i],
                                self.concatenate_queries_node,
                                self.match_nodes[0]]
-                    self.add_linear_processing_pathway(pathway)
-                self.add_linear_processing_pathway([self.match_nodes[0], self.softmax_node])
+                    self._add_linear_processing_pathway(pathway, context=context)
+                self._add_linear_processing_pathway([self.match_nodes[0], self.softmax_node], context=context)
 
             # softmax gain control is specified:
             if self.softmax_gain_control_node:
@@ -2303,17 +2305,19 @@ class EMComposition(AutodiffComposition):
             # field_weights -> weighted_softmax pathways
             if any(self.field_weight_nodes):
                 for i in range(self.num_keys):
-                    self.add_linear_processing_pathway([self.field_weight_nodes[i], self.weighted_match_nodes[i]])
+                    self._add_linear_processing_pathway([self.field_weight_nodes[i], self.weighted_match_nodes[i]], context=context)
 
             self.add_nodes(self.value_input_nodes, context=context)
 
             # Retrieval pathways
             for i in range(len(self.retrieved_nodes)):
-                self.add_linear_processing_pathway([self.softmax_node, self.retrieved_nodes[i]])
+                self._add_linear_processing_pathway([self.softmax_node, self.retrieved_nodes[i]], context=context)
 
             # Storage Nodes
             if use_storage_node:
                 self.add_node(self.storage_node, context=context)
+
+        self._analyze_graph(context)
 
     def _construct_input_nodes(self):
         """Create one node for each input to EMComposition and identify as key or value
