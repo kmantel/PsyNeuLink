@@ -8289,7 +8289,32 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             `learning Pathway` <Composition_Learning_Pathway>` added to the Composition.
 
         """
+        pathway = self._add_linear_learning_pathway(
+            pathway=pathway,
+            learning_function=learning_function,
+            loss_spec=loss_spec,
+            learning_rate=learning_rate,
+            error_function=error_function,
+            learning_update=learning_update,
+            default_projection_matrix=default_projection_matrix,
+            name=name,
+            context=context,
+        )
+        self._analyze_graph(context)
+        return pathway
 
+    def _add_linear_learning_pathway(
+        self,
+        pathway,
+        learning_function: Union[Type[LearningFunction], LearningFunction, Callable] = None,
+        loss_spec: Optional[Loss] = Loss.MSE,
+        learning_rate: Optional[Union[int, float, np.ndarray]] = None,
+        error_function=LinearCombination,
+        learning_update: Union[bool, Literal['online', 'after']] = 'after',
+        default_projection_matrix=None,
+        name: Optional[str] = None,
+        context=None,
+    ):
         from psyneulink.core.compositions.pathway import Pathway, PathwayRole
 
         # If called from add_pathways(), use its pathway_arg_str
@@ -8346,13 +8371,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # Add required role before calling add_linear_process_pathway so NodeRole.OUTPUTS are properly assigned
             self._add_required_node_role(output_source, NodeRole.OUTPUT, context)
 
-            learning_pathway = self.add_linear_processing_pathway(pathway=[input_source,
+            learning_pathway = self._add_linear_processing_pathway(pathway=[input_source,
                                                                            learned_projection,
                                                                            output_source],
                                                                   default_projection_matrix=default_projection_matrix,
                                                                   name=pathway_name,
-                                                                  # context=context)
-                                                                  context=context)
+                                                                  context=context,
+                                                                  )
 
             input_source_output_port = learned_projection.sender
             output_source_input_port = learned_projection.receiver
@@ -8395,8 +8420,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                            LEARNED_PROJECTIONS: [learned_projection],
                                            LEARNING_FUNCTION: learning_function}
             learning_pathway.learning_components = learning_related_components
-            # Update graph in case method is called again
-            self._analyze_graph()
 
         # Assign any Projection-specific learning_rates from/to LearningMechanisms
         learning_mechanisms = learning_pathway.learning_components[LEARNING_MECHANISMS]
@@ -8898,10 +8921,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # Pass ContextFlags.INITIALIZING so that it can be passed on to _analyze_graph() and then
         #    _check_for_projection_assignments() in order to ignore checks for require_projection_in_composition
         context.string = f"in 'pathway' arg for add_backpropagation_learning_pathway method of '{self.name}'"
-        learning_pathway = self.add_linear_processing_pathway(pathway=pathway,
-                                                              name=name,
-                                                              default_projection_matrix=default_projection_matrix,
-                                                              context=context)
+        learning_pathway = self._add_linear_processing_pathway(
+            pathway=pathway,
+            name=name,
+            default_projection_matrix=default_projection_matrix,
+            context=context,
+        )
         processing_pathway = learning_pathway.pathway
 
         path_length = len(processing_pathway)
@@ -9087,10 +9112,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        LEARNING_FUNCTION: BackPropagation}
 
         learning_pathway.learning_components = learning_related_components
-
-        # Update graph in case method is called again
-        self._analyze_graph()
-
         return learning_pathway
 
 
