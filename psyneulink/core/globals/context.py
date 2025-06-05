@@ -96,7 +96,7 @@ from beartype import beartype
 from psyneulink._typing import Optional, Union, Literal, Set, List
 
 from psyneulink.core.globals.keywords import CONTEXT, CONTROL, EXECUTING, EXECUTION_PHASE, FLAGS, INITIALIZING, LEARNING, SEPARATOR_BAR, SOURCE, VALIDATE
-from psyneulink.core.globals.utilities import _signature_cache, get_deepcopy_with_shared
+from psyneulink.core.globals.utilities import _get_cached_function_signature, get_deepcopy_with_shared
 
 
 __all__ = [
@@ -677,11 +677,7 @@ def handle_external_context(
         try:
             context_arg_index = _handle_external_context_arg_cache[func][CONTEXT]
         except KeyError:
-            try:
-                sig = _signature_cache[func]
-            except KeyError:
-                sig = inspect.signature(func)
-                _signature_cache[func] = sig
+            sig = _get_cached_function_signature(func)
             # this is true when there is a variable positional argument
             # (like *args). don't try to infer context position in this case,
             # because it can vary. I don't see a good way to get around this
