@@ -1978,7 +1978,13 @@ def get_all_explicit_arguments(cls_, func_str):
         func = getattr(cls_, func_str)
         has_args_or_kwargs = False
 
-        for arg_name, arg in inspect.signature(func).parameters.items():
+        try:
+            sig = _signature_cache[func]
+        except KeyError:
+            sig = inspect.signature(func)
+            _signature_cache[func] = sig
+
+        for arg_name, arg in sig.parameters.items():
             if (
                 arg.kind is inspect.Parameter.VAR_POSITIONAL
                 or arg.kind is inspect.Parameter.VAR_KEYWORD
