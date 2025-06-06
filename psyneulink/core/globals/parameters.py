@@ -846,7 +846,35 @@ class ParameterBase(types.SimpleNamespace, _ParamOwner):
         return object.__hash__(self)
 
 
-class Parameter(ParameterBase):
+def make_parameter_attr_property(cls, param_attr, initial_value):
+    private_field = f'_{param_attr}'
+    setattr(cls, private_field, initial_value)
+
+    def getter(self):
+        if self._inherited:
+            _inherited_source = self._inherited_source
+            return getattr(_inherited_source, param_attr)
+        else:
+            return getattr(self, private_field)
+
+    def setter(self, value):
+        self._inherited = False
+        # copy from parents? probably needed...
+        # maybe this means it won't actually save any time
+        setattr(self, private_field, value)
+
+    return property(getter).setter(setter)
+
+
+class _ParameterMeta(type):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        p = 'test_field'
+        setattr(self, p, make_parameter_attr_property(self, p, None))
+
+
+class Parameter(ParameterBase, metaclass=_ParameterMeta):
     """
     COMMENT:
         KDM 11/30/18: using nonstandard formatting below to ensure developer notes is below type in html
