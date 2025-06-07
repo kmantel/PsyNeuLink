@@ -166,7 +166,8 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-_signature_cache = {}
+_signature_cache = weakref.WeakKeyDictionary()
+_signature_strong_cache = {}
 
 
 class UtilitiesError(Exception):
@@ -1872,13 +1873,20 @@ def _get_arg_from_stack(arg_name:str):
 
 
 def _get_cached_function_signature(func):
-    # store hash as key to avoid non-weakref-able types (ex: wrapper_descriptor)
-    key = hash(func)
     try:
-        sig = _signature_cache[key]
+        sig = _signature_cache[func]
     except KeyError:
         sig = inspect.signature(func)
-        _signature_cache[key] = sig
+        _signature_cache[func] = sig
+    except TypeError:
+        # should be minimally used, primarily for object.__init__ slot
+        # wrapper type
+        try:
+            sig = _signature_strong_cache[func]
+        except KeyError:
+            sig = inspect.signature(func)
+            _signature_strong_cache[func] = sig
+
     return sig
 
 
