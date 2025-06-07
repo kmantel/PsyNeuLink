@@ -1872,12 +1872,8 @@ def _get_arg_from_stack(arg_name:str):
 
 
 def _get_cached_function_signature(func):
-    # try:
-    #     key = f'{func.__module__}.{func.__qualname__}'
-    # except AttributeError:
-    #     import ipdb
-    #     ipdb.set_trace()
-    key = repr(func)
+    # store hash as key to avoid non-weakref-able types (ex: wrapper_descriptor)
+    key = hash(func)
     try:
         sig = _signature_cache[key]
     except KeyError:
