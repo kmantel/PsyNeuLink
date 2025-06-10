@@ -1102,7 +1102,7 @@ class Parameter(ParameterBase):
     """
     # The values of these attributes will never be inherited from parent Parameters
     # KDM 7/12/18: consider inheriting ONLY default_value?
-    _uninherited_attrs = {'name', 'values', 'history', 'log'}
+    _uninherited_attrs = {'name', 'values', 'history', 'log', 'spec'}
 
     # for user convenience - these attributes will be hidden from the repr
     # display if the function is True based on the value of the attribute
@@ -1166,7 +1166,7 @@ class Parameter(ParameterBase):
         specify_none=False,
         bool_as_number=True,
         _owner=None,
-        _inherited=False,
+        _inherited=None,
         # this stores a reference to the Parameter object that is the
         # closest non-inherited parent. This parent is where the
         # attributes will be taken from
@@ -1197,41 +1197,70 @@ class Parameter(ParameterBase):
         if dependencies is not None:
             dependencies = create_union_set(dependencies)
 
-        super().__init__(
-            default_value=default_value,
-            name=name,
-            stateful=stateful,
-            modulable=modulable,
-            structural=structural,
-            modulation_combination_function=modulation_combination_function,
-            read_only=read_only,
-            function_arg=function_arg,
-            pnl_internal=pnl_internal,
-            aliases=aliases,
-            user=user,
-            values=values,
-            getter=getter,
-            setter=setter,
-            loggable=loggable,
-            log=log,
-            log_condition=log_condition,
-            delivery_condition=delivery_condition,
-            history=history,
-            history_max_length=history_max_length,
-            history_min_length=history_min_length,
-            fallback_value=fallback_value,
-            retain_old_simulation_data=retain_old_simulation_data,
-            constructor_argument=constructor_argument,
-            spec=spec,
-            parse_spec=parse_spec,
-            valid_types=valid_types,
-            reference=reference,
-            dependencies=dependencies,
-            initializer=initializer,
-            port=port,
-            mdf_name=mdf_name,
-            specify_none=specify_none,
-            bool_as_number=bool_as_number,
+        _inherited_specified = _inherited is not None
+
+        if (
+            self._is_sparse(_owner)
+            and (
+                _inherited
+                or not _inherited_specified
+            )
+        ):
+            self.__inherited = True
+            super().__init__(
+                name=name,
+                values=values,
+                history=history,
+                log=log,
+                spec=spec,
+                _inherited=_inherited,
+                _inherited_source=_inherited_source,
+                _user_specified=_user_specified,
+                _temp_uninherited=set(),
+                _scalar_converted=_scalar_converted,
+                _tracking_compiled_struct=_tracking_compiled_struct,
+                **kwargs
+            )
+        else:
+            if not _inherited_specified:
+                _inherited = False
+
+            self.__inherited = _inherited
+            super().__init__(
+                default_value=default_value,
+                name=name,
+                stateful=stateful,
+                modulable=modulable,
+                structural=structural,
+                modulation_combination_function=modulation_combination_function,
+                read_only=read_only,
+                function_arg=function_arg,
+                pnl_internal=pnl_internal,
+                aliases=aliases,
+                user=user,
+                values=values,
+                getter=getter,
+                setter=setter,
+                loggable=loggable,
+                log=log,
+                log_condition=log_condition,
+                delivery_condition=delivery_condition,
+                history=history,
+                history_max_length=history_max_length,
+                history_min_length=history_min_length,
+                fallback_value=fallback_value,
+                retain_old_simulation_data=retain_old_simulation_data,
+                constructor_argument=constructor_argument,
+                spec=spec,
+                parse_spec=parse_spec,
+                valid_types=valid_types,
+                reference=reference,
+                dependencies=dependencies,
+                initializer=initializer,
+                port=port,
+                mdf_name=mdf_name,
+                specify_none=specify_none,
+                bool_as_number=bool_as_number,
             _inherited=_inherited,
             _inherited_source=_inherited_source,
             _user_specified=_user_specified,
@@ -1242,13 +1271,11 @@ class Parameter(ParameterBase):
         )
 
         self._owner = _owner
-        self._param_attrs = [k for k in self.__dict__ if k[0] != '_'] \
-            + [k for k in self.__class__.__dict__ if k in self._additional_param_attr_properties]
+        # self._param_attrs = [k for k in self.__dict__ if k[0] != '_'] \
+        #     + [k for k in self.__class__.__dict__ if k in self._additional_param_attr_properties]
 
         self._is_invalid_source = False
         self._inherited_attrs_cache = {}
-        self.__inherited = False
-        self._inherited = _inherited
 
     def __repr__(self):
         return '{0} :\n{1}'.format(super(types.SimpleNamespace, self).__repr__(), str(self))
@@ -1324,7 +1351,11 @@ class Parameter(ParameterBase):
             # will fail, use default behavior
             return self.__getattribute__(attr)
         else:
-            return inherited_source.__getattribute__(attr)
+            try:
+                return inherited_source.__getattribute__(attr)
+            except AttributeError:
+                import ipdb
+                ipdb.set_trace()
 
     def __setattr__(self, attr, value):
         if attr in self._additional_param_attr_properties:
@@ -2063,23 +2094,25 @@ class Parameter(ParameterBase):
     def final_source(self):
         return self
 
+    def _is_sparse(self, owner):
+        return owner and type(owner).__name__ != 'ComponentsMeta'
+
 
 class _ParameterAliasMeta(type):
     # these will not be taken from the source
-    _unshared_attrs = ['name', 'aliases']
+    _unshared_attrs = {'name', 'aliases'}
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for k in Parameter().__dict__:
-            if k not in self._unshared_attrs:
-                setattr(
-                    self,
-                    k,
-                    property(
-                        fget=get_alias_property_getter(k, attr='source'),
-                        fset=get_alias_property_setter(k, attr='source')
-                    )
-                )
+    def __getattr__(self, attr):
+        if attr in self._unshared_attrs:
+            return super().__getattr__(attr)
+        else:
+            return getattr(self.source, attr)
+
+    def __setattr__(self, attr, value):
+        if attr in self._unshared_attrs:
+            return super().__setattr__(attr, value)
+        else:
+            return setattr(self.source, attr, value)
 
 
 # TODO: may not completely work with history/history_max_length
@@ -2418,6 +2451,8 @@ class ParametersBase(ParametersTemplate):
     _validation_method_prefix = '_validate_'
 
     def __init__(self, owner, parent=None):
+        from psyneulink.core.components.component import ComponentsMeta
+
         self._initializing = True
         self._nonexistent_attr_cache = set()
 
@@ -2451,10 +2486,17 @@ class ParametersBase(ParametersTemplate):
                     # Parameters class)
                     aliases_to_create[param_name] = parent_param.source.name
                 else:
-                    new_param = copy.deepcopy(parent_param)
-                    new_param._owner = self
-                    new_param._inherited = True
+                    if type(owner) is ComponentsMeta:
+                        new_param = copy.deepcopy(parent_param)
+                        new_param._owner = self
+                        new_param._inherited = True
+                    else:
+                        assert False
 
+                    # print(owner, param_name, new_param)
+                    # if owner.__name__ == 'Composition_Base':
+                    #     import ipdb
+                    #     ipdb.set_trace()
                     setattr(self, param_name, new_param)
 
         for alias_name, source_name in aliases_to_create.items():
@@ -2523,7 +2565,13 @@ class ParametersBase(ParametersTemplate):
                     reconciled_value = self._reconcile_value_with_init_default(attr, value.default_value)
                     value._set_default_value(reconciled_value, check_scalar=is_new_parameter)
 
+                # import ipdb
+                # ipdb.set_trace()
+                # print(value)
                 super().__setattr__(attr, value)
+
+                # import ipdb
+                # ipdb.set_trace()
 
                 if value.aliases is not None:
                     conflicts = []

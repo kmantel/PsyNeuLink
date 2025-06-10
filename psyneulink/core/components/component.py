@@ -762,6 +762,10 @@ class ComponentsMeta(ABCMeta):
         except AttributeError:
             parent = None
         self.parameters = self.Parameters(owner=self, parent=parent)
+        Parameter._param_attrs = (
+            [k for k in self.parameters.variable.__dict__ if k[0] != '_']
+            + [k for k in Parameter.__dict__ if k in Parameter._additional_param_attr_properties]
+        )
 
         for param in self.parameters:
             if not hasattr(self, param.name):
@@ -1061,6 +1065,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         """
         variable = Parameter(np.array([0]), read_only=True, pnl_internal=True, constructor_argument='default_variable')
         value = Parameter(np.array([0]), read_only=True, pnl_internal=True)
+        # import ipdb
+        # ipdb.set_trace()
         has_initializers = Parameter(False, setter=_has_initializers_setter, pnl_internal=True)
         # execution_count is not stateful because it is a global counter;
         #    for context-specific counts should use schedulers which store this info
