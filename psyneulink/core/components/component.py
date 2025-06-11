@@ -2416,6 +2416,9 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 p.spec = copy_parameter_value(p.spec, shared_types=shared_types)
 
             # set default to None context to ensure it exists
+            if p.name == 'integration_rate' and 'Recurrent' in type(self).__name__:
+                import ipdb
+                ipdb.set_trace()
             if (
                 p._get(context, fallback_value=None) is None and p.getter is None
                 or context.execution_id not in p.values

@@ -644,12 +644,15 @@ addl_unsynced_parameter_names = {'value'}
 class _ParamOwner:
     @property
     def _owner(self):
-        return unproxy_weakproxy(self._owner_ref)
+        try:
+            return self._owner_ref()
+        except TypeError:
+            return None
 
     @_owner.setter
     def _owner(self, value):
         try:
-            self._owner_ref = weakref.proxy(value)
+            self._owner_ref = weakref.ref(value)
         except TypeError:
             self._owner_ref = value
         self.__owner_string = None
@@ -891,7 +894,35 @@ class ParameterBase(types.SimpleNamespace, _ParamOwner):
 my_debug = True
 
 
-class Parameter(ParameterBase):
+class _ParameterMeta(type):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        _param_attrs = set()
+        for cls_ in reversed(self.__mro__):
+            if isinstance(cls_, _ParameterMeta):
+                _param_attrs.update(
+                    {
+                        name for name, param in _get_cached_function_signature(cls_.__init__).parameters.items()
+                        if (
+                            name[0] != '_'
+                            and name != 'self'
+                            and param.kind not in {
+                                inspect.Parameter.VAR_POSITIONAL,
+                                inspect.Parameter.VAR_KEYWORD
+                            }
+                        )
+                    }
+                )
+        self._param_attrs = _param_attrs
+
+        try:
+            self._sourced_attrs = _param_attrs.difference(self._unsourced_attrs)
+        except AttributeError:
+            pass
+
+
+class Parameter(ParameterBase, metaclass=_ParameterMeta):
     """
     COMMENT:
         KDM 11/30/18: using nonstandard formatting below to ensure developer notes is below type in html
@@ -1315,18 +1346,6 @@ class Parameter(ParameterBase):
         self._owner = _owner
         self._is_invalid_source = _inherited
         self._inherited_attrs_cache = {}
-
-    _param_attrs = {
-        name for name, param in _get_cached_function_signature(__init__).parameters.items()
-        if (
-            name[0] != '_'
-            and name != 'self'
-            and param.kind not in {
-                inspect.Parameter.VAR_POSITIONAL,
-                inspect.Parameter.VAR_KEYWORD
-            }
-        )
-    }
 
     def __repr__(self):
         return '{0} :\n{1}'.format(super(types.SimpleNamespace, self).__repr__(), str(self))
@@ -2161,6 +2180,24 @@ class Parameter(ParameterBase):
         except AttributeError:
             return False
 
+    @classmethod
+    def _get_param_attrs(cls):
+        new_attrs = {
+            name for name, param in _get_cached_function_signature(cls.__init__).parameters.items()
+            if (
+                name[0] != '_'
+                and name != 'self'
+                and param.kind not in {
+                    inspect.Parameter.VAR_POSITIONAL,
+                    inspect.Parameter.VAR_KEYWORD
+                }
+            )
+        }
+        return {
+            **super()._get_param_attrs()
+            **new_attrs
+        }
+
 
 class _ParameterAliasMeta(type):
     # these will not be taken from the source
@@ -2209,12 +2246,12 @@ class ParameterAlias(ParameterBase, metaclass=_ParameterAliasMeta):
 
     @property
     def source(self):
-        return unproxy_weakproxy(self._source)
+        return self._source()
 
     @source.setter
     def source(self, value):
         try:
-            self._source = weakref.proxy(value)
+            self._source = weakref.ref(value)
         except TypeError:
             self._source = value
 
@@ -2281,8 +2318,7 @@ class SharedParameter(Parameter):
     _additional_param_attr_properties = Parameter._additional_param_attr_properties.union({'name'})
     _uninherited_attrs = Parameter._uninherited_attrs.union({'attribute_name', 'shared_parameter_name'})
     # attributes that should not be inherited from source attr
-    _unsourced_attrs = {'default_value', 'primary', 'getter', 'setter'}
-    _sourced_attrs = Parameter._param_attrs.difference(_unsourced_attrs)
+    _unsourced_attrs = {'default_value', 'attribute_name', 'shared_parameter_name', 'primary', 'getter', 'setter'}
 
     def __init__(
         self,
@@ -2557,7 +2593,9 @@ class ParametersBase(ParametersTemplate):
                     else:
                         # import ipdb
                         # ipdb.set_trace()
-                        new_param = Parameter(name=param_name, _owner=self, _inherited=True)
+                        new_param = type(parent_param)(
+                            name=param_name, _owner=self, _inherited=True
+                        )
 
 
                     # print(owner, param_name, new_param)
