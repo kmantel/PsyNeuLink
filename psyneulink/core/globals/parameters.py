@@ -2528,8 +2528,6 @@ class ParametersBase(ParametersTemplate):
 
             constructor_default = get_init_signature_default_value(self._owner, param_name)
 
-            print(owner, param_name)
-
             if (
                 (
                     constructor_default is not None
