@@ -329,6 +329,7 @@ from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.keywords import DEFAULT, SHARED_COMPONENT_TYPES
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
 from psyneulink.core.globals.utilities import (
+    _get_cached_function_signature,
     call_with_pruned_args,
     contains_type,
     convert_all_elements_to_np_array,
@@ -665,6 +666,7 @@ class ParametersTemplate(_ParamOwner):
     _values_default_excluded_attrs = {'user': False}
 
     def __init__(self, owner, parent=None):
+        from psyneulink.core.components.component import ComponentsMeta
         # using weakref to allow garbage collection of unused objects of this type
         self._owner = owner
         self._parent = parent
@@ -683,6 +685,7 @@ class ParametersTemplate(_ParamOwner):
                 self._params.add(k)
 
         self._children = weakref.WeakSet()
+        self._on_class = isinstance(owner, ComponentsMeta)
 
     def __repr__(self):
         return '{0} :\n{1}'.format(super().__repr__(), str(self))
@@ -883,6 +886,9 @@ class ParameterBase(types.SimpleNamespace, _ParamOwner):
 
     def __hash__(self):
         return object.__hash__(self)
+
+
+my_debug = True
 
 
 class Parameter(ParameterBase):
@@ -1129,6 +1135,42 @@ class Parameter(ParameterBase):
         'spec',
     }
 
+    # _param_attrs = {
+    #     'default_value': None,
+    #     'name': None,
+    #     'stateful': True,
+    #     'modulable': False,
+    #     'structural': False,
+    #     'modulation_combination_function': None,
+    #     'read_only': False,
+    #     'function_arg': True,
+    #     'pnl_internal': False,
+    #     'aliases': None,
+    #     'user': True,
+    #     'values': None,
+    #     'getter': None,
+    #     'setter': None,
+    #     'loggable': True,
+    #     'log': None,
+    #     'log_condition': LogCondition.OFF,
+    #     'delivery_condition': LogCondition.OFF,
+    #     'history': None,
+    #     'history_max_length': 1,
+    #     'history_min_length': 0,
+    #     'fallback_value': ParameterNoValueError,
+    #     'retain_old_simulation_data': False,
+    #     'constructor_argument': None,
+    #     'spec': None,
+    #     'parse_spec': False,
+    #     'valid_types': None,
+    #     'reference': False,
+    #     'dependencies': None,
+    #     'initializer': None,
+    #     'port': None,  # if modulated, set to the ParameterPort
+    #     'mdf_name': None,
+    #     'specify_none': False,
+    # }
+
     def __init__(
         self,
         default_value=None,
@@ -1271,11 +1313,20 @@ class Parameter(ParameterBase):
         )
 
         self._owner = _owner
-        # self._param_attrs = [k for k in self.__dict__ if k[0] != '_'] \
-        #     + [k for k in self.__class__.__dict__ if k in self._additional_param_attr_properties]
-
-        self._is_invalid_source = False
+        self._is_invalid_source = _inherited
         self._inherited_attrs_cache = {}
+
+    _param_attrs = {
+        name for name, param in _get_cached_function_signature(__init__).parameters.items()
+        if (
+            name[0] != '_'
+            and name != 'self'
+            and param.kind not in {
+                inspect.Parameter.VAR_POSITIONAL,
+                inspect.Parameter.VAR_KEYWORD
+            }
+        )
+    }
 
     def __repr__(self):
         return '{0} :\n{1}'.format(super(types.SimpleNamespace, self).__repr__(), str(self))
@@ -1349,11 +1400,17 @@ class Parameter(ParameterBase):
 
         if inherited_source is None:
             # will fail, use default behavior
+            # global my_debug
+            # if my_debug:
+            #     my_debug = False
+            #     import ipdb
+            #     ipdb.set_trace()
             return self.__getattribute__(attr)
         else:
             try:
                 return inherited_source.__getattribute__(attr)
             except AttributeError:
+                raise
                 import ipdb
                 ipdb.set_trace()
 
@@ -1464,7 +1521,11 @@ class Parameter(ParameterBase):
                 attr not in exclusions
                 and getattr(self, attr) is getattr(self._parent, attr)
             ):
-                super().__setattr__(attr, self._inherited_attrs_cache[attr])
+                try:
+                    val = self._inherited_attrs_cache[attr]
+                except KeyError:
+                    val = getattr(self, attr)
+                super().__setattr__(attr, val)
 
     @property
     def _parent(self):
@@ -2095,7 +2156,10 @@ class Parameter(ParameterBase):
         return self
 
     def _is_sparse(self, owner):
-        return owner and type(owner).__name__ != 'ComponentsMeta'
+        try:
+            return not owner._on_class
+        except AttributeError:
+            return False
 
 
 class _ParameterAliasMeta(type):
@@ -2217,7 +2281,8 @@ class SharedParameter(Parameter):
     _additional_param_attr_properties = Parameter._additional_param_attr_properties.union({'name'})
     _uninherited_attrs = Parameter._uninherited_attrs.union({'attribute_name', 'shared_parameter_name'})
     # attributes that should not be inherited from source attr
-    _unsourced_attrs = {'default_value', 'primary', 'getter', 'setter', 'aliases'}
+    _unsourced_attrs = {'default_value', 'primary', 'getter', 'setter'}
+    _sourced_attrs = Parameter._param_attrs.difference(_unsourced_attrs)
 
     def __init__(
         self,
@@ -2250,7 +2315,7 @@ class SharedParameter(Parameter):
             return super().__getattr__(attr)
 
     def __setattr__(self, attr, value):
-        if self._source_exists and attr in self._sourced_attrs:
+        if attr in self._sourced_attrs and self._source_exists:
             setattr(self.source, attr, value)
         else:
             super().__setattr__(attr, value)
@@ -2370,10 +2435,6 @@ class SharedParameter(Parameter):
 
         return base_param
 
-    @property
-    def _sourced_attrs(self):
-        return set([a for a in self._param_attrs if a not in self._unsourced_attrs])
-
 
 class FunctionParameter(SharedParameter):
     """
@@ -2467,6 +2528,8 @@ class ParametersBase(ParametersTemplate):
 
             constructor_default = get_init_signature_default_value(self._owner, param_name)
 
+            print(owner, param_name)
+
             if (
                 (
                     constructor_default is not None
@@ -2476,6 +2539,9 @@ class ParametersBase(ParametersTemplate):
             ):
                 # KDM 6/25/18: NOTE: this may need special handling if you're creating a ParameterAlias directly
                 # in a class's Parameters class
+                # if param_name == 'pertinacity':
+                #     import ipdb
+                #     ipdb.set_trace()
                 setattr(self, param_name, param_value)
             else:
                 parent_param = getattr(self._parent, param_name)
@@ -2491,7 +2557,10 @@ class ParametersBase(ParametersTemplate):
                         new_param._owner = self
                         new_param._inherited = True
                     else:
-                        assert False
+                        # import ipdb
+                        # ipdb.set_trace()
+                        new_param = Parameter(name=param_name, _owner=self, _inherited=True)
+
 
                     # print(owner, param_name, new_param)
                     # if owner.__name__ == 'Composition_Base':
@@ -2630,6 +2699,11 @@ class ParametersBase(ParametersTemplate):
 
                 # assign value to default_value
                 if isinstance(current_value, (Parameter, ParameterAlias)):
+
+                    # if attr == 'pertinacity':
+                    #     import ipdb
+                    #     ipdb.set_trace()
+
                     # construct a copy because the original may be used as a base for reset()
                     new_param = copy.deepcopy(current_value)
                     # set _inherited before default_value because it will
@@ -2640,6 +2714,10 @@ class ParametersBase(ParametersTemplate):
                     current_value._is_invalid_source = True
 
                 else:
+                    # if attr == 'pertinacity':
+                    #     import ipdb
+                    #     ipdb.set_trace()
+
                     new_param = Parameter(name=attr, _owner=self)
 
                 super().__setattr__(attr, new_param)

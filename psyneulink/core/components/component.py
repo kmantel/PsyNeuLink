@@ -762,10 +762,6 @@ class ComponentsMeta(ABCMeta):
         except AttributeError:
             parent = None
         self.parameters = self.Parameters(owner=self, parent=parent)
-        Parameter._param_attrs = (
-            [k for k in self.parameters.variable.__dict__ if k[0] != '_']
-            + [k for k in Parameter.__dict__ if k in Parameter._additional_param_attr_properties]
-        )
 
         for param in self.parameters:
             if not hasattr(self, param.name):
@@ -2416,7 +2412,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         for p in filter(lambda x: not isinstance(x, (ParameterAlias, SharedParameter)), self.parameters._in_dependency_order):
             # copy spec so it is not overwritten later
             # TODO: check if this is necessary
-            p.spec = copy_parameter_value(p.spec, shared_types=shared_types)
+            if p.spec is not None:
+                p.spec = copy_parameter_value(p.spec, shared_types=shared_types)
 
             # set default to None context to ensure it exists
             if (
