@@ -2205,31 +2205,17 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
         }
 
 
-class _ParameterAliasMeta(type):
-    # these will not be taken from the source
-    _unshared_attrs = {'name', 'aliases'}
-
-    def __getattr__(self, attr):
-        if attr in self._unshared_attrs:
-            return super().__getattr__(attr)
-        else:
-            return getattr(self.source, attr)
-
-    def __setattr__(self, attr, value):
-        if attr in self._unshared_attrs:
-            return super().__setattr__(attr, value)
-        else:
-            return setattr(self.source, attr, value)
-
-
 # TODO: may not completely work with history/history_max_length
-class ParameterAlias(ParameterBase, metaclass=_ParameterAliasMeta):
+class ParameterAlias(ParameterBase):
     """
         A counterpart to `Parameter` that represents a pseudo-Parameter alias that
         refers to another `Parameter`, but has a different name
     """
+    # these will not be taken from the source
+    _unshared_attrs = {'name', 'aliases', 'source', '_source'}
+
     def __init__(self, source=None, name=None):
-        super().__init__(name=name)
+        super().__init__(name=name, aliases=None)
 
         self.source = source
 
@@ -2239,7 +2225,16 @@ class ParameterAlias(ParameterBase, metaclass=_ParameterAliasMeta):
             pass
 
     def __getattr__(self, attr):
-        return getattr(self.source, attr)
+        if attr in self._unshared_attrs:
+            return super().__getattribute__(attr)
+        else:
+            return getattr(self.source, attr)
+
+    def __setattr__(self, attr, value):
+        if attr in self._unshared_attrs:
+            return super().__setattr__(attr, value)
+        else:
+            return setattr(self.source, attr, value)
 
     # must override deepcopy despite it being essentially shallow
     # because otherwise it will default to Parameter.__deepcopy__ and
