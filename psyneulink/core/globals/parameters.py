@@ -1292,7 +1292,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
                 _temp_uninherited=set(),
                 _scalar_converted=_scalar_converted,
                 _tracking_compiled_struct=_tracking_compiled_struct,
-                **kwargs
+                **{k: v for k, v in kwargs.items() if k in self._uninherited_attrs},
             )
         else:
             if not _inherited_specified:
@@ -1527,7 +1527,12 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
         for attr in self._param_attrs:
             if attr not in exclusions:
                 self._inherited_attrs_cache[attr] = getattr(self, attr)
-                delattr(self, attr)
+                try:
+                    delattr(self, attr)
+                except AttributeError:
+                    pass
+                    # import ipdb
+                    # ipdb.set_trace()
 
     def _restore_inherited_attrs(self, exclusions=None):
         if exclusions is None:
@@ -2316,9 +2321,8 @@ class SharedParameter(Parameter):
                 Parameter's owning Component and returns the set value
     """
     _additional_param_attr_properties = Parameter._additional_param_attr_properties.union({'name'})
-    _uninherited_attrs = Parameter._uninherited_attrs.union({'attribute_name', 'shared_parameter_name'})
     # attributes that should not be inherited from source attr
-    _unsourced_attrs = {'default_value', 'attribute_name', 'shared_parameter_name', 'primary', 'getter', 'setter'}
+    _unsourced_attrs = {'aliases', 'default_value', 'attribute_name', 'shared_parameter_name', 'primary', 'getter', 'setter', '_source_exists'}
 
     def __init__(
         self,
@@ -2418,6 +2422,12 @@ class SharedParameter(Parameter):
             return None
 
         try:
+            # import ipdb
+            # ipdb.set_trace()
+            # print(self._owner._owner, self.name)
+            if not isinstance(self.attribute_name, str):
+                import ipdb
+                ipdb.set_trace()
             obj = getattr(owning_component.parameters, self.attribute_name)
             if obj.stateful:
                 raise ParameterError(
@@ -2494,7 +2504,8 @@ class FunctionParameter(SharedParameter):
                 :type: str
                 :default: 'function'
     """
-    _uninherited_attrs = SharedParameter._uninherited_attrs.union({'function_name', 'function_parameter_name'})
+    # _uninherited_attrs = SharedParameter._uninherited_attrs.union({'attribute_name', 'shared_parameter_name'})
+    _unsourced_attrs = SharedParameter._unsourced_attrs.union({'function_name', 'function_parameter_name'})
 
     def __init__(
         self,
@@ -2589,12 +2600,21 @@ class ParametersBase(ParametersTemplate):
                     if type(owner) is ComponentsMeta:
                         new_param = copy.deepcopy(parent_param)
                         new_param._owner = self
+                        # if isinstance(new_param, SharedParameter):
+                        #     import ipdb
+                        #     ipdb.set_trace()
                         new_param._inherited = True
                     else:
                         # import ipdb
                         # ipdb.set_trace()
+                        # if isinstance(parent_param, SharedParameter):
+                        #     import ipdb
+                        #     ipdb.set_trace()
+
                         new_param = type(parent_param)(
-                            name=param_name, _owner=self, _inherited=True
+                            _owner=self,
+                            _inherited=True,
+                            **{k: copy_parameter_value(getattr(parent_param, k)) for k in parent_param._uninherited_attrs}
                         )
 
 
@@ -2652,6 +2672,9 @@ class ParametersBase(ParametersTemplate):
             super().__setattr__(attr, value)
         else:
             if isinstance(value, Parameter):
+                # if value.name in {'learning_rate', 'learning_function'} and type(value._owner._owner).__name__ != 'ComponentsMeta':
+                #     import ipdb
+                #     ipdb.set_trace()
                 is_new_parameter = False
 
                 if value._owner is None:
@@ -2696,6 +2719,8 @@ class ParametersBase(ParametersTemplate):
                         self._register_parameter(alias)
 
                     if len(conflicts) == 1:
+                        # import ipdb
+                        # ipdb.set_trace()
                         raise ParameterError(
                             f'Attempting to create an alias for the {value.name}'
                             f' Parameter on {self._owner.__name__} that would'
@@ -2739,7 +2764,9 @@ class ParametersBase(ParametersTemplate):
                     # if attr == 'pertinacity':
                     #     import ipdb
                     #     ipdb.set_trace()
-
+                    if current_value.name in {'learning_rate', 'learning_function'} and type(self._owner).__name__ != 'ComponentsMeta':
+                        import ipdb
+                        ipdb.set_trace()
                     # construct a copy because the original may be used as a base for reset()
                     new_param = copy.deepcopy(current_value)
                     # set _inherited before default_value because it will
