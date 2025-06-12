@@ -2180,6 +2180,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
         return self
 
     def _is_sparse(self, owner):
+        return owner is not None
         try:
             return not owner._on_class
         except AttributeError:
@@ -2199,7 +2200,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
             )
         }
         return {
-            **super()._get_param_attrs()
+            **super()._get_param_attrs(),
             **new_attrs
         }
 
@@ -2597,25 +2598,25 @@ class ParametersBase(ParametersTemplate):
                     # Parameters class)
                     aliases_to_create[param_name] = parent_param.source.name
                 else:
-                    if type(owner) is ComponentsMeta:
-                        new_param = copy.deepcopy(parent_param)
-                        new_param._owner = self
-                        # if isinstance(new_param, SharedParameter):
-                        #     import ipdb
-                        #     ipdb.set_trace()
-                        new_param._inherited = True
-                    else:
+                    # if type(owner) is ComponentsMeta:
+                    #     new_param = copy.deepcopy(parent_param)
+                    #     new_param._owner = self
+                    #     # if isinstance(new_param, SharedParameter):
+                    #     #     import ipdb
+                    #     #     ipdb.set_trace()
+                    #     new_param._inherited = True
+                    # else:
                         # import ipdb
                         # ipdb.set_trace()
                         # if isinstance(parent_param, SharedParameter):
                         #     import ipdb
                         #     ipdb.set_trace()
 
-                        new_param = type(parent_param)(
-                            _owner=self,
-                            _inherited=True,
-                            **{k: copy_parameter_value(getattr(parent_param, k)) for k in parent_param._uninherited_attrs}
-                        )
+                    new_param = type(parent_param)(
+                        _owner=self,
+                        _inherited=True,
+                        **{k: copy_parameter_value(getattr(parent_param, k)) for k in parent_param._uninherited_attrs}
+                    )
 
 
                     # print(owner, param_name, new_param)
@@ -2701,6 +2702,7 @@ class ParametersBase(ParametersTemplate):
                 # import ipdb
                 # ipdb.set_trace()
 
+                # print(self._owner, attr)
                 if value.aliases is not None:
                     conflicts = []
                     for alias in value.aliases:
@@ -2781,7 +2783,7 @@ class ParametersBase(ParametersTemplate):
                     #     import ipdb
                     #     ipdb.set_trace()
 
-                    new_param = Parameter(name=attr, _owner=self)
+                    new_param = Parameter(name=attr, _owner=self, _inherited=False)
 
                 super().__setattr__(attr, new_param)
                 new_param._set_default_value(value)
@@ -2855,6 +2857,7 @@ class ParametersBase(ParametersTemplate):
     def _validate(self, attr, value):
         err_msg = None
 
+        # print(getattr(self, attr).__dict__)
         valid_types = getattr(self, attr).valid_types
         if valid_types is not None:
             if not isinstance(value, valid_types):
