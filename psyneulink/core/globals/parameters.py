@@ -2141,6 +2141,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
             value = self._parse(value, check_scalar=check_scalar)
             self._validate(value)
 
+        self._inherited = False
         super().__setattr__('default_value', value)
 
     def _set_history_max_length(self, value):
