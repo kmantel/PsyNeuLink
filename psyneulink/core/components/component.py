@@ -1298,14 +1298,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # settings. Remove this eventually
         self.most_recent_context = context
 
-        if getattr(function, 'owner', None) is self:
-            print(self, 'hi', function)
-        if 'function' in self.defaults and function is self.defaults.function:
-            current_function_val = self.parameters.function._get(context, fallback_value=None)
-            if isinstance(current_function_val, type(function)):
-                print(self, 'not recopying?', function)
-                function = current_function_val
-
         # INSTANTIATE ATTRIBUTES BEFORE FUNCTION
         # Stub for methods that need to be executed before instantiating function
         #    (e.g., _instantiate_sender and _instantiate_receiver in Projection)
@@ -2409,16 +2401,13 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         self.defaults = Defaults(owner=self)
         for k in sorted(defaults, key=self.parameters._dependency_order_key(names=True)):
-            # if defaults[k] is not None:
-            #     defaults[k] = copy_parameter_value(
-            #         defaults[k],
-            #         shared_types=shared_types
-            #     )
+            if defaults[k] is not None:
+                defaults[k] = copy_parameter_value(
+                    defaults[k],
+                    shared_types=shared_types
+                )
             parameter_obj = getattr(self.parameters, k)
             parameter_obj._set_default_value(defaults[k], check_scalar=parameter_obj._user_specified)
-            # if parameter_obj.name == 'matrix' and parameter_obj.default_value is not defaults[k]:
-            #     import ipdb
-            #     ipdb.set_trace()
 
         for p in filter(lambda x: not isinstance(x, (ParameterAlias, SharedParameter)), self.parameters._in_dependency_order):
             # copy spec so it is not overwritten later
@@ -2430,10 +2419,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             if p.name == 'integration_rate' and 'Recurrent' in type(self).__name__:
                 import ipdb
                 ipdb.set_trace()
-
-            # if p.name == 'function':
-            #     continue
-
             if (
                 p._get(context, fallback_value=None) is None and p.getter is None
                 or context.execution_id not in p.values
@@ -2453,8 +2438,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     # elsewhere
                     if isinstance(val, Function):
                         if val.owner is not None:
-                            if p.name == 'function':
-                                print('yuuuuupp', self, val)
                             val = copy.deepcopy(val)
                     elif not contains_type(val, Function):
                         val = copy_parameter_value(val, shared_types=shared_types)
@@ -2509,7 +2492,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # (this originally occurred in _validate_params)
         for p in self.parameters._in_dependency_order:
             if p.getter is None:
-                val = p._get(context, fallback_value=None)
+                val = p._get(context)
                 if (
                     p.name != FUNCTION
                     and is_instance_or_subclass(val, Function)
@@ -2605,7 +2588,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             ):
                 try:
                     obj = getattr(self.parameters, param.attribute_name)
-                    shared_objs = [obj.default_value, obj._get(context, fallback_value=None)]
+                    shared_objs = [obj.default_value, obj._get(context)]
                 except AttributeError:
                     obj = getattr(self, param.attribute_name)
                     shared_objs = [obj]
