@@ -2205,6 +2205,15 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
             **new_attrs
         }
 
+    @property
+    def inherited_attributes(self):
+        if not self._inherited:
+            return None
+        return {
+            attr: getattr(self, attr)
+            for attr in self._param_attrs.difference(self._uninherited_attrs)
+        }
+
 
 # TODO: may not completely work with history/history_max_length
 class ParameterAlias(ParameterBase):
