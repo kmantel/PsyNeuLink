@@ -2611,11 +2611,11 @@ class ParametersBase(ParametersTemplate):
                     #     #     ipdb.set_trace()
                     #     new_param._inherited = True
                     # else:
-                        # import ipdb
-                        # ipdb.set_trace()
-                        # if isinstance(parent_param, SharedParameter):
-                        #     import ipdb
-                        #     ipdb.set_trace()
+                    #     import ipdb
+                    #     ipdb.set_trace()
+                    #     if isinstance(parent_param, SharedParameter):
+                    #         import ipdb
+                    #         ipdb.set_trace()
 
                     new_param = type(parent_param)(
                         _owner=self,
