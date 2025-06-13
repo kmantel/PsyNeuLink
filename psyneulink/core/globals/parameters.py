@@ -2610,7 +2610,11 @@ class ParametersBase(ParametersTemplate):
                     new_param = type(parent_param)(
                         _owner=self,
                         _inherited=True,
-                        **{k: copy_parameter_value(getattr(parent_param, k)) for k in parent_param._uninherited_attrs}
+                        _scalar_converted=parent_param._scalar_converted,
+                        **{
+                            k: copy_parameter_value(getattr(parent_param, k))
+                            for k in parent_param._uninherited_attrs
+                        },
                     )
 
 
