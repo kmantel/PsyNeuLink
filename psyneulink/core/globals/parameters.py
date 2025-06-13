@@ -2141,6 +2141,10 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
             value = self._parse(value, check_scalar=check_scalar)
             self._validate(value)
 
+        # if self.name == 'matrix':
+        #     print(self._inherited)
+        #     import ipdb
+        #     ipdb.set_trace()
         self._inherited = False
         super().__setattr__('default_value', value)
 
