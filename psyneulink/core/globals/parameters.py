@@ -1435,15 +1435,15 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
 
     def __setattr__(self, attr, value):
         if attr in self._additional_param_attr_properties:
-            self._temp_uninherited.add(attr)
-            self._inherited = False
+            # self._temp_uninherited.add(attr)
 
             try:
                 getattr(self, '_set_{0}'.format(attr))(value)
             except AttributeError:
                 super().__setattr__(attr, value)
+            self._inherited = False
 
-            self._temp_uninherited.remove(attr)
+            # self._temp_uninherited.remove(attr)
         else:
             super().__setattr__(attr, value)
 
