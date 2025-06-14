@@ -1543,7 +1543,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
         for attr in self._param_attrs:
             if (
                 attr not in exclusions
-                and getattr(self, attr) is getattr(self._parent, attr)
+                and attr not in self.__dict__
             ):
                 try:
                     val = self._inherited_attrs_cache[attr]
