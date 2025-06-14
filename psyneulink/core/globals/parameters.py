@@ -2222,12 +2222,13 @@ class ParameterAlias(ParameterBase):
         refers to another `Parameter`, but has a different name
     """
     # these will not be taken from the source
-    _unshared_attrs = {'name', 'aliases', 'source', '_source'}
+    _unshared_attrs = {'name', 'aliases', 'source', '_source', 'constructor_argument'}
 
     def __init__(self, source=None, name=None):
         super().__init__(name=name, aliases=None)
 
         self.source = source
+        self.constructor_argument = None
 
         try:
             source._register_alias(name)
