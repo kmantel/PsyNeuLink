@@ -845,7 +845,7 @@ from psyneulink.core.components.ports.outputport import OutputPort
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
 from psyneulink.core.globals.mdf import _get_variable_parameter_name
 from psyneulink.core.globals.keywords import \
-    COMBINE, comparison_operators, EXECUTION_COUNT, FUNCTION, GREATER_THAN_OR_EQUAL, \
+    COMBINE, GREATER_THAN, LESS_THAN, NOT_EQUAL, comparison_operators, EXECUTION_COUNT, FUNCTION, GREATER_THAN_OR_EQUAL, \
     CURRENT_VALUE, LESS_THAN_OR_EQUAL, MAX_ABS_DIFF, \
     NAME, NOISE, NUM_EXECUTIONS_BEFORE_FINISHED, OWNER_VALUE, RESET, RESULT, RESULTS, \
     SELECTION_FUNCTION_TYPE, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE
@@ -1225,6 +1225,24 @@ class TransferMechanism(ProcessingMechanism_Base):
                     :default value: ``operator.le``
                     :type: ``types.FunctionType``
 
+                termination_comparison_rtol
+                    Used with `termination_comparison_op <TransferMechanism.termination_comparison_op>`.
+                    See `numpy.isclose`, the relative tolerance. May be
+                    a number or an array-like of numbers matching the
+                    shape of `value <TransferMechanism.value>`
+
+                    :default value: 1e-05
+                    :type: float
+
+                termination_comparison_atol
+                    Used with `termination_comparison_op <TransferMechanism.termination_comparison_op>`.
+                    See `numpy.isclose`, the absolute tolerance. May be
+                    a number or an array-like of numbers matching the
+                    shape of `value <TransferMechanism.value>`
+
+                    :default value: 1e-08
+                    :type: float
+
                 termination_measure
                     see `termination_measure <TransferMechanism.termination_measure>`
 
@@ -1270,6 +1288,8 @@ class TransferMechanism(ProcessingMechanism_Base):
         )
         termination_threshold = Parameter(None, modulable=True)
         termination_comparison_op = Parameter(LESS_THAN_OR_EQUAL, modulable=False, loggable=False)
+        termination_comparison_rtol = 1e-05
+        termination_comparison_atol = 1e-08
         termination_measure_value = Parameter(0.0, modulable=False, read_only=True, pnl_internal=True)
 
         output_ports = Parameter(
@@ -1344,6 +1364,8 @@ class TransferMechanism(ProcessingMechanism_Base):
                  termination_measure=None,
                  termination_threshold: Optional[Union[int, float]] = None,
                  termination_comparison_op: Optional[Union[str, Literal['<', '<=', '>', '>=', '==', '!=']]] = None,
+                 termination_comparison_rtol: Union[float, Iterable] = 1e-05,
+                 termination_comparison_atol: Union[float, Iterable] = 1e-08,
                  output_ports: Optional[Union[str, Iterable]] = None,
                  params=None,
                  name=None,
@@ -1375,6 +1397,8 @@ class TransferMechanism(ProcessingMechanism_Base):
             termination_measure=termination_measure,
             termination_threshold=termination_threshold,
             termination_comparison_op=termination_comparison_op,
+            termination_comparison_rtol=termination_comparison_rtol,
+            termination_comparison_atol=termination_comparison_atol,
             integrator_function=integrator_function,
             on_resume_integrator_mode=on_resume_integrator_mode,
             function=function,
@@ -1828,20 +1852,44 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         elif self._termination_measure_num_items_expected==1:
             # Squeeze to collapse 2d array with single item
-            status = measure(np.squeeze(value))
+            try:
+                value = value.reshape(self.defaults.value.shape)
+            except ValueError:
+                pass
+            status = measure(value)
         else:
-            previous_value = self.parameters.value.get_previous(context)
-            status = measure([value, previous_value])
+            try:
+                previous_value = self.parameters.value.get_previous(context)
+            except ParameterNoValueError:
+                return False
+            try:
+                status = measure([value, previous_value], context=context)
+            except TypeError as e:
+                if not str(e).endswith("got an unexpected keyword argument 'context'"):
+                    raise
+                status = measure([value, previous_value])
 
         status = convert_all_elements_to_np_array(status)
         self.parameters.termination_measure_value._set(status, context=context, override=True)
 
-        # comparator = self.parameters.termination_comparison_op._get(context)
-        comparator = comparison_operators[self.parameters.termination_comparison_op._get(context)]
-        # if any(comparison_operators[comparator](np.atleast_1d(status), threshold)):
-        if comparator(np.atleast_1d(status), threshold).any():
-            logger.info(f'{type(self).__name__} {self.name} has reached threshold ({threshold})')
-            return True
+        comparison_op = self.parameters.termination_comparison_op._get(context)
+        comparator = comparison_operators[comparison_op]
+        rtol = self.parameters.termination_comparison_rtol._get(context)
+        atol = self.parameters.termination_comparison_atol._get(context)
+
+        status = np.atleast_1d(status)
+        comparator_satis = comparator(status, threshold)
+        status_closeness = np.isclose(status, threshold, rtol, atol)
+
+        for i in range(len(comparator_satis)):
+            if comparison_op in {LESS_THAN, GREATER_THAN, NOT_EQUAL}:
+                fin = comparator_satis[i] and not status_closeness[i]
+            else:
+                fin = comparator_satis[i] or status_closeness[i]
+
+            if fin:
+                logger.info(f'{type(self).__name__} {self.name} has reached threshold ({threshold})')
+                return True
         return False
 
     @handle_external_context()

@@ -51,6 +51,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'RESULT': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
@@ -91,6 +93,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -156,6 +160,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -195,6 +201,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -320,6 +328,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -359,6 +369,8 @@ class TestLog:
             'num_executions_before_finished': 'OFF',
             'noise': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -428,6 +440,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'EXECUTION',
             'variable': 'OFF'
         }
@@ -467,6 +481,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'EXECUTION',
             'variable': 'OFF'
         }
@@ -703,6 +719,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -742,6 +760,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
         }
@@ -786,6 +806,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'EXECUTION',
             'variable': 'OFF'
         }
@@ -830,6 +852,8 @@ class TestLog:
             'noise': 'OFF',
             'num_executions_before_finished': 'OFF',
             'termination_measure_value': 'OFF',
+            'termination_comparison_atol': 'OFF',
+            'termination_comparison_rtol': 'OFF',
             'value': 'EXECUTION',
             'variable': 'OFF'
         }
