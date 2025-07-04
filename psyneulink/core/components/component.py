@@ -1509,7 +1509,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                      "num_executions_before_finished", "num_executions",
                      "variable", "value", "saved_values", "saved_samples",
                      "integrator_function_value", "termination_measure_value",
-                     "termination_comparison_rtol", "termination_comparison_atol",
                      "execution_count", "intensity", "combined_costs",
                      "adjustment_cost", "intensity_cost", "duration_cost",
                      # Invalid types

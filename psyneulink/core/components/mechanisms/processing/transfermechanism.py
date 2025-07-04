@@ -1624,6 +1624,8 @@ class TransferMechanism(ProcessingMechanism_Base):
                                                   "termination_measure",
                                                   param_struct_ptr=m_base_params,
                                                   state_struct_ptr=m_state)
+        rtol_ptr = ctx.get_param_or_state_ptr(builder, self, "termination_comparison_rtol", param_struct_ptr=m_params)
+        atol_ptr = ctx.get_param_or_state_ptr(builder, self, "termination_comparison_atol", param_struct_ptr=m_params)
 
         if isinstance(threshold_ptr.type.pointee, pnlvm.ir.LiteralStructType):
 
@@ -1705,7 +1707,16 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         cmp_val = builder.load(cmp_val_ptr)
         cmp_str = self.parameters.termination_comparison_op.get(None)
-        return builder.fcmp_ordered(cmp_str, cmp_val, threshold)
+
+        rtol_val = pnlvm.helpers.load_extract_scalar_array_one(builder, rtol_ptr)
+        atol_val = pnlvm.helpers.load_extract_scalar_array_one(builder, atol_ptr)
+
+        cmp_close = pnlvm.helpers.is_close(ctx, builder, cmp_val, threshold, rtol_val, atol_val)
+        thresh_met = builder.fcmp_ordered(cmp_str, cmp_val, threshold)
+        if cmp_str in {LESS_THAN, GREATER_THAN, NOT_EQUAL}:
+            return builder.and_(thresh_met, builder.not_(cmp_close))
+        else:
+            return builder.or_(thresh_met, cmp_close)
 
     def _gen_llvm_mechanism_functions(self, ctx, builder, m_base_params, m_params,
                                       m_state, m_in, m_val, ip_out, *, tags:frozenset):
