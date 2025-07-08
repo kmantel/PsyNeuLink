@@ -20,7 +20,7 @@ from psyneulink.library.components.mechanisms.processing.transfer.lcamechanism i
 from psyneulink.core.components.ports.inputport import InputPort
 from psyneulink.core.compositions.composition import Composition
 from psyneulink.core.globals.keywords import \
-    CURRENT_VALUE, LAST_INTEGRATED_VALUE, RESET, COMBINE, GREATER_THAN
+    CURRENT_VALUE, LAST_INTEGRATED_VALUE, LESS_THAN_OR_EQUAL, RESET, COMBINE, GREATER_THAN
 from psyneulink.core.globals.parameters import ParameterError
 from psyneulink.core.scheduling.condition import Never
 from psyneulink.core.scheduling.time import TimeScale
@@ -1684,6 +1684,46 @@ class TestOnResumeIntegratorMode:
             assert decision.num_executions.pass_ == 2
             assert decision.num_executions.trial== 1
             assert decision.num_executions.run == 2
+
+    @pytest.mark.transfer_mechanism
+    @pytest.mark.benchmark(group="TransferMechanism")
+    @pytest.mark.usefixtures("comp_mode_no_per_node")
+    @pytest.mark.parametrize(
+        "measure, comparison_op, increment, atol, rtol, expected_results",
+        [
+            ('==', 1, 10, 1, 0.1, [[[8]]]),
+            ('==', 1, 10, 1, 0, [[[9]]]),
+            ('==', 1, 10, 0, 0.1, [[[9]]]),
+            ('!=', 1, 2, 1, 0.5, [[[5]]]),
+            ('!=', 1, 1, 1, 0, [[[3]]]),
+            ('!=', 1, 1, 0, 1, [[[3]]]),
+            ('!=', -1, -2, 1, 0.5, [[[-5]]]),
+            ('!=', -1, -1, 1, 0, [[[-3]]]),
+            ('!=', -1, -1, 0, 1, [[[-3]]]),
+        ]
+        [
+            ('>=', max, None, .01),
+            ('>=', max, None, .03),
+        ],
+    )
+    def test_termination_measures_tolerances(
+        self, comp_mode, comparison_op, measure, increment, threshold, atol, rtol, expected_results
+    ):
+        A = TransferMechanism(
+            input_shapes=2,
+            integrator_mode=True,
+            integrator_function=pnl.AccumulatorIntegrator(rate=1, increment=increment),
+            termination_threshold=threshold,
+            termination_measure=measure,
+            termination_comparison_op=comparison_op,
+            termination_comparison_rtol=rtol,
+            termination_comparison_atol=atol,
+        )
+        comp = Composition(pathways=[A])
+        inputs = {A: np.ones(A.defaults.variable.shape)}
+        comp.scheduler.termination_conds = {pnl.TimeScale.TRIAL: pnl.WhenFinished(A)}
+        result = comp.run(inputs=inputs, execution_mode=comp_mode)
+        print(result)
 
 
 class TestClip:
