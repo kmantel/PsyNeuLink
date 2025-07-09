@@ -2970,6 +2970,7 @@ class Mechanism_Base(Mechanism):
 
         mod_afferents = self.mod_afferents
         for i, port in enumerate(ports):
+            print(self, i, port)
             p_function = ctx.import_llvm_function(port)
 
             # Find input and output locations
@@ -2978,6 +2979,16 @@ class Mechanism_Base(Mechanism):
 
             if len(port.mod_afferents) == 0:
                 # There's no modulation so the only input is data
+                sep = '\n\t'
+                print(
+                    sep
+                    + sep.join(
+                        [
+                            str(x) for x in
+                            [p_input_data, p_input_data.type, p_function, p_function.args, p_function.args[2].type]
+                        ]
+                    )
+                )
                 if p_input_data.type == p_function.args[2].type:
                     p_input = p_input_data
                 else:
