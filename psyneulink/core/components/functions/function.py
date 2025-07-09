@@ -200,7 +200,9 @@ EPSILON = np.finfo(float).eps
 
 # numeric to allow modulation, invalid to identify unseeded state
 def DEFAULT_SEED():
-    return np.array(-1)
+    res = np.array(-1)
+    print('DEFAULT SEED TYPE', res.dtype)
+    return res
 
 
 FunctionRegistry = {}

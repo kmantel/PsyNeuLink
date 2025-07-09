@@ -326,6 +326,7 @@ class LLVMBuilderContext:
         #        However, it can be modulated and we don't support
         #        passing integer values as computed results.
         new_seed = builder.fptoui(new_seed, used_seed.type)
+        print(self, 'used_seed.type', used_seed.type)
 
         seeds_cmp = builder.icmp_unsigned("!=", used_seed, new_seed)
         with builder.if_then(seeds_cmp, likely=False):

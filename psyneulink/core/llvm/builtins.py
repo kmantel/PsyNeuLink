@@ -572,6 +572,7 @@ def _setup_mt_rand_init(ctx, state_ty, init_scalar):
     state, seed = builder.function.args
 
     default_seed = seed.type(19650218)
+    print(init_scalar, type(init_scalar), 'seed.type', seed.type)
     builder.call(init_scalar, [state, default_seed])
 
     # python considers everything to be an array
