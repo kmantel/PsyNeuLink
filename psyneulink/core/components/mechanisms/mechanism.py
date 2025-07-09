@@ -2977,8 +2977,27 @@ class Mechanism_Base(Mechanism):
             builder, p_input_data = get_input_data_ptr(builder, i)
             builder, p_output = get_output_ptr(builder, i)
 
+            def pseed(obj):
+                try:
+                    sdp = obj.parameters.seed
+                except AttributeError:
+                    pass
+                else:
+                    print(obj)
+                    print(sdp)
+                    for v in [sdp.default_value, *sdp.values.values()]:
+                        try:
+                            print(v)
+                            print(type(v))
+                            print(v.dtype)
+                        except Exception:
+                            pass
+
             if len(port.mod_afferents) == 0:
                 # There's no modulation so the only input is data
+                pseed(self)
+                pseed(self.function)
+
                 sep = '\n\t'
                 print(
                     sep
