@@ -1700,11 +1700,11 @@ class TestOnResumeIntegratorMode:
             ('!=', -1, -2, 1, 0.5, [[[-5]]]),
             ('!=', -1, -1, 1, 0, [[[-3]]]),
             ('!=', -1, -1, 0, 1, [[[-3]]]),
-        ]
-        [
-            ('>=', max, None, .01),
-            ('>=', max, None, .03),
         ],
+        # [
+        #     ('>=', max, None, .01),
+        #     ('>=', max, None, .03),
+        # ],
     )
     def test_termination_measures_tolerances(
         self, comp_mode, comparison_op, measure, increment, threshold, atol, rtol, expected_results
@@ -1724,6 +1724,7 @@ class TestOnResumeIntegratorMode:
         comp.scheduler.termination_conds = {pnl.TimeScale.TRIAL: pnl.WhenFinished(A)}
         result = comp.run(inputs=inputs, execution_mode=comp_mode)
         print(result)
+        assert result == expected_results
 
 
 class TestClip:
