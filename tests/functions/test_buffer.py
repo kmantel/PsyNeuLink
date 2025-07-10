@@ -100,7 +100,7 @@ class TestBuffer():
         val = benchmark(P.execute, 1.0)
 
         # NOTE: actual output is [0, [[1]]]
-        np.testing.assert_allclose(np.asfarray(val, dtype=object), [[0., 1.]])
+        np.testing.assert_allclose(np.asarray(val, dtype=object), [[0., 1.]])
 
         # fails due to value and variable problems when Buffer is the function of a mechanism
         # P = ProcessingMechanism(function=Buffer(default_variable=[[0.0], [1.0], [2.0]],
@@ -124,7 +124,7 @@ class TestBuffer():
         C.run(inputs={P: [[1.0], [2.0], [3.0], [4.0], [5.0]]},
               call_after_trial=assemble_full_result)
         # only returns index 0 item of the deque on each trial  (OutputPort value)
-        np.testing.assert_allclose(np.asfarray(C.results), [[[0.0]], [[0.0]], [[1.0]], [[2.0]], [[3.0]]])
+        np.testing.assert_allclose(np.asarray(C.results), [[[0.0]], [[0.0]], [[1.0]], [[2.0]], [[3.0]]])
 
         # stores full mechanism value (full deque) on each trial
         expected_full_result = [np.array([[0.], [1.]]),
@@ -134,4 +134,4 @@ class TestBuffer():
                                 np.array([[3.], [4.], [5.]])]
         for i in range(5):
             np.testing.assert_allclose(expected_full_result[i],
-                               np.asfarray(full_result[i]))
+                               np.asarray(full_result[i]))

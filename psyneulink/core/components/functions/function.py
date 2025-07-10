@@ -829,7 +829,7 @@ class Function_Base(Function):
         # Note: if 2D or 1D array has more than two items, generate exception
         elif output_type is FunctionOutputType.NP_0D_ARRAY:
             if object_has_single_value(value):
-                value = np.array(float(value))
+                value = np.asarray(value)
             else:
                 raise FunctionError(f"Can't convert value ({value}) with more than a single number to a raw number.")
 

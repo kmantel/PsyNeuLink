@@ -45,7 +45,7 @@ def test_helper_fclamp(mode):
         builder.ret_void()
 
     ref = np.clip(VECTOR, TST_MIN, TST_MAX)
-    bounds = np.asfarray([TST_MIN, TST_MAX])
+    bounds = np.asarray([TST_MIN, TST_MAX])
     bin_f = pnlvm.LLVMBinaryFunction.get(custom_name)
     local_vec = copy.deepcopy(VECTOR)
     if mode == 'CPU':
@@ -149,8 +149,8 @@ def test_helper_is_close(mode, var1, var2, rtol, atol, fp_type):
     bin_f = pnlvm.LLVMBinaryFunction.get(custom_name)
 
     dty = np.dtype(bin_f.byref_arg_types[0])
-    vec1 = np.atleast_1d(np.asfarray(var1, dtype=dty))
-    vec2 = np.atleast_1d(np.asfarray(var2, dtype=dty))
+    vec1 = np.atleast_1d(np.asarray(var1, dtype=dty))
+    vec2 = np.atleast_1d(np.asarray(var2, dtype=dty))
     assert len(vec1) == len(vec2)
     res = np.empty_like(vec2)
 
@@ -185,8 +185,8 @@ def test_helper_all_close(mode, var1, var2, atol, rtol):
     if atol is not None:
         tolerance['atol'] = atol
 
-    vec1 = np.atleast_1d(np.asfarray(var1))
-    vec2 = np.atleast_1d(np.asfarray(var2))
+    vec1 = np.atleast_1d(np.asarray(var1))
+    vec2 = np.atleast_1d(np.asarray(var2))
     assert len(vec1) == len(vec2)
 
     with pnlvm.LLVMBuilderContext.get_current() as ctx:
@@ -469,8 +469,8 @@ def test_helper_numerical(mode, op, var, expected, fp_type):
 @pytest.mark.parametrize('mode', ['CPU',
                                   pytest.param('PTX', marks=pytest.mark.cuda)])
 @pytest.mark.parametrize('var,expected', [
-    (np.asfarray([1,2,3]), np.asfarray([2,3,4])),
-    (np.asfarray([[1,2],[3,4]]), np.asfarray([[2,3],[4,5]])),
+    (np.asarray([1,2,3]), np.asarray([2,3,4])),
+    (np.asarray([[1,2],[3,4]]), np.asarray([[2,3],[4,5]])),
 ], ids=["vector", "matrix"])
 def test_helper_elementwise_op(mode, var, expected):
     with pnlvm.LLVMBuilderContext.get_current() as ctx:
@@ -589,7 +589,7 @@ def test_helper_convert_fp_type(t1, t2, mode, val):
     npt1, npt2 = (np.float16().dtype if x == np.uint16 else x for x in (npt1, npt2))
 
     # instantiate value, result and reference
-    x = np.asfarray(val, dtype=npt1)
+    x = np.asarray(val, dtype=npt1)
     y = np.asfarray(np.random.rand(), dtype=npt2)
     ref = x.astype(npt2)
 

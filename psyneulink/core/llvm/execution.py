@@ -337,7 +337,7 @@ class FuncExecution(CUDAExecution):
     def execute(self, variable):
         # Make sure function inputs are 2d.
         # Mechanism inputs are already 3d so the first part is nop.
-        new_variable = np.asfarray(np.atleast_2d(variable),
+        new_variable = np.asarray(np.atleast_2d(variable),
                                    dtype=self._vi_dty)
 
         ct_vi = np.ctypeslib.as_ctypes(new_variable)

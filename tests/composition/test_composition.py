@@ -7263,8 +7263,8 @@ class TestResetValues:
                         C.parameters.value.get(comp)[0]]
 
         np.testing.assert_allclose(run_2_values, run_3_values)
-        np.testing.assert_allclose(np.asfarray(run_1_values), [[0.36], [0.056], [0.056]])
-        np.testing.assert_allclose(np.asfarray(run_2_values), [[0.5904], [0.16384], [0.16384]])
+        np.testing.assert_allclose(np.asarray(run_1_values), [[0.36], [0.056], [0.056]])
+        np.testing.assert_allclose(np.asarray(run_2_values), [[0.5904], [0.16384], [0.16384]])
 
 
 class TestNodeRoles:

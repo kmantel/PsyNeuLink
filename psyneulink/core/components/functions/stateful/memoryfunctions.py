@@ -1292,7 +1292,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         distance_result = self.distance_function(self._parse_distance_function_variable(variable), context=context)
         # TEST PRINT:
         # print(distance_result, self.distance_function.defaults.value)
-        return np.asfarray([
+        return np.asarray([
             distance_result if i == 0 else np.zeros_like(distance_result)
             for i in range(self.defaults.max_entries)
         ])
@@ -1331,7 +1331,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
 
             # Default to full memory
             selection_function = self.selection_function
-            test_var = np.asfarray([
+            test_var = np.asarray([
                 distance_result if i == 0 else np.zeros_like(distance_result)
                 for i in range(self._get_current_parameter_value('max_entries', context))
             ])
@@ -2314,7 +2314,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
         distance_result = self.distance_function.parameters.value._get(context)
         # TEST PRINT:
         # print(distance_result, self.distance_function.defaults.value)
-        return np.asfarray([
+        return np.asarray([
             distance_result if i == 0 else np.zeros_like(distance_result)
             for i in range(self.defaults.max_entries)
         ])
@@ -2552,7 +2552,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
 
         # Default to full memory
         selection_function = self.selection_function
-        test_var = np.asfarray([distance_result if i==0
+        test_var = np.asarray([distance_result if i==0
                                 else np.zeros_like(distance_result)
                                 for i in range(self._get_current_parameter_value('max_entries', context))])
         if isinstance(selection_function, type):
@@ -2708,12 +2708,12 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
         # Store variable to dict:
         rate = self._get_current_parameter_value(RATE, context)
         if rate is not None:
-            key = np.asfarray(key) * np.asfarray(rate)
+            key = np.asarray(key) * np.asarray(rate)
             assert len(key) == len(variable[KEYS]), "{} vs. {}".format(key, variable[KEYS])
 
         if noise is not None:
             # TODO: does val need noise?
-            key = np.asfarray(key) + np.asfarray(noise)[KEYS]
+            key = np.asarray(key) + np.asarray(noise)[KEYS]
             assert len(key) == len(variable[KEYS]), "{} vs. {}".format(key, variable[KEYS])
 
         if storage_prob == 1.0 or (storage_prob > 0.0 and storage_prob > random_state.uniform()):
