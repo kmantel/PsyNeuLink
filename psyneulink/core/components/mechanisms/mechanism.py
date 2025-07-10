@@ -2985,11 +2985,10 @@ class Mechanism_Base(Mechanism):
                 else:
                     print(obj)
                     print(sdp)
-                    for v in [sdp.default_value, *sdp.values.values()]:
+                    for nm, v in [('default', sdp.default_value), *sdp.values.items()]:
                         try:
-                            print(v)
-                            print(type(v))
-                            print(v.dtype)
+                            print('eid:', nm)
+                            print(v, type(v), v.dtype)
                         except Exception:
                             pass
 
