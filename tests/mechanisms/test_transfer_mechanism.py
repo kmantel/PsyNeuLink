@@ -1689,17 +1689,17 @@ class TestOnResumeIntegratorMode:
     @pytest.mark.benchmark(group="TransferMechanism")
     @pytest.mark.usefixtures("comp_mode_no_per_node")
     @pytest.mark.parametrize(
-        "measure, comparison_op, increment, atol, rtol, expected_results",
+        "measure, comparison_op, increment, threshold, atol, rtol, expected_results",
         [
-            ('==', 1, 10, 1, 0.1, [[[8]]]),
-            ('==', 1, 10, 1, 0, [[[9]]]),
-            ('==', 1, 10, 0, 0.1, [[[9]]]),
-            ('!=', 1, 2, 1, 0.5, [[[5]]]),
-            ('!=', 1, 1, 1, 0, [[[3]]]),
-            ('!=', 1, 1, 0, 1, [[[3]]]),
-            ('!=', -1, -2, 1, 0.5, [[[-5]]]),
-            ('!=', -1, -1, 1, 0, [[[-3]]]),
-            ('!=', -1, -1, 0, 1, [[[-3]]]),
+            (max, '==', 1, 10, 1, 0.1, [[8, 8]]),
+            (max, '==', 1, 10, 1, 0, [[9, 9]]),
+            (max, '==', 1, 10, 0, 0.1, [[9, 9]]),
+            (max, '!=', 1, 2, 1, 0.5, [[5, 5]]),
+            (max, '!=', 1, 1, 1, 0, [[3, 3]]),
+            (max, '!=', 1, 1, 0, 1, [[3, 3]]),
+            (max, '!=', -1, -2, 1, 0.5, [[-5, -5]]),
+            (max, '!=', -1, -1, 1, 0, [[-3, -3]]),
+            (max, '!=', -1, -1, 0, 1, [[-3, -3]]),
         ],
         # [
         #     ('>=', max, None, .01),
@@ -1707,7 +1707,7 @@ class TestOnResumeIntegratorMode:
         # ],
     )
     def test_termination_measures_tolerances(
-        self, comp_mode, comparison_op, measure, increment, threshold, atol, rtol, expected_results
+        self, comp_mode, measure, comparison_op, increment, threshold, atol, rtol, expected_results
     ):
         A = TransferMechanism(
             input_shapes=2,
@@ -1724,7 +1724,7 @@ class TestOnResumeIntegratorMode:
         comp.scheduler.termination_conds = {pnl.TimeScale.TRIAL: pnl.WhenFinished(A)}
         result = comp.run(inputs=inputs, execution_mode=comp_mode)
         print(result)
-        assert result == expected_results
+        np.testing.assert_allclose(result, expected_results)
 
 
 class TestClip:
