@@ -1541,35 +1541,50 @@ class TransferMechanism(ProcessingMechanism_Base):
             raise MechanismError(f"Noise parameter ({noise}) for {self.name} must be a float, "
                                  f"function, or array/list of these.")
 
-    def _instantiate_attributes_after_function(self, context=None):
-        """Determine number of items expected by termination_measure and check clip if specified"""
-        super()._instantiate_attributes_after_function(context)
-
+    def _get_termination_measure_num_items_expected(self, context):
         measure = self.termination_measure
 
         if isinstance(measure, TimeScale):
-            self._termination_measure_num_items_expected = 0
             self.parameters.termination_comparison_op._set(GREATER_THAN_OR_EQUAL, context)
-            return
+            return 0
+
+        if self.defaults.value.size == 1:
+            return 2
 
         try:
-            # If measure is a Function, use its default_variable to determine expected number of items
-            self._termination_measure_num_items_expected = len(measure.parameters.variable.default_value)
-        except:
-            # Otherwise, use "duck typing"
-            try:
-                # Try a single item first (only uses value, and not previous_value)
-                measure(np.array([0,0]))
-                self._termination_measure_num_items_expected = 1
-            except:
-                try:
-                    # termination_measure takes two arguments -- value and previous_value -- (e.g., Distance)
-                    measure(np.array([[0,0],[0,0]]))
-                    self._termination_measure_num_items_expected = 2
-                except:
-                    assert False, f"PROGRAM ERROR: Unable to determine length of input for" \
-                                  f" {repr(TERMINATION_MEASURE)} arg of {self.name}"
+            measure_variable = measure.defaults.variable
+        except AttributeError:
+            pass
+        else:
+            # measure compares items in mechanism's variable
+            if measure_variable.shape == self.defaults.variable.shape:
+                return 1
+            else:
+                # If measure is a Function, use its default_variable to determine expected number of items
+                return len(measure_variable)
 
+        val = np.zeros_like(self.defaults.value)
+        try:
+            # Try a single item first (only uses value, and not previous_value)
+            measure(val)
+            return 1
+        except Exception:
+            pass
+
+        try:
+            # termination_measure takes two arguments -- value and previous_value -- (e.g., Distance)
+            measure([val, val])
+            return 2
+        except Exception:
+            assert False, (
+                "PROGRAM ERROR: Unable to determine length of input"
+                + f" for {TERMINATION_MEASURE} arg of {self.name}"
+            )
+
+    def _instantiate_attributes_after_function(self, context=None):
+        """Determine number of items expected by termination_measure and check clip if specified"""
+        super()._instantiate_attributes_after_function(context)
+        self._termination_measure_num_items_expected = self._get_termination_measure_num_items_expected(context)
         self.parameters.value.history_min_length = self._termination_measure_num_items_expected - 1
 
        # Force call to _clip_setter in order to check against range (now that any function range are known)
@@ -1866,10 +1881,7 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         elif self._termination_measure_num_items_expected==1:
             # Squeeze to collapse 2d array with single item
-            try:
-                value = value.reshape(self.defaults.value.shape)
-            except ValueError:
-                pass
+            value = value.squeeze()
             status = measure(value)
         else:
             try:

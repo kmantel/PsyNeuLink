@@ -1685,12 +1685,23 @@ class TestOnResumeIntegratorMode:
             assert decision.num_executions.trial== 1
             assert decision.num_executions.run == 2
 
+    def _termination_tolerances_setup(self, increment, **mech_kwargs):
+        A = TransferMechanism(
+            integrator_mode=True,
+            integrator_function=pnl.AccumulatorIntegrator(rate=1, increment=increment),
+            **mech_kwargs,
+        )
+        comp = Composition(pathways=[A])
+        comp.scheduler.termination_conds = {pnl.TimeScale.TRIAL: pnl.WhenFinished(A)}
+        return A, comp
+
     @pytest.mark.transfer_mechanism
     @pytest.mark.benchmark(group="TransferMechanism")
     @pytest.mark.usefixtures("comp_mode_no_per_node")
     @pytest.mark.parametrize(
         "measure, comparison_op, increment, threshold, atol, rtol, expected_results",
         [
+            # these copied from Threshold condition tests
             (max, '==', 1, 10, 1, 0.1, [[8, 8]]),
             (max, '==', 1, 10, 1, 0, [[9, 9]]),
             (max, '==', 1, 10, 0, 0.1, [[9, 9]]),
@@ -1700,30 +1711,72 @@ class TestOnResumeIntegratorMode:
             (max, '!=', -1, -2, 1, 0.5, [[-5, -5]]),
             (max, '!=', -1, -1, 1, 0, [[-3, -3]]),
             (max, '!=', -1, -1, 0, 1, [[-3, -3]]),
+            # new
+            (max, '>=', 2, 10, .5, 0, [[10, 10]]),
+            (max, '>=', 2, 9, .5, 0, [[10, 10]]),
+            (max, '>=', 2, 9, 1, 0, [[8, 8]]),
+            (max, '>=', 2, 10, 0, 0.2, [[8, 8]]),
+            (max, '>', 2, 10, .5, 0, [[12, 12]]),
+            (max, '>', 2, 9, .5, 0, [[10, 10]]),
+            (max, '>', 2, 9, 1, 0, [[12, 12]]),
+            (max, '>', 2, 10, 0, 0.2, [[14, 14]]),
+            (max, '<=', -1, -2, 1, 0.5, [[-5, -5]]),
+            (max, '<=', -1, -1, 1, 0, [[-2, -2]]),
+            (max, '<=', -1, -1, 0, 1, [[-2, -2]]),
+            (max, '<', -1, -2, 1, 0.5, [[-6, -6]]),
+            (max, '<', -1, -2, 1, 0, [[-4, -4]]),
+            (max, '<', -1, -1, 1, 0, [[-3, -3]]),
+            (max, '<', -1, -1, 0, 1, [[-2, -2]]),
         ],
-        # [
-        #     ('>=', max, None, .01),
-        #     ('>=', max, None, .03),
-        # ],
     )
     def test_termination_measures_tolerances(
-        self, comp_mode, measure, comparison_op, increment, threshold, atol, rtol, expected_results
+        self, comp_mode, measure, comparison_op, increment, threshold, atol, rtol, expected_results,
     ):
-        A = TransferMechanism(
+        A, comp = self._termination_tolerances_setup(
+            increment,
             input_shapes=2,
-            integrator_mode=True,
-            integrator_function=pnl.AccumulatorIntegrator(rate=1, increment=increment),
             termination_threshold=threshold,
             termination_measure=measure,
             termination_comparison_op=comparison_op,
             termination_comparison_rtol=rtol,
             termination_comparison_atol=atol,
         )
-        comp = Composition(pathways=[A])
-        inputs = {A: np.ones(A.defaults.variable.shape)}
-        comp.scheduler.termination_conds = {pnl.TimeScale.TRIAL: pnl.WhenFinished(A)}
+        inputs = {A: [[1, 2]]}
         result = comp.run(inputs=inputs, execution_mode=comp_mode)
-        print(result)
+        np.testing.assert_allclose(result, expected_results)
+
+    @pytest.mark.transfer_mechanism
+    @pytest.mark.benchmark(group="TransferMechanism")
+    @pytest.mark.parametrize(
+        "measure, comparison_op, default_variable, increment, threshold, atol, rtol, expected_results",
+        [
+            # compiled modes do not support:
+            #   - array-format increment
+            #   - non-max termination measures
+            (max, '>=', [[0, 0]], [[1, 2]], 10, .5, 0, [[5, 10]]),
+            (max, '>=', [[0, 0]], [[1, 2]], 9, .5, 0, [[5, 10]]),
+            (min, '>', [[0, 0]], [[1, 2]], 10, .5, 0, [[11, 22]]),
+            (min, '>', [[0, 0]], [[1, 2]], 9, .5, 0, [[10, 20]]),
+            (min, '>', [[0, 0]], [[1, 2]], 10, .5, 0, [[11, 22]]),
+            (min, '>', [[0, 0]], [[1, 2]], 9, .5, 0, [[10, 20]]),
+            (pnl.Distance(default_variable=[[0], [0]]), '>', [[0], [0]], [[1], [2]], 10, .5, 0, [[11], [22]]),
+            (pnl.Distance(default_variable=[[0], [0]]), '>', [[0], [0]], [[1], [2]], 9, .5, 0, [[10], [20]]),
+        ],
+    )
+    def test_termination_measures_tolerances_non_compiled(
+        self, measure, comparison_op, default_variable, increment, threshold, atol, rtol, expected_results,
+    ):
+        A, comp = self._termination_tolerances_setup(
+            increment,
+            default_variable=default_variable,
+            termination_threshold=threshold,
+            termination_measure=measure,
+            termination_comparison_op=comparison_op,
+            termination_comparison_rtol=rtol,
+            termination_comparison_atol=atol,
+        )
+        inputs = {A: np.reshape([1, 2], A.defaults.variable.shape)}
+        result = comp.run(inputs=inputs)
         np.testing.assert_allclose(result, expected_results)
 
 
