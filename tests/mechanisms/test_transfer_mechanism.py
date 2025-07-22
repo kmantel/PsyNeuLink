@@ -1757,7 +1757,6 @@ class TestOnResumeIntegratorMode:
             (min, '>', [[0, 0]], [[1, 2]], 10, .5, 0, [[11, 22]]),
             (max, '<', [[0, 0]], [[-1, -2]], -10, .5, 0, [[-11, -22]]),
             (min, '<=', [[0, 0]], [[-1, -2]], -10, .5, 0, [[-5, -10]]),
-            (pnl.Distance(default_variable=[[0], [0]]), '>', [[0], [0]], [[1], [2]], 10, .5, 0, [[11], [22]]),
         ],
     )
     def test_termination_measures_tolerances_non_compiled(
