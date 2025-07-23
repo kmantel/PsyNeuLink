@@ -845,7 +845,7 @@ from psyneulink.core.components.ports.outputport import OutputPort
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
 from psyneulink.core.globals.mdf import _get_variable_parameter_name
 from psyneulink.core.globals.keywords import \
-    COMBINE, CONVERGENCE, GREATER_THAN, LESS_THAN, NOT_EQUAL, TIME, VALUE, comparison_operators, EXECUTION_COUNT, FUNCTION, GREATER_THAN_OR_EQUAL, \
+    COMBINE, CONVERGENCE, GREATER_THAN, LESS_THAN, NOT_EQUAL, VALUE, comparison_operators, EXECUTION_COUNT, FUNCTION, GREATER_THAN_OR_EQUAL, \
     CURRENT_VALUE, LESS_THAN_OR_EQUAL, MAX_ABS_DIFF, \
     NAME, NOISE, NUM_EXECUTIONS_BEFORE_FINISHED, OWNER_VALUE, RESET, RESULT, RESULTS, \
     SELECTION_FUNCTION_TYPE, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE
@@ -1362,7 +1362,7 @@ class TransferMechanism(ProcessingMechanism_Base):
                 return termination_threshold_criterion.lower()
 
         def _validate_termination_threshold_criterion(self, termination_threshold_criterion):
-            valid_values = {VALUE, CONVERGENCE, TIME}
+            valid_values = {VALUE, CONVERGENCE}
             if termination_threshold_criterion not in valid_values:
                 return f'must be one of {valid_values}'
 
@@ -1381,7 +1381,7 @@ class TransferMechanism(ProcessingMechanism_Base):
                  integration_rate=None,
                  on_resume_integrator_mode=None,
                  termination_measure=None,
-                 termination_threshold_criterion: Optional[Literal['convergence', 'time', 'value']] = VALUE,
+                 termination_threshold_criterion: Optional[Literal['convergence', 'value']] = VALUE,
                  termination_threshold: Optional[Union[int, float]] = None,
                  termination_comparison_op: Optional[Union[str, Literal['<', '<=', '>', '>=', '==', '!=']]] = None,
                  termination_comparison_rtol: Optional[Union[int, float, Iterable]] = 1e-05,
