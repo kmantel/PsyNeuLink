@@ -853,7 +853,7 @@ from psyneulink.core.globals.parameters import Parameter, FunctionParameter, Par
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.utilities import \
-    all_within_range, is_instance_or_subclass, is_numeric_scalar, append_type_to_name, convert_all_elements_to_np_array, iscompatible, convert_to_np_array, safe_equals, parse_valid_identifier, safe_len, try_extract_0d_array_item
+    all_within_range, is_numeric_scalar, append_type_to_name, convert_all_elements_to_np_array, iscompatible, convert_to_np_array, safe_equals, parse_valid_identifier, safe_len, try_extract_0d_array_item
 from psyneulink.core.scheduling.time import TimeScale
 
 __all__ = [
@@ -1415,10 +1415,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         # compares to previous value
         # NOTE: this method is for shaping, not for computation, and
         # a previous value should not be passed through here
-        if is_instance_or_subclass(self.measure, Distance):
-            return variable
-        else:
-            return np.asarray([variable, variable])
+        return np.array([variable, variable])
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate FUNCTION and Mechanism params
