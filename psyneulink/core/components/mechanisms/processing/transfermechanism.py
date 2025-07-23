@@ -845,7 +845,7 @@ from psyneulink.core.components.ports.outputport import OutputPort
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
 from psyneulink.core.globals.mdf import _get_variable_parameter_name
 from psyneulink.core.globals.keywords import \
-    COMBINE, GREATER_THAN, LESS_THAN, NOT_EQUAL, comparison_operators, EXECUTION_COUNT, FUNCTION, GREATER_THAN_OR_EQUAL, \
+    COMBINE, CONVERGENCE, GREATER_THAN, LESS_THAN, NOT_EQUAL, TIME, VALUE, comparison_operators, EXECUTION_COUNT, FUNCTION, GREATER_THAN_OR_EQUAL, \
     CURRENT_VALUE, LESS_THAN_OR_EQUAL, MAX_ABS_DIFF, \
     NAME, NOISE, NUM_EXECUTIONS_BEFORE_FINISHED, OWNER_VALUE, RESET, RESULT, RESULTS, \
     SELECTION_FUNCTION_TYPE, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE
@@ -1291,6 +1291,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         termination_comparison_rtol = 1e-05
         termination_comparison_atol = 1e-08
         termination_measure_value = Parameter(0.0, modulable=False, read_only=True, pnl_internal=True)
+        termination_threshold_criterion = VALUE
 
         output_ports = Parameter(
             [RESULTS],
@@ -1347,6 +1348,24 @@ class TransferMechanism(ProcessingMechanism_Base):
                 return f"must be boolean comparison operator or one of the following strings:" \
                        f" {','.join(comparison_operators.keys())}."
 
+        def _parse_termination_threshold_criterion(self, termination_threshold_criterion):
+            # CONVERGENCE keyword is all caps
+            try:
+                termination_threshold_criterion = termination_threshold_criterion.upper()
+            except AttributeError:
+                return termination_threshold_criterion
+
+            if termination_threshold_criterion == CONVERGENCE:
+                return CONVERGENCE
+            else:
+                # other criteria keywords are all lowercase
+                return termination_threshold_criterion.lower()
+
+        def _validate_termination_threshold_criterion(self, termination_threshold_criterion):
+            valid_values = {VALUE, CONVERGENCE, TIME}
+            if termination_threshold_criterion not in valid_values:
+                return f'must be one of {valid_values}'
+
     @check_user_specified
     @beartype
     def __init__(self,
@@ -1362,6 +1381,7 @@ class TransferMechanism(ProcessingMechanism_Base):
                  integration_rate=None,
                  on_resume_integrator_mode=None,
                  termination_measure=None,
+                 termination_threshold_criterion: Optional[Literal['convergence', 'time', 'value']] = VALUE,
                  termination_threshold: Optional[Union[int, float]] = None,
                  termination_comparison_op: Optional[Union[str, Literal['<', '<=', '>', '>=', '==', '!=']]] = None,
                  termination_comparison_rtol: Optional[Union[int, float, Iterable]] = 1e-05,
@@ -1395,6 +1415,7 @@ class TransferMechanism(ProcessingMechanism_Base):
             integrator_mode=integrator_mode,
             clip=clip,
             termination_measure=termination_measure,
+            termination_threshold_criterion=termination_threshold_criterion,
             termination_threshold=termination_threshold,
             termination_comparison_op=termination_comparison_op,
             termination_comparison_rtol=termination_comparison_rtol,
@@ -1577,6 +1598,13 @@ class TransferMechanism(ProcessingMechanism_Base):
                 "PROGRAM ERROR: Unable to determine length of input"
                 + f" for {TERMINATION_MEASURE} arg of {self.name}"
             )
+
+    def _instantiate_attributes_before_function(self, function=None, context=None):
+        super()._instantiate_attributes_before_function(function=function, context=None)
+        threshold = self.parameters.termination_threshold._get(context)
+        if isinstance(threshold, TimeScale):
+            # check not user specified as value or convergence (or warning?)
+            ...
 
     def _instantiate_attributes_after_function(self, context=None):
         """Determine number of items expected by termination_measure and check clip if specified"""
