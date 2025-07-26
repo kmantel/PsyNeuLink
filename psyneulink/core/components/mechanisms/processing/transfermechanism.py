@@ -1291,7 +1291,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         termination_comparison_rtol = 1e-05
         termination_comparison_atol = 1e-08
         termination_measure_value = Parameter(0.0, modulable=False, read_only=True, pnl_internal=True)
-        termination_threshold_criterion = VALUE
+        termination_threshold_criterion = Parameter(VALUE, stateful=False)
 
         output_ports = Parameter(
             [RESULTS],
@@ -1600,7 +1600,7 @@ class TransferMechanism(ProcessingMechanism_Base):
             )
 
     def _instantiate_attributes_before_function(self, function=None, context=None):
-        super()._instantiate_attributes_before_function(function=function, context=None)
+        super()._instantiate_attributes_before_function(function=function, context=context)
         threshold = self.parameters.termination_threshold._get(context)
         if isinstance(threshold, TimeScale):
             # check not user specified as value or convergence (or warning?)
@@ -1610,7 +1610,10 @@ class TransferMechanism(ProcessingMechanism_Base):
         """Determine number of items expected by termination_measure and check clip if specified"""
         super()._instantiate_attributes_after_function(context)
         self._termination_measure_num_items_expected = self._get_termination_measure_num_items_expected(context)
-        self.parameters.value.history_min_length = self._termination_measure_num_items_expected - 1
+        self.parameters.value.history_min_length = max(
+            self._termination_measure_num_items_expected - 1,
+            int(self.termination_threshold_criterion == CONVERGENCE)  # convergence needs 1 previous_value
+        )
 
        # Force call to _clip_setter in order to check against range (now that any function range are known)
         if self.clip is not None:
@@ -1899,16 +1902,13 @@ class TransferMechanism(ProcessingMechanism_Base):
             "History of 'value' is not guaranteed enough entries for termination_measure"
 
         measure = self.termination_measure
+        criterion = self.termination_threshold_criterion
         value = self.parameters.value._get(context)
 
-        if self._termination_measure_num_items_expected==0:
+        if isinstance(measure, TimeScale):
             status = self.parameters.num_executions._get(context)._get_by_time_scale(TimeScale(self.termination_measure))
 
-        elif self._termination_measure_num_items_expected==1:
-            # Squeeze to collapse 2d array with single item
-            value = value.squeeze()
-            status = measure(value)
-        else:
+        elif criterion == CONVERGENCE:
             try:
                 previous_value = self.parameters.value.get_previous(context)
             except ParameterNoValueError:
@@ -1919,6 +1919,11 @@ class TransferMechanism(ProcessingMechanism_Base):
                 if not str(e).endswith("got an unexpected keyword argument 'context'"):
                     raise
                 status = measure([value, previous_value])
+        else:
+            assert criterion == VALUE
+            # Squeeze to collapse 2d array with single item
+            value = value.squeeze()
+            status = measure(value)
 
         status = convert_all_elements_to_np_array(status)
         self.parameters.termination_measure_value._set(status, context=context, override=True)
