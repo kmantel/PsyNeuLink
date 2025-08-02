@@ -19,7 +19,6 @@ from psyneulink.core.components.projections.pathway.mappingprojection import Map
 from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition, AutodiffCompositionError
 from psyneulink.core.compositions.report import ReportOutput
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -393,11 +392,14 @@ class TestAutodiffLearningRateArgs:
             learn_method_learning_rate_dict.update({nested_proj: .2})
 
         # Construct outer_comp
+        outer_comp_learning_rate = (
+            constructor_learning_rate_dict
+            if "constructor" in condition
+            else {pnl.DEFAULT_LEARNING_RATE: constructor_lr}
+        )
         outer_comp = pnl.AutodiffComposition(name='Outer Comp',
                                              pathways=pathway,
-                                             learning_rate = (constructor_learning_rate_dict
-                                                              if "constructor" in condition
-                                                              else {pnl.DEFAULT_LEARNING_RATE: constructor_lr}))
+                                             learning_rate=outer_comp_learning_rate)
         # Test for specified learning rates in constructor
         input_proj_lr = \
             .3 if constructor_dict_param == 'input' \
