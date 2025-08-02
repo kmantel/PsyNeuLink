@@ -19,7 +19,6 @@ from psyneulink.core.components.mechanisms.processing.transfermechanism import T
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition, AutodiffCompositionError
 from psyneulink.core.compositions.report import ReportOutput
-from tests.mdf.stroop_conflict_monitoring import output
 
 logger = logging.getLogger(__name__)
 
@@ -389,11 +388,14 @@ class TestAutodiffLearningRateArgs:
                                            pnl.DEFAULT_LEARNING_RATE: learn_method_lr}
 
         # Construct outer_comp
+        outer_comp_learning_rate = (
+            constructor_learning_rate_dict
+            if "constructor" in condition
+            else {pnl.DEFAULT_LEARNING_RATE: constructor_lr}
+        )
         outer_comp = pnl.AutodiffComposition(name='Outer Comp',
                                              pathways=pathway,
-                                             learning_rate = (constructor_learning_rate_dict
-                                                              if "constructor" in condition
-                                                              else {pnl.DEFAULT_LEARNING_RATE: constructor_lr}))
+                                             learning_rate=outer_comp_learning_rate)
 
         input_proj_lr = \
             .3 if constructor_dict_param == 'input' \
