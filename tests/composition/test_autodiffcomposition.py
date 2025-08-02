@@ -578,7 +578,7 @@ class TestAutodiffLearningRateArgs:
                 assert ("The '_build_pytorch_representation() method for 'Outer Comp' has already been called "
                         "directly from the command line; this and any additional calls will be ignored. Make any "
                         "desired modifications to parameters (e.g., learning_rates) either in the constructor for "
-                        "the AutodiffComposition, or its learn() method. in warning[0].message.args[0]")
+                        "the AutodiffComposition, or its learn() method.") in warning[0].message.args[0]
 
             # change a projection learning_rate for composition using another call to _build_pytorch_representation()
             pytorch_rep = outer_comp._build_pytorch_representation(learning_rate={"NESTED 2 PROJ CD": 14})
