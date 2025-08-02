@@ -192,6 +192,7 @@ jobs:
           choco install --no-progress -y sumatrapdf.install
 
     - name: Test with pytest
+      if: always()
       timeout-minutes: 180
       run: pytest --junit-xml=tests_out.xml --verbosity=0 -n logical --capture=sys -o console_output_style=count ${{ matrix.extra-args }}
 
