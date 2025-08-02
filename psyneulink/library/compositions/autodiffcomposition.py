@@ -1664,6 +1664,15 @@ class AutodiffComposition(Composition):
             overrides specification(s) made in Autodiff constructor; see `retain_torch_losses
             <AutodiffComposition.retain_torch_losses>` for additional details.
         """
+        if (
+            not skip_initialization
+            and (
+                context is None
+                or ContextFlags.SIMULATION_MODE not in context.runmode
+            )
+        ):
+            self._initialize_from_context(context, base_context, override=False)
+
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
 
@@ -1690,6 +1699,16 @@ class AutodiffComposition(Composition):
             # If learning_rate is a dict:
             # - move it to optimizer_params;
             # - if it contains DEFAULT_LEARNING_RATE entry, assign that as learning_rate
+
+            # parse and then assign any learning_rate specs to learning_rates_dict for execution context
+            _, lr_dict = self._parse_and_validate_learning_rate_arg(kwargs[LEARNING_RATE], context)
+            if lr_dict is not None:
+                lr_dict = {
+                    **self.parameters.learning_rates_dict._get(context, fallback_value={}),
+                    **lr_dict,
+                }
+                self.parameters.learning_rates_dict._set(lr_dict, context)
+
             kwargs[OPTIMIZER_PARAMS] = kwargs[LEARNING_RATE]
             kwargs[LEARNING_RATE] = kwargs[OPTIMIZER_PARAMS].pop(DEFAULT_LEARNING_RATE, None)
 

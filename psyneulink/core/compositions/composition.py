@@ -8074,7 +8074,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # BREADCRUMB: SHOULD PASS PROJECTIONS FROM PATHWAY RATHER THAN projections THEMSELVES,
         #             (SINCE "PROXIES" MAY BE USED IN PATHWAY FOR PROJECTIONS TO NESTED COMPOSITIONS)
         #             OR MAP FROM PROJECTIONS TO PROXIES FOR LEARNING RATE ASSIGNMENTS
-        self._assign_learning_rates(projections)
+        self._assign_learning_rates(projections, context)
 
         specified_pathway = pathway
         # interleave (sets of) Nodes and (sets or lists of) Projections
@@ -9397,16 +9397,21 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 lr_dict.update(_lr_dict_arg)
 
         if context is not None and context.execution_id is not None:
-            lr_dict = self.parameters.learning_rates_dict.get(context)
-            # If called from learn(), check that all entries in lr_dict are for Projections in the Composition
-            bad_keys = [proj_name for proj_name in lr_dict.keys() if proj_name not in self.projections]
-            if bad_keys:
-                singular = ["entry appears", "its key is not a Projection", "name of one"]
-                plural = ["entries appear", "their keys are not Projections", "names of ones"]
-                filler = singular if len(bad_keys) == 1 else plural
-                err_msg = (f"The following {filler[0]} in the dict specified for the 'learning_rate' arg of "
-                           f"'{self.name}' but {filler[1]} or the {filler[2]} in that Composition:")
-                raise CompositionError(err_msg + f" '{', '.join(list(bad_keys))}'.")
+            lr_dict = copy(
+                self.parameters.learning_rates_dict.get(context, fallback_value=None)
+            )
+            if lr_dict is not None:
+                # If called from learn(), check that all entries in lr_dict are for Projections in the Composition
+                bad_keys = [proj_name for proj_name in lr_dict.keys() if proj_name not in self.projections]
+                if bad_keys:
+                    singular = ["entry appears", "its key is not a Projection", "name of one"]
+                    plural = ["entries appear", "their keys are not Projections", "names of ones"]
+                    filler = singular if len(bad_keys) == 1 else plural
+                    err_msg = (
+                        f"The following {filler[0]} in the dict specified for the 'learning_rate' arg of "
+                        f"'{self.name}' but {filler[1]} or the {filler[2]} in that Composition:"
+                    )
+                    raise CompositionError(err_msg + f" '{', '.join(list(bad_keys))}'.")
 
         return learning_rate, lr_dict
 
@@ -9421,9 +9426,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                     else [sub_item])]
         not_learnable = []
         # Get learning_rates_dict for Composition's constructor
-        learning_rates_dict = self.parameters.learning_rates_dict.get(None)
-        # MODIFIED 7/23/25 OLD:
-        context = context or self.name + DEFAULT_SUFFIX
+        learning_rates_dict = self.parameters.learning_rates_dict.get(context)
 
         for proj in projections:
             _is_proxy = hasattr(proj, PROXY_FOR_ATTRIB)
@@ -9434,7 +9437,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     not_learnable.append(proj.name)
             else:
                 # Assign Projection's learning_rate to learning_rates_dict if it is not already specified in the dict
-                learning_rates_dict[proj_name] = proj.parameters.learning_rate.get(None) if proj.learnable else False
+                learning_rates_dict[proj_name] = proj.parameters.learning_rate.get(context) if proj.learnable else False
             # Set Projection's learning_rate to specified value in <Composition.name>_default context
             # BREADCRUMB:  ADD NOTE TO DOCUMENTATION THAT LEARNING_RATE ASSIGNED TO A PROJECTION IN A COMPOSITION'S
             #              CONSTRUCTOR WILL NOT SHOW UP WHEN THE PROJECTION'S LEARNING_RATE IS INSPECTED;
