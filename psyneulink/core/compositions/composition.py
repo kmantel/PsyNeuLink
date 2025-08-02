@@ -3241,6 +3241,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.log import CompositionLog, LogCondition
 from psyneulink.core.globals.parameters import (
     Parameter,
+    ParameterNoValueError,
     ParametersBase,
     check_user_specified,
     copy_parameter_value,
@@ -4044,7 +4045,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self._partially_added_nodes = []
         self.parsed_inputs = False
 
-        composition_learning_rate = self._parse_and_validate_learning_rate_arg(learning_rate)
+        composition_learning_rate, lr_dict = self._parse_and_validate_learning_rate_arg(learning_rate)
         self._runtime_learning_rate = None
         self.execute_in_additional_optimizations = execute_in_additional_optimizations or {}  # BREADCRUMB: MOVE TO AUTODIFF
 
@@ -4076,6 +4077,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             retain_old_simulation_data=retain_old_simulation_data,
             context=context
         )
+
+        if lr_dict is not None:
+            self.parameters.learning_rates_dict._set(lr_dict, context)
 
         # Compiled resources
         self._compilation_data = self._CompilationData(owner=self)
@@ -9402,6 +9406,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         Otherwise, assumes call is from learn() method, and gets learning_rats for Projections in all nested comps
         """
         source_str = self.name
+        lr_dict = None
         if context:
             source_str = f"the learn() method of " + source_str
 
@@ -9446,22 +9451,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # MODIFIED 7/21/25 END
             # BREADCRUMB: KATHERINE: THE learning_rates_dict ASSIGNMENT FROM THE PRECEDING TEST IS PERSISTING:
             #             test_projection_specific_learning_rates(): hidden_dict_constructor -> input_dict_learn
-            if context is None:
-                lr_dict = self.parameters.learning_rates_dict.set(_lr_dict_arg, None)
+            try:
+                lr_dict = copy(self.parameters.learning_rates_dict.get(context))
+            except ParameterNoValueError:
+                lr_dict = _lr_dict_arg
             else:
-                lr_dict = self.parameters.learning_rates_dict.get(context)
                 # If called in an execution context (i.e., from learn()), get learning_rates for all nested comps
                 for comp in self._get_nested_compositions():
-                    lr_dict.update(comp.parameters.learning_rates_dict.get(None))
+                    lr_dict.update(comp.parameters.learning_rates_dict.get(context))
                 lr_dict.update(_lr_dict_arg)
-
-                # Assign learning_rates_dict to context for the current execution
-                self.parameters.learning_rates_dict.set(lr_dict, context)
-
-        # BREADCRUMB:  NEEDEED DUE TO PERSISTENCE PROBLEM NOTED ABOVE
-        else:
-            # BREADCRUMB: IS THIS OK IF THE CALL IS FROM learn() AND THERE IS NO DICT?  WIPES OUT CONSTRUCDTOR-SPECIFIED
-            self.parameters.learning_rates_dict.set({}, None)
 
         if context is not None and context.execution_id is not None:
             lr_dict = self.parameters.learning_rates_dict.get(context)
@@ -9475,7 +9473,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                            f"'{self.name}' but {filler[1]} or the {filler[2]} in that Composition:")
                 raise CompositionError(err_msg + f" '{', '.join(list(bad_keys))}'.")
 
-        return learning_rate
+        return learning_rate, lr_dict
 
     def _assign_learning_rates(self, projections=None, context=None):
         """Assign specified learning_rates for context to Projections & build learning_rates_dict for all Projections
@@ -12118,7 +12116,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"argument the constructor(s) for the corresponding MappingProjection(s).")
 
             # parse and then assign any learning_rate specs to learning_rates_dict for execution context
-            self._parse_and_validate_learning_rate_arg(learning_rate, context)
+            _, lr_dict = self._parse_and_validate_learning_rate_arg(learning_rate, context)
+            if lr_dict is not None:
+                self.parameters.learning_rates_dict._set(lr_dict, context)
             self._assign_learning_rates(context=context)
 
         # Non-Python (i.e. PyTorch and LLVM) learning modes only supported for AutodiffComposition
