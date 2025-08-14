@@ -123,7 +123,18 @@ def run_compositions_in_state(
     results = {}
 
     for comp_name, inputs in composition_input_strs.items():
-        exec(f'{comp_name}.run(inputs={inputs}, {extra_run_args_str})', _globals, _locals)
+        try:
+            exec(f'{comp_name}.run(inputs={inputs}, {extra_run_args_str})', _globals, _locals)
+        except Exception as e:
+            print(
+                str(e),
+                composition_input_strs,
+                _globals,
+                _locals,
+                sep="\n",
+                file=sys.stderr,
+            )
+            raise
         results[comp_name] = eval(f'{comp_name}.results', _globals, _locals)
 
     return results, _globals, _locals
