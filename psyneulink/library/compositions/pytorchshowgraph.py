@@ -59,13 +59,17 @@ class PytorchShowGraph(ShowGraph):
         self.show_pytorch = kwargs.pop('show_pytorch', False)
         context = kwargs.get('context')
         if self.show_pytorch:
-            self.pytorch_rep = self.composition._build_pytorch_representation(context, refresh=False)
+            self.composition.infer_backpropagation_learning_pathways(ExecutionMode.PyTorch)
+            self.pytorch_rep = (
+                self.composition._build_pytorch_representation(
+                    context=Context(source=ContextFlags.SHOW_GRAPH, execution_id=context.execution_id),
+                    new=False))
         self.exclude_from_gradient_calc_line_style = kwargs.pop(EXCLUDE_FROM_GRADIENT_CALC_LINE_STYLE, 'dotted')
         self.exclude_from_gradient_calc_color = kwargs.pop(EXCLUDE_FROM_GRADIENT_CALC_COLOR, 'brown')
         return super().show_graph(*args, **kwargs)
 
     def _get_processing_graph(self, composition, context):
-        """Helper method that creates dependencies graph for nodes of autodiffcomposition used in Pytorch mode"""
+        """Helper method that creates dependencies graph for nodes of AutodiffComposition used in PyTorch mode"""
         if self.show_pytorch:
             processing_graph = {}
             projections = self._get_projections(composition, context)
@@ -97,8 +101,8 @@ class PytorchShowGraph(ShowGraph):
     def _get_nodes(self, composition, context):
         """Override to return nodes of PytorchCompositionWrapper rather than autodiffcomposition"""
         if self.show_pytorch:
-            nodes = [node for node in self.pytorch_rep.nodes_map
-                           if SHOW_PYTORCH in self.pytorch_rep.nodes_map[node]._use]
+            nodes = sorted([node for node in self.pytorch_rep.nodes_map
+                            if SHOW_PYTORCH in self.pytorch_rep.nodes_map[node]._use])
             return nodes
         else:
             return super()._get_nodes(composition, context)
@@ -106,9 +110,7 @@ class PytorchShowGraph(ShowGraph):
     def _get_projections(self, composition, context):
         """Override to return nodes of Pytorch graph"""
         if self.show_pytorch:
-            # projections = list(self.pytorch_rep.projections_map.keys())
-            projections = [proj for proj in self.pytorch_rep.projections_map
-                           if SHOW_PYTORCH in self.pytorch_rep.projections_map[proj]._use]
+            projections = self.pytorch_rep.composition._pytorch_projections
             # Add any Projections to TARGET nodes
             projections += [afferent
                             for node in self.composition.learning_components

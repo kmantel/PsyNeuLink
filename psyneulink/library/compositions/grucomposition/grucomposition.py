@@ -324,9 +324,15 @@ from psyneulink.core.globals.keywords import (
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.llvm import ExecutionMode
 
-__all__ = ['GRUComposition', 'GRUCompositionError',
-           'INPUT_NODE', 'HIDDEN_LAYER', 'RESET_NODE',
-           'UPDATE_NODE', 'NEW_NODE', 'OUTPUT_NODE', 'GRU_INTERNAL_STATE_NAMES', 'GRU_NODE', 'GRU_TARGET_NODE']
+__all__ = ['GRUComposition', 'GRUCompositionError', 'INPUT_NODE', 'HIDDEN_LAYER', 'RESET_NODE', 'UPDATE_NODE',
+           'NEW_NODE', 'OUTPUT_NODE', 'GRU_INTERNAL_STATE_NAMES', 'GRU_NODE', 'GRU_TARGET_NODE', 'INPUT_TO_RESET',
+           'INPUT_TO_UPDATE', 'INPUT_TO_NEW',
+           'HIDDEN_TO_RESET', 'HIDDEN_TO_UPDATE', 'HIDDEN_TO_NEW', 'NEW_TO_HIDDEN', 'HIDDEN_RECURRENT',
+           'HIDDEN_TO_OUTPUT',
+           'BIAS_NODE_INPUT_TO_NEW', 'BIAS_NODE_INPUT_TO_UPDATE', 'BIAS_NODE_INPUT_TO_RESET', 'BIAS_NODE_HIDDEN_TO_NEW',
+           'BIAS_NODE_HIDDEN_TO_RESET', 'BIAS_NODE_HIDDEN_TO_UPDATE', 'BIAS_INPUT_TO_RESET', 'BIAS_INPUT_TO_UPDATE',
+           'BIAS_INPUT_TO_NEW', 'BIAS_HIDDEN_TO_RESET', 'BIAS_HIDDEN_TO_UPDATE', 'BIAS_HIDDEN_TO_NEW'
+           ]
 
 # Node names
 INPUT_NODE = 'INPUT'
@@ -338,6 +344,47 @@ OUTPUT_NODE = 'OUTPUT'
 GRU_INTERNAL_STATE_NAMES = [NEW_NODE, RESET_NODE, UPDATE_NODE, HIDDEN_LAYER]
 GRU_NODE = 'PYTORCH GRU NODE'
 GRU_TARGET_NODE = 'GRU TARGET NODE'
+BIAS_NODE_INPUT_TO_NEW = 'BIAS NODE IN'
+BIAS_NODE_INPUT_TO_UPDATE = 'BIAS NODE IU'
+BIAS_NODE_INPUT_TO_RESET = 'BIAS NODE IR'
+BIAS_NODE_HIDDEN_TO_NEW = 'BIAS NODE HN'
+BIAS_NODE_HIDDEN_TO_RESET = 'BIAS NODE HR'
+BIAS_NODE_HIDDEN_TO_UPDATE = 'BIAS NODE HU'
+
+# Projection names
+INPUT_TO_RESET = 'INPUT TO RESET WEIGHTS'
+INPUT_TO_UPDATE = 'INPUT TO UPDATE WEIGHTS'
+INPUT_TO_NEW = 'INPUT TO NEW WEIGHTS'
+INPUT_TO_HIDDEN_WEIGHTS = [INPUT_TO_RESET, INPUT_TO_UPDATE, INPUT_TO_NEW, ]
+HIDDEN_TO_RESET = 'HIDDEN TO RESET WEIGHTS'
+HIDDEN_TO_UPDATE = 'HIDDEN TO UPDATE WEIGHTS'
+HIDDEN_TO_NEW = 'HIDDEN TO NEW WEIGHTS'
+HIDDEN_TO_HIDDEN_WEIGHTS = [HIDDEN_TO_RESET, HIDDEN_TO_UPDATE, HIDDEN_TO_NEW]
+NEW_TO_HIDDEN = 'NEW TO HIDDEN WEIGHTS'
+HIDDEN_RECURRENT = 'HIDDEN RECURRENT WEIGHTS'
+HIDDEN_TO_OUTPUT = 'HIDDEN TO OUTPUT WEIGHTS'
+BIAS_INPUT_TO_RESET = 'BIAS IR'
+BIAS_INPUT_TO_UPDATE = 'BIAS IU'
+BIAS_INPUT_TO_NEW = 'BIAS IN'
+INPUT_TO_HIDDEN_BIASES = [BIAS_INPUT_TO_RESET, BIAS_INPUT_TO_UPDATE, BIAS_INPUT_TO_NEW]
+BIAS_HIDDEN_TO_RESET = 'BIAS HR'
+BIAS_HIDDEN_TO_UPDATE = 'BIAS HU'
+BIAS_HIDDEN_TO_NEW = 'BIAS HN'
+HIDDEN_TO_HIDDEN_BIASES = [BIAS_HIDDEN_TO_RESET, BIAS_HIDDEN_TO_UPDATE, BIAS_HIDDEN_TO_NEW]
+RESET_GATE = 'RESET GATE'
+RECURRENT_GATE = 'RECURRENT GATE'
+NEW_GATE = 'NEW GATE'
+
+# Port names
+NEW_INPUT = 'NEW INPUT'
+RECURRENT = 'RECURRENT'
+FROM_INPUT = 'FROM INPUT'
+FROM_HIDDEN = 'FROM HIDDEN'
+TO_HIDDEN_LAYER_INPUT = 'TO HIDDEN LAYER INPUT'
+RESET_GATING_SIGNAL = 'RESET GATING SIGNAL'
+RECURRENT_GATING_SIGNAL = 'RECURRENT GATING SIGNAL'
+NEW_GATING_SIGNAL = 'NEW GATING SIGNAL'
+
 
 class GRUCompositionError(CompositionError):
     pass
@@ -744,7 +791,6 @@ class GRUComposition(AutodiffComposition):
         hidden_size = Parameter(1, structural=True, stateful=False)
         bias = Parameter(False, structural=True, stateful=False)
         gru_mech = Parameter(None, structural=True, stateful=False)
-        enable_learning = Parameter(True, structural=True)
         learning_rate = Parameter(.001, modulable=True)
         input_weights_learning_rate = Parameter(True, structural=True)
         hidden_weights_learning_rate = Parameter(True, structural=True)
@@ -790,9 +836,9 @@ class GRUComposition(AutodiffComposition):
                  # batch_first:bool=False,
                  # dropout:float=0.0,
                  # bidirectional:bool=False,
-                 enable_learning:bool=True,
-                 learning_rate:float=None,
-                 optimizer_params:dict=None,
+                 enable_learning=True,
+                 learning_rate=None,
+                 # optimizer_params:dict=None,
                  random_state=None,
                  seed=None,
                  name="GRU Composition",
@@ -808,9 +854,9 @@ class GRUComposition(AutodiffComposition):
                          # batch_first=batch_first,
                          # dropout=dropout,
                          # bidirectional=bidirectional,
+                         # optimizer_params=optimizer_params,
                          enable_learning=enable_learning,
                          learning_rate=learning_rate,
-                         optimizer_params=optimizer_params,
                          random_state = random_state,
                          seed = seed,
                          **kwargs
@@ -1023,8 +1069,6 @@ class GRUComposition(AutodiffComposition):
         self.scheduler.add_condition(self.new_node, conditions.AfterNodes(self.update_node))
         self.scheduler.add_condition(self.hidden_layer_node, conditions.AfterNodes(self.new_node))
 
-        self._set_learning_attributes()
-
         self._analyze_graph()
 
     def _assign_gru_specific_attributes(self, input_size, hidden_size):
@@ -1039,32 +1083,6 @@ class GRUComposition(AutodiffComposition):
         self._trained_comp_nodes_to_pytorch_nodes_map = {self.output_node: self.gru_mech}
         self.target_node = ProcessingMechanism(default_variable = np.zeros_like(self.gru_mech.value),
                                                name= GRU_TARGET_NODE)
-
-    def _set_learning_attributes(self):
-        """Set learning-related attributes for Node and Projections
-        """
-        learning_rate = self.enable_learning
-
-        for projection in self.learnable_projections:
-
-            if self.enable_learning is False:
-                projection.learnable = False
-                continue
-
-            if learning_rate is False:
-                projection.learnable = False
-                continue
-
-            elif learning_rate is True:
-                # Default (GRUComposition's learning_rate) is used for all field_weight Projections:
-                learning_rate = self.learning_rate
-
-            assert isinstance(learning_rate, (int, float)), \
-                (f"PROGRAM ERROR: learning_rate for {projection.sender.owner.name} is not a valid value.")
-
-            projection.learnable = True
-            if projection.learning_mechanism:
-                projection.learning_mechanism.learning_rate = learning_rate
 
     def get_weights(self, context=None):
         wts_ir = self.wts_ir.parameters.matrix.get(context)
@@ -1090,7 +1108,6 @@ class GRUComposition(AutodiffComposition):
                  f"({wts.shape}) does not match required shape ({valid_shape}).)")
             proj.parameters.matrix._set(wts, context)
             proj.parameter_ports['matrix'].parameters.value._set(wts, context)
-        # MODIFIED 3/11/25 END
 
         if biases:
             for torch_bias, pnl_bias in zip(biases, [self.bias_ir, self.bias_iu, self.bias_in,
@@ -1167,11 +1184,12 @@ class GRUComposition(AutodiffComposition):
                 direct_proj_in = MappingProjection(name="Projection to GRU COMP",
                                                    sender=sender,
                                                    receiver=self.gru_mech,
-                                                   learnable=projection.learnable)
+                                                   learnable=projection.learnable,
+                                                   learning_rate=projection.learning_rate)
                 self._pytorch_projections.append(direct_proj_in)
             except DuplicateProjectionError:
-                assert False, "PROGRAM ERROR: Duplicate Projection to GRU COMP"
-
+                # assert False, "PROGRAM ERROR: Duplicate Projection to GRU COMP"
+                direct_proj_in = True
             try:
                 direct_proj_out = MappingProjection(name="Projection from GRU COMP",
                                                     sender=self.gru_mech,
@@ -1234,3 +1252,33 @@ class GRUComposition(AutodiffComposition):
         if CONTEXT not in kwargs or kwargs[CONTEXT] is None:
             raise CompositionError(f"Projections cannot be added to a {self.componentCategory}: ('{self.name}'.")
         return super().add_projection(*args, **kwargs)
+
+    @property
+    def w_ih_learning_rate(self):
+        from psyneulink.library.compositions.grucomposition.pytorchGRUwrappers import INPUT_TO_HIDDEN
+        pytorch_rep = self._build_pytorch_representation()
+        return pytorch_rep._pnl_refs_to_torch_param_names[INPUT_TO_HIDDEN].projection.learning_rate
+
+    @property
+    def w_hh_learning_rate(self):
+        from psyneulink.library.compositions.grucomposition.pytorchGRUwrappers import HIDDEN_TO_HIDDEN
+        pytorch_rep = self._build_pytorch_representation()
+        return pytorch_rep._pnl_refs_to_torch_param_names[HIDDEN_TO_HIDDEN].projection.learning_rate
+
+    @property
+    def b_ih_learning_rate(self):
+        if self.bias:
+            from psyneulink.library.compositions.grucomposition.pytorchGRUwrappers import BIAS_INPUT_TO_HIDDEN
+            pytorch_rep = self._build_pytorch_representation()
+            return pytorch_rep._pnl_refs_to_torch_param_names[BIAS_INPUT_TO_HIDDEN].projection.learning_rate
+        warnings.warn(f"{self.name} does not have any bias parameters; "
+                      f"it must be constructed with bias=True in its constructor to have them.")
+
+    @property
+    def b_hh_learning_rate(self):
+        if self.bias:
+            from psyneulink.library.compositions.grucomposition.pytorchGRUwrappers import BIAS_HIDDEN_TO_HIDDEN
+            pytorch_rep = self._build_pytorch_representation()
+            return pytorch_rep._pnl_refs_to_torch_param_names[BIAS_HIDDEN_TO_HIDDEN].projection.learning_rate
+        warnings.warn(f"{self.name} does not have any bias parameters; "
+                      f"it must be constructed with bias=True in its constructor to have them.")

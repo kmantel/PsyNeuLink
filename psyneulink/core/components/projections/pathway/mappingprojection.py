@@ -305,17 +305,21 @@ from psyneulink.core.components.projections.pathway.pathwayprojection import Pat
 from psyneulink.core.components.projections.projection import ProjectionError, projection_keywords
 from psyneulink.core.components.ports.outputport import OutputPort
 from psyneulink.core.globals.keywords import \
-    AUTO_ASSIGN_MATRIX, DEFAULT_MATRIX, FULL_CONNECTIVITY_MATRIX, HOLLOW_MATRIX, IDENTITY_MATRIX, INPUT_PORT, \
-    MAPPING_PROJECTION, MATRIX, \
-    OUTPUT_PORT, VALUE
+    (AUTO_ASSIGN_MATRIX, DEFAULT, DEFAULT_MATRIX, FULL_CONNECTIVITY_MATRIX, HOLLOW_MATRIX,
+     IDENTITY_MATRIX, INPUT_PORT, MAPPING_PROJECTION, MATRIX, OUTPUT_PORT, VALUE)
 from psyneulink.core.globals.log import ContextFlags
 from psyneulink.core.globals.parameters import FunctionParameter, Parameter, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
+from psyneulink.core.globals.utilities import is_numeric_scalar
 
 __all__ = [
-    'MappingError', 'MappingProjection'
+    'MappingError', 'MappingProjection',
+    'PROXY_FOR', 'PROXY_FOR_ATTRIB'
 ]
+
+PROXY_FOR = 'proxy_for'
+PROXY_FOR_ATTRIB = '_' + PROXY_FOR
 
 parameter_keywords.update({MAPPING_PROJECTION})
 projection_keywords.update({MAPPING_PROJECTION})
@@ -444,6 +448,7 @@ class MappingProjection(PathwayProjection_Base):
     componentType = MAPPING_PROJECTION
     className = componentType
     suffix = " " + className
+    classPreferenceLevel = PreferenceLevel.TYPE
 
     class Parameters(PathwayProjection_Base.Parameters):
         """
@@ -456,19 +461,26 @@ class MappingProjection(PathwayProjection_Base):
                     :default value: `MatrixTransform`
                     :type: `Function`
 
+                learning_rate
+                    see `learning_rate <MappingProjection.learning_rate>`
+
+                    :default value: None
+                    :type: ``float``
+
                 matrix
                     see `matrix <MappingProjection.matrix>`
 
                     :default value: `AUTO_ASSIGN_MATRIX`
                     :type: ``str``
-        """
-        function = Parameter(MatrixTransform, stateful=False, loggable=False)
-        matrix = FunctionParameter(
-            DEFAULT_MATRIX,
-            setter=_mapping_projection_matrix_setter
-        )
 
-    classPreferenceLevel = PreferenceLevel.TYPE
+        """
+        learning_rate = Parameter(None, stateful=True, fallback_value=DEFAULT)
+        function = Parameter(MatrixTransform, stateful=False, loggable=False)
+        matrix = FunctionParameter(DEFAULT_MATRIX,
+                                   setter=_mapping_projection_matrix_setter)
+        def _validate_learning_rate(self, val):
+            if val is not None and not is_numeric_scalar(val):
+                return 'must be a float, int or a bool'
 
     @property
     def _loggable_items(self):
@@ -496,6 +508,7 @@ class MappingProjection(PathwayProjection_Base):
                  matrix=None,
                  function=None,
                  learnable=True,
+                 learning_rate=None,
                  params=None,
                  name=None,
                  prefs: Optional[ValidPrefSet] = None,
@@ -511,6 +524,13 @@ class MappingProjection(PathwayProjection_Base):
         self.learning_mechanism = None
         self.has_learning_projection = None
         self.learnable = bool(learnable)
+        if not self.learnable and not isinstance(learning_rate, bool) and is_numeric_scalar(learning_rate):
+            raise MappingError(f"The 'learning_rate' argument ({learning_rate}) cannot be specified as a "
+                               f"float or int when 'learnable' is False.")
+        if PROXY_FOR in kwargs:
+            # Identifies Projection into or out of a nested Composition for which this is the proxy
+            #  (created to Projection to/from input_CIM/output_CIM of nested Composition)
+            self._proxy_for = kwargs.pop(PROXY_FOR)
 
         # If sender or receiver has not been assigned, defer init to Port.instantiate_projection_to_state()
         if sender is None or receiver is None:
@@ -522,6 +542,7 @@ class MappingProjection(PathwayProjection_Base):
                          weight=weight,
                          exponent=exponent,
                          matrix=matrix,
+                         learning_rate=learning_rate,
                          function=function,
                          params=params,
                          name=name,

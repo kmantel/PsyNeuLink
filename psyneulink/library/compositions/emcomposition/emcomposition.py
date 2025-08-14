@@ -945,22 +945,22 @@ from psyneulink.core.components.functions.nonstateful.transformfunctions import 
     Concatenate, LinearCombination, MatrixTransform)
 from psyneulink.core.components.functions.function import DEFAULT_SEED, _random_state_getter, _seed_setter
 from psyneulink.core.compositions.composition import CompositionError, NodeRole
-from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition, torch_available
+from psyneulink.library.compositions.autodiffcomposition import (
+    AutodiffComposition, torch_available, EXCLUDE_FROM_GRADIENT_CALC)
 from psyneulink.library.components.mechanisms.modulatory.learning.EMstoragemechanism import EMStorageMechanism
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.core.components.mechanisms.modulatory.control.controlmechanism import ControlMechanism
 from psyneulink.core.components.mechanisms.modulatory.control.gating.gatingmechanism import GatingMechanism
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
-from psyneulink.core.components.ports.inputport import InputPort
-from psyneulink.core.components.ports.outputport import OutputPort
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
 from psyneulink.core.globals.keywords import \
-    (ADAPTIVE, ALL, ARG_MAX, ARG_MAX_INDICATOR, AUTO, CONTEXT, CONTROL, DEFAULT_INPUT, DEFAULT_VARIABLE, DOT_PRODUCT,
+    (ADAPTIVE, AFTER, ALL, ARG_MAX, ARG_MAX_INDICATOR, AUTO, CONTEXT, CONTROL,
+     DEFAULT_INPUT, DEFAULT_LEARNING_RATE, DEFAULT_VARIABLE, DOT_PRODUCT,
      EM_COMPOSITION, FULL_CONNECTIVITY_MATRIX, GAIN, IDENTITY_MATRIX, INPUT_SHAPES, L0,
      MULTIPLICATIVE_PARAM, NAME, PARAMS, PROB_INDICATOR, PRODUCT, PROJECTIONS, RANDOM, VARIABLE)
 from psyneulink.core.globals.utilities import \
-    ContentAddressableList, convert_all_elements_to_np_array, is_numeric_scalar
+    ContentAddressableList, convert_all_elements_to_np_array, is_numeric_scalar, is_iterable
 from psyneulink.core.llvm import ExecutionMode
 
 
@@ -1595,7 +1595,6 @@ class EMComposition(AutodiffComposition):
         field_names = Parameter(None, structural=True)
         field_weights = Parameter([1], setter=field_weights_setter)
         learn_field_weights = Parameter(False, structural=True)
-        learning_rate = Parameter(.001, modulable=True)
         normalize_field_weights = Parameter(True)
         concatenate_queries = Parameter(False, structural=True)
         normalize_memories = Parameter(True)
@@ -1605,7 +1604,6 @@ class EMComposition(AutodiffComposition):
         storage_prob = Parameter(1.0, modulable=True, aliases=[MULTIPLICATIVE_PARAM])
         memory_decay_rate = Parameter(AUTO, modulable=True)
         purge_by_field_weights = Parameter(False, structural=True)
-        enable_learning = Parameter(True, structural=True)
         target_fields = Parameter(None, read_only=True, structural=True)
         random_state = Parameter(None, loggable=False, getter=_random_state_getter, dependencies='seed')
         seed = Parameter(DEFAULT_SEED(), modulable=True, setter=_seed_setter)
@@ -1646,8 +1644,8 @@ class EMComposition(AutodiffComposition):
 
         def _validate_learn_field_weights(self, learn_field_weights):
             if isinstance(learn_field_weights, (list, np.ndarray)):
-                if not all(isinstance(item, (bool, int, float)) for item in learn_field_weights):
-                    return f"can only contains bools, ints or floats as entries."
+                if not all(isinstance(item, (bool, int, float, type(None))) for item in learn_field_weights):
+                    return f"can only contains bools, ints, floats or None as entries."
             elif not isinstance(learn_field_weights, bool):
                 return f"must be a bool or list of bools, ints and/or floats."
 
@@ -1678,7 +1676,7 @@ class EMComposition(AutodiffComposition):
                  field_names:Optional[list]=None,
                  field_weights:Union[int,float,list,tuple]=None,
                  learn_field_weights:Union[bool,list,tuple]=None,
-                 learning_rate:float=None,
+                 learning_rate:Union[float,bool,int,dict]=None,
                  normalize_field_weights:bool=True,
                  concatenate_queries:bool=False,
                  normalize_memories:bool=True,
@@ -1709,6 +1707,7 @@ class EMComposition(AutodiffComposition):
             name,
             learn_field_weights,
         )
+        self._enable_learning_warning_flag = False
 
         memory_template, memory_capacity = self._parse_memory_template(memory_template,
                                                                        memory_capacity,
@@ -2052,6 +2051,12 @@ class EMComposition(AutodiffComposition):
 
         self.num_fields = len(self.entry_template)
 
+        # Handle dict specification for self.learning_rate (not allowed for EMComposition)
+        if isinstance(learning_rate, dict):
+            raise EMCompositionError(f"The 'learning_rate' arg for '{name}' is specified as a dict, "
+                                     f"which is not supported for an EMComposition;  "
+                                     f"use either its 'fields' arg or its 'learn_field_weights' arg instead.")
+
         if fields:
             # If a fields dict has been specified, use that to assign field_names, field_weights & learn_field_weights
             if any([field_names, field_weights, learn_field_weights, target_fields]):
@@ -2086,15 +2091,49 @@ class EMComposition(AutodiffComposition):
             parsed_field_weights = np.repeat(parsed_field_weights, self.num_fields)
 
         # Make sure field_weight learning was not specified for any value fields (since they don't have field_weights)
+        # # MODIFIED 6/15/25 OLD:
+        # if isinstance(learn_field_weights, (list, tuple, np.ndarray)):
+        #     for i, lfw in enumerate(learn_field_weights):
+        #         if parsed_field_weights[i] is None and lfw is not False:
+        #             warnings.warn(f"Learning was specified for field '{field_names[i]}' in the 'learn_field_weights' "
+        #                           f"arg for '{name}', but it is not allowed for value fields; it will be ignored.")
+        # MODIFIED 6/15/25 END
+        # # MODIFIED 6/14/25 OLD:
+        # elif learn_field_weights in {None, True, False}:
+        #     learn_field_weights = [False] * len(parsed_field_weights)
+        # # MODIFIED 6/14/25 NEW:
+        # elif learn_field_weights in {None, True, False}:
+        #     learn_field_weights = [learn_field_weights] * len(parsed_field_weights)
+        # MODIFIED 6/14/25 NEWER:
+        # elif isinstance(learn_field_weights, bool):
+        #     learn_field_weights = [learn_field_weights] * len(parsed_field_weights)
+        # elif learn_field_weights is None:
+        #     learn_field_weights = [False] * len(parsed_field_weights)
+        # MODIFIED 6/15/25 NEWEST:
+        lfw_values_specified_individually = True
+        if not is_iterable(learn_field_weights) and learn_field_weights in {None, True, False}:
+            learn_field_weights = [learn_field_weights] * len(parsed_field_weights)
+            lfw_values_specified_individually = False
         if isinstance(learn_field_weights, (list, tuple, np.ndarray)):
-            for i, lfw in enumerate(learn_field_weights):
-                if parsed_field_weights[i] is None and lfw is not False:
-                    warnings.warn(f"Learning was specified for field '{field_names[i]}' in the 'learn_field_weights' "
-                                  f"arg for '{name}', but it is not allowed for value fields; it will be ignored.")
-        elif learn_field_weights in {None, True, False}:
-            learn_field_weights = [False] * len(parsed_field_weights)
+            for i, vals in enumerate(zip(parsed_field_weights, learn_field_weights)):
+                fw, lfw = vals
+                if fw is None:
+                    # Field is a value field, so no learning allowed
+                    if lfw and lfw_values_specified_individually:
+                        # learning_rate specified as True or scalar for value field
+                        warnings.warn(f"A learning_rate was specified for field '{field_names[i]}' "
+                                      f"in the 'learn_field_weights' arg for '{name}', "
+                                      f"but it is not allowed for value fields; it will be ignored.")
+                    learn_field_weights[i] = False
+                elif lfw in {None, True}:
+                    # Assign default learning_rate
+                    learn_field_weights[i] = learning_rate or lfw
+                else:
+                    learn_field_weights[i] = lfw
+        # MODIFIED 6/14/25 END
         else:
-            assert False, f"PROGRAM ERROR: learn_field_weights ({learn_field_weights}) is not a list, tuple or bool."
+            assert False, \
+                f"PROGRAM ERROR: learn_field_weights ({learn_field_weights}) is not a list, array, tuple, or bool."
 
         # Memory structure Parameters
         parsed_field_names = field_names.copy() if field_names is not None else None
@@ -2416,7 +2455,6 @@ class EMComposition(AutodiffComposition):
                                                                       PROJECTIONS: memory_projection}))
                 field.memory_projection = memory_projection
 
-
     def _construct_field_weight_nodes(self, concatenate_queries, use_gating_for_weighting):
         """Create ProcessingMechanisms that weight each key's contribution to the retrieved values.
         Note: not constructed if only one key is specified, since in that case there is no point in weighting.
@@ -2593,6 +2631,10 @@ class EMComposition(AutodiffComposition):
             for field in self.fields:
                 field.storage_projection = self.storage_node.path_afferents[field.index]
 
+    def _assign_learning_rates(self, projections=None, context=None):
+        """Override to defer population of learning_rates_dict until call to _set_learning_attributes below."""
+        pass
+
     def _set_learning_attributes(self):
         """Set learning-related attributes for Node and Projections
         Make exclude_fron_gradient_calc assignments to relevant Nodes
@@ -2618,36 +2660,62 @@ class EMComposition(AutodiffComposition):
         4. if either self.learning_rate or self.learn_field_weights is False, but the other is not,
            - set self.learning_rate to False and issue warning (don't bother if both are False)
         """
+
+        # BREADCRUMB: SET self.storage_node = None IF NOT USE_STORAGE_NODE?
+        if hasattr(self, 'storage_node'):
+            setattr(self.storage_node, EXCLUDE_FROM_GRADIENT_CALC, AFTER)
+
+        # Get field_weight projections and set all others to be non-learnable
+        field_weight_projections = []
         for projection in self.projections:
-
-            projection_is_field_weight = projection.sender.owner in self.field_weight_nodes
-
-            if self.enable_learning is False or not projection_is_field_weight:
-                projection.learnable = False
-                continue
-
-            # Use globally specified learning_rate
-            if self.learn_field_weights is None: # Default, which should be treat same as True
-                learning_rate = True
-            elif isinstance(self.learn_field_weights, (bool, int, float)):
-                learning_rate = self.learn_field_weights
-            # Use individually specified learning_rate
+            if projection.sender.owner in self.field_weight_nodes:
+                field_weight_projections.append(projection)
             else:
-                # FIX: THIS NEEDS TO USE field_index_map, BUT THAT DOESN'T SEEM TO HAVE THE WEIGHT PROJECTION YET
-                learning_rate = self.learn_field_weights[self._field_index_map[projection]]
-
-            if learning_rate is False:
                 projection.learnable = False
-                continue
-            elif learning_rate is True:
-                # Default (EMComposition's learning_rate) is used for all field_weight Projections:
-                learning_rate = self.learning_rate
-            assert isinstance(learning_rate, (int, float)), \
-                (f"PROGRAM ERROR: learning_rate for {projection.sender.owner.name} is not a valid value.")
+                projection.learning_rate = False
 
-            projection.learnable = True
-            if projection.learning_mechanism:
-                projection.learning_mechanism.learning_rate = learning_rate
+        constructor_learning_rate = self._optimizer_constructor_params
+        learn_field_weights = self.parameters.learn_field_weights.spec
+
+        if not isinstance(learn_field_weights, (list, np.ndarray)):
+            assert not self.enable_learning, \
+                "PROGRAM ERROR: self.learn_field_weights is not a list, but should be by this point"
+
+        if (all(item is False for item in learn_field_weights)
+                or len(self.query_input_nodes) == 1 or self.concatenate_queries_node):
+            # If learning for all field weights is set to False, or there is a single query_input_node,
+            #   or concatenate is being used, then set learnable and learning_rate for all Projections to False
+            lr_dict = {}
+            for projection in field_weight_projections:
+                projection.learnable = False
+                projection.learning_rate = False
+                lr_dict[projection] = False
+            self._enable_learning_warning_flag = True
+
+        else:
+            # BREADCRUMB:  ASSIGN ACTUAL learning_rates TO PROJECTIONS HERE?
+            # Construct dict for constructor_learning_rate from learn_field_weights if that is a list
+            lr_dict = {}
+            if constructor_learning_rate:
+                lr_dict[DEFAULT_LEARNING_RATE] = constructor_learning_rate.pop(DEFAULT_LEARNING_RATE, None)
+            for i, field in enumerate(self.fields):
+                if field.type == FieldType.KEY:
+                    # Get Projection for field_weight_node
+                    proj = field.weight_node.efferents[0]
+                    # Get learning_rate for field_weight_node
+                    if learn_field_weights[i] is False:
+                        lr_dict[proj] = False
+                        proj.learnable = False
+                    elif is_numeric_scalar(learn_field_weights[i]):
+                        lr_dict[proj] = learn_field_weights[i]
+                    elif learn_field_weights[i] is None:
+                        continue
+                    else:
+                        raise EMCompositionError(f"PROGRAM ERROR: learning_rate for {field.name} "
+                                                 f"({learn_field_weights[i]}) is not a valid value.")
+
+        self.parameters.learning_rates_dict.set(lr_dict, context=None)
+        self._optimizer_constructor_params = lr_dict
 
     def _validate_options_with_learning(self,
                                         use_gating_for_weighting,
@@ -2663,8 +2731,6 @@ class EMComposition(AutodiffComposition):
             warnings.warn(f"The 'softmax_choice' arg of '{self.name}' is set to '{softmax_choice}' with "
                           f"'enable_learning' set to True; this will generate an error if its "
                           f"'learn' method is called. Set 'softmax_choice' to WEIGHTED_AVG before learning.")
-
-
     #endregion
 
     # *****************************************************************************************************************
@@ -2792,6 +2858,24 @@ class EMComposition(AutodiffComposition):
             raise EMCompositionError(f"The ARG_MAX and PROBABILISTIC options for the 'softmax_choice' arg "
                                      f"of '{self.name}' cannot be used during learning; change to WEIGHTED_AVG.")
 
+        if self._enable_learning_warning_flag and not self.is_nested:
+            # Warn only if EM is being run as a standalone Composition
+            #   (it may be common for it to be nested but use only one key or concatenation, so dont' bother user)
+            # FIX: THIS SHOULD BE CHANGED WHEN FIELD_WEIGHTS CAN BE TENSORS THAT ARE LEARNABLE
+            warning = None
+            if self.concatenate_queries_node:
+                warning = (f"The 'enable_learning' arg of '{self.name}' is set to 'True' with "
+                           f"`concatenate_queries` also set to 'True', so 'fields_weights' and 'learning' "
+                           f"will have no effect; therefore, 'enable_learning' is being set to 'False'.")
+            elif self.query_input_nodes == 1:
+                # If there is only a single key, there are no field_weight nodes or Projections,
+                #   therefore learning is not possible, so warn and disable learning
+                warning = (f"The 'enable_learning' arg of '{self.name}' is set to 'True', but it has only one key "
+                           f"('{self.query_input_nodes[0].name}') so fields_weights and learning will have no "
+                           f"effect; therefore, 'enable_learning' is being set to 'False'.")
+            if warning:
+                warnings.warn(warning)
+
         return super().learn(
             *args,
             context=context,
@@ -2830,7 +2914,7 @@ class EMComposition(AutodiffComposition):
 
     def infer_backpropagation_learning_pathways(self, execution_mode, context=None):
         if self.concatenate_queries:
-            raise EMCompositionError(f"EMComposition does not support learning with 'concatenate_queries'=True.")
+            raise EMCompositionError(f"EMComposition does not support learning with 'concatenate_queries'='True'.")
         return super().infer_backpropagation_learning_pathways(execution_mode, context=context)
 
     def do_gradient_optimization(self, retain_in_pnl_options, context, optimization_num=None):
