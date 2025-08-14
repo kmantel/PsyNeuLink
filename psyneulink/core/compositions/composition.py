@@ -1,4 +1,4 @@
-# Princeton University licenses this file to You under the Apache License, Version 2.0 (the "License");
+# "License");
 # you may not use this file except in compliance with the License.  You may obtain a copy of the License at:
 #     http://www.apache.org/licenses/LICENSE-2.0
 # Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
@@ -40,6 +40,7 @@ Contents
            - `Composition_Learning_Methods`
            - `Composition_Learning_Components`
            - `Composition_Learning_Execution`
+        • `Composition_Enable_Learning`
         • `Composition_Learning_Rate`
      - `Composition_Learning_AutodiffComposition`
      - `Composition_Learning_UDF`
@@ -117,10 +118,10 @@ The following arguments of the Composition's constructor can be used to add Comp
         adds one or more `Pathways <Composition_Pathways>` to the Composition; this is equivalent to constructing
         the Composition and then calling its `add_pathways <Composition.add_pathways>` method, and can use the
         same forms of specification as the **pathways** argument of that method (see `Pathway_Specification` for
-        additonal details). If any `learning Pathways <Composition_Learning_Pathway>` are included, then the
-        constructor's **disable_learning** argument can be used to disable learning on those by default (though it
-        will still allow learning to occur on any other Compositions, either nested within the current one,
-        or within which the current one is nested (see `Composition_Learning` for a full description).
+        additonal details). If any `learning Pathways <Composition_Learning_Pathway>` are included, then assigning
+        ``False`` to the constructor's **enable_learning** argument disables learning on those by default (though it
+        will still allow learning to occur on any other Compositions, either nested within it or within which it is
+        nested;  see `Composition_Learning` for a full description).
 
    .. _Composition_Nodes_Arg:
 
@@ -197,7 +198,7 @@ These methods can be used to add `Pathways <Composition_Pathways>` to an existin
         the Composition.
 
     COMMENT:
-    The following set of `learning methods <Composition_Learning_Methods>` can be used to add `Pathways
+    The following set of `learning pathway methods <Composition_Learning_Methods>` can be used to add `Pathways
         <Component_Pathway>` that implement `learning <Composition_Learning>` to an existing Composition:
     COMMENT
 
@@ -471,11 +472,10 @@ are also included in those attributes of any intervening and the outermost Compo
 
 .. _Composition_Nested_Learning:
 
-*Learning in nested Compositions.* A nested Composition can also contain one or more `learning Pathways
-<Composition_Learning_Pathway>`, however a learning Pathway may not extend from an enclosing Composition
-to one nested within it or vice versa.  The learning Pathways within a nested Composition are executed
-when that Composition is run, just like any other (see `Composition_Learning_Execution`).
-
+*Learning in nested Compositions.* Some subclasses of Composition support learning in nested Compositions
+<Composition_Nested> (e.g., AutdodiffComposition; see `AutodiffComposition_Nesting`).  The learning Pathways within
+a nested Composition are executed when that Composition is run, just like any other (see
+`Composition_Enable_Learning`).
 
 .. _Composition_CIMs:
 
@@ -856,16 +856,16 @@ COMMENT
 
 .. _Composition_Learning_Methods:
 
-*Supervised Learning Methods*
-=============================
+*Supervised Learning Pathway Methods*
+=====================================
 
 Supervised learning is implemented in a Composition by specifying a `learning Pathway <Composition_Learning_Pathway>`
 in the **pathways** argumemt of the Composition's constructor, its `add_pathways <Composition.add_pathways>` method,
-or one of its learning methods.  If the constructor or `add_pathways <Composition.add_pathways>` method is used,
+or one of its learning pathway methods.  If the constructor or `add_pathways <Composition.add_pathways>` method is used,
 then the `Pathway specification <Pathway_Specification>` must be the first item in a tuple, followed by a
 `LearningFunction` as its 2nd item that specfies the type of learning.  Alternatively, a `learning Pathway
 <Composition_Learning_Pathway>` can be added to a Composition by specifying the `Pathway` to be learned in the one
-of the Composition's learning methods, of which there are currently three:
+of the Composition's learning pathway methods, of which there are currently three:
 
     • `add_reinforcement_learning_pathway` -- uses `Reinforcement`;
     • `add_td_learning_pathway` -- uses `TDLearning`;
@@ -887,7 +887,7 @@ matches as closely as possible a target value `specified as input <Composition_T
 `learn <Composition.learn>` method. The Mechanisms in the pathway must be compatible with learning (that is, their
 `function <Mechanism_Base.function>` must be compatible with the `function <LearningMechanism.function>` of the
 `LearningMechanism` for the MappingProjections they receive (see `LearningMechanism_Function`).  The Composition's
-`learning methods <Composition_Learning_Methods>` return a learning `Pathway`, in which its `learning_components
+`learning pathway methods <Composition_Learning_Methods>` return a learning `Pathway`, in which its `learning_components
 <Pathway.learning_components>` attribute is assigned a dict containing the set of learning components generated for
 the Pathway, as described below.
 
@@ -897,7 +897,8 @@ the Pathway, as described below.
 ================================
 
 For each `learning pathway <Composition_Learning_Pathway>` specified in the **pathways** argument of a Composition's
-constructor or one of its `learning methods <Composition_Learning_Methods>`, it creates the following Components,
+constructor or one of its `learning pathway methods <Composition_Learning_Methods>`, it creates the following
+Components,
 and assigns to them the `NodeRoles <NodeRole>` indicated:
 
     .. _TARGET_MECHANISM:
@@ -989,7 +990,7 @@ each the learning method determines how the sequence to be added relates to any 
 intersects, and automatically creates andconfigures the relevant learning components so that the error terms are
 properly computed and propagated by each LearningMechanism to the next in the configuration. It is important to note
 that, in doing so, the status of a Mechanism in the final configuration takes precedence over its status in any of
-the individual sequences specified in the `learning methods <Composition_Learning_Methods>` when building the
+the individual sequences specified in the `learning pathway methods <Composition_Learning_Methods>` when building the
 Composition.  In particular, whereas ordinarily the last ProcessingMechanism of a sequence specified in a learning
 method projects to a *OBJECTIVE_MECHANISM*, this may be superseded if multiple sequences are created. This is the
 case if: i) the Mechanism is in a seqence that is contiguous (i.e., abuts or intersects) with others already in the
@@ -1027,19 +1028,15 @@ they project to another Mechanism (the *OBJECTIVE_MECHANISM*) in the Composition
 *Execution of Supervised Learning*
 ==================================
 
-For learning to occur when a Composition is run, its `learn <Composition.learn>` method must be used instead of the
-`run <Composition.run>` method, and its `disable_learning <Composition.disable_learning>` attribute must be False.
-When the `learn <Composition.learn>` method is used, all Components *unrelated* to learning are executed in the same
-way as with the `run <Composition.run>` method.  If the Composition has any `nested Composition <Composition_Nested>`
-that have `learning Pathways <Composition_Learning_Pathway>`, then learning also occurs on all of those for which
-the `disable_learning <Composition.disable_learning>` attribute is False.  This is true even if the `disable_learning
-<Composition.disable_learning>` attribute is True for the Composition on which the  `learn <Composition.learn>` method
-was called.
+For learning to occur when a Composition is executed, its `learn <Composition.learn>` method must be used instead
+of the `run <Composition.run>` method, and its `enable_learning <Composition.enable_learning>` attribute must be
+``True`` (or it must have a nested Composition for which that is so; see `Composition_Enable_Learning` for additional
+details). When the `learn <Composition.learn>` method is used, all Components *unrelated* to learning are executed
+in the same way as with the `run <Composition.run>` method. When a Composition is run that contains one or more
+`learning Pathways <Composition_Learning_Pathway>`,  all of the ProcessingMechanisms for a pathway are executed first,
+and then its `learning components <Composition_Learning_Components>`.  This is shown in an animation of the XOR
+network from the `example above <Composition_XOR_Example>`:
 
-When a Composition is run that contains one or more `learning Pathways <Composition_Learning_Pathway>`, all of the
-ProcessingMechanisms for a pathway are executed first, and then its `learning components
-<Composition_Learning_Components>`.  This is shown in an animation of the XOR network from the `example above
-<Composition_XOR_Example>`:
 
 .. _Composition_Learning_Animation_Figure:
 
@@ -1058,10 +1055,35 @@ ProcessingMechanisms for a pathway are executed first, and then its `learning co
         changes will not be observed in the values of their `matrix <MappingProjection.matrix>` parameters until after
         they are next executed (see `Lazy Evaluation <Component_Lazy_Updating>` for an explanation of "lazy" updating).
 
-The Compositon's `learn <Composition.learn>` method takes all of the same arguments as its `run <Composition.run>`
+The Composition's `learn <Composition.learn>` method takes all of the same arguments as its `run <Composition.run>`
 method, as well as additonal ones that are specific to learning.  Also like `run <Composition.run>`, it returns the
 `output_values <Composition.output_values>` of the Composition after the last trial of execution.  The results for the
 last epoch of learning are stored in its `learning_results <Composition.learning_results>` attribute.
+
+.. _Composition_Enable_Learning:
+
+Enabling Learning
+^^^^^^^^^^^^^^^^^
+
+When a Composition's `learn <Composition.learn>` method is called, learning occurs only if its `enable_learning
+<Composition.enable_learning>` attribute is ``True``; if `enable_learning <Composition.enable_learning>` is ``False``,
+an error is raised.  This attribute can be set in the Composition's constructor, or programmatically by assigning
+a value to it.
+
+*Learning in Nested Compositions.* While the parent class of Composition does not support learning in `nested
+Compositions <Composition_Nested>`, some subclasses do (e.g., AutdodiffComposition; see `AutodiffComposition_Nesting`).
+In such cases, each must have its `enable_learning <Composition.enable_learning>` attribute set to ``True`` for
+learning to occur on that nested Composition when the `learn <Composition.learn>` method of the outer Composition is
+called.  If a nested Composition has its `enable_learning <Composition.enable_learning>` attribute set to ``False``,
+no learning will occur for that Composition when the `learn <Composition.learn>` method of the outer Composition is
+called, regardless of whether the outer Composition's `enable_learning <Composition.enable_learning>` attribute is
+``True`` or ``False``. If a Composition has nested Compositions and any of their `enable_learning
+<Composition.enable_learning>` attributes is set to ``True``, then its `learn <Composition.learn>` method the `learn
+<Composition.learn>` method of the outer Composition can be called, even if its `enable_learning
+<Composition.enable_learning>` attribute is set to ``False``, and learning will occur on any nested Composition(s)
+for which `enable_learning <Composition.enable_learning>` is ``True``.  However, if the outer Composition and all of
+those nested within it have their `enable_learning <Composition.enable_learning>` attribute set to ``False``,
+then an error is raised if the `learn <Composition.learn>` method is called.
 
 
 .. _Composition_Learning_Rate:
@@ -1071,53 +1093,169 @@ Learning Rate
 COMMENT:
 Add explanation of how learning_rate applies to Unsupervised forms of learning
 COMMENT
-The rate at which learning occurs in a `learning pathway <Composition_Learning_Pathway>` is determined by the
-`learning_rate <LearningMechanism_Learning_Rate>` Parameter of the `LearningMechanism(s) <LearningMechanism>` in that
-Pathway.  If it is not specified, then the `default value <Parameter_Defaults>` for the LearningMechanism's `function
-<LearningMechanism.function>` is used, which is determined by the kind of learning in that Pathway. However, the
-learning_rate can be specified in several other ways, both at construction and/or execution.  At construction, it can
-be specified using the **learning_rate** argument of the Compostion's constructor, in which case it serves as the
-default learning_rate for all learning pathways;  it can also be specified in the **learning_rate** argument of a
-`learning construction method <Composition_Learning_Methods>`, in which case it applies to only the LearningMechanisms
-in that Pathway. Specifications for a Pathway take precedence over the specification in the Composition's constructor.
-The **learning_rate** can also be specified at execution, in the Composition's `learn <Composition.learn>` method,
-in which case it applies to all learning pathways during that (and only that) execution, and supersedes any
-specifications made at construction. It can also be specified for one or more individual LearningMechanisms (which
-applies to the `matrix <MappingProjection.matrix>` parameter ("connection weights") of the `MappingProjection` for
-which each LearningMechanism is responsible), by assigning a value directly to the LearningMechanism's `learning_rate
-<LearningMechanism.learning_rate>` Parameter.  This supersedes any other specifications of learning_rate, including
-in the Composition's learn() method, and applies to all subsequent executions of learning, allowing different
-LearningMechanisms (and their corresponding MappingProjections) within a Composition to be assigned different
-learning_rates.  The table below shows the precedence for the specificadtion of learning_rates.
-COMMENT:
-Finally, the `learning_rate <LearningSignal.learning_rate>` for
-a LearningMechanism interacts with any specifications of the `learning_rate <LearningSignal.learning_rate>` for its
-`learning_projections <LearningMechanism.learning_projections>` (see `LearningProjection_Function`
-for additional details).
-COMMENT
+
+The rate at which learning occurs for a `learnable <MappingProjection.learnable>` `MappingProjection` is determined
+by its `learning_rate <MappingProjection.learning_rate>` Parameter. This can be specified in a number of ways,
+including directly for the Projection (in its constructor), the `learning Pathway <Composition_Learning_Pathway>` to
+which in belongs, or for the entire Composition.  `LearningMechanisms <LearningMechanism>` and their `LearningSignals
+<LearningSignal>` also have learning_rate Parameters, but these apply only to `Python execution
+<Composition_Learning_Configurations>`, and it is generally simpler to assign learning_rates directly to a
+MappingProjection, learning Pathways, or to the Composition. These can be specified using the **learning_rate**
+argument for any of these in their constructor, and/or that Composition's `learn <Composition.learn>`
+method (their precedence is shown in the `table <Composition_Learning_Rate_Precedence_Hierarchy> below):
+
+.. _Composition_Learning_Rate_Specification:
+
+    * *int or float*: the value is used as the learning_rate.
+
+    * *True or None*: if used to specify the learning_rate for a MappingProjection, it is assigned the value of the
+       Composition's `learning_rate <Composition.learning_rate>`; if used to specify the learning_rate for a
+       Composition, the Composition's default learning_rate is used.
+
+    * *False*: causes the MappingProjection or Composition to not be learnable (i.e., sets the `learnable
+      <MappingProjection.learnable>` attribute of the corresponding MappingProjection(s) to False).
+
+    * *dict*: {Projection or Projection name: learning_rate}; this can be used in a Composition's constructor and/or
+      its `learn <Composition.learn>` method to specify the learning_rate for individual Projections. The key for
+      each entry must be a `Projection` or its `name <Projection.name>`, and the value can be any of those listed
+      above. An entry with the key *DEFAULT_LEARNING_RATE* can be used to specify the default learning rate for the
+      Composition. If this is used in the constructor for a Composition, its values override any specifications for the
+      corresponding MappingProjections (i.e., in their constructors), and apply to all executions of the Composition's
+      `learn <Composition.learn>` method; a dict can also be used to specify the **learning_rate** argument of the
+      `learn <Composition.learn>` method, which overrides all other specifications, but applies only for that execution.
+
+    .. hint::
+        Specifying *learning_rate* as a dict using Projection name(s) as key(s) can be useful at construction
+        when the Projection itself may not yet have been constructed.
+
+    .. hint::
+        The learning_rate assigned to an individual Projection in a dict specified in the Composition's constructor
+        can be accessed by calling by ``<MappingProjection>.parameters.learning_rate.get(<Composition.name>_default)``,
+        and a value assigned in the Composition's `learn <Composition.learn>` method can be accessed by calling
+        ``<MappingProjection>.parameters.learning_rate.get(<context>)``, where *<context>* is the value of the
+        **context** argument of the `learn <Composition.learn>` method (the default is the name of the Composition).
+
+  .. _Composition_Learning_Rate_Assignment_After_Construction:
+
+  .. note::
+     Specification of the learning_rate for an individual Projection made after it has been included in a
+     Composition has no effect; it must be made either to the MappingProjection (in its constructor or directly
+     to its `learning_rate <MappingProection.learning_rate>` Parameter before being added to the Composition, or
+     in the Composition's constructor (or, for some Composition subclasses, its `learn <Composition.learn>` method),
+     using the dict format described above.
+
+  .. technical_note::
+     The foregoing is because the learning_rate for a Projection is used to construct the components of the
+     Composition responsible for learning, which can only be modified via the Composition once constructed;
+     currently this is not possuible for a standard Compositions, but can be done for an AutodiffCompositions
+     by assignment to the **learning_rate** argument of its `learn AutodiffComposition.learn` method (see
+     `AutodiffComposition_Learning_Rate` for details).
 
 .. _Composition_Learning_Rate_Precedence_Hierarchy
 
+As noted above, learning_rates can be specified in several places. Precedence of specifications is guided by the
+general heuristics that more local, lower level and immediate specificaitons take precedence over broader,
+higher level, more general ones. More specifically:
+
+  * *projection-specific* specifications take precendence over those for a Composition's learning_rate;
+
+  * *learn()* method specifications take precedence over those made in constructors;
+
+  * *inner* Composition specifications take precedence over those for ones within which they are nested, for cases
+    in which learning is supported for nested Compositions (see `note <Composition_Learning_Nested>` above for
+    learning and `nested Compositions <Composition_Nested>`);
+
+  * 'False' specified for a Composition (in its constructor or `learn <Composition.learn>` method) only applies
+    to Projections within its scope that are assigned 'None' (that is, it functions as the default) (see `note
+    <Composition_Learning_Rate_False>` below for addition details).
+
+Below is a complete listing of places where learning_rate(s) can be specified, indicating their precedence in
+determining the learning_rate for a Projection used at execution:
+
 .. table::
 
-   +-------------------------------------------------------------------------------------------------------------------------------------+
-   |                          **Learning Rate Precedence Hierarchy**                                                                     |
-   +----------------+--------------------------------------------------------------------------------------------------------------------+
-   |  **Highest**:  |  Assignment to LearningMechanism `learning_rate <LearningMechanism_Learning_Rate>` Parameter (after construction)  |
-   |                |    ``my_learning_mechanism.parameters.learning_rate.set(val)``                                                     |
-   +----------------+--------------------------------------------------------------------------------------------------------------------+
-   |                |  Call to `Composition.learn` method (execution)                                                                    |
-   |                |    ``my_composition.learn(learning_rate=val)``                                                                     |
-   +----------------+--------------------------------------------------------------------------------------------------------------------+
-   |                |  Assignment in `LearningMechanism` constructor                                                                     |
-   |                |    ``my_learning_mechanimsm=LearningMechanism(learning_rate=val)``                                                 |
-   +----------------+--------------------------------------------------------------------------------------------------------------------+
-   |                |  Assignment in `learning pathway <Composition_Learning_Pathway>` constructor                                       |
-   |                |    ``my_composition.add_linear_learning_pathway(learning_rate=val)``                                               |
-   +----------------+--------------------------------------------------------------------------------------------------------------------+
-   |                |  Assignment in Composition constructor                                                                             |
-   |  **Lowest**:   |    ``my_composition=Composition(learning_rate=val)``                                                               |
-   +----------------+--------------------------------------------------------------------------------------------------------------------+
+   +--------------------------------------------------------------------------------------------------------------------------------------+
+   |                          **Learning Rate Precedence Hierarchy**                                                                      |
+   +----------------+---------------------------------------------------------------------------------------------------------------------+
+   |  **Highest**:  |  `Composition.learn()` method dict specifying Projection-specific learning_rate(s)                                  |
+   |                |    ``my_composition.learn(learning_rate={my_projection:val})`` (applies only during that execution)                 |
+   +----------------+---------------------------------------------------------------------------------------------------------------------+
+   |                |  MappingProjection in Composition constructor dict                                                                  |
+   |                |    ``my_composition=Composition(learning_rate={my_projection: val})``                                               |
+   |                +---------------------------------------------------------------------------------------------------------------------+
+   |                |  `MappingProjection` `learning_rate <MappingProjection.learning_rate>` Parameter (before Composition construction)  |
+   |                |    ``my_projection.learning_rate=val``                                                                              |
+   |                +---------------------------------------------------------------------------------------------------------------------+
+   |                |  `MappingProjection` constructor                                                                                    |
+   |                |    ``my_learning_mechanimsm=MappingProjection(learning_rate=val)``                                                  |
+   |                +---------------------------------------------------------------------------------------------------------------------+
+   |                |  LearningMechanism `learning_rate <LearningMechanism_Learning_Rate>` Parameter (after construction)                 |
+   |                |    ``my_learning_mechanism.learning_rate=val``                                                                      |
+   |                +---------------------------------------------------------------------------------------------------------------------+
+   |                |  `LearningMechanism` constructor                                                                                    |
+   |                |    ``my_learning_mechanimsm=LearningMechanism(learning_rate=val)``                                                  |
+   |                +---------------------------------------------------------------------------------------------------------------------+
+   |                |  `Learning pathway <Composition_Learning_Pathway>` constructor                                                      |
+   |                |    ``my_composition.add_linear_learning_pathway([<pathway>], learning_rate=val)``                                                |
+   |                +---------------------------------------------------------------------------------------------------------------------+
+   |                |  `Composition.learn` method (value or using DEFAULT_LEARNING_RATE key in dict specifying default for Composition    |
+   |                |    ``my_composition.learn(learning_rate=val or {DEFAULT_LEARNING_RATE: val})`` (applies only during that execution) |
+   +----------------+---------------------------------------------------------------------------------------------------------------------+
+   |                |  Nested Composition constructor                                                                                     |
+   |                |    ``my_composition=Composition(learning_rate=val or {DEFAULT_LEARNING_RATE: val})``                                |
+   +----------------+---------------------------------------------------------------------------------------------------------------------+
+   |                |  Outer Composition constructor                                                                                      |
+   |  **Lowest**:   |    ``my_composition=Composition(learning_rate=val or {DEFAULT_LEARNING_RATE: val})``                                |
+   +----------------+---------------------------------------------------------------------------------------------------------------------+
+   |                |  `MappingProjection` `learning_rate <MappingProjection.learning_rate>` Parameter (*after* Composition assginment)   |
+   | **No effect**: |    ``my_projection.learning_rate=val`` (see `note <Composition_Learning_Rate_Assignment_After_Construction>` above) |
+   +----------------+---------------------------------------------------------------------------------------------------------------------+
+
+   .. hint::
+      If the learning_rate of a Projection in a `nested Composition <Composition_Nested>` is not specified, it is
+      assigned the default learning_rate for the nested Composition to which it belongs if that has been explicitly
+      specified or if it is not nested within any other Compositions; otherwise, it is assigned the learning_rate
+      of the first Composition within which it is nested that has an explicitly specified `learning_rate
+      <Composition.learning_rate>`, or the default learning_rate for the outermost Composition if no Composition
+      learning_rates are explicitly specified.
+
+   .. note::
+      Specifying a numeric value for the **learning_rate** argument of a Composition's `learn <Composition.learn>`
+      method overrides all other specifications, except assignment of ``False`` to the `learning_rate
+      <MappingProjection.learning_rate>` Parameter or `learnable <MappingProjection.learnable>` attribute of a
+      Projection, or the `enable_learning <Composition.enable_learning>` attribute of a Composition (see next note);
+      however, it applies only for that execution.
+
+   .. note::
+      Setting `enable_learning <Composition.enable_learning>` (for a Composition) and/or `learnable
+      <MappingProjection.learnable>` (for Projections) to ``False`` take precedence over any other assignments;
+      in either case, no learning takes place for that object (though, for a Composition, learning may occur for
+      Compositions nested within it), irrespective of any specifications in the **learning_rate** argument of
+      the Composition's constructor and/or its `learn <Composition.learn>` method.
+
+   .. _Composition_Learning_Rate_False:
+
+   .. note::
+
+      Specifying **learning_rate** as ``False`` in Composition's constructor or `learn() <Composition.learn>` method
+      applies only to Projections within its scope assigned 'None' (i.e., it functions as the default `learning_rate
+      <MappingProjection.learning_rate>` for those Projections); Projecions assigned a numeric value use that value,
+      and any assigned `True` use the first explicitly specified Composition `learning_rate <Composition.learning_rate>`
+      that is not ``False`` found in the nesting hierarchy, or the default learning_rate for the outermost
+      Composition if no Composition learning_rates are explicitly specified; that is, specifying a Projection's
+      `learning_rate <MappingProjection.learning_rate>` as 'True' "protects" it against assigning 'False' to the
+      `learning_rate <Composition.learning_rate>` of the Composition to which it belongs or any within which that is
+      nested, and forces use of a default value procured from a Composition within which it is nested; however, if
+      there is no such Composition, or the outermost one is set to ``False``, then it will be assigned ``False``.
+      Nevertheless, as suggested in the warning below, the safest way to fully disable learning for a Composition is
+      to set its `enable_learning <Composition.enable_learning>` attribute to ``False``.
+
+   .. warning::
+      Setting the `learning_rate <Composition.learning_rate>` to ``False`` does not necessarily disable learning
+      for the Composition -- it does so only for Projections within its scope that are assigned 'None', and can be
+      overridden by specifying a numeric value for the **learning_rate** argument of the Composition's `learn
+      <Composition.learn>` method. To fully disable learning for a Composition, its `enable_learning
+      <Composition.enable_learning>` attribute should be set to ``False``.
 
 .. _Composition_Learning_AutodiffComposition:
 
@@ -1129,37 +1267,40 @@ COMMENT:
 COMMENT
 `AutodiffCompositions <AutodiffComposition>` provide the ability to execute backpropagation learning much more
 efficiently than using a standard Composition.  An AutodiffComposition is constructed in the same way, but there
-is no need to specify any `learning components <Composition_Learning_Components>`>` or use any `learning methods
+is no need to specify any `learning components <Composition_Learning_Components>`>` or use any `learning pathway methods
 <Composition_Learning_Methods>` -- in fact, they *cannot* be specified (see `warning
 <Autodiff_Learning_Components_Warning>`) -- an AutodiffComposition automatically constructs all of the components
-needed for learning While learning in an AutodiffComposition is currently restricted to the `BackPropagation` learning
+needed for learning. While learning in an AutodiffComposition is currently restricted to the `BackPropagation` learning
 algorithm, its `loss function <Loss>` can be specified (using the **loss_spec** parameter of its constructor),
 which implements different kinds of `supervised learning <Composition_Learning_Supervised>` (for example, `Loss.MSE`
 can be used for regression, or `Loss.CROSS_ENTROPY` for classification).
 
 The advantage of using an AutodiffComposition is that it allows a model to be implemented in PsyNeuLink, while
-exploiting the acceleration of optimized implementations of learning. This can be achieved by executing the `learn
+exploiting the acceleration of optimized execution of learning in PyTorch
+COMMENT:
+. This can be achieved by executing the `learn
 <Composition.learn>` method in one of two modes (specified using its **execution_mode** argument):  using direct
 compilation (**execution_mode** = `ExecutionMode.LLVMRun`); or by automatically translating the model to `PyTorch
 <https://pytorch.org>`_ for training (**execution_mode** = `ExecutionMode.PyTorch`). The advantage of these modes is
-that they can provide up to three orders of magnitude speed-up in training a model. Use of the `PyTorch` mode also
-supports learning of `nested Compositions <Composition_Nested>` (see `AutodiffComposition_Nesting`). However, there
-are restrictions on the kinds of Compositions that be implemented in this way (see `AutodiffComposition_Restrictions`).
-The table below summarizes the different ways to implement and execute learning, and features specific to each;
-these are described in more detail in `AutodiffComposition`.
-
-The `learning_rate <AutodiffComposition.learning_rate>` for an AutodiffComposition can be specified in its constructor
-(which assigns it as the default) or in its `learn <AutodiffComposition.learn>` method, in which case it applies to
-that execution only.
+that they
+COMMENT
+which can provide up to three orders of magnitude speed-up in training a model. This is done by specifying
+the **execution_mode** = `ExecutionMode.PyTorch` in the `learn <AutodiffComposition.learn>` method of the
+AutodiffComposition. Use of the `PyTorch` mode also supports learning of `nested Compositions <Composition_Nested>`
+(see `AutodiffComposition_Nesting`). However, there are restrictions on the kinds of Compositions that be implemented
+in this way (see `AutodiffComposition_Restrictions`). The table below summarizes the different ways to implement and
+execute learning, and features specific to each; these are described in more detail in `AutodiffComposition`.
+Learning can also be accelerated using `ExecutionMode.LLVM`, which directly `compiles <Composition_Compilation>` a
+PsyNeuLink model for learning, and can provide the greatest speed-up, but not all `Function`\\s are supported.
 
   .. note::
     * Using `ExecutionMode.Python` in an AutodffComposition is the same as using a standard Composition, allowing
       an AutodffComposition to be run in any mode (e.g., for comparison and/or compatibility purposes).
 
   .. warning::
-    * `ExecutionMode.LLVMRun` and `ExecutionMode.PyTorch` can only be used in the `learn <AutodiffComposition.learn>`
-      method of an `AutodiffComposition`;  specifying them in the `learn <Composition.learn>`()` method of a standard
-      `Composition` causes an error.
+    * `ExecutionMode.PyTorch` and `ExecutionMode.LLVMRun` and can be used only in the `learn
+      <AutodiffComposition.learn>` method of an `AutodiffComposition`;  specifying them in the
+      `learn <Composition.learn>`()` method of a standard `Composition` causes an error.
 
 |
 .. _Composition_Compilation_Table:
@@ -1170,36 +1311,41 @@ that execution only.
 .. table::
    :widths: 5 34 33 33
 
-   +--------------------+------------------------------------+---------------------------------------------------------+
-   |                    |**Composition**                     |**AutodiffComposition**                                  |
-   +--------------------+------------------------------------+--------------------------+------------------------------+
-   |                    |*Python*                            |`AutodiffComposition_LLVM`|`AutodiffComposition_PyTorch` |
-   |                    |                                    |(*Direct Compilation*)    |                              |
-   +====================+====================================+==========================+==============================+
-   |execution_mode=     |`ExecutionMode.Python`              |`ExecutionMode.LLVMRun`   |`ExecutionMode.PyTorch`       |
-   +--------------------+------------------------------------+--------------------------+------------------------------+
-   |`learn()            |                                    |                          |                              |
-   |<Composition.learn>`|Python interpreted                  |LLVM compiled             |PyTorch compiled              |
-   |                    |                                    |                          |                              |
-   |`run()              |                                    |                          |                              |
-   |<Composition.run>`  |Python interpreted                  |LLVM compiled             |Python interpreted            |
-   +--------------------+------------------------------------+--------------------------+------------------------------+
-   |*Speed:*            |slow                                |fastest                   |fast                          |
-   +--------------------+------------------------------------+--------------------------+------------------------------+
-   |                    |`BackPropagation`                   |Backpropagation           |Backpropagation               |
-   |                    |                                    |                          |                              |
-   |                    |`Reinforcement` learning            |                          |RNN, inclduing LSTM           |
-   |                    |                                    |                          |                              |
-   |*Supports:*         |`Unspervised learning               |                          |Unsupervised learning         |
-   |                    |<Composition_Learning_Unsupervised>`|                          |                              |
-   |                    |                                    |                          |                              |
-   |                    |                                    |                          |`Learning of                  |
-   |                    |                                    |                          |nested Compositions           |
-   |                    |`Modulation                         |                          |<AutodiffComposition_Nesting>`|
-   |                    |<ModulatorySignal_Modulation>`      |                          |                              |
-   |                    |                                    |                          |                              |
-   |                    |Inspection                          |                          |                              |
-   +--------------------+------------------------------------+--------------------------+------------------------------+
+   +--------------------+------------------------------------+----------------------------------------------------------+
+   |                    |**Composition**                     |**AutodiffComposition**                                   |
+   +--------------------+------------------------------------+------------------------------+---------------------------+
+   |                    |*Python*                            |`AutodiffComposition_PyTorch` |`AutodiffComposition_LLVM` |
+   |                    |                                    |                              |(*Direct* `Compilation     |
+   |                    |                                    |                              |<Composition_Compilation>`)|
+   +====================+====================================+==============================+===========================+
+   |execution_mode=     |`ExecutionMode.Python`              |`ExecutionMode.PyTorch`       |`ExecutionMode.LLVMRun`    |
+   +--------------------+------------------------------------+------------------------------+---------------------------+
+   |`learn()            |                                    |                              |                           |
+   |<Composition.learn>`|Python interpreted                  |PyTorch compiled              |LLVM compiled              |
+   |                    |                                    |                              |                           |
+   |`run()              |                                    |                              |                           |
+   |<Composition.run>`  |Python interpreted                  |Python interpreted            |LLVM compiled              |
+   +--------------------+------------------------------------+------------------------------+---------------------------+
+   |*Speed:*            |slow                                |fast                          |fastest                    |
+   +--------------------+------------------------------------+------------------------------+---------------------------+
+   |                    |`BackPropagation`                   |Backpropagation               |Backpropagation            |
+   |                    |                                    |                              |                           |
+   |                    |`Reinforcement` learning            |                              |                           |
+   |                    |                                    |                              |                           |
+   |                    |                                    |`GRU <GRUComposition>` RNN    |                           |
+   |                    |                                    |                              |                           |
+   |*Supports:*         |`Unspervised learning               |Unsupervised learning         |                           |
+   |                    |<Composition_Learning_Unsupervised>`|                              |                           |
+   |                    |                                    |                              |                           |
+   |                    |                                    |`Learning of                  |                           |
+   |                    |                                    |nested Compositions           |                           |
+   |                    |                                    |<AutodiffComposition_Nesting>`|                           |
+   |                    |                                    |                              |                           |
+   |                    |`Modulation                         |                              |                           |
+   |                    |<ModulatorySignal_Modulation>`      |                              |                           |
+   |                    |                                    |                              |                           |
+   |                    |Inspection                          |                              |                           |
+   +--------------------+------------------------------------+------------------------------+---------------------------+
 
 .. _Composition_Learning_UDF:
 
@@ -1279,10 +1425,10 @@ then a number of `TRIAL <TimeScale.TRIAL>`\\s is executed equal to the number of
 
 *Learning*. If a Composition is configured for `learning <Composition_Learning>` then, for learning to occur,
 its `learn <Composition.learn>` method must be used in place of the `run <Composition.run>` method, and its
-`disable_learning <Composition.disable_learning>` attribute must be False (the default). A set of targets must also
+`enable_learning <Composition.enable_learning>` attribute must be ``True`` (the default). A set of targets must also
 be specified (see `below <Composition_Target_Inputs>`). The `run <Composition.run>` and `execute <Composition.execute>`
 methods can also be used to execute a Composition that has been `configured for learning <Composition_Learning>`,
-but no learning will occur, irrespective of the value of the `disable_learning <Composition.disable_learning>`
+but no learning will occur, irrespective of the value of the `enable_learning <Composition.enable_learning>`
 attribute.
 
 The sections that follow describe the formats that can be used for inputs, factors that impact execution, and
@@ -3294,7 +3440,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         projections=None,                  \
         allow_probes=True,                 \
         include_probes_in_output=False     \
-        disable_learning=False,            \
+        enable_learning=True,              \
         learning_rate=None,                \
         minibatch_size=1,                  \
         optimizations_per_minibatch=1,     \
@@ -3356,14 +3502,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         <NodeRole.PROBE>` Nodes *are excluded* from those attributes;  if True (the default) they are included
         (see `Probes <Composition_Probes>` for additional details).
 
-    disable_learning : bool : default False
+    enable_learning : bool : default True
         specifies whether `LearningMechanisms <LearningMechanism>` in the Composition are executed when run in
-        `learning mode <Composition.learn>`.
+        `learning mode <Composition.learn>` (see `Composition_Enable_Learning` for additional details).
 
-    learning_rate: float or int : default None
-        specifies the learning_rate to be used by `LearningMechanisms <LearningMechanism>` in the Composition
-        that do not have their own `learning_rate <LearningMechanism.learning_rate>` otherwise specified
-        (see `Composition_Learning_Rate` for additional details).
+    learning_rate : float, int, bool or dict : default .05
+        specifies the default learning_rate for the Composition, used for any `learnable <MappingProjection.learnable>`
+        MappingProjections for which individual learning_rates have not been specified (see `Composition_Learning_Rate`
+        for details of specification).
 
     minibatch_size : int : default 1
         specifies the default for the Composition for the number of distinct inputs from the training set used to
@@ -3638,18 +3784,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
     execution_ids : set
         stores all execution_ids used by the Composition.
 
-    disable_learning: bool : default False
+    enable_learning : bool : default False
         determines whether `LearningMechanisms <LearningMechanism>` in the Composition are executed when run in
-        `learning mode <Composition.learn>`.
+        `learning mode <Composition.learn>` (see `Composition_Enable_Learning` for additional details).
 
-    learning_rate : float or int
-        if specified, used as the default value for the `learning_rate <LearningMechanism.learning_rate>` of
-        `LearningMechanisms <LearningMechanism>` in the Composition that do not have their learning_rate otherwise
-        specified; it is superseded by the **learning_rate** argument of a `learning construction method
-        <Composition_Learning_Methods>`, and can also be overriden by specifying the **learning_rate** argument in a
-        call to the `learn <Composition.learn>` method of a Composition or direct specification of the `learning_rate
-        <LearningMechanism.learning_rate>` Parameter of a LearningMechanism (see `Composition_Learning_Rate` for
-        additional details).
+    learning_rate : float, int or bool
+        determines the default learning_rate for the Composition, used for any `learnable <MappingProjection.learnable>`
+        MappingProjections for which individual learning_rates have not been specified (see `Composition_Learning_Rate`
+        for details of specification).
 
     minibatch_size : int
         determines the number of input stimuli from the training set used to compute the `error_signal
@@ -3675,7 +3817,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         <Composition.learning_components>` attribute.
 
     is_nested : bool
-        True of Composition is `nested <Composition_Nested>` in another (outer) Compositon.
+        True of Composition is `nested <Composition_Nested>` in another (outer) Composition.
 
     results : list[list[list]]
         a list of the `output_values <Mechanism_Base.output_values>` of the `OUTPUT` `Nodes <Composition_Nodes>`
@@ -3743,10 +3885,22 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             Attributes
             ----------
 
+                enable_learning
+                    see `enable_learning <AutodiffComposition.enable_learning>`
+
+                    :default value: True
+                    :type: ``bool``
+
                 input_specification
                     see `input_specification <Composition.input_specification>`
 
                     :default value: None
+                    :type:
+
+                learning_rate
+                    see `learning_rate <Composition.learning_rate>`
+
+                    :default value: .05
                     :type:
 
                 learning_results
@@ -4828,13 +4982,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
     def _get_nested_compositions(self,
                                  nested_compositions=NotImplemented,
-                                 visited_compositions=NotImplemented):
-        """Recursively search for and return all nested compositions.
-
-        :return
-
-        A list of nested compositions.
-
+                                 visited_compositions=NotImplemented)-> list:
+        """Return list of all Compositions nested in self
+        Recursively search for and return all nested compositions.
         """
         if nested_compositions is NotImplemented:
             nested_compositions=[]
@@ -6690,7 +6840,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 sender_mechanism = sender.output_CIM
                 sender_output_port = sender_mechanism.output_port
             nested_compositions.append(nested_comp)
-            # MODIFIED 3/17/25 END
+
         else:
             raise CompositionError("sender arg ({}) of call to add_projection method of {} is not a {}, {} or {}".
                                    format(sender, self.name,
@@ -8015,7 +8165,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         See `Composition_Learning` for a more detailed description of how learning is implemented in a
         Composition, including the `learning components <Composition_Learning_Components>` that are created,
-        as well as other `learning methods <Composition_Learning_Methods>` that can be used to implement specific
+        as well as other `learning pathway methods <Composition_Learning_Methods>` that can be used to implement
+        specific
         algorithms.
 
         The `learning components <Composition_Learning_Components>` created are placed in a dict
@@ -8053,8 +8204,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         learning_rate : float : default 0.05
             specifies the `learning_rate <LearningMechanism.learning_rate>` used for the **learning_function**
-            of the `LearningMechanism` in the **pathway** (see `Composition_Learning_Rate` for
-            additional details).
+            of the `LearningMechanism`\\(s) in the **pathway** (see `Composition_Learning_Rate` for additional details).
 
         error_function : function : default LinearCombination
             specifies the function assigned to Mechanism used to compute the error from the target and the output
@@ -8363,7 +8513,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         learning_rate = learning_rate if learning_rate is not None \
             else self.learning_rate if self.learning_rate is not None \
             else None
-            # else 0.05
         return self.add_linear_learning_pathway(pathway,
                                                 learning_rate=learning_rate,
                                                 learning_function=BackPropagation,
@@ -10439,7 +10588,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     node_name = node_spec.name
                 else:
                     node_name = node_spec.full_name
-                error_base_msg = f"Input for '{node_name}' of {self.name} ({_inputs}) "
+                error_base_msg = f"Input for '{node_name}' of '{self.name}' ({_inputs}) "
 
                 if isinstance(_inputs, dict):
                     # entry is dict for a nested Composition, which will be handled recursively
@@ -11568,7 +11717,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             **kwargs
     )->list:
         """
-            Runs the composition in learning mode - that is, any components with disable_learning False will be
+            Runs the composition in learning mode - that is, any components with enable_learning ``True`` will be
             executed in learning mode. See `Composition_Learning` for details.
 
             Arguments
@@ -11607,11 +11756,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             epochs : int (default=1)
                 specifies the number of training epochs (that is, repetitions of the batched input set) to run with
 
-            learning_rate : float : default None
-                specifies the learning_rate used by all `learning pathways <Composition_Learning_Pathway>`
-                when the Composition's learn method is called.  This overrides the `learning_rate` specified
-                for any individual Pathways at construction, but only applies for the current execution of
-                the learn method (see `Composition_Learning_Rate` for additional details).
+            learning_rate : float, int or bool : default None
+                specifies the learning_rate used by `learnable <MappingProjection.learnable>` MappingProjections
+                in the Composition during execution of the learn() method.  This overrides the default `learning_rate
+                <Composition.learning_rate>` specified for the Composition, applies only to Projections for which
+                individual learning_rates have not been specified, and only during the current execution of the learn()
+                method (see `Composition_Learning_Rate` for additional details).
 
             minibatch_size : int (default=1)
                 specifies the number of inputs used to calculate the `error_signal <LearningMechanism.error_signal>`
@@ -13057,7 +13207,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         return False
 
     def _is_learning(self, context):
-        """Returns true if the composition can learn in the given context"""
+        """Returns ``True`` if the Composition can learn in the given context"""
         return (not self.disable_learning) and (ContextFlags.LEARNING_MODE in context.runmode)
 
     def _build_variable_for_input_CIM(self, inputs):

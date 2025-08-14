@@ -20,6 +20,9 @@ Contents
           - `AutodiffComposition_Bias_Parameters`
           - `AutodiffComposition_Nesting`
           - `AutodiffComposition_Learning_Rates`
+          COMMENT:
+          - `AutodiffComposition_Optimizer`
+          COMMENT
           - `AutodiffComposition_Exchange_With_Torch_Parameters`
           - `AutodiffComposition_Post_Construction_Modification`
       * `AutodiffComposition_Execution`
@@ -114,15 +117,15 @@ However, biases can be implemented using `Composition_Bias_Nodes`.
 ~~~~~~~~~
 
 An AutodiffComposition can be `nested <Composition_Nested>` inside another Composition for learning, and there can
-be any level of such nestings.  However, all of the nested Compositions must be AutodiffCompositions. Furthermore, all
-nested Compositions use the `learning_rate <AutodiffComposition.learning_rate>` specified for the outermost Composition,
-whether this is specified in the call to its `learn <AutodiffComposition.learn>` method, its constructor, or its
-default value is being used (see `learning_rate <AutodiffComposition.learning_rate>` below for additional details).
+be any level of such nestings.  However, all of the nested Compositions must be AutodiffCompositions. The learning_rate
+for nested Compositions is inherited from the enclosing Composition unless it is set individually (see
+`Composition_Learning_Rate` for a full discussion of how learning rates and precedence of assignment;  see
+`Composition_Enable_Learning` for enabling and disabling learning in nested Compositions.
 
 .. technical_note::
    Projections from `Nodes <Composition_Nodes>` in an immediately enclosing outer Composition to the `input_CIM
    <Composition.input_CIM>` of a nested Composition, and from its `output_CIM <Composition.output_CIM>` to Nodes
-   in the outer Composition are subject to learning;  however those within the nested Composition itself (i.e.,
+   in the outer Composition are subject to learning; however those within the nested Composition itself (i.e.,
    from its input_CIM to its INPUT Nodes and from its OUTPUT Nodes to its output_CIM) are *not* subject to learning,
    as they serve simply as conduits of information between the outer Composition and the nested one.
 
@@ -133,19 +136,49 @@ default value is being used (see `learning_rate <AutodiffComposition.learning_ra
 
 .. _AutodiffComposition_Learning_Rates:
 
-*Learning Rates and Optimizer Params*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*Learning Rates*
+~~~~~~~~~~~~~~~~
 
-The **optimizer_params** argument of the constructor can be used to specify parameters for the optimizer used for
-learning by the AutodiffComposition. At present, this is restricted to overriding the `learning_rate
-<AutodiffComposition.learning_rate>` Parameter of the Composition (used as the default by the `optimizer
-<AutodiffComposition.optimizer>`) to assign individual learning rates to specific Projections. This is done by
-specifying **optimizer_params** as a dict, in which each key is a reference to a learnable `MappingProjection`
-in the AutodiffComposition, and the value of which specifies its learning_rate. Sublcasses of AutodiffComposition may
-involve different forms of specification and/or support other parameters for the optimizer. Projections that are not
-sepcified in **optimizer_params** use, in order of precedence: the `learning_rate <AutodiffComposition.learning_rate>`
-specified in the call to the AutodiffComposition's `learn <AutodiffComposition.learn>` method, the **learning_rate**
-argument of its constructor, or the default value for the AutodiffComposition.
+The **learning** argument of the constructor and/or the `learn <AutodiffComposition.learn>` method can be used to
+specify both a `learning_rate <AutodiffComposition.learning_rate>` for the entire AutodiffComposition and/or
+individual MappingProjections within it (see `Composition_Learning_rate` for details of specification). Learning_rates
+specified for individual MappingProjections are passed to the corresponding parameters of the AutodiffComposition's
+`pytorch_representation <AutodiffComposition.pytorch_representation>` when it is executed. Specifications made in the
+constructor for the AutodiffComposition are used as the default learning_rates for all executions of the `learn
+<AutodiffComposition.learn>`; specifications made in the call to the `learn() <AutodiffComposition.learn>` method
+override any made in the constructor, but are used only for that execution. A warning is issued if a learning_rate is
+specified for a Projection with a `learnable <MappingProjection.learnable>` attribute set to ``False``, and an error
+is generated if the Projection is associated with a PyTorch Parameter that is not learnable.
+See `Composition_Learning_rate` for additional information about specifying learning_rates, including how the
+`learning_rate <MappingProjection.learning_rate>` is determined for Projections that are not expliclity specified.
+
+COMMENT:
+.. note::
+   An outermost AutodiffComposition's learning rate is applied to any `nested AutodiffCompositions
+   <AutodiffComposition_Nesting>`, whether this is specified in the call to its `learn
+   <AutodiffComposition.learn>` method, its constructor, or its default value is being used.
+COMMENT
+
+.. hint::
+   To disable learning for a particular `MappingProjection` in an AutodiffComposition, specify either the
+   **learnable** parameter of its constructor or its learning_rate specification in the **learning_rate**
+   argument of the AutodiffComposition's constructor to False; this applies to MappingProjections at any level of
+   `nesting <AutodiffComposition_Nesting>`.
+
+COMMENT:
+.. _AutodiffComposition_Optimizer:
+
+*Optimizer*
+~~~~~~~~~~~
+
+In addition to `learning_rate <Projection.learning_rate>`, other parameters can be customized by constructing
+a `torch.nn.optimizer <https://pytorch.org/docs/main/optim.html>`_ and assigining it to the **optimizer** argument
+of either the AutodiffComposition's constructor or `learn <AutodiffComposition.learn>` method.  This requires creating
+and adding ``param_groups`` for the `torch.nn.Parameters
+<https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html>`_ corresponding to the Projections to be
+specified, which are listed in the AutodiffComposition's `torch_parameters <AutodiffComposition.torch_parameters>`
+attribute.
+COMMENT
 
 .. _AutodiffComposition_Exchange_With_Torch_Parameters:
 
@@ -190,11 +223,11 @@ which provides a comparison of the different modes of execution for an AutodiffC
 ~~~~~~~~~~~~~~
 
 COMMENT:
-# 7/10/24 - FIX:
+# 7/10/24 - BREADCRUMB:
 .. _AutodiffComposition_PyTorch_LearningScale:
    ADD DESCRIPTION OF HOW LearningScale SPECIFICATIONS MAP TO EXECUTION OF pytorch_rep:
       OPTIMIZATION STEP:
-      for AutodiffCompositions, this corresponds to a single call to `foward()` and `backward()`
+      for AutodiffCompositions, this corresponds to a single call to `forward()` and `backward()`
             methods of the Pytorch model
 COMMENT
 
@@ -212,7 +245,7 @@ AutoDiffCompositions in learning. Although it is best suited for use with `super
 
     .. note::
        While specifying `ExecutionMode.PyTorch` in the `learn <Composition.learn>`  method of an AutodiffComposition
-       causes it to use PyTorch for training, specifying this in the `run <Compositon.run>` method causes it to be
+       causes it to use PyTorch for training, specifying this in the `run <Composition.run>` method causes it to be
        executed using the *Python* interpreter (and not PyTorch);  this is so that any modulation can take effect
        during execution (see `AutodiffComposition_Nested_Modulation` below), which is not supported by PyTorch.
 
@@ -440,9 +473,8 @@ class AutodiffComposition(Composition):
         optimizer_type='sgd',
         loss_spec=Loss.MSE,
         weight_decay=0,
+        enable_learning=True,
         learning_rate=0.001,
-        optimizer_params=None,
-        disable_learning=False,
         synch_projection_matrices_with_torch=RUN,
         synch_node_variables_with_torch=None,
         synch_node_values_with_torch=RUN,
@@ -469,18 +501,15 @@ class AutodiffComposition(Composition):
     weight_decay : float : default 0
         specifies the L2 penalty (which discourages large weights) used by the optimizer.
 
-    learning_rate : float : default 0.001
-        specifies the learning rate passed to the optimizer if none is specified in the `learn
-        <AutdodiffComposition.learn>` method of the AutodiffComposition;
-        see `learning_rate <AutodiffComposition.learning_rate>` for additional details.
+    enable_learning : bool: default True
+        specifies whether the AutodiffComposition should enable learning when run in `learning mode
+        <Composition.learn>` (see `Composition_Enable_Learning` for additional details).
 
-    optimizer_params : Dict[str: value]
-        specifies parameters for the optimizer used for learning by the GRUComposition
-        (see `AutodiffComposition_Learning_Rates` for details of specification.
-
-    disable_learning : bool: default False
-        specifies whether the AutodiffComposition should disable learning when run in `learning mode
-        <Composition.learn>`.
+    learning_rate : float, int, bool or dict : default 0.001
+        specifies the learning rate(s) passed to the optimizer; overridden by any specified in the `learn
+        <AutdodiffComposition.learn>` method of the AutodiffComposition; if a dict is used, and it does
+        not contain an entry for *DEFAULT_LEARNING_RATE*, the default indicated above is used (see `learning_rate
+        (see `AutodiffComposition_Learning_Rate` and `Composition_Learning_Rate` for additional details).
 
     synch_projection_matrices_with_torch : `LearningScale` : default RUN
         specifies the default for the AutodiffComposition for when to copy Pytorch parameters to PsyNeuLink
@@ -622,6 +651,10 @@ class AutodiffComposition(Composition):
         if this is nota specified in the call to `learn <AutodiffComposition.learn>`
         (see `AutodiffComposition_PyTorch_LearningScale` for information about settings).
 
+    torch_parameters : List[Tuple[str, torch.nn.parameter]]
+        list of PyTorch named_parameters() for `pytorch_representation <AutodiffComposition.pytorch_representation>`
+        of AutodiffComposition.
+
     torch_trained_outputs : List[ndarray]
         stores the outputs (converted to np arrays) of the Pytorch model trained during learning, at the frequency
         specified by `retain_torch_trained_outputs <AutodiffComposition.retain_torch_trained_outputs>` if it is set
@@ -762,10 +795,6 @@ class AutodiffComposition(Composition):
                  name="autodiff_composition",
                  **kwargs):
 
-        # if not torch_available:
-        #     raise AutodiffCompositionError('Pytorch python module (torch) is not installed. Please install it with '
-        #                                    '`pip install torch` or `pip3 install torch`')
-        #
         show_graph_attributes = kwargs.pop('show_graph_attributes', {})
 
         super(AutodiffComposition, self).__init__(
@@ -821,28 +850,6 @@ class AutodiffComposition(Composition):
         else:
             self.device = device
             self.torch_dtype = None
-        # # MODIFIED 7/10/24 NEW: NEEDED FOR torch MPS SUPPORT
-        #  FIX: ADD AFTER USE OF utilities.get_torch_tensor() AND COMPATIBLITY WITH MPS IS VALIDATED
-        # if device is None:
-        #     # Try setting device by default
-        #     if not disable_cuda and torch.cuda.is_available():
-        #         if cuda_index is None:
-        #             self.device = torch.device(CUDA)
-        #         else:
-        #             self.device = torch.device('cuda:' + str(cuda_index))
-        #     elif torch_available:
-        #         if torch.backends.mps.is_available():
-        #             from psyneulink.core.components.functions.nonstateful.transferfunctions import Linear
-        #             try:
-        #                 self.device = torch.device(MPS)
-        #                 test_pytorch_fct_with_mps = Linear()._gen_pytorch_fct(self.device, Context())
-        #             except AssertionError:
-        #                 self.device = torch.device(CPU)
-        #         else:
-        #             self.device = torch.device(CPU)
-        # else:
-        #     self.device = device
-        # # MODIFIED 7/10/24 END
 
         # Set to True after first warning about failure to specify execution mode so warning is issued only once
         self.execution_mode_warned_about_default = False
@@ -852,6 +859,7 @@ class AutodiffComposition(Composition):
 
         # ShowGraph
         self.assign_ShowGraph(show_graph_attributes)
+
     def assign_ShowGraph(self, show_graph_attributes):
         """Override to replace assignment of ShowGraph class with PytorchShowGraph if torch is available"""
         show_graph_attributes = show_graph_attributes or {}
@@ -1093,7 +1101,47 @@ class AutodiffComposition(Composition):
     # CLEANUP: move some of what's done in the methods below to a "validate_params" type of method
     @handle_external_context()
     def _build_pytorch_representation(self, context=None, refresh=None, base_context=Context(execution_id=None)):
-        """Builds a Pytorch representation of the AutodiffComposition"""
+                                      learning_rate=None,
+        """Build a Pytorch representation of the AutodiffComposition
+        Construct PytorchCompositionWrapper that is used for learning in PyTorch, which is assigned to
+        self.pytorch_representation.
+
+        A new pytorch_representation is constructed if:
+            self.pytorch_representation == None
+            **new** is specified as True
+        If _build_pytorch_representation() is called with **new**==None and a pytorch_representation already exists,
+            a warning issued and the call is ignored.
+
+        By default (learning_rate=None), the learning_rates specified in the **learning_rate**
+        argument of the constructor for the Composition (and stored in self._learning_rates_dict) are
+        used to construct the pytorch_representation. However:
+        - if **learning_rate** is specified (in a call from the COMMANDLINE),
+           that can be used to override the default values, as described under the learning_rate argument below;
+        - if **optimizer_params** is specified (in a call from learn(), that is used to specify the learning_rates;
+        - if **optimizer_params** is specified in a call from COMMAND_LINE, an error is returned.
+
+        Arguments
+        ---------
+
+        new : bool or None : default None
+            specifies creation of a new pytorch_representation, using self._optimizer_constructor_params
+            as the base values, and updated with any specified in the **learning_rates** arg.  If the method is called
+            from the command_line more than once without **new** specified as `True`, warns and ignores.
+
+        learning_rate : float, int, dict : default None
+            if None, then the values in self.learning_rates_dict (and stored in self._optimizer_constructor_params)
+            are used to assign learning_rates to all Projections in the Composition (and any nested within it)
+            (see `Composition_Learning_Rate` for details of specification); if a numeric values is specified,
+            that is used as the default learning_rate for the pytorch_representation (replacing
+            composition.learning_rate); if a dict is specified, entries are moved to optmizer_params and replace
+            values for the specified Projections as well as the Composition's learning_rate (if DEFAULT_LEARNING_RATE
+            is specified in the dict).
+
+            .. note::
+               Projection-specific learning_rates specified in a dict assigned to **learning_rate** here, like
+               any specified in the constructor for the Composition, are stored in the corresponding Projections'
+               `learning_rate <MappingProjection.learning_rate>` Parameter under the context <self.name>.DEFAULT_SUFFIX.
+        """
         if self.scheduler is None:
             self.scheduler = Scheduler(graph=self.graph_processing)
         if self.parameters.pytorch_representation._get(context=context, fallback_value=None) is None or refresh:
@@ -1477,6 +1525,49 @@ class AutodiffComposition(Composition):
         Note: defaults for synch and retain args are set to NotImplemented, so that the user can specify None if
               they want to locally override the default values for the AutodiffComposition (see docstrings for run()
               and _parse_synch_and_retain_args() for additonal details).
+
+        Arguments
+        ---------
+
+        learning_rate : float, int, bool or dict : default 0.001
+            specifies the learning rate(s) passed to the optimizer, that overrides any learning_rate specifications
+            made in AutodiffComposition constructor and/or individual MappingProjections. If a value is specified,
+            it overrides the default learning rate for the Composition, and is used as the default learning rate for
+            all MappingProjections in the Composition (and any nested within it) that do not have a specific
+            learning_rate specified in their constructor.  A dict can be used to specify
+            `MappingProjection`\\-specific learning_rate(s); if it contains a *DEFAULT_LEARNING_RATE* entry,
+            that is used in the same was as specifing numeric value; if the dict does not contain a
+            *DEFAULT_LEARNING_RATE* entry, then the default indicated above is used for all MappingProjections
+            in the Composition, and MappingProjections in any nested Compositions use their default learning_rate
+            (see `AutodiffComposition_Learning_Rate` and `Composition_Learning_Rate` for additional details).
+
+        synch_projection_matrices_with_torch : [LEARNING_SCALE_LITERALS] : Default None
+            overrides specification(s) made in Autodiff constructor; see `synch_projection_matrices_with_torch
+            <AutodiffComposition.synch_projection_matrices_with_torch>` for additional details.
+
+        synch_node_variables_with_torch : [LEARNING_SCALE_LITERALS] : Default None
+            overrides specification(s) made in Autodiff constructor; see `synch_node_variables_with_torch
+            <AutodiffComposition.synch_node_variables_with_torch>` for additional details.
+
+        synch_node_values_with_torch : [LEARNING_SCALE_LITERALS] : Default None
+            overrides specification(s) made in Autodiff constructor; see `synch_node_values_with_torch
+            <AutodiffComposition.synch_node_values_with_torch>` for additional details.
+
+        synch_results_with_torch : [LEARNING_SCALE_LITERALS] : Default None
+            overrides specification(s) made in Autodiff constructor; see `synch_results_with_torch
+            <AutodiffComposition.synch_results_with_torch>` for additional details.
+
+        retain_torch_trained_outputs : [LEARNING_SCALE_LITERALS] : Default None
+            overrides specification(s) made in Autodiff constructor; see `retain_torch_trained_outputs
+            <AutodiffComposition.retain_torch_trained_outputs>` for additional details.
+
+        retain_torch_targets : [LEARNING_SCALE_LITERALS] : Default None
+            overrides specification(s) made in Autodiff constructor; see `retain_torch_targets
+            <AutodiffComposition.retain_torch_targets>` for additional details.
+
+        retain_torch_losses : [LEARNING_SCALE_LITERALS] : Default None
+            overrides specification(s) made in Autodiff constructor; see `retain_torch_losses
+            <AutodiffComposition.retain_torch_losses>` for additional details.
         """
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
@@ -1780,7 +1871,9 @@ class AutodiffComposition(Composition):
             kwargs[SYNCH_WITH_PNL_OPTIONS] = synch_with_pnl_options
             kwargs[RETAIN_IN_PNL_OPTIONS] = retain_in_pnl_options
 
+        # Run AutodiffComposition
         results = super(AutodiffComposition, self).run(*args, context=context, **kwargs)
+
         if EXECUTION_MODE in kwargs and kwargs[EXECUTION_MODE] is pnlvm.ExecutionMode.PyTorch:
             # Synchronize specified outcomes at end of run
             pytorch_rep = self.parameters.pytorch_representation.get(context)

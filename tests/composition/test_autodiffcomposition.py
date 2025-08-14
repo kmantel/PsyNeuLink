@@ -18,6 +18,7 @@ from psyneulink.core.components.projections.pathway.mappingprojection import Map
 from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition, AutodiffCompositionError
 from psyneulink.core.compositions.report import ReportOutput
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,7 +42,6 @@ NAME = 'proj_name'
 @pytest.mark.pytorch
 @pytest.mark.autodiff_constructor
 class TestAutodiffConstructor:
-
 
     def test_no_args(self):
         comp = AutodiffComposition()
@@ -1088,10 +1088,10 @@ class TestTrainingCorrectness:
             }
         }
 
-        pih = MappingProjection(matrix=wih)
-        pch = MappingProjection(matrix=wch)
-        pco = MappingProjection(matrix=wco)
-        pho = MappingProjection(matrix=who, learnable=False)
+        pih = MappingProjection(matrix=wih, name='pih')
+        pch = MappingProjection(matrix=wch, name='pch')
+        pco = MappingProjection(matrix=wco, name='pco')
+        pho = MappingProjection(matrix=who, name='pho', learnable=False)
 
         mnet = AutodiffComposition(learning_rate=learning_rate)
 
@@ -1105,13 +1105,14 @@ class TestTrainingCorrectness:
         mnet.add_projection(projection=pho, sender=hl, receiver=ol)
 
 
-        mnet.learn(
+        result = mnet.learn(
             inputs=input_set,
             minibatch_size=1,
             patience=patience,
             min_delta=min_delt,
             execution_mode=pnl.ExecutionMode.PyTorch,
         )
+
         mnet.run(
             inputs=input_set['inputs']
         )
@@ -3026,7 +3027,6 @@ class TestMiscTrainingFunctionality:
         # np.testing.assert_allclose(pt_weights_hid_bp, pt_weights_hid_ap)
         # np.testing.assert_allclose(pt_weights_out_bp, pt_weights_out_ap)
 
-
     @pytest.mark.parametrize(
         'loss, expected', [
             (Loss.CROSS_ENTROPY, [[[0.99330715]], [[0.99933202]], [[0.99933202]], [[0.99985049]]]),
@@ -3089,7 +3089,6 @@ class TestMiscTrainingFunctionality:
                   execution_mode=autodiff_mode)
         xor.learn(inputs={"inputs": {xor_in: xor_inputs}, "targets": {xor_out: xor_targets}, "epochs": 10},
                   execution_mode=autodiff_mode)
-
 
     @pytest.mark.benchmark(group="Optimizer specs")
     @pytest.mark.parametrize(

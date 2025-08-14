@@ -68,10 +68,9 @@ def _get_pytorch_function(obj, device, context):
         return pytorch_fct(device, context)
 
 
-class PytorchCompositionWrapper(torch.nn.Module):
 # NEEDED FOR torch MPS SUPPORT
-# class PytorchCompositionWrapper(torch.jit.ScriptModule):
-# END
+# class PytorchCompositionWrapper(torch.jit.ScriptModule)
+class PytorchCompositionWrapper(torch.nn.Module):
     """Wrapper for a Composition as a Pytorch Module.
 
     Wraps an `AutodiffComposition` as a `PyTorch module
@@ -276,10 +275,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
         self.output_nodes = self.composition.get_nested_output_nodes_at_all_levels()
 
         self.composition.parameters.pytorch_representation._set(self, context, skip_history=True, skip_log=True)
-
-        # Get projections from flattened set, so that they are all in the outer Composition
-        #   and visible by _regenerate_torch_parameter_list;
-        #   needed for call to backward() in AutodiffComposition.do_gradient_optimization
         self.projection_wrappers = list(self.projections_map.values())
 
         composition.scheduler._delete_counts(execution_context.execution_id)
@@ -724,6 +719,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         # Register pytorch Parameters for ProjectionWrappers (since they are not already torch parameters
         for proj_wrapper in [p for p in self.projection_wrappers if not p.projection.exclude_in_autodiff]:
             self.register_parameter(proj_wrapper.name, proj_wrapper.matrix)
+            # self.register_parameter(proj_wrapper.projection.name, proj_wrapper.matrix)
 
     # generates llvm function for self.forward
     def _gen_llvm_function(self, *, ctx:pnlvm.LLVMBuilderContext, tags:frozenset):
@@ -933,6 +929,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         builder.call(optimizer_step_f, [optimizer_struct, state, params])
 
     def _get_compiled_optimizer(self):
+        # FIX: 7/1/25 - THIS BE MODIFIED TO USE CONTEXT-SPECIFIC LEARNING RATES
         # setup optimizer
         optimizer_type = self.composition.optimizer_type
         if optimizer_type == 'adam':
@@ -1274,8 +1271,9 @@ class PytorchMechanismWrapper(torch.nn.Module):
 
     exclude_from_gradient_calc : bool or str[BEFORE | AFTER]: False
         used to prevent a node from being included in the Pytorch gradient calculation by excluding it in calls to
-        the forward() and backward().  If AFTER is specified, the node is executed after at the end of the
-        `update_learning_parameters` method.  BEFORE is not currently supported
+        the forward() and backward(). If AFTER is specified, the node is executed after at the end of the
+        `update_learning_parameters` method;  it must be specified as an attribute of the Mechanism being wrapped.
+        BEFORE is not currently supported.
 
     _use : list[LEARNING, SYNCH]
         designates the uses of the Mechanism, specified by the following keywords (see
@@ -1397,6 +1395,7 @@ class PytorchMechanismWrapper(torch.nn.Module):
                 proj_wrapper._curr_sender_value = val
 
             proj_wrapper._curr_sender_value = torch.atleast_1d(proj_wrapper._curr_sender_value)
+            assert True
 
         # Specific port is specified
         if port is not None:
@@ -1764,10 +1763,10 @@ class PytorchProjectionWrapper():
         self.receiver_wrapper = receiver_wrapper  # PytorchMechanismWrapper to which Projection's receiver is mapped
         self._context = context
 
-        if (
-            projection.parameters.has_initializers._get(context)
-            and projection.parameters.value.initializer
-        ):
+        # if (projection.parameters.has_initializers._get(context, fallback_value=False)
+        #         and projection.parameters.value.initializer):
+        if (projection.parameters.has_initializers.get(context)
+                and projection.parameters.value.initializer):
             self.default_value = projection.parameters.value.initializer.get(context)
         else:
             self.default_value = projection.defaults.value
@@ -1790,10 +1789,8 @@ class PytorchProjectionWrapper():
         self.matrix = torch.nn.Parameter(torch.tensor(matrix.copy(),
                                          device=device,
                                          dtype=torch.double))
-        # Use Projection's name as key to align with name of torch Parameter
-        self._pnl_refs_to_torch_params_map = {pnl_proj.name: self.matrix}
-        # 2/16/25 - FIX: RECONCILE THIS WITH ANY SPECS FOR PROJECTION IN optimizer_params
-        #           cf _parse_optimizer_params():
+        # 2/16/25 4/13/25- FIX: RECONCILE THIS WITH ANY SPECS FOR PROJECTION IN optimizer_torch_params_full_with_specified
+        #           cf _update_optimizer_params():
         if projection.learnable is False:
             self.matrix.requires_grad = False
 

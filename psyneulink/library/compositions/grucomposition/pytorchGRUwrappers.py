@@ -113,12 +113,13 @@ class PytorchGRUCompositionWrapper(PytorchCompositionWrapper):
         For each PytorchGRUProjectionWrapper, assign the current weight matrix of the PNL Projection
         to the corresponding part of the tensor in the parameter of the Pytorch GRU module.
         """
-
         pnl = self.composition
         self.torch_gru_parameters = torch_gru.parameters
 
         _projection_wrapper_pairs = []
 
+        # Wrap PNL Projections corresponding to all components of the Pytorch GRU module's parameters
+        # NOTE: these are used for synching values with those PNL Projections
         # Pytorch parameter info
         hid_len = pnl.hidden_size
         z_idx = hid_len
@@ -234,7 +235,6 @@ class PytorchGRUCompositionWrapper(PytorchCompositionWrapper):
         Otherwise, the node.execute() method is called directly (i.e., it is treated as a single node).
         Returns a dictionary {output_node:value} with the output value for the torch GRU module (that is used
         by the collect_afferents method(s) of the other node(s) that receive Projections from the GRUComposition.
-
         """
 
         self._set_synch_with_pnl(synch_with_pnl_options)
@@ -271,15 +271,16 @@ class PytorchGRUCompositionWrapper(PytorchCompositionWrapper):
          - in set_weights_from_torch_gru(), where they are converted to numpy arrays
          - for forward computation in pytorchGRUwrappers._copy_pytorch_node_outputs_to_pnl_values()
         """
+
         hid_len = torch_gru.hidden_size
         z_idx = hid_len
         n_idx = 2 * hid_len
 
-        wts_ih = torch_gru.state_dict()['weight_ih_l0']
+        wts_ih = torch_gru.state_dict()[W_IH_NAME]
         wts_ir = wts_ih[:z_idx].T.detach().cpu().numpy().copy()
         wts_iu = wts_ih[z_idx:n_idx].T.detach().cpu().numpy().copy()
         wts_in = wts_ih[n_idx:].T.detach().cpu().numpy().copy()
-        wts_hh = torch_gru.state_dict()['weight_hh_l0']
+        wts_hh = torch_gru.state_dict()[W_HH_NAME]
         wts_hr = wts_hh[:z_idx].T.detach().cpu().numpy().copy()
         wts_hu = wts_hh[z_idx:n_idx].T.detach().cpu().numpy().copy()
         wts_hn = wts_hh[n_idx:].T.detach().cpu().numpy().copy()
@@ -363,10 +364,11 @@ class PytorchGRUMechanismWrapper(PytorchMechanismWrapper):
           received from other node(s) that project to the GRUComposition, and its outputs used by the
           collect_afferents method(s) of the other node(s) that receive Projections from the  GRUComposition.
         """
+
         # Get hidden state from GRUComposition's HIDDEN_NODE.value
         from psyneulink.library.compositions.grucomposition.grucomposition import HIDDEN_LAYER
 
-        self.composition.pytorch_representation._set_synch_with_pnl(synch_with_pnl_options)
+        self.composition.pytorch_representation._set_synch_with_pnl(self, synch_with_pnl_options)
 
         self.input = variable
 
@@ -412,7 +414,6 @@ class PytorchGRUMechanismWrapper(PytorchMechanismWrapper):
         (batch, input_port, projection, ...)
 
         Where the ellipsis represent 1 or more dimensions for the values of the projected afferent.
-
         """
 
         if self.afferents == INPUT:
@@ -477,6 +478,7 @@ class PytorchGRUMechanismWrapper(PytorchMechanismWrapper):
         These are needed for assigning to the corresponding nodes in the GRUComposition.
         Returns r_t, z_t, n_t, h_t current reset, update, new, hidden and state values, respectively
         """
+
         torch_gru_parameters = PytorchGRUCompositionWrapper.get_parameters_from_torch_gru(self.function.function)
 
         # Get weights
@@ -591,8 +593,8 @@ class PytorchGRUProjectionWrapper(PytorchProjectionWrapper):
 
     matrix_indices: slice
         a slice specifying the part of the Pytorch parameter corresponding to the GRUCOmposition Projection's matrix.
-
     """
+
     def __init__(self,
                  projection:MappingProjection,
                  torch_parameter:Tuple,

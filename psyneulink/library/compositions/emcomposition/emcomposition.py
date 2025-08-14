@@ -213,7 +213,7 @@ that is propagated through the EMComposition.
 .. _EMComposition_Field_Specification_Dict:
 
 * **fields**: a dict that specifies the names of the fields and their attributes. There must be an entry for each
-  field specified in the **memory_template**, and must have the following format:
+  field specified in the **memory_template**, and each must have the following format:
 
   * *key*:  a string that specifies the name of the field.
 
@@ -240,9 +240,11 @@ that is propagated through the EMComposition.
      the dict itself is not retained as a `Parameter` or attribute of the EMComposition.
 
   The specifications provided in the **fields** argument are assigned to the corresponding Parameters of
-  the EMComposition which, alternatively, can  be specified individually using the **field_names**, **field_weights**,
+  the EMComposition which, alternatively, can  be specified directly using the **field_names**, **field_weights**,
   **learn_field_weights** and **target_fields** arguments of the EMComposition's constructor, as described below.
-  However, these and the **fields** argument cannot both be used together; doing so raises an error.
+  However, these and the **fields** argument cannot both be used together; if both are specified, a warning is issued,
+  the values specified in the **fields** dict are used, and any specifications made in the **field_names**,
+  **field_weights**, **learn_field_weights** and **target_fields** arguments are ignored.
 
 .. _EMComposition_Field_Names:
 
@@ -253,8 +255,8 @@ that is propagated through the EMComposition.
 .. _EMComposition_Field_Weights:
 
 * **field_weights**: specifies which fields are used as keys, and how they are weighted during retrieval. Fields
-  designated as keys used to match inputs (queries) against entries in memory for retrieval (see `Match memories by
-  field <EMComposition_Processing>`); entries designated as *values* are ignored during the matching process, but
+  designated as keys are used to match inputs (queries) against entries in memory for retrieval (see `Match memories
+  by field <EMComposition_Processing>`); entries designated as *values* are ignored during the matching process, but
   their values in memory are retrieved and assigned as the `value <Mechanism_Base.value>` of the corresponding
   `retrieved_node <EMComposition.retrieved_nodes>`. This distinction between keys and value corresponds
   to the format of a standard "dictionary," though in that case only a single key and value are allowed, whereas
@@ -287,11 +289,17 @@ that is propagated through the EMComposition.
       <EMComposition.field_weight_nodes>`, and are ignored during retrieval.  These *cannot be modified* after the
       EMComposition has been constructed (see note below).
 
+    .. _EMComposition_No_Field_Weights_For_Single_Key_Note:
+
+    .. note::
+       If there is only a single key field, no field_weight is constructed, as in this case weighting would have
+       no effect; this also means that **learn_field_weights** has no effect, and a warning is issued if specified.
+
     .. _EMComposition_Field_Weights_Change_Note:
 
     .. note::
        The field_weights can be modified after the EMComposition has been constructed, by assigning a new set of weights
-       to its `field_weights <EMComposition.field_weights>` `Parameter`.  However, only field_weights associated with
+       to the `field_weights <EMComposition.field_weights>` `Parameter`.  However, only field_weights associated with
        key fields (i.e., that were initially assigned non-zero field_weights) can be modified; the weights for value
        fields (i.e., ones that were initially assigned a field_weight of None) cannot be modified, and doing so raises
        an error. If a field that will be used initially as a value may later need to be used as a key, it should be
@@ -303,19 +311,20 @@ that is propagated through the EMComposition.
        <EMComposition.field_weight_nodes>` are constructed only for keys, since ones for values would have no effect
        on the retrieval process and therefore are uncecessary (and can be misleading).
 
-
 * **learn_field_weights**:  if **enable_learning** is True, this specifies which field_weights are subject to learning,
   and optionally the `learning_rate <EMComposition.learning_rate>` for each (see `learn_field_weights
-  <EMComposition_Field_Weights_Learning>` below for details of specification).
+  <EMComposition_Field_Weights_Learning>` below for details of specification);  however, this has no effect if there
+  is only a single key (see `note <EMComposition_No_Field_Weights_For_Single_Key_Note>` above), and a warning is issued
+  if it is specified.
 
 .. _EMComposition_Normalize_Field_Weights:
 
 * **normalize_field_weights**: specifies whether the `field_weights <EMComposition.field_weights>` are normalized or
-    their raw values are used.  If True, the value of all non-None `field_weights <EMComposition.field_weights>` are
-    normalized so that they sum to 1.0, and the normalized values are used to weight (i.e., multiply) the corresponding
-    fields during retrieval (see `Weight fields <EMComposition_Processing>`). If False, the raw values of the
-    `field_weights <EMComposition.field_weights>` are used to weight the retrieved value of each field. This setting
-    is ignored if **field_weights** is None or `concatenate_queries <EMComposition_Concatenate_Queries>` is True.
+  their raw values are used.  If True, the value of all non-None `field_weights <EMComposition.field_weights>` are
+  normalized so that they sum to 1.0, and the normalized values are used to weight (i.e., multiply) the corresponding
+  fields during retrieval (see `Weight fields <EMComposition_Processing>`). If False, the raw values of the
+  `field_weights <EMComposition.field_weights>` are used to weight the retrieved value of each field. This setting
+  is ignored if **field_weights** is None or `concatenate_queries <EMComposition_Concatenate_Queries>` is True.
 
 .. _EMComposition_Concatenate_Queries:
 
@@ -1095,13 +1104,13 @@ class Field():
         self.weighted_match_node = None
         self.retrieved_node = None
         # Projections for all fields:
-        self.storage_projection = None       # Projection from input_node to storage_node
-        self.retrieve_projection = None     # Projection from softmax_node ("RETRIEVE" node) to retrieved_node
+        self.storage_projection = None         # Projection from input_node to storage_node
+        self.retrieve_projection = None        # Projection from softmax_node ("RETRIEVE" node) to retrieved_node
         # Projections for key fields:
-        self.memory_projection = None        # Projection from query_input_node to match_node
-        self.concatenation_projection = None # Projection from query_input_node to concatenate_queries_node
-        self.match_projection = None         # Projection from match_node to weighted_match_node
-        self.weight_projection = None        # Projection from weight_node to weighted_match_node
+        self.memory_projection = None          # Projection from query_input_node to match_node
+        self.concatenation_projection = None   # Projection from query_input_node to concatenate_queries_node
+        self.match_projection = None           # Projection from match_node to weighted_match_node
+        self.weight_projection = None          # Projection from weight_node to weighted_match_node
         self.weighted_match_projection = None  # Projection from weighted_match_node to combined_matches_node
 
     @property
@@ -1200,22 +1209,24 @@ class EMComposition(AutodiffComposition):
 
     field_names : list or tuple : default None
         specifies the names assigned to each field in the memory_template (see `field names <EMComposition_Field_Names>`
-        for details). If the **fields** argument is specified, this is not necessary and specifying raises an error.
+        for details). If the **fields** argument is specified, specifying **field_names** is not necessary and
+        doing so raises a warning.
 
     field_weights : list or tuple : default (1,0)
         specifies the relative weight assigned to each key when matching an item in memory (see `field weights
-        <EMComposition_Field_Weights>` for additional details). If the **fields** argument is specified, this
-        is not necessary and specifying raises an error.
+        <EMComposition_Field_Weights>` for additional details). If the **fields** argument is specified, specifying
+        **field_weights** is not necessary and doing so raises a warning.
 
     learn_field_weights : bool or list[bool, int, float]: default False
         specifies whether the `field_weights <EMComposition.field_weights>` are learnable and, if so, optionally what
         the learning_rate is for each field (see `learn_field_weights <EMComposition_Field_Weights_Learning>` for
-        specifications). If the **fields** argument is specified, this is not necessary and specifying raises an error.
+        specifications). If the **fields** argument is specified, specifying **learn_field_weights** is not necessary,
+        and doing so raises a warning.
 
     learning_rate : float : default .01
         specifies the default learning_rate for `field_weights <EMComposition.field_weights>` not
-        specified in `learn_field_weights <EMComposition.learn_field_weights>` (see `learning_rate
-        <EMComposition_Field_Weights_Learning>` for additional details).
+        specified in `fields <EMComposition.fields>` or `learn_field_weights <EMComposition.learn_field_weights>`
+        (see `learning_rate <EMComposition_Field_Weights_Learning>` for additional details).
 
     normalize_field_weights : bool : default True
         specifies whether the **fields_weights** are normalized over the number of keys, or used as absolute
@@ -1264,7 +1275,7 @@ class EMComposition(AutodiffComposition):
         of the EMComposition.  If it is a list, each item must be ``True`` or ``False`` and the number of items
         must be equal to the number of `fields <EMComposition_Fields> specified (see `Target Fields
          <EMComposition_Target_Fields>` for additional details). If the **fields** argument is specified,
-         this is not necessary and specifying raises an error.
+         specifying **target_fields** is not necessary and doing so raises a warning.
 
     # 7/10/24 FIX: STILL TRUE?  DOES IT PRECLUDE USE OF EMComposition as a nested Composition??
     .. technical_note::
@@ -1483,12 +1494,6 @@ class EMComposition(AutodiffComposition):
                     see `concatenate_queries <EMComposition.concatenate_queries>`
 
                     :default value: False
-                    :type: ``bool``
-
-                enable_learning
-                    see `enable_learning <EMComposition.enable_learning>`
-
-                    :default value: True
                     :type: ``bool``
 
                 field_names
@@ -2413,7 +2418,9 @@ class EMComposition(AutodiffComposition):
 
 
     def _construct_field_weight_nodes(self, concatenate_queries, use_gating_for_weighting):
-        """Create ProcessingMechanisms that weight each key's softmax contribution to the retrieved values."""
+        """Create ProcessingMechanisms that weight each key's contribution to the retrieved values.
+        Note: not constructed if only one key is specified, since in that case there is no point in weighting.
+        """
         if not concatenate_queries and self.num_keys > 1:
             for field in [self.fields[i] for i in self.key_indices]:
                 name = WEIGHT if self.num_keys == 1 else f'{field.name}{WEIGHT_AFFIX}'
@@ -2588,9 +2595,29 @@ class EMComposition(AutodiffComposition):
 
     def _set_learning_attributes(self):
         """Set learning-related attributes for Node and Projections
+        Make exclude_fron_gradient_calc assignments to relevant Nodes
+        Convert any learning_rate specifications into standard AutodiffComposition learning_rate dict format
+
+        BREADCRUMB:
+        Relevant attributes:
+        - self.enable_learning
+        - self.learning_rate (single value or dict)
+        - self.fields (dict, that may contain entries for field-specific learning_rates)
+        - self.learn_field_weights (list of field-specific learning_rates)
+
+        1. Raise error if learning_rate = dict and self.learn_field_weights is a list
+        2. if self.learning_rate is a dict:
+           - if DEFAULT_LEARNING_RATE is not specified, assign self.learn_field_weights to it
+           - otherwise, use whichever is numeric, and raise error if both are
+        3. if self.learning_rate is NOT a dict:
+           - create one from self.learn_field_weights:
+             - if both self.learning_rate and self.learn_field_weights are numeric, raise error
+             - otherwise, assign whichever is numeric to DEFAULT_LEARNING_RATE entry in self.learning_rate dict
+             - if self.learn_field_weights is a list, assign each value to entry in self.learning_rate dict
+        BREADCRUMB - STILL NEEDS TO BE DONE:
+        4. if either self.learning_rate or self.learn_field_weights is False, but the other is not,
+           - set self.learning_rate to False and issue warning (don't bother if both are False)
         """
-        # 7/10/24 FIX: SHOULD THIS ALSO BE CONSTRAINED BY VALUE OF field_weights FOR CORRESPONDING FIELD?
-        #         (i.e., if it is zero then not learnable? or is that a valid initial condition?)
         for projection in self.projections:
 
             projection_is_field_weight = projection.sender.owner in self.field_weight_nodes
@@ -2739,7 +2766,10 @@ class EMComposition(AutodiffComposition):
         skip_initialization: bool = False,
         **kwargs
     ) -> list:
-        """Override to check for inappropriate use of ARG_MAX or PROBABILISTIC options for retrieval with learning"""
+        """Override to check for various error and warning conditions
+        - error for inappropriate use of ARG_MAX or PROBABILISTIC options for retrieval with learning
+        - warning for enable_learning when concatenate_queries is True or when there is only one key
+        """
 
         if (
             not skip_initialization
