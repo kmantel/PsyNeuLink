@@ -11,6 +11,7 @@ from psyneulink.core.components.functions.nonstateful.learningfunctions import B
 from psyneulink.core.globals.keywords import Loss
 # from psyneulink.library.components.mechanisms.processing.objective.comparatormechanism import SSE, MSE, L0
 
+
 def xor_network(comp_type, comp_learning_rate, pathway_learning_rate):
     """Create simple sample network for testing learning specifications
     Returns a function that takes a Composition type and learning_rate specifications and
