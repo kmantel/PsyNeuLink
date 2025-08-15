@@ -1518,7 +1518,7 @@ class Parameter(ParameterBase):
                 ) from e
 
         if self.getter is not None:
-            value = self._call_getter(context, **kwargs)
+            value = self._call_getter(context, fallback_value=fallback_value, **kwargs)
             if self.stateful:
                 self._set_value(value, execution_id=execution_id, context=context)
             return value
