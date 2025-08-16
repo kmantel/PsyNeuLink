@@ -127,6 +127,7 @@ class Port(ShellClass):
 
 
 class Projection(ShellClass):
+    _proxy_for = None
 
     # def assign_states(self):
     #     raise ShellClassError("Must implement assign_states in {0}".format(self.__class__.__name__))
