@@ -1077,7 +1077,18 @@ class PytorchCompositionWrapper(torch.nn.Module):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
 
         proj_composition = self._pnl_refs_to_torch_param_names[projection.name].composition
-        proj_comp_lr = self._get_default_composition_learning_rate(proj_composition, self.composition, context)
+        comp_lr_dict = proj_composition.parameters.learning_rates_dict._get(context)
+
+        for proj in [projection, projection._proxy_for]:
+            if proj is not None:
+                if proj in comp_lr_dict:
+                    proj_comp_lr = comp_lr_dict[proj]
+                    break
+                if proj.name in comp_lr_dict:
+                    proj_comp_lr = comp_lr_dict[proj.name]
+                    break
+        else:
+            proj_comp_lr = self._get_default_composition_learning_rate(proj_composition, self.composition, context)
 
         # Get default learning_rate for Projection for current Composition
         specified_learning_rate = \
