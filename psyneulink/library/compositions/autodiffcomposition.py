@@ -1654,6 +1654,15 @@ class AutodiffComposition(Composition):
             overrides specification(s) made in Autodiff constructor; see `retain_torch_losses
             <AutodiffComposition.retain_torch_losses>` for additional details.
         """
+        if (
+            not skip_initialization
+            and (
+                context is None
+                or ContextFlags.SIMULATION_MODE not in context.runmode
+            )
+        ):
+            self._initialize_from_context(context, base_context, override=False)
+
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
 
