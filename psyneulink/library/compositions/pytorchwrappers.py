@@ -42,7 +42,7 @@ from psyneulink.core.components.ports.port import Port
 from psyneulink.core.components.projections.projection import Projection, DuplicateProjectionError
 from psyneulink.core.components.projections.modulatory.modulatoryprojection import ModulatoryProjection_Base
 from psyneulink.core.components.projections.modulatory.learningprojection import LearningProjection
-from psyneulink.core.components.projections.pathway.mappingprojection import (MappingProjection, PROXY_FOR, PROXY_FOR_ATTRIB)
+from psyneulink.core.components.projections.pathway.mappingprojection import (MappingProjection, PROXY_FOR)
 from psyneulink.core.compositions.composition import Composition, CompositionError, CompositionInterfaceMechanism, LearningScale, NodeRole
 from psyneulink.library.components.mechanisms.processing.objective.lossmechanism import LossMechanism
 from psyneulink.library.compositions.pytorchllvmhelper import *
@@ -1248,7 +1248,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
             # Get Projection-specific learning_rate if specified in call to constructor or in learn()
             if projection.name in optimizer_params_user_parsed:
                 specified_learning_rate = optimizer_params_user_parsed[projection.name].value
-            elif hasattr(projection, PROXY_FOR_ATTRIB) and projection._proxy_for.name in optimizer_params_user_parsed:
+            elif projection._proxy_for is not None and projection._proxy_for.name in optimizer_params_user_parsed:
                 specified_learning_rate = optimizer_params_user_parsed[projection._proxy_for.name].value
 
         if specified_learning_rate in {None, True}:
