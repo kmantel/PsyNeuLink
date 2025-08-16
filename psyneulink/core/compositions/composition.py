@@ -8102,7 +8102,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if isinstance(n, tuple):
                     nodes[nodes.index(n)] = n[0]
 
-        self._assign_learning_rates(projections)
+        self._assign_learning_rates(projections, context)
 
         specified_pathway = pathway
         # interleave (sets of) Nodes and (sets or lists of) Projections
@@ -9452,8 +9452,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                        for item in (sub_item if isinstance(sub_item, (list, tuple, set))
                                     else [sub_item])]
         not_learnable = []
-        # Get learning_rates_dict for Composition's constructor
-        learning_rates_dict = self.parameters.learning_rates_dict.get(None)
+        learning_rates_dict = self.parameters.learning_rates_dict._get(context)
         context = context or self.name + DEFAULT_SUFFIX
 
         for proj in projections:
