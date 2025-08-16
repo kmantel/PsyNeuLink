@@ -9424,19 +9424,23 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     lr_dict.update(comp.parameters.learning_rates_dict.get(context))
                 lr_dict.update(_lr_dict_arg)
 
-        if context is not None and context.execution_id is not None:
-            lr_dict = self.parameters.learning_rates_dict.get(context)
-            # If called from learn(), check that all entries in lr_dict are for Projections in the Composition
-            bad_keys = [proj_name for proj_name in lr_dict.keys() if proj_name not in self.projections]
-            if bad_keys:
-                singular = ["entry appears", "its key is not a Projection", "name of one"]
-                plural = ["entries appear", "their keys are not Projections", "names of ones"]
-                filler = singular if len(bad_keys) == 1 else plural
-                err_msg = (f"The following {filler[0]} in the dict specified for the 'learning_rate' arg of "
-                           f"'{self.name}' but {filler[1]} or the {filler[2]} in that Composition:")
-                raise CompositionError(err_msg + f" '{', '.join(list(bad_keys))}'.")
-
         return learning_rate, lr_dict
+
+    def _validate_learning_rates_dict(self, learning_rates_dict):
+        bad_keys = []
+        all_projs = self._get_all_projections()
+        all_projs.update({p._proxy_for: None for p in all_projs if hasattr(p, '_proxy_for')})
+        all_proj_names = {p.name for p in all_projs}
+        bad_keys = [item for item in learning_rates_dict.keys() if item not in all_projs and item not in all_proj_names]
+        if bad_keys:
+            singular = ["entry appears", "its key is not a Projection", "name of one"]
+            plural = ["entries appear", "their keys are not Projections", "names of ones"]
+            filler = singular if len(bad_keys) == 1 else plural
+            err_msg = (
+                f"The following {filler[0]} in the dict specified for the 'learning_rate' arg of "
+                f"'{self.name}' but {filler[1]} or the {filler[2]} in that Composition:"
+            )
+            raise CompositionError(err_msg + f" '{', '.join(list(bad_keys))}'.")
 
     def _assign_learning_rates(self, projections=None, context=None):
         """Assign specified learning_rates for context to Projections & build learning_rates_dict for all Projections
@@ -12053,6 +12057,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # parse and then assign any learning_rate specs to learning_rates_dict for execution context
             _, lr_dict = self._parse_and_validate_learning_rate_arg(learning_rate, context)
             if lr_dict is not None:
+                # If called from learn(), check that all entries in lr_dict are for Projections in the Composition
+                self._validate_learning_rates_dict(lr_dict)
                 self.parameters.learning_rates_dict._set(lr_dict, context)
             self._assign_learning_rates(context=context)
 
