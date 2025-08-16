@@ -361,7 +361,7 @@ class ParameterError(Exception):
 class ParameterNoValueError(ParameterError):
     def __init__(
         self,
-        param,
+        param: 'Parameter',
         execution_id,
         # to indicate there are no history values, pass None
         history: Optional[Union[int, Iterable, None]] = NotImplemented,
@@ -1518,10 +1518,14 @@ class Parameter(ParameterBase):
                 ) from e
 
         if self.getter is not None:
-            value = self._call_getter(context, fallback_value=fallback_value, **kwargs)
-            if self.stateful:
-                self._set_value(value, execution_id=execution_id, context=context)
-            return value
+            try:
+                value = self._call_getter(context, **kwargs)
+            except ParameterNoValueError as e:
+                return self._handle_fallback_value(execution_id, fallback_value, e)
+            else:
+                if self.stateful:
+                    self._set_value(value, execution_id=execution_id, context=context)
+                return value
         else:
             try:
                 return self.values[execution_id]
