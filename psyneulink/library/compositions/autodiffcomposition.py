@@ -388,7 +388,7 @@ import numpy as np
 from packaging import version
 from pathlib import Path, PosixPath
 from collections import deque
-from typing import Union
+from typing import Hashable, Union
 
 try:
     import torch
@@ -697,13 +697,13 @@ class AutodiffComposition(Composition):
     class Parameters(Composition.Parameters):
         pytorch_representation = None
         # optimizer = None
-        synch_projection_matrices_with_torch = Parameter(RUN, fallback_value=DEFAULT)
-        synch_node_variables_with_torch = Parameter(None, fallback_value=DEFAULT)
-        synch_node_values_with_torch = Parameter(RUN, fallback_value=DEFAULT)
-        synch_results_with_torch = Parameter(RUN, fallback_value=DEFAULT)
-        retain_torch_trained_outputs = Parameter(MINIBATCH, fallback_value=DEFAULT)
-        retain_torch_targets = Parameter(MINIBATCH, fallback_value=DEFAULT)
-        retain_torch_losses = Parameter(MINIBATCH, fallback_value=DEFAULT)
+        synch_projection_matrices_with_torch = Parameter(RUN)
+        synch_node_variables_with_torch = Parameter(None)
+        synch_node_values_with_torch = Parameter(RUN)
+        synch_results_with_torch = Parameter(RUN)
+        retain_torch_trained_outputs = Parameter(MINIBATCH)
+        retain_torch_targets = Parameter(MINIBATCH)
+        retain_torch_losses = Parameter(MINIBATCH)
         torch_trained_outputs = Parameter([], getter=_get_torch_trained_outputs)
         torch_targets = Parameter([], getter=_get_torch_targets)
         torch_losses = Parameter([], getter=_get_torch_losses)
@@ -1147,7 +1147,7 @@ class AutodiffComposition(Composition):
             self.scheduler = Scheduler(graph=self.graph_processing)
 
         # Construct a new pytorch_representation if none exists or new is specified
-        if self.parameters.pytorch_representation._get(context=context, fallback_value=None) is None or new:
+        if self.parameters.pytorch_representation._get(context=context) is None or new:
             # Instantiate pytorch_representation
             self.pytorch_composition_wrapper_type(composition=self,
                                                   device=self.device,
@@ -1654,6 +1654,12 @@ class AutodiffComposition(Composition):
             overrides specification(s) made in Autodiff constructor; see `retain_torch_losses
             <AutodiffComposition.retain_torch_losses>` for additional details.
         """
+        # NOTE: do not call _initialize_from_context here -
+        # infer_backpropagation_learning_pathways call below can change
+        # the structure of the Composition and its CIMs and this will
+        # result in them having old values. Stateful Parameter get may
+        # not have a value before call to super().learn
+
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
 
@@ -1930,7 +1936,8 @@ class AutodiffComposition(Composition):
             retain_torch_targets:Optional[LEARNING_SCALE_LITERALS]=NotImplemented,
             retain_torch_losses:Optional[LEARNING_SCALE_LITERALS]=NotImplemented,
             batched_results:bool=False,
-            context: Context = None,
+            context: Union[Context, Hashable] = None,
+            base_context: Context = Context(execution_id=None),
             **kwargs):
         """Override to handle synch and retain args if run called directly from run() rather than learn()
         Note: defaults for synch and retain args are NotImplemented, so that the user can specify None if they want
@@ -1938,6 +1945,9 @@ class AutodiffComposition(Composition):
               for details). This is distinct from the user assigning the Parameter default_values(s), which is done
               in the AutodiffComposition constructor and handled by the Parameter._specify_none attribute.
         """
+        # NOTE: like in .learn, do not call _initialize_from_context
+        # here. correct shapes for CIMs are determined in .run before
+        # _initialize_from_context is called there.
 
         # Store whether we need to return results list with a batch dimension, or flatten it
         self.batched_results = batched_results
