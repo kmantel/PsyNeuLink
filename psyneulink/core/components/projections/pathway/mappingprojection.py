@@ -472,13 +472,18 @@ class MappingProjection(PathwayProjection_Base):
                     :type: ``str``
 
         """
-        learning_rate = Parameter(None, stateful=True, fallback_value=DEFAULT)
+        learning_rate = Parameter(None, stateful=True)
         function = Parameter(MatrixTransform, stateful=False, loggable=False)
-        matrix = FunctionParameter(DEFAULT_MATRIX,
-                                   setter=_mapping_projection_matrix_setter)
+        matrix = FunctionParameter(
+            DEFAULT_MATRIX,
+            setter=_mapping_projection_matrix_setter
+        )
+
         def _validate_learning_rate(self, val):
             if val is not None and not is_numeric_scalar(val):
                 return 'must be a float, int or a bool'
+
+    classPreferenceLevel = PreferenceLevel.TYPE
 
     @property
     def _loggable_items(self):
