@@ -780,7 +780,7 @@ class DummyProjection(Projection):
     name = ""
 
     class Parameters(Projection.Parameters):
-        learning_rate = Parameter(None, stateful=True, fallback_value=DEFAULT)
+        learning_rate = Parameter(None, stateful=True)
 
     @check_user_specified
     def __init__(self, name):
