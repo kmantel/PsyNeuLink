@@ -388,7 +388,7 @@ import numpy as np
 from packaging import version
 from pathlib import Path, PosixPath
 from collections import deque
-from typing import Union
+from typing import Hashable, Union
 
 try:
     import torch
@@ -1654,6 +1654,9 @@ class AutodiffComposition(Composition):
             overrides specification(s) made in Autodiff constructor; see `retain_torch_losses
             <AutodiffComposition.retain_torch_losses>` for additional details.
         """
+        if ContextFlags.SIMULATION_MODE not in context.runmode:
+            self._initialize_from_context(context, base_context, override=False)
+
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
 
@@ -1952,7 +1955,8 @@ class AutodiffComposition(Composition):
             retain_torch_targets:Optional[LEARNING_SCALE_LITERALS]=NotImplemented,
             retain_torch_losses:Optional[LEARNING_SCALE_LITERALS]=NotImplemented,
             batched_results:bool=False,
-            context: Context = None,
+            context: Union[Context, Hashable] = None,
+            base_context: Context = Context(execution_id=None),
             **kwargs):
         """Override to handle synch and retain args if run called directly from run() rather than learn()
         Note: defaults for synch and retain args are NotImplemented, so that the user can specify None if they want
@@ -1960,6 +1964,8 @@ class AutodiffComposition(Composition):
               for details). This is distinct from the user assigning the Parameter default_values(s), which is done
               in the AutodiffComposition constructor and handled by the Parameter._specify_none attribute.
         """
+        if ContextFlags.SIMULATION_MODE not in context.runmode:
+            self._initialize_from_context(context, base_context, override=False)
 
         # Store whether we need to return results list with a batch dimension, or flatten it
         self.batched_results = batched_results
