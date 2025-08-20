@@ -697,13 +697,13 @@ class AutodiffComposition(Composition):
     class Parameters(Composition.Parameters):
         pytorch_representation = None
         # optimizer = None
-        synch_projection_matrices_with_torch = Parameter(RUN, fallback_value=DEFAULT)
-        synch_node_variables_with_torch = Parameter(None, fallback_value=DEFAULT)
-        synch_node_values_with_torch = Parameter(RUN, fallback_value=DEFAULT)
-        synch_results_with_torch = Parameter(RUN, fallback_value=DEFAULT)
-        retain_torch_trained_outputs = Parameter(MINIBATCH, fallback_value=DEFAULT)
-        retain_torch_targets = Parameter(MINIBATCH, fallback_value=DEFAULT)
-        retain_torch_losses = Parameter(MINIBATCH, fallback_value=DEFAULT)
+        synch_projection_matrices_with_torch = Parameter(RUN)
+        synch_node_variables_with_torch = Parameter(None)
+        synch_node_values_with_torch = Parameter(RUN)
+        synch_results_with_torch = Parameter(RUN)
+        retain_torch_trained_outputs = Parameter(MINIBATCH)
+        retain_torch_targets = Parameter(MINIBATCH)
+        retain_torch_losses = Parameter(MINIBATCH)
         torch_trained_outputs = Parameter([], getter=_get_torch_trained_outputs)
         torch_targets = Parameter([], getter=_get_torch_targets)
         torch_losses = Parameter([], getter=_get_torch_losses)
@@ -1147,7 +1147,7 @@ class AutodiffComposition(Composition):
             self.scheduler = Scheduler(graph=self.graph_processing)
 
         # Construct a new pytorch_representation if none exists or new is specified
-        if self.parameters.pytorch_representation._get(context=context, fallback_value=None) is None or new:
+        if self.parameters.pytorch_representation._get(context=context) is None or new:
             # Instantiate pytorch_representation
             self.pytorch_composition_wrapper_type(composition=self,
                                                   device=self.device,
