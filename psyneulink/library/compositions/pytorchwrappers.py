@@ -43,7 +43,8 @@ from psyneulink.core.globals.keywords import (AFTER, ALL, BEFORE,
                                               DEFAULT_LEARNING_RATE, DEFAULT_SUFFIX, DEFAULT_VARIABLE,
                                               EPOCH, INPUTS, LEARNING, LEARNING_SCALE_LITERALS, Loss, MATRIX_WEIGHTS,
                                               NODE, NODE_VALUES, NODE_VARIABLES, OUTPUTS,
-                                              RESULTS, RUN, SHOW_PYTORCH, SYNCH, TARGET_MECHANISM, )
+                                              RESULTS, RUN, SHOW_PYTORCH, SYNCH, TARGET_MECHANISM, DEFAULT,
+                                              )
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
 from psyneulink.core.globals.utilities import (
     convert_to_list, convert_to_np_array, get_deepcopy_with_shared, is_numeric_scalar, is_iterable)
@@ -1080,7 +1081,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
 
         # Get default learning_rate for Projection for current Composition
         specified_learning_rate = \
-            projection.parameters.learning_rate.get(proj_composition.name + DEFAULT_SUFFIX)
+            projection.parameters.learning_rate.get(proj_composition.name + DEFAULT_SUFFIX, fallback_value=DEFAULT)
 
         if optimizer_params_user_parsed:
             # Get Projection-specific learning_rate if specified in call to constructor or in learn()
