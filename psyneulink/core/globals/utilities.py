@@ -292,7 +292,7 @@ class PNLStrEnum(str, Enum):
         other = self._normalize_value(other)
         return super().__contains__(other)
 
-    def _generate_next_value_(name, start, count, last_values):
+    def _generate_next_value_(name, start, count, last_values):  # noqa: U100
         return PNLStrEnum._normalize_value(name)
 
     @classmethod
