@@ -82,7 +82,7 @@ __all__ = [
     'LABELS', 'LCA_MECHANISM', 'LEAKY_COMPETING_INTEGRATOR_FUNCTION', 'LEAK', 'LEARNABLE', 'LEARNED_PROJECTIONS',
     'LEARNING', 'LEARNING_FUNCTION', 'LEARNING_FUNCTION_TYPE', 'LEARNING_OBJECTIVE', 'LEARNING_MECHANISM',
     'LEARNING_MECHANISMS', 'LEARNING_PATHWAY', 'LEARNING_PROJECTION', 'LEARNING_PROJECTION_PARAMS', 'LEARNING_RATE',
-    'LEARNING_SCALE', 'LEARNING_SCALE_LITERALS', 'LEARNING_SCALE_NAMES', 'LEARNING_SIGNAL', 'LEARNING_SIGNAL_SPECS',
+    'LEARNING_SIGNAL', 'LEARNING_SIGNAL_SPECS',
     'LEARNING_SIGNALS', 'LESS_THAN', 'LESS_THAN_OR_EQUAL',
     'LINEAR', 'LINEAR_COMBINATION_FUNCTION', 'LINEAR_FUNCTION', 'LINEAR_TIMER_FUNCTION',
     'LOG_ENTRIES', 'LOGISTIC_FUNCTION', 'Loss', 'LOSSES', 'LOW', 'LVOC_CONTROL_MECHANISM',
@@ -335,7 +335,14 @@ CONVERGENCE = 'CONVERGENCE'
 #region -------------------------------------------    LEARNING    -----------------------------------------------------
 
 
-class LearningScale:
+OPTIMIZATION_STEP = 'optimization_step'
+TRIAL = 'trial'
+MINIBATCH = 'minibatch'
+EPOCH = 'epoch'
+RUN = 'run'
+
+
+class LearningScale(Enum):
     """Scales at which `learning <Composition_Learning>` occurs
 
     Used to specify the scales over which learning-related events occur when `learning <Composition_Learning>` is
@@ -368,34 +375,11 @@ class LearningScale:
         `num_epochs <Composition.num_epochs>` epochs.
 
     """
-    def __init__(self):
-        self.OPTIMIZATION_STEP = OPTIMIZATION_STEP
-        self.TRIAL = MINIBATCH
-        self.MINIBATCH = MINIBATCH
-        self.EPOCH = EPOCH
-        self.RUN = RUN
-
-    def _values(self):
-        return list(self.__dict__.values())
-
-    def _set(self):
-        return set(self.__dict__.values())
-
-    def _names(self):
-        return list(self.__dict__)
-
-
-OPTIMIZATION_STEP = 'optimization_step'
-# TRIAL = 'trial'  # defined below in section on Composition
-MINIBATCH = 'minibatch'
-EPOCH = 'epoch'
-RUN = 'run'
-
-LEARNING_SCALE = LearningScale()
-LEARNING_SCALE_SET = LEARNING_SCALE._set()
-LEARNING_SCALE_VALUES = LEARNING_SCALE._values()
-LEARNING_SCALE_NAMES = LEARNING_SCALE._names()
-LEARNING_SCALE_LITERALS = Literal[tuple(LEARNING_SCALE_VALUES)] # Used for type hinting
+    OPTIMIZATION_STEP = OPTIMIZATION_STEP
+    TRIAL = TRIAL
+    MINIBATCH = MINIBATCH
+    EPOCH = EPOCH
+    RUN = RUN
 
 
 class Loss(Enum):
