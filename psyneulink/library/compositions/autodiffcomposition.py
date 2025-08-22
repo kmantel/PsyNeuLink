@@ -1654,8 +1654,11 @@ class AutodiffComposition(Composition):
             overrides specification(s) made in Autodiff constructor; see `retain_torch_losses
             <AutodiffComposition.retain_torch_losses>` for additional details.
         """
-        if ContextFlags.SIMULATION_MODE not in context.runmode:
-            self._initialize_from_context(context, base_context, override=False)
+        # NOTE: do not call _initialize_from_context here -
+        # infer_backpropagation_learning_pathways call below can change
+        # the structure of the Composition and its CIMs and this will
+        # result in them having old values. Stateful Parameter get may
+        # not have a value before call to super().learn
 
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
