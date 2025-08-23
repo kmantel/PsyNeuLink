@@ -321,6 +321,6 @@ def cleanup(check_leaks:bool=False):
 
         # The set of active executions should be empty
         for e in CompExecution.active_executions:
-            assert any(inspect.isframe(r) for r in gc.get_referrers(e))
+            assert any(inspect.isframe(r) for r in gc.get_referrers(e)), str(gc.get_referrers(e))
 
         CompExecution.active_executions.clear()
