@@ -1945,8 +1945,9 @@ class AutodiffComposition(Composition):
               for details). This is distinct from the user assigning the Parameter default_values(s), which is done
               in the AutodiffComposition constructor and handled by the Parameter._specify_none attribute.
         """
-        if ContextFlags.SIMULATION_MODE not in context.runmode:
-            self._initialize_from_context(context, base_context, override=False)
+        # NOTE: like in .learn, do not call _initialize_from_context
+        # here. correct shapes for CIMs are determined in .run before
+        # _initialize_from_context is called there.
 
         # Store whether we need to return results list with a batch dimension, or flatten it
         self.batched_results = batched_results
