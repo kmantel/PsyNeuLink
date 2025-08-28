@@ -24,7 +24,7 @@ from psyneulink.core.globals.context import Context, ContextFlags, handle_extern
 from psyneulink.core.globals.utilities import convert_to_list
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.keywords import (
-    ALL, ANY, CONTEXT, DEFAULT, INPUT, INPUTS, LEARNING, NODE_VALUES, SHOW_PYTORCH, SYNCH, SYNCH_WITH_PNL_OPTIONS,
+    ALL, ANY, CONTEXT, INPUT, INPUTS, LEARNING, NODE_VALUES, SHOW_PYTORCH, SYNCH, SYNCH_WITH_PNL_OPTIONS,
 )
 from psyneulink.core.globals.log import LogCondition
 
@@ -766,7 +766,7 @@ class DummyProjection(Projection):
     name = ""
 
     class Parameters(Projection.Parameters):
-        learning_rate = Parameter(None, stateful=True, fallback_value=DEFAULT)
+        learning_rate = Parameter(None, stateful=True)
 
     @check_user_specified
     def __init__(self, name):

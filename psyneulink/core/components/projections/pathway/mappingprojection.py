@@ -305,7 +305,7 @@ from psyneulink.core.components.projections.pathway.pathwayprojection import Pat
 from psyneulink.core.components.projections.projection import ProjectionError, projection_keywords
 from psyneulink.core.components.ports.outputport import OutputPort
 from psyneulink.core.globals.keywords import \
-    (AUTO_ASSIGN_MATRIX, DEFAULT, DEFAULT_MATRIX, FULL_CONNECTIVITY_MATRIX, HOLLOW_MATRIX,
+    (AUTO_ASSIGN_MATRIX, DEFAULT_MATRIX, FULL_CONNECTIVITY_MATRIX, HOLLOW_MATRIX,
      IDENTITY_MATRIX, INPUT_PORT, MAPPING_PROJECTION, MATRIX, OUTPUT_PORT, VALUE)
 from psyneulink.core.globals.log import ContextFlags
 from psyneulink.core.globals.parameters import FunctionParameter, Parameter, check_user_specified, copy_parameter_value
@@ -474,7 +474,7 @@ class MappingProjection(PathwayProjection_Base):
                     :type: ``str``
 
         """
-        learning_rate = Parameter(None, stateful=True, fallback_value=DEFAULT)
+        learning_rate = Parameter(None, stateful=True)
         function = Parameter(MatrixTransform, stateful=False, loggable=False)
         matrix = FunctionParameter(DEFAULT_MATRIX,
                                    setter=_mapping_projection_matrix_setter)
