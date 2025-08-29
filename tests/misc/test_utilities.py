@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from psyneulink.core.globals.utilities import (
-    convert_all_elements_to_np_array, extended_array_equal, prune_unused_args, update_array_in_place
+    PNLStrEnum, convert_all_elements_to_np_array, extended_array_equal, prune_unused_args, update_array_in_place
 )
 
 
@@ -166,3 +166,32 @@ def test_update_array_in_place_failures(target, source):
         assert not np.array_equal(target[i], source[i])
         assert not np.array_equal(old_target[i], source[i])
         np.testing.assert_array_equal(target[i], old_target[i])
+
+
+class TestPNLStrEnum:
+    class NewPNLStrEnum(PNLStrEnum):
+        A = 'A'
+        B = 'b'
+        C = 'cC'
+        A2 = 'a'
+
+    equals_parametrizations = [
+        (NewPNLStrEnum.A, NewPNLStrEnum.A2),
+        (NewPNLStrEnum.A, 'A'),
+        (NewPNLStrEnum.A, 'a'),
+        (NewPNLStrEnum.B, 'B'),
+        (NewPNLStrEnum.B, 'b'),
+        (NewPNLStrEnum.C, 'Cc'),
+    ]
+
+    @pytest.mark.parametrize('enum_val, value', equals_parametrizations)
+    def test_equals(self, enum_val, value):
+        assert enum_val == value
+
+    @pytest.mark.parametrize('enum_val, value', equals_parametrizations)
+    def test_contains(self, enum_val, value):
+        assert value in enum_val
+
+    @pytest.mark.parametrize('enum_val, value', equals_parametrizations)
+    def test_create_from(self, enum_val, value):
+        assert self.NewPNLStrEnum(value) == enum_val

@@ -162,6 +162,7 @@ __all__ = [
     'tensor_power', 'TEST_CONDTION', 'type_match',
     'underscore_to_camelCase', 'UtilitiesError', 'unproxy_weakproxy', 'create_union_set', 'merge_dictionaries',
     'contains_type', 'is_numeric_scalar', 'try_extract_0d_array_item', 'fill_array', 'update_array_in_place', 'array_from_matrix_string', 'get_module_file_prefix', 'get_stacklevel_skip_file_prefixes',
+    'PNLStrEnum',
 ]
 
 logger = logging.getLogger(__name__)
@@ -268,6 +269,46 @@ class AutoNumber(IntEnum):
         obj = int.__new__(component_type)
         obj._value_ = value
         return obj
+
+
+# builtin StrEnum supported in python 3.11+
+class PNLStrEnum(str, Enum):
+    def __new__(cls, value: str):
+        value = cls._normalize_value(value)
+        member = str.__new__(cls, value)
+        member._value_ = value
+        return member
+
+    def __str__(self):
+        return self.value
+
+    def __hash__(self):
+        return hash(self.value)
+
+    def __eq__(self, other):
+        return self.value == self._normalize_value(other)
+
+    def __contains__(self, other):
+        other = self._normalize_value(other)
+        return super().__contains__(other)
+
+    def _generate_next_value_(name, start, count, last_values):
+        return PNLStrEnum._normalize_value(name)
+
+    @classmethod
+    def _missing_(cls, value):
+        value = cls._normalize_value(value)
+        for member in cls:
+            if member.value == value:
+                return member
+        return None
+
+    @staticmethod
+    def _normalize_value(x):
+        try:
+            return x.lower()
+        except AttributeError:
+            return x
 
 
 #region ******************************** GLOBAL STRUCTURES, CONSTANTS AND METHODS  *************************************
