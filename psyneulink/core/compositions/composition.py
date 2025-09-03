@@ -3156,6 +3156,7 @@ Class Reference
 """
 
 import collections
+from dataclasses import dataclass
 import enum
 import functools
 import inspect
@@ -3178,7 +3179,7 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
-from psyneulink._typing import Callable, Literal, List, Mapping, Optional, Set, Type, Union
+from psyneulink._typing import Any as TypeAny, Callable, Literal, List, Mapping, Optional, Set, Type, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import Component, ComponentError, ComponentsMeta
@@ -3436,6 +3437,25 @@ unmodifiable_node_roles = {NodeRole.ORIGIN,
                            NodeRole.SINGLETON,
                            NodeRole.TERMINAL,
                            NodeRole.CYCLE}
+
+
+@dataclass
+class _OptParam:
+    name: str
+    _value: TypeAny
+
+    def value(self, projection: Optional[Projection] = None):
+        try:
+            return self._value[projection]
+        except TypeError:
+            return self._value
+        except KeyError:
+            return self._value.get(DEFAULT_LEARNING_RATE, None)
+
+
+@dataclass
+class OptimizerParams:
+    learning_rate: Union[numbers.Number, Dict[]]
 
 
 class Composition(Composition_Base, metaclass=ComponentsMeta):
