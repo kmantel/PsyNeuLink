@@ -413,6 +413,7 @@ from psyneulink.core.compositions.composition import (
     CompositionError,
     LearningScale,
     NodeRole,
+    OptimizerParams,
 )
 from psyneulink.core.compositions.report import (ReportOutput, ReportParams, ReportProgress, ReportSimulations,
                                                  ReportDevices, EXECUTE_REPORT, LEARN_REPORT, PROGRESS_REPORT)
@@ -1735,6 +1736,13 @@ class AutodiffComposition(Composition):
             # - if it contains DEFAULT_LEARNING_RATE entry, assign that as learning_rate
             kwargs[OPTIMIZER_PARAMS] = kwargs[LEARNING_RATE]
             kwargs[LEARNING_RATE] = kwargs[OPTIMIZER_PARAMS].pop(DEFAULT_LEARNING_RATE, None)
+
+        # TODO:
+        if LEARNING_RATE in kwargs:
+            runtime_optimizer_params = OptimizerParams(learning_rate=kwargs[LEARNING_RATE])
+        else:
+            runtime_optimizer_params = None
+        print('RUNTIME OPT PARAMS', runtime_optimizer_params)
 
         any_nested_comps = [node for node in self.nodes if isinstance(node, Composition)]
         if any_nested_comps:
