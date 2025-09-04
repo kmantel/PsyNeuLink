@@ -3179,7 +3179,7 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
-from psyneulink._typing import Any as TypeAny, Callable, Dict, Literal, List, Mapping, Optional, Set, Type, Union
+from psyneulink._typing import Any, Callable, Dict, Literal, List, Mapping, Optional, Set, Type, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import Component, ComponentError, ComponentsMeta
@@ -3273,6 +3273,10 @@ __all__ = [
     ]
 
 logger = logging.getLogger(__name__)
+
+
+LearningRate = Optional[Union[numbers.Number, bool]]
+
 
 CompositionRegistry = {}
 
@@ -3443,9 +3447,13 @@ unmodifiable_node_roles = {NodeRole.ORIGIN,
 
 @dataclass
 class OptParam:
-    _value: TypeAny = NotImplemented
-    default: TypeAny = None  # value if dict and no component-specific entry
+    _value: Any
+    _default: Optional[Any] = None  # value if dict and no component-specific entry
     param_group_name: Optional[str] = None
+
+    def __post_init__(self):
+        pass
+
 
     def value(self, component: Optional[Component] = None):
         if self._value is NotImplemented:
@@ -3459,19 +3467,20 @@ class OptParam:
             return self.default
 
 
+@dataclass
 class OptimizerParams:
-    learning_rate: OptParam
+    learning_rate: OptParam = OptParam(NotImplemented, param_group_name='lr')
 
     def __init__(
         self,
-        learning_rate: Union[
-            numbers.Number, Dict[Union[Component, str], numbers.Number]
-        ],
+        learning_rate: Union[LearningRate, Dict[Union[Component, str], LearningRate]],
     ):
-        self.learning_rate = OptParam(learning_rate, param_group_name='lr')
+        self.learning_rate = OptParam(
+            learning_rate, param_group_name=OptimizerParams.learning_rate.param_group_name
+        )
 
     @staticmethod
-    def from_Component(
+    def from_component(
         component: Component, context: Context
     ) -> 'OptimizerParams':
         params = {}
