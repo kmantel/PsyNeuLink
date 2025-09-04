@@ -3179,7 +3179,7 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
-from psyneulink._typing import Any as TypeAny, Callable, Literal, List, Mapping, Optional, Set, Type, Union
+from psyneulink._typing import Any as TypeAny, Callable, Dict, Literal, List, Mapping, Optional, Set, Type, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import Component, ComponentError, ComponentsMeta
@@ -3266,8 +3266,10 @@ from psyneulink.library.components.mechanisms.processing.transfer.recurrenttrans
     RecurrentTransferMechanism
 from psyneulink.library.components.projections.pathway.autoassociativeprojection import AutoAssociativeProjection
 
+
 __all__ = [
     'Composition', 'CompositionError', 'CompositionRegistry', 'get_compositions', 'NodeRole', 'LearningScale',
+    'OptimizerParams',
     ]
 
 logger = logging.getLogger(__name__)
@@ -3440,22 +3442,46 @@ unmodifiable_node_roles = {NodeRole.ORIGIN,
 
 
 @dataclass
-class _OptParam:
-    name: str
-    _value: TypeAny
+class OptParam:
+    _value: TypeAny = NotImplemented
+    default: TypeAny = None  # value if dict and no component-specific entry
+    param_group_name: Optional[str] = None
 
-    def value(self, projection: Optional[Projection] = None):
+    def value(self, component: Optional[Component] = None):
+        if self._value is NotImplemented:
+            return NotImplemented
+
         try:
-            return self._value[projection]
+            return self._value[component]
         except TypeError:
             return self._value
         except KeyError:
-            return self._value.get(DEFAULT_LEARNING_RATE, None)
+            return self.default
 
 
-@dataclass
 class OptimizerParams:
-    learning_rate: Union[numbers.Number, Dict[]]
+    learning_rate: OptParam
+
+    def __init__(
+        self,
+        learning_rate: Union[
+            numbers.Number, Dict[Union[Component, str], numbers.Number]
+        ],
+    ):
+        self.learning_rate = OptParam(learning_rate, param_group_name='lr')
+
+    @staticmethod
+    def from_Component(
+        component: Component, context: Context
+    ) -> 'OptimizerParams':
+        params = {}
+        for param_name in OptimizerParams.__annotations__:
+            if param_name not in component.parameters:
+                params[param_name] = NotImplemented
+            else:
+                value = getattr(component.parameters, param_name)._get(context)
+                params[param_name] = value
+        return OptimizerParams(**params)
 
 
 class Composition(Composition_Base, metaclass=ComponentsMeta):
