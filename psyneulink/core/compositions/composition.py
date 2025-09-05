@@ -3454,7 +3454,6 @@ class OptParam:
     def __post_init__(self):
         pass
 
-
     def value(self, component: Optional[Component] = None):
         if self._value is NotImplemented:
             return NotImplemented
@@ -3467,8 +3466,7 @@ class OptParam:
             return self.default
 
 
-@dataclass
-class OptimizerParams:
+class OptimizerParams(types.SimpleNamespace):
     learning_rate: OptParam = OptParam(NotImplemented, param_group_name='lr')
 
     def __init__(
