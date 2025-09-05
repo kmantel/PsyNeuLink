@@ -412,6 +412,8 @@ from psyneulink.core.compositions.composition import (
     Composition,
     CompositionError,
     LearningScale,
+    LearningRate,
+    LearningRateArg,
     NodeRole,
     OptimizerParams,
 )
@@ -1649,6 +1651,7 @@ class AutodiffComposition(Composition):
               retain_torch_trained_outputs: SynchRetainArg = NotImplemented,
               retain_torch_targets: SynchRetainArg = NotImplemented,
               retain_torch_losses: SynchRetainArg = NotImplemented,
+            #   learning_rate: LearningRateArg = None,
               context: Context = None,
               base_context: Context = Context(execution_id=None),
               skip_initialization: bool = False,
@@ -1715,6 +1718,7 @@ class AutodiffComposition(Composition):
         context.execution_phase = execution_phase_at_entry
 
         print('kwargs', kwargs)
+        learning_rate = kwargs.get(LEARNING_RATE, None)
         # Deal with deprecated arg (can't use deprecation_warning() since that is for constructors)
         if OPTIMIZER_PARAMS in kwargs:
             default_learning_rate = kwargs.pop(LEARNING_RATE, None)
@@ -1723,6 +1727,13 @@ class AutodiffComposition(Composition):
                                                 method="learn() method",
                                                 additional_msg=" Other torch.nn.optimizer parameters are not "
                                                                "currently supported, but will be in a future version.")
+            print('FROM DEPRECATION', learning_rate)
+
+        runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
+        print('kwargs', kwargs)
+        print('RUNTIME OPT PARAMS', runtime_optimizer_params)
+
+        if OPTIMIZER_PARAMS in kwargs:
             kwargs.update(learning_rate)
             # Move learning_rate spec into optimizer_params dict
             if default_learning_rate is not None:
@@ -1737,14 +1748,6 @@ class AutodiffComposition(Composition):
             # - if it contains DEFAULT_LEARNING_RATE entry, assign that as learning_rate
             kwargs[OPTIMIZER_PARAMS] = kwargs[LEARNING_RATE]
             kwargs[LEARNING_RATE] = kwargs[OPTIMIZER_PARAMS].pop(DEFAULT_LEARNING_RATE, None)
-
-        # TODO:
-        if LEARNING_RATE in kwargs:
-            runtime_optimizer_params = OptimizerParams(learning_rate=kwargs[LEARNING_RATE])
-        else:
-            runtime_optimizer_params = None
-        print('kwargs', kwargs)
-        print('RUNTIME OPT PARAMS', runtime_optimizer_params)
 
         any_nested_comps = [node for node in self.nodes if isinstance(node, Composition)]
         if any_nested_comps:
@@ -1789,6 +1792,8 @@ class AutodiffComposition(Composition):
                              context=context,
                              base_context=base_context,
                              skip_initialization=skip_initialization,
+                             # TODO: rename/replace this with just optimizer_params
+                             runtime_optimizer_params=runtime_optimizer_params,
                              **kwargs)
 
     def parse_synch_and_retain_args(
