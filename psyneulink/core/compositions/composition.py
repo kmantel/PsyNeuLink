@@ -3276,6 +3276,7 @@ logger = logging.getLogger(__name__)
 
 
 LearningRate = Optional[Union[numbers.Number, bool]]
+LearningRateArg = Union[LearningRate, Dict[Union[Component, str], LearningRate]]
 
 
 CompositionRegistry = {}
@@ -3450,11 +3451,13 @@ class OptParam:
     _value: Any
     _default: Optional[Any] = None  # value if dict and no component-specific entry
     param_group_name: Optional[str] = None
+    # NOTE: added for compatibility with DEFAULT_LEARNING_RATE keyword; consider if just using DEFAULT is ok
+    _default_key: Optional[str] = DEFAULT
 
     def __post_init__(self):
         try:
-            self.default = self._value[DEFAULT]
-        except (TypeError, KeyError):
+            self.default = self._value[self._default_key]
+        except (IndexError, KeyError, TypeError):
             self.default = self._default
 
     def value(self, component: Optional[Component] = None):
@@ -3470,14 +3473,22 @@ class OptParam:
 
 
 class OptimizerParams(types.SimpleNamespace):
-    learning_rate: OptParam = OptParam(NotImplemented, param_group_name='lr')
+    learning_rate: OptParam = OptParam(
+        NotImplemented, param_group_name='lr', _default_key=DEFAULT_LEARNING_RATE
+    )
 
     def __init__(
         self,
-        learning_rate: Union[LearningRate, Dict[Union[Component, str], LearningRate]],
+        learning_rate: LearningRateArg,
     ):
+        # NOTE: written in this way to facilitate future generalization
+        # over attrs in __annotations__ to keep template consistent and
+        # not repeat code
+        cls_param = OptimizerParams.learning_rate
         self.learning_rate = OptParam(
-            learning_rate, param_group_name=OptimizerParams.learning_rate.param_group_name
+            learning_rate,
+            param_group_name=cls_param.param_group_name,
+            _default_key=cls_param._default_key,
         )
 
     @staticmethod
@@ -12000,6 +12011,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             randomize_minibatches=False,
             call_before_minibatch=None,
             call_after_minibatch=None,
+            runtime_optimizer_params: Optional[OptimizerParams] = None,
             context: Optional[Context] = None,
             *args,
             base_context: Context = Context(execution_id=None),
@@ -12162,6 +12174,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self._initialize_from_context(context, base_context, override=False)
 
         runner = CompositionRunner(self)
+
+        composition_optimizer_params = OptimizerParams.from_component(self, context)
+        print('COMPOSITION OPT PARAMS', composition_optimizer_params)
+
+        # TODO: prioritize runtime and composition here
+        resolved_optimizer_params = None
 
         if not isinstance(self, AutodiffComposition):
             if isinstance(learning_rate, dict):
