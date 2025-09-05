@@ -3452,7 +3452,10 @@ class OptParam:
     param_group_name: Optional[str] = None
 
     def __post_init__(self):
-        pass
+        try:
+            self.default = self._value[DEFAULT]
+        except (TypeError, KeyError):
+            self.default = self._default
 
     def value(self, component: Optional[Component] = None):
         if self._value is NotImplemented:
