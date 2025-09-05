@@ -1714,6 +1714,7 @@ class AutodiffComposition(Composition):
         execution_mode = self._get_execution_mode(kwargs.pop('execution_mode', None))
         context.execution_phase = execution_phase_at_entry
 
+        print('kwargs', kwargs)
         # Deal with deprecated arg (can't use deprecation_warning() since that is for constructors)
         if OPTIMIZER_PARAMS in kwargs:
             default_learning_rate = kwargs.pop(LEARNING_RATE, None)
@@ -1742,6 +1743,7 @@ class AutodiffComposition(Composition):
             runtime_optimizer_params = OptimizerParams(learning_rate=kwargs[LEARNING_RATE])
         else:
             runtime_optimizer_params = None
+        print('kwargs', kwargs)
         print('RUNTIME OPT PARAMS', runtime_optimizer_params)
 
         any_nested_comps = [node for node in self.nodes if isinstance(node, Composition)]
