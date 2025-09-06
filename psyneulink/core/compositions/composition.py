@@ -3451,7 +3451,8 @@ class OptParam:
     _value: Any
     _default: Optional[Any] = None  # value if dict and no component-specific entry
     param_group_name: Optional[str] = None
-    # NOTE: added for compatibility with DEFAULT_LEARNING_RATE keyword; consider if just using DEFAULT is ok
+    # NOTE: added for compatibility with DEFAULT_LEARNING_RATE keyword;
+    # consider if just using DEFAULT is ok
     _default_key: Optional[str] = DEFAULT
 
     def __post_init__(self):
@@ -3491,8 +3492,11 @@ class OptimizerParams(types.SimpleNamespace):
             _default_key=cls_param._default_key,
         )
 
+    def from_optimizerparam(test):
+        pass
+
     @staticmethod
-    def from_component(
+    def _params_from_component(
         component: Component, context: Context
     ) -> 'OptimizerParams':
         params = {}
@@ -3501,7 +3505,14 @@ class OptimizerParams(types.SimpleNamespace):
                 params[param_name] = NotImplemented
             else:
                 value = getattr(component.parameters, param_name)._get(context)
-                params[param_name] = value
+                params[param_name] = copy_parameter_value(value)
+        return params
+
+    @staticmethod
+    def from_component(
+        component: Component, context: Context
+    ) -> 'OptimizerParams':
+        params = OptimizerParams._params_from_component(component, context)
         return OptimizerParams(**params)
 
 
