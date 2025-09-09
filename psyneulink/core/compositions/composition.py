@@ -3472,6 +3472,12 @@ class OptParam:
         except KeyError:
             return self.default
 
+    def has_specific_value_for(self, component: Optional[Component]) -> bool:
+        try:
+            return component in self._value
+        except (KeyError, TypeError):
+            return False
+
 
 class OptimizerParams(types.SimpleNamespace):
     learning_rate: OptParam = OptParam(
@@ -3491,6 +3497,13 @@ class OptimizerParams(types.SimpleNamespace):
             param_group_name=cls_param.param_group_name,
             _default_key=cls_param._default_key,
         )
+
+    def optim_args(self, component: Optional[Component] = None) -> Dict[str, Any]:
+        res = {}
+        for param_name in OptimizerParams.__annotations__:
+            param = getattr(self, param_name)
+            res[param.param_group_name] = param.value(component)
+        return res
 
     def from_optimizerparam(test):
         pass
