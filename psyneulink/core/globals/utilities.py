@@ -2123,14 +2123,13 @@ def contains_type(
     except AttributeError:
         pass
     else:
-        # not object or void dtype
-        if dtype.kind not in {'O', 'V'}:
+        if dtype.kind not in {'O', 'V'}:  # not object or void dtype
             try:
                 typ_dtypes = tuple(np.dtype(t) for t in typ)
             except TypeError:
-                return dtype.kind == np.dtype(typ).kind
+                return dtype == np.dtype(typ)
             else:
-                return any(dtype.kind == dt.kind for dt in typ_dtypes)
+                return any(dtype == dt for dt in typ_dtypes)
 
     try:
         arr_items = iter(arr)
