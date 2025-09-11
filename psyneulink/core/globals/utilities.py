@@ -2107,7 +2107,8 @@ def gen_friendly_comma_str(items):
 
 def contains_type(
     arr: collections.abc.Iterable,
-    typ: typing.Union[type, typing.Tuple[type, ...]]
+    typ: typing.Union[type, typing.Tuple[type, ...]],
+    strict_size: bool = False,
 ) -> bool:
     """
         Returns:
@@ -2124,12 +2125,19 @@ def contains_type(
         pass
     else:
         if dtype.kind not in {'O', 'V'}:  # not object or void dtype
+            if strict_size:
+                def dtypes_equal(x, y):
+                    return x == y
+            else:
+                def dtypes_equal(x, y):
+                    return x.kind == y.kind
             try:
                 typ_dtypes = tuple(np.dtype(t) for t in typ)
             except TypeError:
-                return dtype == np.dtype(typ)
+                if strict_size:
+                    return dtypes_equal(dtype, np.dtype(typ))
             else:
-                return any(dtype == dt for dt in typ_dtypes)
+                return any(dtypes_equal(dtype, dt) for dt in typ_dtypes)
 
     try:
         arr_items = iter(arr)
