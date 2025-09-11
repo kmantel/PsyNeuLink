@@ -9186,6 +9186,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         objective_mechanism.modulatory_mechanism = learning_mechanism
 
+        # NOTE: this is required before
+        # _create_learning_related_projections to prevent a crash, and
+        # before add_nodes to avoid test result failures
+        self._analyze_graph(context)
+
         self.add_nodes(nodes=[(target_mechanism, NodeRole.TARGET),
                               (objective_mechanism, NodeRole.LEARNING_OBJECTIVE),
                               learning_mechanism],
