@@ -82,6 +82,7 @@ Class Reference
 
 """
 
+from ast import Assert
 import enum
 import functools
 import warnings
@@ -700,25 +701,25 @@ def handle_external_context(
         def wrapper(*args, context=None, **kwargs):
             eid = execution_id
 
-            if context is not None and not type(context) is Context:
+            try:
+                context_arg = args[context_arg_index]
+            except (IndexError, TypeError):
+                # context_arg_index None or context not in var positional
+                context_arg = context
+
+            # we don't use .execution_id for non-Context objects
+            try:
+                eid = context_arg.execution_id
+            except AttributeError:
                 try:
-                    eid = context.default_execution_id
+                    eid = context_arg.default_execution_id
                 except AttributeError:
-                    eid = context
+                    if context_arg is not None:
+                        eid = context_arg
                 context = None
             else:
-                try:
-                    if args[context_arg_index] is not None:
-                        if type(args[context_arg_index]) is Context:
-                            context = args[context_arg_index]
-                        else:
-                            try:
-                                eid = args[context_arg_index].default_execution_id
-                            except AttributeError:
-                                eid = args[context_arg_index]
-                            context = None
-                except (TypeError, IndexError):
-                    pass
+                # is passed as a Context object
+                context = context_arg
 
             if context is None:
                 if eid is None:
@@ -727,6 +728,9 @@ def handle_external_context(
 
                     if fallback_most_recent:
                         eid = args[0].most_recent_context.execution_id
+                        assert not fallback_default, (
+                            'specify only one of fallback_most_recent and fallback_default'
+                        )
                     if fallback_default:
                         eid = args[0].default_execution_id
 
