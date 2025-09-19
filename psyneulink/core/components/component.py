@@ -4453,8 +4453,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             self.__parameter_components = set()
             return self.__parameter_components
 
-    @handle_external_context()
-    def _update_parameter_components(self, context=None):
+    def _update_parameter_components(self, context: Context):
         # store all Components in Parameters to be used in
         # _dependent_components for _initialize_from_context
         for p in self.parameters:

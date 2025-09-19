@@ -89,7 +89,7 @@ from psyneulink.core.components.ports.port import _parse_port_spec
 from psyneulink.core.compositions.compositionfunctionapproximator import CompositionFunctionApproximator, CompositionFunctionApproximatorError
 from psyneulink.core.globals.keywords import ALL, CONTROL_SIGNALS, DEFAULT_VARIABLE, VARIABLE
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
-from psyneulink.core.globals.context import Context
+from psyneulink.core.globals.context import Context, handle_external_context
 from psyneulink.core.globals.utilities import get_deepcopy_with_shared, powerset, tensor_power
 
 __all__ = ['PREDICTION_TERMS', 'PV', 'RegressionCFA']
@@ -287,7 +287,7 @@ class RegressionCFA(CompositionFunctionApproximator):
         else:
             self.prediction_terms = [PV.F,PV.C,PV.COST]
 
-    # def initialize(self, owner):
+    @handle_external_context(fallback_most_recent=True)
     def initialize(self, features_array, control_signals, context):
         """Assign owner and instantiate `prediction_vector <RegressionCFA.prediction_vector>`
 

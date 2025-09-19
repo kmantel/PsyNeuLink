@@ -2754,6 +2754,7 @@ class Mechanism_Base(Mechanism):
             port._update(params=runtime_output_port_params,
                          context=context)
 
+    @handle_external_context(fallback_most_recent=True)
     def initialize(self, value, context=None):
         """Assign an initial value to the Mechanism's `value <Mechanism_Base.value>` attribute and update its
         `OutputPorts <Mechanism_OutputPorts>`.
