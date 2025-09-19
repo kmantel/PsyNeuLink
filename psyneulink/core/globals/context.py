@@ -745,24 +745,16 @@ def handle_external_context(
                     execution_phase=execution_phase,
                     **context_kwargs
                 )
-                if context_arg_index is not None:
-                    try:
-                        args = list(args)
-                        args[context_arg_index] = context
-                    except IndexError:
-                        pass
+            if context_arg_index is not None:
+                try:
+                    args = list(args)
+                    args[context_arg_index] = context
+                except IndexError:
+                    pass
+                else:
+                    return func(*args, **kwargs)
 
-            try:
-                return func(*args, context=context, **kwargs)
-            except TypeError as e:
-                # context parameter may be passed as a positional arg
-                if (
-                    f"{func.__name__}() got multiple values for argument"
-                    not in str(e)
-                ):
-                    raise e
-
-            return func(*args, **kwargs)
+            return func(*args, context=context, **kwargs)
 
         return wrapper
     return decorator
