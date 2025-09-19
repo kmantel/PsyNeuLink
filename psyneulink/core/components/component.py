@@ -2080,7 +2080,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         elif runtime_params:    # not None
             raise ComponentError(f"Invalid specification of runtime parameters for {self.name}: {runtime_params}.")
 
-    @handle_external_context()
     def _instantiate_defaults(self,
                         variable=None,
                         request_set=None,
