@@ -698,14 +698,19 @@ def handle_external_context(
             _handle_external_context_arg_cache[func][CONTEXT] = context_arg_index
 
         @functools.wraps(func)
-        def wrapper(*args, context=None, **kwargs):
+        def wrapper(*args, context=NotImplemented, **kwargs):
             eid = execution_id
 
             try:
                 context_arg = args[context_arg_index]
             except (IndexError, TypeError):
                 # context_arg_index None or context not in var positional
+                if context is NotImplemented:
+                    context = None
                 context_arg = context
+            else:
+                assert context is NotImplemented
+                context = None
 
             # we don't use .execution_id for non-Context objects
             try:
