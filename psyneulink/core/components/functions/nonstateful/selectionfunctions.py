@@ -710,11 +710,11 @@ class OneHot(SelectionFunction):
 
         """
 
-        mode = self.parameters.mode.get(context)
-        direction = self.parameters.direction.get(context)
-        abs_val = self.parameters.abs_val.get(context)
-        indicator = self.parameters.indicator.get(context)
-        tie = self.parameters.tie.get(context)
+        mode = self.parameters.mode._get(context)
+        direction = self.parameters.direction._get(context)
+        abs_val = self.parameters.abs_val._get(context)
+        indicator = self.parameters.indicator._get(context)
+        tie = self.parameters.tie._get(context)
 
         if mode in {PROB, PROB_INDICATOR}:
             # 1st item of variable should be data, and 2nd a probability distribution for choosing

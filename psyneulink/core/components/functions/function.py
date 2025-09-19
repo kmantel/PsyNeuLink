@@ -373,7 +373,7 @@ def _seed_setter(value, owning_component, context, *, compilation_sync):
         value = _get_global_seed()
 
     # Remove any old PRNG state
-    owning_component.parameters.random_state.set(None, context=context)
+    owning_component.parameters.random_state._set(None, context=context)
     return np.asarray(value)
 
 
@@ -708,7 +708,7 @@ class Function_Base(Function):
                 # HACK: Make sure any copies are re-seeded to avoid dependent RNG.
                 # functions with "random_state" param must have "seed" parameter
                 for ctx in new.parameters.seed.values:
-                    new.parameters.seed.set(
+                    new.parameters.seed._set(
                         DEFAULT_SEED(), ctx, skip_log=True, skip_history=True
                     )
 
