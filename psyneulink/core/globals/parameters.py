@@ -542,7 +542,7 @@ def check_user_specified(func):
 
         # find the corresponding constructor in chained wrappers
         constructor = func
-        while '__init__' not in constructor.__qualname__:
+        while '__init__' not in constructor.__qualname__ and hasattr(constructor, '__wrapped__'):
             constructor = constructor.__wrapped__
 
         try:
@@ -590,6 +590,10 @@ def check_user_specified(func):
 
         self._prev_kwargs = kwargs
         return func(self, *args, **orig_kwargs)
+
+    traceable_name = f"check_user_specified_wrapper-{func.__qualname__}"
+    check_user_specified_wrapper.__name__ = traceable_name
+    check_user_specified_wrapper.__code__ = check_user_specified_wrapper.__code__.replace(co_name=traceable_name)
 
     return check_user_specified_wrapper
 
