@@ -3170,6 +3170,7 @@ import warnings
 import weakref
 from copy import deepcopy, copy
 from inspect import isgenerator, isgeneratorfunction
+from typing import Hashable
 
 import graph_scheduler
 import numpy as np
@@ -3178,7 +3179,7 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
-from psyneulink._typing import Callable, Hashable, Literal, List, Mapping, Optional, Set, Type, Union
+from psyneulink._typing import Callable, Literal, List, Mapping, Optional, Set, Type, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import Component, ComponentError, ComponentsMeta
