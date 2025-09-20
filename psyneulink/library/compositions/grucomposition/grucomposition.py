@@ -1069,7 +1069,7 @@ class GRUComposition(AutodiffComposition):
         self.scheduler.add_condition(self.new_node, conditions.AfterNodes(self.update_node))
         self.scheduler.add_condition(self.hidden_layer_node, conditions.AfterNodes(self.new_node))
 
-        self._analyze_graph()
+        self._analyze_graph(context)
 
     def _assign_gru_specific_attributes(self, input_size, hidden_size):
         for node in self.nodes:
