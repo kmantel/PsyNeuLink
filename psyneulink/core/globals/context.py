@@ -754,6 +754,9 @@ def handle_external_context(
                     raise e
 
             return func(*args, **kwargs)
+        traceable_name = f"handle_external_context_wrapper-{func.__qualname__}"
+        wrapper.__name__ = traceable_name
+        wrapper.__code__ = wrapper.__code__.replace(co_name=traceable_name)
 
         return wrapper
     return decorator
