@@ -5,7 +5,7 @@ m2 = TransferMechanism()
 c = Composition()
 c.add_node(m1, required_roles=NodeRole.INPUT)
 c.add_node(m2, required_roles=NodeRole.INPUT)
-c._analyze_graph()
+c.analyze_graph()
 lvoc = OptimizationControlMechanism(agent_rep=RegressionCFA,
                                     state_features=[m1.input_ports[0], m1.input_ports[1], m2.input_port],
                                     objective_mechanism=ObjectiveMechanism(
@@ -18,4 +18,3 @@ input_dict = {m1: [[1], [1]], m2: [1]}
 c.show_graph(show_controller=True)
 
 # c.run(inputs=input_dict)
-

@@ -55,7 +55,7 @@ class TestControlSpecification:
         ctl_mech = pnl.ControlMechanism()
         comp = pnl.Composition(controller=ctl_mech)
         comp.add_node(ddm)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert comp.controller.control[0].efferents[0].receiver == ddm.parameter_ports['drift_rate']
         assert ddm.parameter_ports['drift_rate'].mod_afferents[0].sender.owner == comp.controller
         np.testing.assert_allclose(comp.controller.control[0].allocation_samples(),
@@ -372,7 +372,7 @@ class TestControlSpecification:
             assert comp.controller.state_feature_values == {reward.input_port: [0], Input.input_port: [0]}
             assert comp.controller.state_input_ports.names == [shadowed_reward_node, shadowed_Input_node]
 
-        # comp._analyze_graph()
+        # comp.analyze_graph()
 
         stim_list_dict = {
             Input: [0.5, 0.123],
@@ -749,7 +749,7 @@ class TestControlSpecification:
                                                                            control_signals=(pnl.SLOPE, mech),
                                                                            search_space=[1]))
         assert comp.controller.composition == comp
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert comp.controller.state_input_ports[0].shadow_inputs == mech.input_port
         assert comp.controller.state_input_ports[0].path_afferents[0].sender == mech.input_port.path_afferents[0].sender
         assert any(pnl.SLOPE in p_name for p_name in comp.projections.names)
@@ -761,7 +761,7 @@ class TestControlSpecification:
                                                    control_signals=(pnl.INTERCEPT, mech),
                                                    search_space=[1])
         comp.add_controller(new_ocm)
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         #Confirm that components of new_ocm have been added
         assert comp.controller == new_ocm
@@ -1040,7 +1040,7 @@ class TestControlMechanisms:
                                                                                      allocation_samples=[10, 20, 30])
                                                    )
             ocomp.add_controller(ocm)
-            ocomp._analyze_graph()
+            ocomp.analyze_graph()
             if allow_probes and B in convert_to_list(monitor_for_control):
                 # If this fails, could be due to ordering of ports in ocomp.output_CIM (current assumes probe is on 0)
                 assert ocomp.output_CIM._sender_is_probe(ocomp.output_CIM.output_ports[0])
@@ -1062,7 +1062,7 @@ class TestControlMechanisms:
                                                                                          allocation_samples=[10, 20, 30])
                                                        )
                 ocomp.add_controller(ocm)
-                ocomp._analyze_graph()
+                ocomp.analyze_graph()
                 ocomp.run()
             assert str(err.value) == err_msg
 
@@ -1799,7 +1799,7 @@ class TestControlMechanisms:
         c = pnl.Composition()
         c.add_node(m1, required_roles=pnl.NodeRole.INPUT)
         c.add_node(m2, required_roles=pnl.NodeRole.INPUT)
-        c._analyze_graph()
+        c.analyze_graph()
         lvoc = pnl.OptimizationControlMechanism(agent_rep=pnl.RegressionCFA,
                                                 state_features=[m1.input_ports[0], m1.input_ports[1], m2.input_port],
                                                 objective_mechanism=pnl.ObjectiveMechanism(
@@ -1823,7 +1823,7 @@ class TestControlMechanisms:
         c = pnl.Composition()
         c.add_node(m1, required_roles=pnl.NodeRole.INPUT)
         c.add_node(m2, required_roles=pnl.NodeRole.INPUT)
-        c._analyze_graph()
+        c.analyze_graph()
         lvoc = pnl.OptimizationControlMechanism(agent_rep=pnl.RegressionCFA,
                                                 state_features=[m1.input_ports[0], m1.input_ports[1], m2.input_port, m2],
                                                 objective_mechanism=pnl.ObjectiveMechanism(
@@ -1852,7 +1852,7 @@ class TestControlMechanisms:
         c = pnl.Composition()
         c.add_node(m1, required_roles=pnl.NodeRole.INPUT)
         c.add_node(m2, required_roles=pnl.NodeRole.INPUT)
-        c._analyze_graph()
+        c.analyze_graph()
 
         ocm_kwargs = dict(agent_rep=pnl.RegressionCFA,
                           state_features=[m1.input_ports[0], m1.input_ports[1], m2.input_port, m2],
@@ -1898,8 +1898,8 @@ class TestControlMechanisms:
         ocomp.add_node(icomp)
         icomp.add_node(ia, required_roles=pnl.NodeRole.INPUT)
         icomp.add_node(ib)
-        ocomp._analyze_graph()
-        icomp._analyze_graph()
+        ocomp.analyze_graph()
+        icomp.analyze_graph()
         ocomp.add_projection(pnl.MappingProjection(), sender=oa, receiver=ia)
         icomp.add_projection(pnl.MappingProjection(), sender=ia, receiver=ib)
         ocomp.add_projection(pnl.MappingProjection(), sender=ib, receiver=ob)
@@ -1967,8 +1967,8 @@ class TestControlMechanisms:
         ocomp.add_node(icomp)
         icomp.add_node(ia, required_roles=pnl.NodeRole.INPUT)
         icomp.add_node(ib)
-        ocomp._analyze_graph()
-        icomp._analyze_graph()
+        ocomp.analyze_graph()
+        icomp.analyze_graph()
         ocomp.add_projection(pnl.MappingProjection(), sender=oa, receiver=ia)
         icomp.add_projection(pnl.MappingProjection(), sender=ia, receiver=ib)
         ocomp.add_projection(pnl.MappingProjection(), sender=ib, receiver=ob)
@@ -2029,8 +2029,8 @@ class TestControlMechanisms:
         ocomp.add_node(icomp)
         icomp.add_node(ia, required_roles=pnl.NodeRole.INPUT)
         icomp.add_node(ib)
-        ocomp._analyze_graph()
-        icomp._analyze_graph()
+        ocomp.analyze_graph()
+        icomp.analyze_graph()
         ocomp.add_projection(pnl.MappingProjection(), sender=oa, receiver=ia)
         icomp.add_projection(pnl.MappingProjection(), sender=ia, receiver=ib)
         ocomp.add_projection(pnl.MappingProjection(), sender=ib, receiver=ob)
@@ -2809,7 +2809,7 @@ class TestModelBasedOptimizationControlMechanisms_Execution:
 
         comp.enable_controller = True
 
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         stim_list_dict = {
             Input: [0.5, 0.123],

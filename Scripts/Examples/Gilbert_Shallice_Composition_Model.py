@@ -226,7 +226,7 @@ Gilbert_Shallice_System.require_node_roles(WORD_OUTPUT_LAYER, pnl.NodeRole.TERMI
 Gilbert_Shallice_System.require_node_roles(COLOR_OUTPUT_LAYER, pnl.NodeRole.TERMINAL)
 # MODIFIED 4/25/20 END
 
-Gilbert_Shallice_System._analyze_graph()
+Gilbert_Shallice_System.analyze_graph()
 # Gilbert_Shallice_System.show_graph()
 
 input_dict = {COLOR_INPUT_LAYER: [1, 0, 0],

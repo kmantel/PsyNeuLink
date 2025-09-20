@@ -1278,7 +1278,7 @@ class TestFeedback:
         comp = pnl.Composition()
         comp.add_linear_processing_pathway(pathway=[A, B])
         comp.add_node(C)
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         assert _get_vertex_feedback_type(comp.graph, A.output_port, B) is EdgeType.NON_FEEDBACK
         assert _get_vertex_feedback_type(comp.graph, B.output_port, C) is EdgeType.NON_FEEDBACK
@@ -1304,7 +1304,7 @@ class TestFeedback:
         comp = pnl.Composition()
         comp.add_linear_processing_pathway(pathway=[A, terminal_mech])
         comp.add_nodes([C, terminal_mech])
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         # "is" comparisons because MAYBE can be assigned to feedback
         assert _get_vertex_feedback_type(comp.graph, A.output_port, terminal_mech) is EdgeType.NON_FEEDBACK
@@ -1371,7 +1371,7 @@ class TestFeedback:
             sender=fb_sender, receiver=fb_receiver,
             feedback=EdgeType.FLEXIBLE
         )
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         for s_i in range(len(cycle_nodes)):
             r_i = (s_i + 1) % len(cycle_nodes)
@@ -1434,7 +1434,7 @@ class TestFeedback:
             sender=fb_sender, receiver=fb_receiver,
             feedback=EdgeType.FLEXIBLE
         )
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         assert comp.scheduler.dependency_dict == expected_dependencies
 

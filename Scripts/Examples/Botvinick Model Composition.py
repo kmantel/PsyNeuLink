@@ -162,7 +162,7 @@ Stimulus = [[CN_trial_initialize_input, CN_congruent_trial_input],
 # should be 500 and 1000
 ntrials0 = 5
 ntrials = 10
-comp._analyze_graph()
+comp.analyze_graph()
 
 comp.show_graph()
 

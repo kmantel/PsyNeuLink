@@ -188,7 +188,7 @@ Gilbert_Shallice_System.add_linear_processing_pathway(pathway=color_input_task_p
 Gilbert_Shallice_System.add_required_node_role(WORD_OUTPUT_LAYER, pnl.NodeRole.TERMINAL)
 Gilbert_Shallice_System.add_required_node_role(COLOR_OUTPUT_LAYER, pnl.NodeRole.TERMINAL)
 
-Gilbert_Shallice_System._analyze_graph()
+Gilbert_Shallice_System.analyze_graph()
 Gilbert_Shallice_System.show_graph()
 
 input_dict = {COLOR_INPUT_LAYER: [1, 0, 0],
@@ -204,6 +204,3 @@ WORD_OUTPUT_LAYER.log.print_entries()
 COLOR_OUTPUT_LAYER.log.print_entries()
 TASK_DEMAND_LAYER.log.print_entries()
 ### SYSTEM
-
-
-

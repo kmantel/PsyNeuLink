@@ -46,7 +46,7 @@ rl_agent_action = ProcessingMechanism(name='RL Agent Action', input_shapes=5)
 rl_agent = Composition(name='RL Agent')
 rl_learning_components = rl_agent.add_reinforcement_learning_pathway([rl_agent_state, rl_agent_action])
 # rl_agent.add_required_node_role(rl_agent_action, NodeRole.OUTPUT)
-rl_agent._analyze_graph()
+rl_agent.analyze_graph()
 
 # *********************************************************************************************
 #                          MEMORY AND CONTROL MECHANISMS
@@ -73,7 +73,7 @@ model.add_nodes([stim_in, context_in, reward_in, perceptual_state, rl_agent, act
 model.add_projection(sender=perceptual_state, receiver=rl_agent_state)
 model.add_projection(sender=reward_in, receiver=rl_learning_components[TARGET_MECHANISM])
 model.add_projection(sender=rl_agent, receiver=action)
-model._analyze_graph()
+model.analyze_graph()
 assert True
 # # ALTERNATIVE: Use linear_processing_pathway  ------------------------------------------------
 # model.add_nodes([stim_in, context_in, reward_in, perceptual_state])

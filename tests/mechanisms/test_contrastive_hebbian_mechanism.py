@@ -29,7 +29,7 @@ class TestContrastiveHebbian:
         c = pnl.Composition()
         c.add_linear_processing_pathway([m, o])
         c.scheduler.add_condition(o, pnl.WhenFinished(m))
-        c._analyze_graph()
+        c.analyze_graph()
         print('matrix:\n', m.afferents[1].matrix)
         c.run(inputs={m:[2, 2]}, num_trials=4)
         results = c.results

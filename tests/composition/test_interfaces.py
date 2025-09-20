@@ -371,14 +371,14 @@ class TestConnectCompositionsViaCIMS:
 
         outer_composition.add_node(mechanism_d)
 
-        inner_composition_1._analyze_graph()
+        inner_composition_1.analyze_graph()
 
         outer_composition.add_projection(projection=MappingProjection(), sender=inner_composition_1,
                                          receiver=mechanism_d)
 
 
 
-        inner_composition_2._analyze_graph()
+        inner_composition_2.analyze_graph()
 
         outer_composition.add_projection(projection=MappingProjection(), sender=inner_composition_2,
                                          receiver=mechanism_d)
@@ -486,7 +486,7 @@ class TestConnectCompositionsViaCIMS:
         assert error_msg in str(error_text.value)
 
         # with pytest.warns(None) as w:
-        #     comp._analyze_graph()
+        #     comp.analyze_graph()
         #     comp.run({mech: [[1]]})
         #
         # assert len(w) == 0
@@ -572,7 +572,7 @@ class TestConnectCompositionsViaCIMS:
             # ocomp.add_linear_processing_pathway([icomp])
             # ocomp.add_node(cm)
             # ocomp.show_graph(show_cim=True, show_node_structure=True)
-        ocomp._analyze_graph()
+        ocomp.analyze_graph()
         input_nodes = ocomp.get_nodes_by_role(NodeRole.INPUT)
         assert cm in input_nodes
         assert icomp in input_nodes
@@ -600,7 +600,7 @@ class TestConnectCompositionsViaCIMS:
         ocomp.add_node(cm)
         ocomp.add_node(icomp)
 
-        ocomp._analyze_graph()
+        ocomp.analyze_graph()
         input_nodes = ocomp.get_nodes_by_role(NodeRole.INPUT)
         assert cm in input_nodes
         assert icomp in input_nodes
@@ -1036,7 +1036,7 @@ def test_CIM_shapes(mechanisms, expected_input_shape, expected_output_shape):
     for i in range(len(mechanisms)):
         comp.add_node(mechanisms[i])
 
-    comp._analyze_graph()
+    comp.analyze_graph()
 
     for cim, expected_shape in [
         (comp.input_CIM, expected_input_shape),

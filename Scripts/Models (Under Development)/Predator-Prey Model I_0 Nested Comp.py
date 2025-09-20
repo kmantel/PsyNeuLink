@@ -103,7 +103,7 @@ if PERCEPTUAL_DISTORT:
     CTL_PARAM = VARIANCE
 else:
     CTL_PARAM = SLOPE
-# agent_comp._analyze_graph()
+# agent_comp.analyze_graph()
 ocm = OptimizationControlMechanism(state_features=[player_obs.input_port, predator_obs.input_port, prey_obs.input_port],
                                    agent_rep=agent_comp,
                                    function=GridSearch(direction=MAXIMIZE,

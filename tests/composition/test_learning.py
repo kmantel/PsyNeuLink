@@ -2139,7 +2139,7 @@ class TestNestedLearning:
         rl_agent = pnl.Composition(name='RL Agent')
         rl_learning_components = rl_agent.add_reinforcement_learning_pathway([rl_agent_state,
                                                                               rl_agent_action])
-        rl_agent._analyze_graph()
+        rl_agent.analyze_graph()
 
         model = pnl.Composition(name='Adaptive Replay Model')
         model.add_nodes([stim_in, context_in, reward_in, perceptual_state, rl_agent, action])
@@ -2300,7 +2300,7 @@ class TestNestedLearning:
             learning_rate=100
         )
 
-        mnet._analyze_graph()
+        mnet.analyze_graph()
 
         inputs = {
             il: iSs,
@@ -3475,7 +3475,7 @@ class TestBackPropLearning:
             learning_rate=100
         )
 
-        mnet._analyze_graph()
+        mnet.analyze_graph()
 
         inputs = {
             il: iSs,

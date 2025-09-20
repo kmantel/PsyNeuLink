@@ -53,7 +53,7 @@ class TestLCControlMechanism:
             base_gain_assigned_to_A.append(A.function.gain.base)
             base_gain_assigned_to_B.append(B.function.gain.base)
 
-        C._analyze_graph()
+        C.analyze_graph()
         benchmark(C.run, inputs={A: [[1.0], [1.0], [1.0], [1.0], [1.0]]},
               call_after_trial=functools.partial(report_trial, C))
 

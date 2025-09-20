@@ -469,7 +469,7 @@ class TestAddProjection:
             (B,pnl.NodeRole.LEARNING),
             C
         ])
-        comp._analyze_graph()
+        comp.analyze_graph()
         autoassociative_learning_nodes = comp.get_nodes_by_role(pnl.NodeRole.LEARNING)
         assert A in autoassociative_learning_nodes
         assert B in autoassociative_learning_nodes
@@ -1805,13 +1805,13 @@ class TestAnalyzeGraph:
 
     def test_empty_call(self):
         comp = Composition()
-        comp._analyze_graph()
+        comp.analyze_graph()
 
     def test_singleton(self):
         comp = Composition()
         A = TransferMechanism(name='composition-pytests-A')
         comp.add_node(A)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert A in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert A in comp.get_nodes_by_role(NodeRole.TERMINAL)
 
@@ -1821,7 +1821,7 @@ class TestAnalyzeGraph:
         B = TransferMechanism(name='composition-pytests-B')
         comp.add_node(A)
         comp.add_node(B)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert A in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert B in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert A in comp.get_nodes_by_role(NodeRole.TERMINAL)
@@ -1834,7 +1834,7 @@ class TestAnalyzeGraph:
         comp.add_node(A)
         comp.add_node(B)
         comp.add_projection(MappingProjection(), A, B)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert A in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert B not in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert A not in comp.get_nodes_by_role(NodeRole.TERMINAL)
@@ -1850,7 +1850,7 @@ class TestAnalyzeGraph:
         comp.add_projection(MappingProjection(), A, B)
 
         comp.add_projection(MappingProjection(), B, A)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert A in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert B in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert A in comp.get_nodes_by_role(NodeRole.TERMINAL)
@@ -1872,7 +1872,7 @@ class TestAnalyzeGraph:
         comp.add_projection(MappingProjection(), C, B)
         comp.add_projection(MappingProjection(), B, C)
         comp.add_projection(MappingProjection(), D, C)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert A in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert D in comp.get_nodes_by_role(NodeRole.ORIGIN)
         assert B in comp.get_nodes_by_role(NodeRole.CYCLE)
@@ -1901,7 +1901,7 @@ class TestAnalyzeGraph:
 
         # disable controller
         comp.enable_controller = False
-        comp._analyze_graph()
+        comp.analyze_graph()
         # assert comp.controller.objective_mechanism in comp.get_nodes_by_role(NodeRole.OUTPUT)
         assert comp.controller.objective_mechanism not in comp.get_nodes_by_role(NodeRole.OUTPUT)
 
@@ -1926,14 +1926,14 @@ class TestAnalyzeGraph:
                                                                                                           0.3)}]
                                                                         )
                                        )
-        comp._analyze_graph()
+        comp.analyze_graph()
         # ObjectiveMechanism associated with controller should not be considered an OUTPUT node
         assert comp.controller.objective_mechanism not in comp.get_nodes_by_role(NodeRole.OUTPUT)
         assert B in comp.get_nodes_by_role(NodeRole.OUTPUT)
 
         # disable controller
         comp.enable_controller = False
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         # assert comp.controller.objective_mechanism in comp.get_nodes_by_role(NodeRole.OUTPUT)
         # assert B not in comp.get_nodes_by_role(NodeRole.OUTPUT)
@@ -2335,7 +2335,7 @@ class TestExecutionOrder:
         assert all(expected_consideration_queue[i] == comp.scheduler.consideration_queue[i]
                    for i in range(len(expected_consideration_queue)))
 
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert set(comp.get_nodes_by_role(NodeRole.ORIGIN)) == expected_consideration_queue[0]
 
         new_origin = ProcessingMechanism(name="new_origin")
@@ -2345,7 +2345,7 @@ class TestExecutionOrder:
         assert all(expected_consideration_queue[i] == comp.scheduler.consideration_queue[i]
                    for i in range(len(expected_consideration_queue)))
 
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert set(comp.get_nodes_by_role(NodeRole.ORIGIN)) == expected_consideration_queue[0]
 
     def test_terminal_loop(self):
@@ -2364,7 +2364,7 @@ class TestExecutionOrder:
         assert all(expected_consideration_queue[i] == comp.scheduler.consideration_queue[i]
                    for i in range(len(expected_consideration_queue)))
 
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert set(comp.get_nodes_by_role(NodeRole.TERMINAL)) == expected_consideration_queue[-1]
 
         new_terminal = ProcessingMechanism(name="new_terminal")
@@ -2374,7 +2374,7 @@ class TestExecutionOrder:
         assert all(expected_consideration_queue[i] == comp.scheduler.consideration_queue[i]
                    for i in range(len(expected_consideration_queue)))
 
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert set(comp.get_nodes_by_role(NodeRole.TERMINAL)) == expected_consideration_queue[-1]
 
     def test_simple_loop(self):
@@ -3133,7 +3133,7 @@ class TestInputPortSpecifications:
         # # FIX: INCLUSION OF A BELOW BLOCKS B FROM RECEIVING EXTERNAL INPUT ON UNOCCUPIED INPUTPORT
         # comp = Composition(pathways=[[A,B],[B,C],[D,E,D]], name='comp')
         comp = Composition(pathways=[[B,C],[D,E,D]], name='comp')
-        comp._analyze_graph()
+        comp.analyze_graph()
         comp.run()
         assert B.value[2] == [21]
         assert D.value[0] == [33]
@@ -3242,7 +3242,7 @@ class TestRunInputSpecifications:
                 ocomp.run(inputs=inputs)
             assert expected_error_text in str(error_text.value)
         else:
-            ocomp._analyze_graph()
+            ocomp.analyze_graph()
             icomp.run(inputs={ia:[1]})
 
     def test_input_shape_errors(self):
@@ -3775,7 +3775,7 @@ class TestRun:
         comp.add_node(A)
         comp.add_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
-        comp._analyze_graph()
+        comp.analyze_graph()
         inputs_dict = {A: 3}
         sched = Scheduler(composition=comp)
         output = comp.execute(inputs=inputs_dict, scheduler=sched, execution_mode=mode)
@@ -3791,7 +3791,7 @@ class TestRun:
         D = TransferMechanism(name="composition-pytests-D", function=Linear(slope=2.0, intercept=4.0))   # 19 x 2 + 4 = 42
         E = TransferMechanism(name="composition-pytests-E", function=Linear(slope=2.0, intercept=5.0))   # 42 x 2 + 5 = 89
         comp.add_linear_processing_pathway([A, B, C, D, E])
-        comp._analyze_graph()
+        comp.analyze_graph()
         inputs_dict = {A: [[1]]}
         sched = Scheduler(composition=comp)
         output = benchmark(comp.run, inputs=inputs_dict, scheduler=sched, execution_mode=comp_mode)
@@ -3807,7 +3807,7 @@ class TestRun:
         A_to_B = MappingProjection(sender=A, receiver=B)
         D_to_E = MappingProjection(sender=D, receiver=E)
         comp.add_linear_processing_pathway([A, A_to_B, B, C, D, D_to_E, E])
-        comp._analyze_graph()
+        comp.analyze_graph()
         inputs_dict = {A: [[1]]}
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler=sched, execution_mode=comp_mode)
@@ -4114,7 +4114,7 @@ class TestRun:
                                        hetero=-2.0,
                                        output_ports = [RESULT])
         comp.add_node(R)
-        comp._analyze_graph()
+        comp.analyze_graph()
         val = comp.run(inputs={R: [[3.0]]}, num_trials=1, execution_mode=comp_mode)
         np.testing.assert_allclose(val, [[0.95257413]])
         val = comp.run(inputs={R: [[4.0]]}, num_trials=1, execution_mode=comp_mode)
@@ -4135,7 +4135,7 @@ class TestRun:
                                        integration_rate=0.01,
                                        output_ports = [RESULT])
         comp.add_node(R)
-        comp._analyze_graph()
+        comp.analyze_graph()
         val = comp.run(inputs={R: [[3.0]]}, num_trials=1, execution_mode=comp_mode)
         np.testing.assert_allclose(val, [[0.50749944]])
         val = comp.run(inputs={R: [[4.0]]}, num_trials=1, execution_mode=comp_mode)
@@ -4150,7 +4150,7 @@ class TestRun:
         comp = Composition()
         R = RecurrentTransferMechanism(input_shapes=2, function=Logistic())
         comp.add_node(R)
-        comp._analyze_graph()
+        comp.analyze_graph()
         val = comp.run(inputs={R: [[1.0, 2.0]]}, num_trials=1, execution_mode=comp_mode)
         np.testing.assert_allclose(val, [[0.81757448, 0.92414182]])
         val = comp.run(inputs={R: [[1.0, 2.0]]}, num_trials=1, execution_mode=comp_mode)
@@ -4170,7 +4170,7 @@ class TestRun:
                                        hetero=-2.0,
                                        output_ports = [RESULT])
         comp.add_node(R)
-        comp._analyze_graph()
+        comp.analyze_graph()
         val = comp.run(inputs={R: [[1.0, 2.0]]}, num_trials=1, execution_mode=comp_mode)
         np.testing.assert_allclose(val, [[0.5, 0.73105858]])
         val = comp.run(inputs={R: [[1.0, 2.0]]}, num_trials=1, execution_mode=comp_mode)
@@ -4191,7 +4191,7 @@ class TestRun:
                                        integration_rate=0.01,
                                        output_ports = [RESULT])
         comp.add_node(R)
-        comp._analyze_graph()
+        comp.analyze_graph()
         val = comp.run(inputs={R: [[1.0, 2.0]]}, num_trials=1, execution_mode=comp_mode)
         np.testing.assert_allclose(val, [[0.5, 0.50249998]])
         val = comp.run(inputs={R: [[1.0, 2.0]]}, num_trials=1, execution_mode=comp_mode)
@@ -5093,8 +5093,8 @@ class TestNestedCompositions:
         ocomp.add_node(icomp)
         icomp.add_node(ia, required_roles=pnl.NodeRole.INPUT)
         icomp.add_node(ib)
-        ocomp._analyze_graph()
-        icomp._analyze_graph()
+        ocomp.analyze_graph()
+        icomp.analyze_graph()
         ocomp.add_projection(pnl.MappingProjection(), sender=oa, receiver=ia)
         icomp.add_projection(pnl.MappingProjection(), sender=ia, receiver=ib)
         ocomp.add_projection(pnl.MappingProjection(), sender=ib, receiver=ob)
@@ -5200,7 +5200,7 @@ class TestNestedCompositions:
 
         # validate first composition ---------------------------------------------
 
-        tree1._analyze_graph()
+        tree1.analyze_graph()
         origins = tree1.get_nodes_by_role(NodeRole.ORIGIN)
         assert len(origins) == 2
         assert myMech1 in origins
@@ -5224,7 +5224,7 @@ class TestNestedCompositions:
 
         # validate second composition ----------------------------------------------
 
-        tree2._analyze_graph()
+        tree2.analyze_graph()
         origins = tree2.get_nodes_by_role(NodeRole.ORIGIN)
         assert len(origins) == 2
         assert myMech4 in origins
@@ -5236,7 +5236,7 @@ class TestNestedCompositions:
         # combine the compositions -------------------------------------------------
 
         tree1.add_pathway(tree2)
-        tree1._analyze_graph()
+        tree1.analyze_graph()
 
         # BEFORE linking via 3 --> 4 projection ------------------------------------
         # Mech1 --
@@ -5264,7 +5264,7 @@ class TestNestedCompositions:
         #                          Mech5 --
 
         tree1.add_projection(MappingProjection(sender=myMech3, receiver=myMech4), myMech3, myMech4)
-        tree1._analyze_graph()
+        tree1.analyze_graph()
 
         origins = tree1.get_nodes_by_role(NodeRole.ORIGIN)
         assert len(origins) == 3
@@ -5305,7 +5305,7 @@ class TestNestedCompositions:
 
         # validate first composition ---------------------------------------------
 
-        tree1._analyze_graph()
+        tree1.analyze_graph()
         origins = tree1.get_nodes_by_role(NodeRole.ORIGIN)
         assert len(origins) == 2
         assert myMech1 in origins
@@ -5329,7 +5329,7 @@ class TestNestedCompositions:
 
         # validate second composition ----------------------------------------------
 
-        tree2._analyze_graph()
+        tree2.analyze_graph()
         origins = tree2.get_nodes_by_role(NodeRole.ORIGIN)
         assert len(origins) == 2
         assert myMech3 in origins
@@ -5341,7 +5341,7 @@ class TestNestedCompositions:
         # combine the compositions -------------------------------------------------
 
         tree1.add_pathway(tree2)
-        tree1._analyze_graph()
+        tree1.analyze_graph()
         # no need for a projection connecting the two compositions because they share myMech3
 
         origins = tree1.get_nodes_by_role(NodeRole.ORIGIN)
@@ -6919,7 +6919,7 @@ class TestShadowInputs:
             # Confirm that B's shadow of I comes from the same ocomp_input_CIM that serves I
             O = ProcessingMechanism(name='O',input_ports=[I.input_port, A.input_port])
             ocomp = Composition(nodes=[mcomp,O], name='OUTER COMP')
-            ocomp._analyze_graph()
+            ocomp.analyze_graph()
             assert len(O.afferents)==2
             assert O.input_ports[0].shadow_inputs.owner is I
             receiver = icomp.input_CIM.port_map[I.input_port][0]
@@ -7336,7 +7336,7 @@ class TestNodeRoles:
         B = ProcessingMechanism(name='B')
         C = ProcessingMechanism(name='C')
         comp = Composition(pathways=[[A],[B,C]], name='comp')
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         assert set(comp.get_nodes_by_role(NodeRole.INPUT)) == {A,B}
         assert set(comp.get_nodes_by_role(NodeRole.OUTPUT)) == {A,C}
@@ -7392,7 +7392,7 @@ class TestNodeRoles:
                                                   receiver=nodes('HIDDEN')))
             comp.add_projection(MappingProjection(sender=nodes('DOUBLE BIAS').output_ports['second'],
                                                   receiver=nodes('OUTPUT')))
-            comp._analyze_graph()
+            comp.analyze_graph()
             assert all(p.default_input == DEFAULT_VARIABLE for p in nodes('DOUBLE BIAS').input_ports)
             assert comp.get_nodes_by_role(NodeRole.BIAS) == [nodes('DOUBLE BIAS')]
             assert comp.get_nodes_by_role(NodeRole.INPUT) == [nodes('INPUT')] # mech_single_bias should not be an INPUT Node
@@ -7416,7 +7416,7 @@ class TestNodeRoles:
             comp = Composition(pathways=[nodes('DOUBLE BIAS')])
             assert comp.get_nodes_by_role(NodeRole.INPUT) == [nodes('DOUBLE BIAS')]
             comp.require_node_roles(nodes('DOUBLE BIAS'), NodeRole.BIAS)
-            comp._analyze_graph()
+            comp.analyze_graph()
             assert comp.get_nodes_by_role(NodeRole.BIAS) == [nodes('DOUBLE BIAS')]
             assert comp.get_nodes_by_role(NodeRole.INPUT) == []
 
@@ -7657,7 +7657,7 @@ class TestNodeRoles:
                                 nodes=[mcomp,O],
                                 allow_probes=allow_probes,
                                 include_probes_in_output=include_probes_in_output)
-                ocomp._analyze_graph()
+                ocomp.analyze_graph()
             assert str(err.value) == err_msg
 
     def test_two_node_cycle(self):
@@ -7677,7 +7677,7 @@ class TestNodeRoles:
         C = TransferMechanism(name='MECH C')
         comp = Composition(pathways=[A, B, C])
         comp.add_projection(sender=C, receiver=A)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert set(comp.get_nodes_by_role(NodeRole.CYCLE)) == {A,B,C}
         # Test that order of output_CIM.output ports follows order of Nodes in self.nodes
         assert 'MECH A' in comp.output_CIM.output_ports.names[0]
@@ -7693,7 +7693,7 @@ class TestNodeRoles:
         C = TransferMechanism()
         comp = Composition(pathways=[A, B, C])
         comp.add_projection(sender=C, receiver=A, feedback=True)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert not set(comp.get_nodes_by_role(NodeRole.CYCLE))
         assert set(comp.get_nodes_by_role(NodeRole.FEEDBACK_SENDER)) == {C}
         assert set(comp.get_nodes_by_role(NodeRole.INTERNAL)) == {B}
@@ -7800,7 +7800,7 @@ class TestNodeRoles:
         C = TransferMechanism()
         comp = Composition(pathways=[A, B, C])
         comp.add_projection(sender=C, receiver=A)
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert set(comp.get_nodes_by_role(NodeRole.CYCLE)) == {A,B,C}
         assert not set(comp.get_nodes_by_role(NodeRole.FEEDBACK_SENDER))
         result = comp.run(inputs={A:[3]})
@@ -7812,7 +7812,7 @@ class TestNodeRoles:
         C = ProcessingMechanism(name='C')
         comp = Composition(pathways=[A, B, C])
         comp.add_projection(sender=C, receiver=A, feedback=True)
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         assert comp.get_nodes_by_role(NodeRole.FEEDBACK_SENDER) == [C]
         assert comp.get_nodes_by_role(NodeRole.FEEDBACK_RECEIVER) == [A]
@@ -7828,7 +7828,7 @@ class TestNodeRoles:
         C = ProcessingMechanism(name='MECH C')
         comp.add_linear_processing_pathway([A, B, C])
         comp.add_projection(sender=C, receiver=A)
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         # Test that order of output_CIM.output ports follows order of Nodes in self.nodes
         assert 'MECH A' in comp.output_CIM.output_ports.names[0]
@@ -7845,7 +7845,7 @@ class TestNodeRoles:
         B = ProcessingMechanism(name='MECH B')
         C = ProcessingMechanism(name='MECH C')
         comp.add_linear_processing_pathway([A, B, C, A])
-        comp._analyze_graph()
+        comp.analyze_graph()
 
         # Test that order of output_CIM.output ports follows order of Nodes in self.nodes
         assert 'MECH A' in comp.output_CIM.output_ports.names[0]
@@ -7863,7 +7863,7 @@ class TestNodeRoles:
     #     C = ProcessingMechanism(name='C')
     #     comp.add_linear_processing_pathway([A, B, C])
     #     comp.add_projection(sender=C, receiver=A)
-    #     comp._analyze_graph()
+    #     comp.analyze_graph()
     #
     #     assert set(comp.get_nodes_by_role(NodeRole.CYCLE)) == {A,B,C}
     #     assert not set(comp.get_nodes_by_role(NodeRole.FEEDBACK_SENDER))
@@ -8208,7 +8208,7 @@ class TestFeedbackProjections:
         )
         c.get_efferents(f)[0].feedback = pnl.EdgeType.FLEXIBLE
         f.get_efferents(b)[0].feedback = pnl.EdgeType.FLEXIBLE
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert comp.feedback_projections == c.get_efferents(f)
 
     def test_extended_loop_feedback_attr_unneeded_flexible(self):
@@ -8218,7 +8218,7 @@ class TestFeedbackProjections:
         )
         c.get_efferents(f)[0].feedback = pnl.EdgeType.FLEXIBLE
         f.get_efferents(b)[0].feedback = pnl.EdgeType.FEEDBACK
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert comp.feedback_projections == f.get_efferents(b)
 
     def test_extended_loop_feedback_attr_both_non_feedback(self):
@@ -8228,7 +8228,7 @@ class TestFeedbackProjections:
         )
         c.get_efferents(f)[0].feedback = pnl.EdgeType.NON_FEEDBACK
         f.get_efferents(b)[0].feedback = pnl.EdgeType.NON_FEEDBACK
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert comp.feedback_projections == []
 
     def test_extended_loop_feedback_attr_extraneous(self):
@@ -8239,7 +8239,7 @@ class TestFeedbackProjections:
         c.get_efferents(f)[0].feedback = pnl.EdgeType.FLEXIBLE
         # not in a cycle
         c.get_efferents(d)[0].feedback = pnl.EdgeType.FLEXIBLE
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert comp.feedback_projections == c.get_efferents(f)
 
 

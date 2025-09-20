@@ -3449,7 +3449,7 @@ class TestMiscTrainingFunctionality:
         xor.add_projection(sender=xor_hid, projection=out_map, receiver=xor_out)
 
         # mini version of xor.execute just to build up pytorch representation
-        xor._analyze_graph()
+        xor.analyze_graph()
         # must manually initialize because _build_pytorch_representation
         # is an internal method
         xor._initialize_from_context(Context(execution_id=xor.default_execution_id))

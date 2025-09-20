@@ -67,7 +67,7 @@ comp.add_controller(controller=ocm)
 comp.enable_controller = True
 
 # Stimuli
-comp._analyze_graph()
+comp.analyze_graph()
 
 stim_list_dict = {
     Input: [0.5, 0.123],

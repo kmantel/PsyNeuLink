@@ -142,7 +142,7 @@ class TestInputPorts:
             required_roles=pnl.NodeRole.INTERNAL,
             context=pnl.Context(source=pnl.ContextFlags.METHOD)
         )
-        comp._analyze_graph()
+        comp.analyze_graph()
         assert pnl.NodeRole.INTERNAL in comp.get_roles_by_node(m)
         assert pnl.NodeRole.INPUT not in comp.get_roles_by_node(m)
 
@@ -257,7 +257,7 @@ class TestDefaultInput:
         # FIX: remove if resetting default_input is allowed, which requires adding a Projection from input_CIM
         # a.input_ports[0].parameters.default_input.set(None, override=True)
         # np.testing.assert_array_equal(comp.execute(), [[2]])
-        # comp._analyze_graph()
+        # comp.analyze_graph()
         # np.testing.assert_array_equal(comp.run(inputs={a:[[]]}), [[4]])
 
     def test_default_input_with_projections_two_ports(self):

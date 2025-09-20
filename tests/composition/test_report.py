@@ -229,7 +229,7 @@ class TestReport():
         # setup structure of outer comp
         ocomp.add_node(icomp)
 
-        # ocomp._analyze_graph()
+        # ocomp.analyze_graph()
 
         # add controller to outer comp
         ocomp.add_controller(
