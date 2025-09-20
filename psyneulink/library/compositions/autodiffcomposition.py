@@ -957,13 +957,13 @@ class AutodiffComposition(Composition):
                                                           loss_spec=self.loss_spec)
 
         self.outputs_to_targets_map = {output: target for target, output in self.targets_from_outputs_map.items()}
-        self._analyze_graph()
+        self._analyze_graph(context)
         return self.learning_components
 
     @handle_external_context()
     def _get_pytorch_backprop_pathways(self, context)->list:
 
-        self._analyze_graph()
+        self._analyze_graph(context)
         return [pathway
                     for node in (self.get_nodes_by_role(NodeRole.INPUT) + self.get_nodes_by_role(NodeRole.BIAS))
                     if node not in self.get_nodes_by_role(NodeRole.TARGET)

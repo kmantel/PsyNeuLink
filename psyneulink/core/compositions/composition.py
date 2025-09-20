@@ -3178,7 +3178,7 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
-from psyneulink._typing import Callable, Literal, List, Mapping, Optional, Set, Type, Union
+from psyneulink._typing import Callable, Hashable, Literal, List, Mapping, Optional, Set, Type, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import Component, ComponentError, ComponentsMeta
@@ -4208,7 +4208,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
     # ******************************************************************************************************************
 
     @handle_external_context(source=ContextFlags.COMPOSITION)
-    def _analyze_graph(self, context=None):
+    def analyze_graph(self, context: Optional[Union[Context, Hashable]] = None):
         """
         Assigns `NodeRoles <NodeRole>` to nodes based on the structure
         of the :py:class:`Graph <psyneulink.core.globals.graph.Graph>`.
@@ -4223,7 +4223,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         to set any Node in the Composition to `OUTPUT <NodeRole.OUTPUT>`, then the `TERMINAL <NodeRole.TERMINAL>`
         nodes are not set to `OUTPUT <NodeRole.OUTPUT>` by default.
         """
+        self._analyze_graph(context)
 
+    def _analyze_graph(self, context: Context):
         self._check_controller_initialization_status(context=context)
         self._check_nodes_initialization_status(context=context)
 
@@ -4453,7 +4455,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self.needs_update_scheduler = True
 
         if analyze_graph:
-            self._analyze_graph()
+            self._analyze_graph(Context(execution_id=None))
 
     def remove_nodes(self, nodes):
         if not isinstance(nodes, (list, Mechanism, Composition)):
@@ -4462,7 +4464,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for node in nodes:
             self._remove_node(node, analyze_graph=False)
 
-        self._analyze_graph()
+        self._analyze_graph(Context(execution_id=None))
 
     def import_composition(self,
                            composition,
@@ -5148,7 +5150,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             for i, component in enumerate(node.aux_components):
                 if isinstance(component, (Mechanism, Composition)):
                     if isinstance(component, Composition):
-                        component._analyze_graph()
+                        component._analyze_graph(context)
                     self.add_node(component)
                 elif isinstance(component, Projection):
                     proj_tuple = (component, False)
@@ -7428,7 +7430,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         return pathway, pathway_name
 
     # FIX: REFACTOR TO TAKE Pathway OBJECT AS ARGUMENT
-    def add_pathway(self, pathway, context=None):
+    @handle_external_context()
+    def add_pathway(self, pathway, context: Optional[Union[Context, Hashable]] = None):
         """Add an existing `Pathway <Composition_Pathways>` to the Composition
 
         Arguments
@@ -7458,7 +7461,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         for p in projections:
             self.add_projection(p, p.sender.owner, p.receiver.owner, context=context)
 
-        self._analyze_graph()
+        self._analyze_graph(context)
 
     @handle_external_context()
     def add_pathways(self, pathways, context=None)->list:
@@ -12115,7 +12118,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         context.add_flag(ContextFlags.LEARNING_MODE)
         execution_phase_at_entry = context.execution_phase
         context.execution_phase=ContextFlags.PREPARING
-        self._analyze_graph()
+        self._analyze_graph(context)
         self._check_nested_target_mechs()
         context.execution_phase = execution_phase_at_entry
 

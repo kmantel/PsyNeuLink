@@ -1221,7 +1221,7 @@ class PEC_OCM(OptimizationControlMechanism):
 
         # Get the input indices for the control mechanisms that are used to modulate the fitting parameters
         if self._pec_control_mech_indices is None:
-            self.composition.model._analyze_graph()
+            self.composition.model._analyze_graph(Context(execution_id=None))
             input_nodes = [node for node, roles in self.composition.model.nodes_to_roles.items()
                            if NodeRole.INPUT in roles]
             self._pec_control_mech_indices = [input_nodes.index(m) for m in self.composition.pec_control_mechs.values()]
