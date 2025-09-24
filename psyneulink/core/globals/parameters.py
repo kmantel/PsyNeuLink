@@ -1766,8 +1766,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
                 value = value.__self__
         except AttributeError:
             pass
-
-        if isinstance(value, Component):
+        else:
             owner = self._owner._owner
             if value not in owner._parameter_components:
                 if owner.initialization_status == ContextFlags.INITIALIZED:
