@@ -436,6 +436,13 @@ class ParameterInvalidSourceError(ParameterError):
         super().__init__(message)
 
 
+def _get_prefixed_method(obj, prefix, name, sep=''):
+    try:
+        return getattr(obj, f'{prefix}{sep}{name}')
+    except AttributeError:
+        return None
+
+
 def get_validator_by_function(function):
     """
         Arguments
@@ -2472,7 +2479,6 @@ class ParametersBase(ParametersTemplate):
     def __init__(self, owner, parent=None):
         self._initializing = True
         self._nonexistent_attr_cache = set()
-        self._method_cache = {}
 
         super().__init__(owner=owner, parent=parent)
 
@@ -2704,16 +2710,6 @@ class ParametersBase(ParametersTemplate):
             )
         )
 
-    def _get_prefixed_method(self, prefix, name, sep=''):
-        method_name = f'{prefix}{sep}{name}'
-        try:
-            res = self._method_cache[method_name]
-            return res
-        except KeyError:
-            res = getattr(self, method_name, None)
-            self._method_cache[method_name] = res
-            return res
-
     def _get_parse_method(self, parameter):
         """
         Returns:
@@ -2721,7 +2717,7 @@ class ParametersBase(ParametersTemplate):
             attribute (ex: 'modulable') if it exists, or None if it does
             not
         """
-        return self._get_prefixed_method(self._parsing_method_prefix, parameter)
+        return _get_prefixed_method(self, self._parsing_method_prefix, parameter)
 
     def _get_validate_method(self, parameter):
         """
@@ -2730,7 +2726,7 @@ class ParametersBase(ParametersTemplate):
             Parameter attribute (ex: 'modulable') if it exists, or None
             if it does not
         """
-        return self._get_prefixed_method(self._validation_method_prefix, parameter)
+        return _get_prefixed_method(self, self._validation_method_prefix, parameter)
 
     def _validate(self, attr, value):
         err_msg = None
