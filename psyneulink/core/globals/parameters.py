@@ -659,7 +659,6 @@ class ParametersTemplate(_ParamOwner):
     _values_default_excluded_attrs = {'user': False}
 
     def __init__(self, owner, parent=None):
-        from psyneulink.core.components.component import ComponentsMeta
         # using weakref to allow garbage collection of unused objects of this type
         self._owner = owner
         self._parent = parent
@@ -678,7 +677,6 @@ class ParametersTemplate(_ParamOwner):
                 self._params.add(k)
 
         self._children = weakref.WeakSet()
-        self._on_class = isinstance(owner, ComponentsMeta)
 
     def __repr__(self):
         return '{0} :\n{1}'.format(super().__repr__(), str(self))
