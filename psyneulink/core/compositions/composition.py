@@ -3467,7 +3467,7 @@ class OptParam:
 
         try:
             return self._value[component]
-        except TypeError:
+        except (IndexError, TypeError):
             return self._value
         except KeyError:
             return self.default
@@ -10243,6 +10243,46 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             modulated_mechanisms.append(mech)
         return modulated_mechanisms
 
+    @handle_external_context(fallback_most_recent=True)
+    def get_optimizer_param_value(
+        self,
+        param: str,
+        context: Optional[Context] = None,
+        projection: Optional[Projection] = None,
+    ):
+        try:
+            runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
+        except AttributeError:
+            pass
+        else:
+            if projection and runtime.has_specific_value_for(projection):
+                return runtime.value(projection)
+
+        vals = {}
+        # TODO: get matching composition param set here, handling nested
+        comp = self
+        # TODO: add learning mech then pathway
+        comp_opt_params = OptimizerParams.from_component(comp, context)
+        comp_opt_p = getattr(comp_opt_params, param)
+        vals[comp] = comp_opt_p.value(projection)
+        if projection and comp_opt_p.has_specific_value_for(projection):
+            return vals[comp]
+
+        if projection:
+            proj_opt_params = OptimizerParams.from_component(projection, context)
+            proj_opt_p = getattr(proj_opt_params, param)
+            vals[projection] = proj_opt_p.value(projection)
+            if vals[projection] is not None:
+                return vals[projection]
+
+        # TODO: add learning mech then pathway
+        for obj in [comp]:
+            v = vals.get(obj, None)
+            if v is not None:
+                return v
+
+        return None
+
     # endregion CONTROL
 
     # ******************************************************************************************************************
@@ -12200,7 +12240,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         runner = CompositionRunner(self)
 
         composition_optimizer_params = OptimizerParams.from_component(self, context)
-        print('COMPOSITION OPT PARAMS', composition_optimizer_params)
+        print('LEARN METHOD COMPOSITION OPT PARAMS', composition_optimizer_params)
+        try:
+            self.runtime_optimizer_params[context.execution_id] = composition_optimizer_params
+        except AttributeError:
+            self.runtime_optimizer_params = {context.execution_id: composition_optimizer_params}
 
         # TODO: prioritize runtime and composition here
         resolved_optimizer_params = None
