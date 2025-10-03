@@ -3517,7 +3517,14 @@ class OptimizerParams(types.SimpleNamespace):
             if param_name not in component.parameters:
                 params[param_name] = NotImplemented
             else:
-                value = getattr(component.parameters, param_name)._get(context)
+                # TODO: REMOVE THIS - TEMP FOR TESTING ONLY USE ONLY THE
+                #       ELSE CLAUSE IN FINAL VERSION this is to leave
+                #       original behavior intact while developing, but
+                #       this will be assigned as Parameter values
+                if isinstance(component, Composition):
+                    value = component.TEMP_init_composition_learning_rate
+                else:
+                    value = getattr(component.parameters, param_name)._get(context)
                 params[param_name] = copy_parameter_value(value)
         return params
 
@@ -4136,6 +4143,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self._partially_added_nodes = []
         self.parsed_inputs = False
 
+        self.TEMP_init_composition_learning_rate = copy_parameter_value(learning_rate)
         composition_learning_rate, lr_dict = self._parse_and_validate_learning_rate_arg(learning_rate)
         self._runtime_learning_rate = None
         self.execute_in_additional_optimizations = execute_in_additional_optimizations or {}  # BREADCRUMB: MOVE TO AUTODIFF
@@ -4156,6 +4164,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         self.nodes_to_roles = collections.OrderedDict()
         self.cycle_vertices = set()
+
 
         context = Context(source=ContextFlags.CONSTRUCTOR, execution_id=None)
 
@@ -10250,23 +10259,44 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         context: Optional[Context] = None,
         projection: Optional[Projection] = None,
     ):
+        return self._get_optimizer_param_value(param, context, projection)
+
+
+    def _get_optimizer_param_value(
+        self,
+        param: str,
+        context: Optional[Context] = None,
+        projection: Optional[Projection] = None,
+    ):
+        vals = {}
+
         try:
             runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
         except AttributeError:
             pass
         else:
+            vals['runtime'] = runtime.value(projection)
             if projection and runtime.has_specific_value_for(projection):
-                return runtime.value(projection)
+                return vals['runtime']
 
-        vals = {}
+        all_compositions = set()
+        queue = [self]
+        while True:
+            try:
+                next_comp = queue.pop()
+            except IndexError:
+                break
+            all_compositions.add(next_comp)
+            queue.extend(next_comp.compositions)
+
         # TODO: get matching composition param set here, handling nested
-        comp = self
-        # TODO: add learning mech then pathway
-        comp_opt_params = OptimizerParams.from_component(comp, context)
-        comp_opt_p = getattr(comp_opt_params, param)
-        vals[comp] = comp_opt_p.value(projection)
-        if projection and comp_opt_p.has_specific_value_for(projection):
-            return vals[comp]
+        for comp in all_compositions:
+            # TODO: add learning mech then pathway
+            comp_opt_params = OptimizerParams.from_component(comp, context)
+            comp_opt_p = getattr(comp_opt_params, param)
+            vals[comp] = comp_opt_p.value(projection)
+            if projection and comp_opt_p.has_specific_value_for(projection):
+                return vals[comp]
 
         if projection:
             proj_opt_params = OptimizerParams.from_component(projection, context)
@@ -10276,7 +10306,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 return vals[projection]
 
         # TODO: add learning mech then pathway
-        for obj in [comp]:
+        for obj in ['runtime', *all_compositions,]:
             v = vals.get(obj, None)
             if v is not None:
                 return v
@@ -12241,10 +12271,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         composition_optimizer_params = OptimizerParams.from_component(self, context)
         print('LEARN METHOD COMPOSITION OPT PARAMS', composition_optimizer_params)
+
+        runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
         try:
-            self.runtime_optimizer_params[context.execution_id] = composition_optimizer_params
+            self.runtime_optimizer_params[context.execution_id] = runtime_optimizer_params
         except AttributeError:
-            self.runtime_optimizer_params = {context.execution_id: composition_optimizer_params}
+            self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
 
         # TODO: prioritize runtime and composition here
         resolved_optimizer_params = None
@@ -12304,6 +12336,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             execution_mode=execution_mode,
             skip_initialization=skip_initialization,
             *args, **kwargs)
+
+        del self.runtime_optimizer_params[context.execution_id]
 
         context.remove_flag(ContextFlags.LEARNING_MODE)
         return result
