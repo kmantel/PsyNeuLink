@@ -258,9 +258,10 @@ class PytorchCompositionWrapper(torch.nn.Module):
     """
 
     torch_dtype = torch.float64
+    composition: Composition
 
     def __init__(self,
-                 composition,
+                 composition: Composition,
                  device,
                  outer_creator=None,
                  dtype=None,
@@ -1067,6 +1068,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         optimizer.param_groups = new_param_groups
         all_requires_grads_false = True
 
+        print(self, self.composition)
         # Use old_param_groups for reference, and modify new_param_groups (now assigned to optimizer)
         for old_param_group, new_param_group in zip(old_param_groups, new_param_groups):
             # Get each param in the param_groups
@@ -1078,9 +1080,13 @@ class PytorchCompositionWrapper(torch.nn.Module):
                                                                 optimizer_params_user_parsed,
                                                                 run_time_default_learning_rate,
                                                                 source, context))
+                from_opt_param_val = self.composition._get_optimizer_param_value('learning_rate', context, projection)
                 if specified_learning_rate is not False:
                     all_requires_grads_false = False
-                self._update_torch_param_group(specified_learning_rate, param,
+                print(projection)
+                print('specified_learning_rate', specified_learning_rate)
+                print('from_opt_param_val', from_opt_param_val)
+                self._update_torch_param_group(from_opt_param_val, param,
                                                old_param_group, new_param_group, new_param_groups, optimizer)
 
         if all_requires_grads_false:
@@ -1380,6 +1386,9 @@ class PytorchCompositionWrapper(torch.nn.Module):
         this is to accomodate assigning  a Projection's learning_rate as``True``, which "protects" if from False
         and uses the first learning_rate found above its Composition in the hierarchy.
          """
+        # import ipdb
+        # ipdb.set_trace()
+        print('DEF LEARN RATE', context.__dict__)
         comp_nesting_hierarchy = nested_comp._get_outer_compositions(outer_comp)
         for comp in comp_nesting_hierarchy:
             if comp.parameters.learning_rate._user_specified:
@@ -2160,7 +2169,7 @@ class PytorchMechanismWrapper(torch.nn.Module):
 
     def __init__(self,
                  mechanism:ProcessingMechanism,                 # Mechanism to be wrapped
-                 composition,                                   # one to which mech belongs (for nested executions)
+                 composition: Composition,                                   # one to which mech belongs (for nested executions)
                  component_idx:Optional[int],                   # index of the Mechanism in the Composition
                  use:Union[list, Literal[LEARNING, SYNCH, SHOW_PYTORCH]], # learning, synching of values and/or display
                  dtype:torch.dtype,                             # needed for Pytorch
@@ -2186,7 +2195,7 @@ class PytorchMechanismWrapper(torch.nn.Module):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         assert isinstance(composition, AutodiffComposition), \
             f"PROGRAM ERROR: {composition} must be an AutodiffComposition."
-        self.composition = composition
+        self.composition: Composition = composition
         self.torch_dtype = dtype
 
         self.input = None
