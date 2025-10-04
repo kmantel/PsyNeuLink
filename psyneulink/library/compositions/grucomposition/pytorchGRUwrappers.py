@@ -788,11 +788,12 @@ class DummyProjection(Projection):
 
     class Parameters(Projection.Parameters):
         learning_rate = Parameter(None, stateful=True)
+        learning_rate_TEMP_UNPROCESSED = Parameter(None)
 
     @check_user_specified
     def __init__(self, name):
         self.name = name
-        self._initialize_parameters(learning_rate=None, context=Context(execution_id=None))
+        self._initialize_parameters(learning_rate=None, learning_rate_TEMP_UNPROCESSED=None, context=Context(execution_id=None))
         self.parameters.learning_rate.set(None, None)
         self.learnable = True
 
@@ -805,7 +806,7 @@ class DummyProjection(Projection):
 
     def __getattr__(self, name):
         obj_name = f"{self.name} "
-        if name not in {'learning_rate', 'name'}:
+        if name not in {'learning_rate', 'name', 'learning_rate_TEMP_UNPROCESSED'}:
             raise AttributeError(f"This object is used to convey the learning rate for the torch parameters "
                                  f"corresponding to the set of {obj_name}Projections of a GRUComposition, "
                                  f"that cannot be set directly.  It has only 'name', 'learnable', and"
