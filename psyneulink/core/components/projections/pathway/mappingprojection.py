@@ -473,6 +473,7 @@ class MappingProjection(PathwayProjection_Base):
 
         """
         learning_rate = Parameter(None, stateful=True)
+        learning_rate_TEMP_UNPROCESSED = Parameter(None)
         function = Parameter(MatrixTransform, stateful=False, loggable=False)
         matrix = FunctionParameter(
             DEFAULT_MATRIX,
@@ -546,6 +547,7 @@ class MappingProjection(PathwayProjection_Base):
                          exponent=exponent,
                          matrix=matrix,
                          learning_rate=learning_rate,
+                         learning_rate_TEMP_UNPROCESSED=copy_parameter_value(learning_rate),
                          function=function,
                          params=params,
                          name=name,
