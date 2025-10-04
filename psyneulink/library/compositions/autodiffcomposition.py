@@ -3483,6 +3483,13 @@ class AutodiffComposition(Composition):
         for pytorch_repr in self.parameters.pytorch_representation.values.values():
             if pytorch_repr is not None:
                 res.extend([w.projection for w in pytorch_repr.projection_wrappers])
+                try:
+                    dummy_proj_pairs = pytorch_repr._projection_wrapper_pairs
+                except AttributeError:
+                    # currently only GRU wrapper uses them
+                    pass
+                else:
+                    res.extend([dummy_proj for dummy_proj, _ in dummy_proj_pairs])
 
         return res
 
