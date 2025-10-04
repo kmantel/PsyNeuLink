@@ -3521,10 +3521,10 @@ class OptimizerParams(types.SimpleNamespace):
                 #       ELSE CLAUSE IN FINAL VERSION this is to leave
                 #       original behavior intact while developing, but
                 #       this will be assigned as Parameter values
-                if isinstance(component, Composition):
-                    value = component.TEMP_init_composition_learning_rate
-                else:
-                    value = getattr(component.parameters, param_name)._get(context)
+                key_name = param_name
+                if param_name == 'learning_rate':
+                    key_name = 'learning_rate_TEMP_UNPROCESSED'
+                value = getattr(component.parameters, key_name)._get(context)
                 params[param_name] = copy_parameter_value(value)
         return params
 
@@ -4046,6 +4046,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         enable_learning = Parameter(True, structural=True)
         learning_rate = Parameter(.05)
         learning_rates_dict = Parameter({}, stateful=True, pnl_internal=True, modulable=False, loggable=False)
+        learning_rate_TEMP_UNPROCESSED = Parameter(.05)
         minibatch_size = Parameter(1, modulable=True, pnl_internal=True)
         optimizations_per_minibatch = Parameter(1, modulable=True, pnl_internal=True)
         results = Parameter([], loggable=False, pnl_internal=True)
@@ -4143,7 +4144,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self._partially_added_nodes = []
         self.parsed_inputs = False
 
-        self.TEMP_init_composition_learning_rate = copy_parameter_value(learning_rate)
+        learning_rate_TEMP_UNPROCESSED = copy_parameter_value(learning_rate)
         composition_learning_rate, lr_dict = self._parse_and_validate_learning_rate_arg(learning_rate)
         self._runtime_learning_rate = None
         self.execute_in_additional_optimizations = execute_in_additional_optimizations or {}  # BREADCRUMB: MOVE TO AUTODIFF
@@ -4171,6 +4172,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self._initialize_parameters(
             **param_defaults,
             learning_rate=composition_learning_rate,
+            learning_rate_TEMP_UNPROCESSED=learning_rate_TEMP_UNPROCESSED,
             enable_learning=enable_learning,
             minibatch_size=minibatch_size,
             optimizations_per_minibatch=optimizations_per_minibatch,
@@ -10292,7 +10294,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # TODO: get matching composition param set here, handling nested
         for comp in all_compositions:
             # TODO: add learning mech then pathway
-            comp_opt_params = OptimizerParams.from_component(comp, context)
+            try:
+                comp_opt_params = OptimizerParams.from_component(comp, context)
+            except ParameterNoValueError:
+                if comp == self:
+                    raise
+                # comp is an outer composition, but run context is (presumably) that for a run of the inner composition by itself
+                continue
             comp_opt_p = getattr(comp_opt_params, param)
             vals[comp] = comp_opt_p.value(projection)
             if projection and comp_opt_p.has_specific_value_for(projection):
@@ -10306,10 +10314,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 return vals[projection]
 
         # TODO: add learning mech then pathway
-        for obj in ['runtime', *all_compositions,]:
+        for obj in ['runtime', *all_compositions, projection]:
             v = vals.get(obj, None)
             if v is not None:
                 return v
+
+        # for obj in [*all_compositions, projection]:
+        #     try:
+        #         parameter_default_val = getattr(obj.defaults, param)
+        #     except AttributeError:
+        #         pass
+        #     else:
+        #         if parameter_default_val is not None:
+        #             return parameter_default_val
 
         return None
 
