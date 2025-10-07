@@ -580,6 +580,7 @@ def check_user_specified(func):
                                 or not safe_equals(self._prev_kwargs[k], v)
                             )
                         )
+                        or k == 'learning_rate_TEMP_UNPROCESSED'
                     ):
                         # NOTE: this is a good place to identify
                         # potentially unnecessary/inconsistent default
