@@ -441,7 +441,7 @@ from psyneulink.core.globals.keywords import (
 from psyneulink.core.globals.utilities import (
     is_matrix_keyword, is_numeric_scalar, convert_to_np_array, deprecation_warning)
 from psyneulink.core.scheduling.scheduler import Scheduler
-from psyneulink.core.globals.parameters import Parameter, check_user_specified
+from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
 from psyneulink.core.scheduling.time import TimeScale
 from psyneulink.core import llvm as pnlvm
 
@@ -841,6 +841,8 @@ class AutodiffComposition(Composition):
                 opt_params_arg[DEFAULT_LEARNING_RATE] = learning_rate
             learning_rate = opt_params_arg.pop(LEARNING_RATE)
 
+        learning_rate_TEMP_UNPROCESSED = copy_parameter_value(learning_rate)
+
         super(AutodiffComposition, self).__init__(
             name = name,
             pathways=pathways,
@@ -849,6 +851,7 @@ class AutodiffComposition(Composition):
             weight_decay = weight_decay,
             enable_learning = enable_learning,
             learning_rate = learning_rate,
+            learning_rate_TEMP_UNPROCESSED=learning_rate_TEMP_UNPROCESSED,
             synch_projection_matrices_with_torch = synch_projection_matrices_with_torch,
             synch_node_variables_with_torch = synch_node_variables_with_torch,
             synch_node_values_with_torch = synch_node_values_with_torch,

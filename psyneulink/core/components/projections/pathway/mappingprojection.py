@@ -291,10 +291,10 @@ Class Reference
 
 """
 import copy
+import weakref
 
 import numpy as np
 from typing import Union
-
 from psyneulink._typing import Optional
 
 from psyneulink.core.components.component import parameter_keywords
@@ -503,6 +503,9 @@ class MappingProjection(PathwayProjection_Base):
 
     projection_sender = OutputPort
 
+    _proxy_for_ref = None
+    _proxy_ref = None
+
     @check_user_specified
     def __init__(self,
                  sender=None,
@@ -692,3 +695,33 @@ class MappingProjection(PathwayProjection_Base):
     def logPref(self, setting):
         self.prefs.logPref = setting
         self.parameter_ports[MATRIX].logPref = setting
+
+    @property
+    def _proxy_for(self):
+        try:
+            return self._proxy_for_ref()
+        except TypeError:
+            return None
+
+    @_proxy_for.setter
+    def _proxy_for(self, value):
+        try:
+            self._proxy_for_ref = weakref.ref(value)
+        except TypeError:
+            self._proxy_for_ref = value
+        else:
+            value._proxy = self
+
+    @property
+    def _proxy(self):
+        try:
+            return self._proxy_ref()
+        except TypeError:
+            return None
+
+    @_proxy.setter
+    def _proxy(self, value):
+        try:
+            self._proxy_ref = weakref.ref(value)
+        except TypeError:
+            self._proxy_ref = value

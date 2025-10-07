@@ -4078,6 +4078,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             include_probes_in_output: bool = False,
             enable_learning: bool = True,
             learning_rate:Optional[Union[float, int, dict]] = None,
+            learning_rate_TEMP_UNPROCESSED=None,
             minibatch_size:int = 1,
             optimizations_per_minibatch:int = 1,
             execute_in_additional_optimizations=None,  # BREADCRUMB: MOVE TO AUTODIFF
@@ -10274,23 +10275,27 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         try:
             runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
-        except AttributeError:
+        except (AttributeError, KeyError):
+            # should keyerror be handled here?
             pass
         else:
             vals['runtime'] = runtime.value(projection)
             if projection and runtime.has_specific_value_for(projection):
                 return vals['runtime']
 
-        all_compositions = set()
+        outer_compositions = set()
         queue = [self]
         while True:
             try:
                 next_comp = queue.pop()
             except IndexError:
                 break
-            all_compositions.add(next_comp)
-            queue.extend(next_comp.compositions)
+            if next_comp not in outer_compositions:
+                outer_compositions.add(next_comp)
+                queue.extend(next_comp.compositions)
 
+        nested_compositions = reversed(self._get_nested_compositions())
+        all_compositions = [*nested_compositions, *outer_compositions]
         # TODO: get matching composition param set here, handling nested
         for comp in all_compositions:
             # TODO: add learning mech then pathway
@@ -10316,7 +10321,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # TODO: add learning mech then pathway
         for obj in ['runtime', *all_compositions, projection]:
             v = vals.get(obj, None)
-            if v is not None:
+            print(self, 'test for default opv obj', obj, 'projection', projection, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj commpositions', [c() for c in projection.compositions])
+            obj_projs = getattr(obj, 'projections', set())
+            if v is not None and (projection is None or obj in projection.compositions):
+                print(self, 'get default opv as default value', v)
                 return v
 
         # for obj in [*all_compositions, projection]:
