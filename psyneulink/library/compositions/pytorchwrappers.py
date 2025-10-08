@@ -841,6 +841,9 @@ class PytorchCompositionWrapper(torch.nn.Module):
             self.state_dict(): (local name of torch param, Tensor)
         """
         # These are used both for error messages (hence strings) as we well determining how to update param_groups
+        optimizer_params_user_specs = {
+            projection: self.composition.get_optimizer_param_value('learning_rate', context, projection=projection) for projection in optimizer_params_user_specs
+        }
 
         if context.runmode == ContextFlags.LEARNING_MODE:
             if context.source == ContextFlags.COMPOSITION:

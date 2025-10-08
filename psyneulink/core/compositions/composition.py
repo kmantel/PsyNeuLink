@@ -3461,12 +3461,21 @@ class OptParam:
         except (IndexError, KeyError, TypeError):
             self.default = self._default
 
+    def _item_for(self, component):
+        try:
+            if component.name in self._value:
+                return component.name
+        except AttributeError:
+            pass
+
+        return component
+
     def value(self, component: Optional[Component] = None):
         if self._value is NotImplemented:
             return NotImplemented
 
         try:
-            return self._value[component]
+            return self._value[self._item_for(component)]
         except (IndexError, TypeError):
             return self._value
         except KeyError:
@@ -3474,7 +3483,7 @@ class OptParam:
 
     def has_specific_value_for(self, component: Optional[Component]) -> bool:
         try:
-            return component in self._value
+            return self._item_for(component) in self._value
         except (KeyError, TypeError):
             return False
 
@@ -10264,7 +10273,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
     ):
         return self._get_optimizer_param_value(param, context, projection)
 
-
     def _get_optimizer_param_value(
         self,
         param: str,
@@ -10272,6 +10280,27 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         projection: Optional[Projection] = None,
     ):
         vals = {}
+
+        # TODO: replace this with maybe storing only projections in
+        # OptParam, then allowing get by name as well
+        if isinstance(projection, str):
+            import psyneulink as pnl
+            for reg in pnl.ProjectionRegistry.values():
+                print(reg)
+                for proj in reg.instanceDict.values():
+                    if proj.name == projection:
+                        print('found key', projection, proj)
+                        projection = proj
+                        break
+
+        try:
+            proxy = projection._proxy_for
+        except AttributeError:
+            # TODO: most likely a string that didn't resolve to a
+            # projection. check here
+            proxy = None
+        if proxy is not None:
+            projection = proxy
 
         try:
             runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)

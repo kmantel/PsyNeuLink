@@ -9,6 +9,7 @@
 
 """PyTorch wrapper for GRUComposition"""
 
+import weakref
 import numpy as np
 import graph_scheduler
 import torch
@@ -196,7 +197,7 @@ class PytorchGRUCompositionWrapper(PytorchCompositionWrapper):
             _projection_wrapper_pairs.append((pnl_proj, pytorch_wrapper))
 
         # Construct DummyProjection for INPUT_TO_HIDDEN and HIDDEN_TO_HIDDEN that are used to access their learning_rate
-        W_IH_projection = DummyProjection(INPUT_TO_HIDDEN)
+        W_IH_projection = DummyProjection(INPUT_TO_HIDDEN, composition=self.composition)
         pytorch_wrapper = PytorchGRUProjectionWrapper(projection=W_IH_projection,
                                                       torch_parameter=(W_IH_NAME, torch_gru.state_dict()[W_IH_NAME]),
                                                       use=LEARNING,
@@ -206,7 +207,7 @@ class PytorchGRUCompositionWrapper(PytorchCompositionWrapper):
         input_to_hidden_param_name_comp_tuple = ParamNameCompositionTuple(W_IH_projection, W_IH_NAME, self.composition)
         self._pnl_refs_to_torch_param_names.update({INPUT_TO_HIDDEN:input_to_hidden_param_name_comp_tuple})
 
-        W_HH_projection = DummyProjection(HIDDEN_TO_HIDDEN)
+        W_HH_projection = DummyProjection(HIDDEN_TO_HIDDEN, composition=self.composition)
         pytorch_wrapper = PytorchGRUProjectionWrapper(projection=W_HH_projection,
                                                       torch_parameter=(W_HH_NAME, torch_gru.state_dict()[W_IH_NAME]),
                                                       use=LEARNING,
@@ -237,7 +238,7 @@ class PytorchGRUCompositionWrapper(PytorchCompositionWrapper):
                 _projection_wrapper_pairs.append((pnl_bias_proj, pytorch_wrapper))
                 # self._pnl_refs_to_torch_param_names.update({pnl_bias_proj.name: torch_bias_spec})
 
-            B_IH_proj = DummyProjection(BIAS_INPUT_TO_HIDDEN)
+            B_IH_proj = DummyProjection(BIAS_INPUT_TO_HIDDEN, composition=self.composition)
             pytorch_wrapper = PytorchGRUProjectionWrapper(projection=B_IH_proj,
                                                           torch_parameter=(B_IH_NAME,torch_gru.state_dict()[B_IH_NAME]),
                                                           use=LEARNING,
@@ -247,7 +248,7 @@ class PytorchGRUCompositionWrapper(PytorchCompositionWrapper):
             bias_in_to_hid_param_name_comp_tuple = ParamNameCompositionTuple(B_IH_proj, B_IH_NAME, self.composition)
             self._pnl_refs_to_torch_param_names.update({BIAS_INPUT_TO_HIDDEN:bias_in_to_hid_param_name_comp_tuple})
 
-            B_HH_proj = DummyProjection(BIAS_HIDDEN_TO_HIDDEN)
+            B_HH_proj = DummyProjection(BIAS_HIDDEN_TO_HIDDEN, composition=self.composition)
             pytorch_wrapper = PytorchGRUProjectionWrapper(projection=B_HH_proj,
                                                           torch_parameter=(B_HH_NAME,torch_gru.state_dict()[B_HH_NAME]),
                                                           use=LEARNING,
@@ -791,8 +792,11 @@ class DummyProjection(Projection):
         learning_rate_TEMP_UNPROCESSED = Parameter(None)
 
     @check_user_specified
-    def __init__(self, name):
+    def __init__(self, name, composition=None):
         self.name = name
+        self.compositions = weakref.WeakSet()
+        if composition is not None:
+            self.compositions.add(composition)
         self._initialize_parameters(learning_rate=None, learning_rate_TEMP_UNPROCESSED=None, context=Context(execution_id=None))
         self.parameters.learning_rate.set(None, None)
         self.learnable = True
@@ -806,11 +810,12 @@ class DummyProjection(Projection):
 
     def __getattr__(self, name):
         obj_name = f"{self.name} "
-        if name not in {'learning_rate', 'name', 'learning_rate_TEMP_UNPROCESSED'}:
+        if name not in {'learning_rate', 'name', 'compositions', 'learning_rate_TEMP_UNPROCESSED'}:
             raise AttributeError(f"This object is used to convey the learning rate for the torch parameters "
                                  f"corresponding to the set of {obj_name}Projections of a GRUComposition, "
                                  f"that cannot be set directly.  It has only 'name', 'learnable', and"
                                  f"'learning_rate' as attributes, and no others.")
+        return super().__getattribute__(name)
 
 
 register_category(
