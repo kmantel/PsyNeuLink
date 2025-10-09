@@ -493,12 +493,12 @@ if torch_available:
         none_expected = [[0.19536549, 0.04794166, 0.14910019, 0.3058192, -0.35057197]]
 
         test_specs = [
-            # ('constructor', pnl.INPUT_TO_HIDDEN, constructor_expected),
-            # ('constructor', "HIDDEN TO UPDATE WEIGHTS", None),
-            # ('learn_method', pnl.HIDDEN_TO_HIDDEN, learn_method_expected),
-            # ('learn_method', "HIDDEN TO UPDATE WEIGHTS", None),
-            # ('constructor', pnl.BIAS_INPUT_TO_HIDDEN, None),
-            # ('learn_method', pnl.BIAS_HIDDEN_TO_HIDDEN, None),
+            ('constructor', pnl.INPUT_TO_HIDDEN, constructor_expected),
+            ('constructor', "HIDDEN TO UPDATE WEIGHTS", None),
+            ('learn_method', pnl.HIDDEN_TO_HIDDEN, learn_method_expected),
+            ('learn_method', "HIDDEN TO UPDATE WEIGHTS", None),
+            ('constructor', pnl.BIAS_INPUT_TO_HIDDEN, None),
+            ('learn_method', pnl.BIAS_HIDDEN_TO_HIDDEN, None),
             ('both', pnl.HIDDEN_TO_HIDDEN, learn_method_expected),
             ('specs_to_nested', pnl.INPUT_TO_HIDDEN, constructor_expected),
             ('none', pnl.HIDDEN_TO_HIDDEN, none_expected)]
