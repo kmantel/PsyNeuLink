@@ -1148,7 +1148,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
             elif projection._proxy_for is not None and projection._proxy_for.name in optimizer_params_user_parsed:
                 specified_learning_rate = optimizer_params_user_parsed[projection._proxy_for.name].value
 
-        if specified_learning_rate in {None, True}:
+        if specified_learning_rate is None or specified_learning_rate is True:
             # No Projection-specific learning_rate specified, so get default one from a Composition in the hierarchy
             if (specified_learning_rate is None and proj_comp_lr is False):
                 # If Projection's learning_rate is None, then assign runtime value if specified, otherwise False
