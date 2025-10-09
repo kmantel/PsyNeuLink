@@ -3252,7 +3252,7 @@ from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel, _
 from psyneulink.core.globals.registry import register_category
 from psyneulink.core.globals.utilities import (
     ContentAddressableList, PNLStrEnum, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list,
-    nesting_depth, convert_to_np_array, is_numeric, is_matrix, is_matrix_keyword, parse_valid_identifier, extended_array_equal,
+    nesting_depth, convert_to_np_array, is_numeric, is_matrix, is_matrix_keyword, parse_valid_identifier, extended_array_equal, try_extract_0d_array_item,
 )
 from psyneulink.core.scheduling.condition import Always, Condition, Never
 from psyneulink.core.scheduling.scheduler import Scheduler, SchedulingMode
@@ -3502,7 +3502,7 @@ class OptimizerParams(types.SimpleNamespace):
         # not repeat code
         cls_param = OptimizerParams.learning_rate
         self.learning_rate = OptParam(
-            learning_rate,
+            try_extract_0d_array_item(learning_rate),
             param_group_name=cls_param.param_group_name,
             _default_key=cls_param._default_key,
         )
