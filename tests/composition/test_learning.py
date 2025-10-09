@@ -240,7 +240,7 @@ class TestStructural:
         # **r = expected lr's after 2nd execution of learn() method w/o lr specs (expect reset to constructor values)
         # condition       ip    ic   m1    mc    op    oc   learn()  ipc   m1c   o2c   ipl  m1l  o2l  ipr   m1r   o2r
         # NUMERIC ASSIGNMENTS
-        # ("None",         None, None, None, None, None, None,  .9,   .001, .001, .001,  .9,  .9,  .9, .001, .001, .001),
+        ("None",         None, None, None, None, None, None,  .9,   .001, .001, .001,  .9,  .9,  .9, .001, .001, .001),
         # Test assignment of numeric learning_rates to constructor at various levels in the hierarchy
         ("inner_n",      None,  .1,  None, None, None, None,  .9,    .1,  .001, .001,  .9,  .9,  .9,  .1,  .001 ,.001),
         ("middle_n",     None, None, None,  .2,  None, None,  .9,    .2,   .2,  .001,  .9,  .9,  .9,  .2,   .2,  .001),
