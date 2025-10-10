@@ -10350,7 +10350,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # TODO: add learning mech then pathway
         for obj in ['runtime', *all_compositions, projection]:
             v = vals.get(obj, None)
-            print(self, 'test for default opv obj', obj, 'projection', projection, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj commpositions', [c() for c in projection.compositions])
+            print(self, 'test for default opv obj', obj, 'projection', projection, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c() for c in getattr(projection, 'compositions', [])])
             obj_projs = getattr(obj, 'projections', set())
             if v is not None and (projection is None or obj in projection.compositions):
                 print(self, 'get default opv as default value', v)
