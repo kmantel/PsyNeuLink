@@ -725,3 +725,15 @@ class MappingProjection(PathwayProjection_Base):
             self._proxy_ref = weakref.ref(value)
         except TypeError:
             self._proxy_ref = value
+
+    # def _add_to_composition(self, composition):
+    #     super()._add_to_composition(composition)
+    #     proxy_for = self._proxy_for
+    #     if proxy_for is not None:
+    #         self._proxy_for._add_to_composition(composition)
+
+    # def _remove_from_composition(self, composition):
+    #     super()._remove_to_composition(composition)
+    #     proxy_for = self._proxy_for
+    #     if proxy_for is not None:
+    #         self._proxy_for._remove_to_composition(composition)

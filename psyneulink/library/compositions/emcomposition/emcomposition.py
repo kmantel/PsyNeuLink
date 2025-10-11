@@ -1818,6 +1818,14 @@ class EMComposition(AutodiffComposition):
                                                    normalize_memories,
                                                    target_fields,
                                                    name)
+
+        # if (
+        #     all(item is False for item in learn_field_weights)
+        #     or len(learn_field_weights) == 1
+        #     or concatenate_queries
+        # ):
+        #     learning_rate = False
+
         if memory_decay_rate is AUTO:
             memory_decay_rate = 1 / memory_capacity
 
