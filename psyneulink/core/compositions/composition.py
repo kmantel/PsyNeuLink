@@ -3455,6 +3455,10 @@ class OptParam:
     # consider if just using DEFAULT is ok
     _default_key: Optional[str] = DEFAULT
 
+    # NOTE: suggests integration with regular Parameter type
+    # (set during construction from Component)
+    _user_specified: bool = False
+
     def __post_init__(self):
         try:
             self.default = self._value[self._default_key]
@@ -3508,6 +3512,9 @@ class OptimizerParams(types.SimpleNamespace):
             _default_key=cls_param._default_key,
         )
 
+    def __iter__(self):
+        return ((p, getattr(self, p)) for p in OptimizerParams.__annotations__)
+
     def optim_args(self, component: Optional[Component] = None) -> Dict[str, Any]:
         res = {}
         for param_name in OptimizerParams.__annotations__:
@@ -3543,7 +3550,21 @@ class OptimizerParams(types.SimpleNamespace):
         component: Component, context: Context
     ) -> 'OptimizerParams':
         params = OptimizerParams._params_from_component(component, context)
-        return OptimizerParams(**params)
+        params = OptimizerParams(**params)
+
+        # TODO: clean up. or find a better way to do this
+        for param_name, param in params:
+            # TODO: REMOVE THIS - TEMP FOR TESTING ONLY USE ONLY THE
+            #       ELSE CLAUSE IN FINAL VERSION this is to leave
+            #       original behavior intact while developing, but
+            #       this will be assigned as Parameter values
+            key_name = param_name
+            if param_name == 'learning_rate':
+                key_name = 'learning_rate_TEMP_UNPROCESSED'
+            comp_param = getattr(component.parameters, key_name)
+            getattr(params, param_name)._user_specified = param._value is not None and comp_param._user_specified
+
+        return params
 
 
 class Composition(Composition_Base, metaclass=ComponentsMeta):
@@ -4074,6 +4095,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             if optimizations_per_minibatch < 1:
                 raise CompositionError(f"`optimizations_per_minibatch` ({optimizations_per_minibatch}) "
                                        f"must an int greater than or equal to 1.")
+
+        def _parse_learning_rate_TEMP_UNPROCESSED(self, learning_rate):
+            # import ipdb
+            # ipdb.set_trace()
+            if isinstance(learning_rate, dict) and list(learning_rate.keys()) == [DEFAULT_LEARNING_RATE]:
+                learning_rate = learning_rate[DEFAULT_LEARNING_RATE]
+                # specification asks explicit dict setting of None to be the parameter default
+                if learning_rate is None:
+                    learning_rate = self.learning_rate.default_value
+            return learning_rate
 
     class _CompilationData(ParametersBase):
         execution = None
@@ -10294,14 +10325,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         projection = proj
                         break
 
+
+        all_projections = [projection]
         try:
             proxy = projection._proxy_for
         except AttributeError:
             # TODO: most likely a string that didn't resolve to a
             # projection. check here
-            proxy = None
-        # if proxy is not None:
-        #     projection = proxy
+            pass
+        else:
+            all_projections.append(proxy)
 
         try:
             runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
@@ -10338,31 +10371,43 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 continue
             comp_opt_p = getattr(comp_opt_params, param)
             opt_params[comp] = comp_opt_p
-            if projection and comp_opt_p.has_specific_value_for(projection):
-                return comp_opt_p.value(projection)
+            for proj in all_projections:
+                if proj and comp_opt_p.has_specific_value_for(proj):
+                    return comp_opt_p.value(proj)
 
-        if projection:
-            proj_opt_params = OptimizerParams.from_component(projection, context)
-            proj_opt_p = getattr(proj_opt_params, param)
-            opt_params[projection] = proj_opt_p
-            v = proj_opt_p.value(projection)
-            if v is not None:
-                return v
+        for proj in all_projections:
+            if proj:
+                proj_opt_params = OptimizerParams.from_component(proj, context)
+                proj_opt_p = getattr(proj_opt_params, param)
+                opt_params[proj] = proj_opt_p
+                v = proj_opt_p.value(proj)
+                if v is not None:
+                    return v
 
         # TODO: add learning mech then pathway
-        all_items = [x for x in ['runtime', *all_compositions, projection] if x is not None]
+        all_items = [x for x in ['runtime', *all_compositions, *all_projections] if x is not None]
         for obj in all_items:
             try:
                 opt_param = opt_params[obj]
             except KeyError:
                 continue
 
-            v = opt_param.value(projection)
-            print(self, 'test for default opv obj', obj, 'projection', projection, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c() for c in getattr(projection, 'compositions', [])])
-            obj_projs = getattr(obj, 'projections', set())
-            if v is not None and (projection is None or obj in projection.compositions):
-                print(self, 'get default opv as default value', v)
-                return v
+            for proj in all_projections:
+                v = opt_param.value(proj)
+                try:
+                    proj_sendcomps = proj.sender.owner.compositions
+                except:
+                    proj_sendcomps = []
+
+                print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
+                obj_projs = getattr(obj, 'projections', None)
+                # if v is not None and (proj is None or obj_projs is None or obj in obj_projs):
+                if v is not None and (proj is None or obj in proj.sender.owner.compositions) and opt_param._user_specified:
+                    print(self, 'get default opv as default value', v)
+                    return v
+
+        outermost_comp = all_compositions[-1]
+        return opt_params[outermost_comp].value(projection)
 
         # for obj in [*all_compositions, projection]:
         #     try:
