@@ -875,7 +875,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         # Proceed to either construct new optimizer.param_groups (if called from constructor)
         #   or update existing ones (if called from learn() method)
 
-        run_time_default_learning_rate = optimizer_params_user_specs.pop(DEFAULT_LEARNING_RATE, None)
+        run_time_default_learning_rate = optimizer_params_user_specs.get(DEFAULT_LEARNING_RATE, None)
 
         optimizer_params_user_parsed, optimizer_torch_params_full_with_specified = (
             self._parse_learning_rate_specs(optimizer,
