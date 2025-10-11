@@ -3470,6 +3470,7 @@ class OptParam:
 
         return component
 
+    # @functools.lru_cache
     def value(self, component: Optional[Component] = None):
         if self._value is NotImplemented:
             return NotImplemented
@@ -10279,7 +10280,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         context: Optional[Context] = None,
         projection: Optional[Projection] = None,
     ):
-        vals = {}
+        opt_params = {}
 
         # TODO: replace this with maybe storing only projections in
         # OptParam, then allowing get by name as well
@@ -10299,8 +10300,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # TODO: most likely a string that didn't resolve to a
             # projection. check here
             proxy = None
-        if proxy is not None:
-            projection = proxy
+        # if proxy is not None:
+        #     projection = proxy
 
         try:
             runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
@@ -10308,9 +10309,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # should keyerror be handled here?
             pass
         else:
-            vals['runtime'] = runtime.value(projection)
+            opt_params['runtime'] = runtime
             if projection and runtime.has_specific_value_for(projection):
-                return vals['runtime']
+                return runtime.value(projection)
 
         outer_compositions = set()
         queue = [self]
@@ -10336,20 +10337,27 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # comp is an outer composition, but run context is (presumably) that for a run of the inner composition by itself
                 continue
             comp_opt_p = getattr(comp_opt_params, param)
-            vals[comp] = comp_opt_p.value(projection)
+            opt_params[comp] = comp_opt_p
             if projection and comp_opt_p.has_specific_value_for(projection):
-                return vals[comp]
+                return comp_opt_p.value(projection)
 
         if projection:
             proj_opt_params = OptimizerParams.from_component(projection, context)
             proj_opt_p = getattr(proj_opt_params, param)
-            vals[projection] = proj_opt_p.value(projection)
-            if vals[projection] is not None:
-                return vals[projection]
+            opt_params[projection] = proj_opt_p
+            v = proj_opt_p.value(projection)
+            if v is not None:
+                return v
 
         # TODO: add learning mech then pathway
-        for obj in ['runtime', *all_compositions, projection]:
-            v = vals.get(obj, None)
+        all_items = [x for x in ['runtime', *all_compositions, projection] if x is not None]
+        for obj in all_items:
+            try:
+                opt_param = opt_params[obj]
+            except KeyError:
+                continue
+
+            v = opt_param.value(projection)
             print(self, 'test for default opv obj', obj, 'projection', projection, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c() for c in getattr(projection, 'compositions', [])])
             obj_projs = getattr(obj, 'projections', set())
             if v is not None and (projection is None or obj in projection.compositions):

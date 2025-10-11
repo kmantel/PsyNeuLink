@@ -842,7 +842,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         """
         # These are used both for error messages (hence strings) as we well determining how to update param_groups
         optimizer_params_user_specs = {
-            projection: self.composition.get_optimizer_param_value('learning_rate', context, projection=projection) for projection in optimizer_params_user_specs
+            projection: self.composition.get_optimizer_param_value('learning_rate', context, projection=projection) for projection in optimizer_params_user_specs if optimizer_params_user_specs[projection] is not None and not isinstance(projection, str)
         }
 
         if context.runmode == ContextFlags.LEARNING_MODE:
