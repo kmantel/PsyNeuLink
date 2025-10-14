@@ -1248,8 +1248,11 @@ class AutodiffComposition(Composition):
             print('PYTORCH REP COMPOSITION OPT PARAMS', composition_optimizer_params)
 
             for proj in self.projections:
-                proj_params = OptimizerParams.from_component(proj, context)
-                print(proj, 'OPTIMIZER PARAMS', proj_params)
+                try:
+                    proj_params = OptimizerParams.from_component(proj, context)
+                    print(proj, 'OPTIMIZER PARAMS', proj_params)
+                except AttributeError:
+                    print(proj, ' no learning rate param but.....learning_rate attr?', getattr(proj, 'learning_rate', 'nope'))
 
             # Instantiate a new optimizer if there isn't one yet or new has been called and is not blocked)
             if context.runmode == ContextFlags.LEARNING_MODE:
