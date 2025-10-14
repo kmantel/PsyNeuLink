@@ -3474,8 +3474,7 @@ class OptParam:
 
         return component
 
-    # @functools.lru_cache
-    def value(self, component: Optional[Component] = None):
+    def _get_value(self, component: Optional[Component] = None):
         if self._value is NotImplemented:
             return NotImplemented
 
@@ -3486,11 +3485,26 @@ class OptParam:
         except KeyError:
             return self.default
 
-    def has_specific_value_for(self, component: Optional[Component]) -> bool:
+    def value(self, component: Optional[Component] = None):
+        if not self._has_specific_value_for(component):
+            proxy_target = getattr(component, '_proxy_for', None)
+            if proxy_target and self._has_specific_value_for(proxy_target):
+                return self._get_value(proxy_target)
+        return self._get_value(component)
+
+    def _has_specific_value_for(self, component: Optional[Component]) -> bool:
         try:
             return self._item_for(component) in self._value
         except (KeyError, TypeError):
             return False
+
+    def has_specific_value_for(self, component: Optional[Component]) -> bool:
+        res = self._has_specific_value_for(component)
+        if not res:
+            proxy_target = getattr(component, '_proxy_for', None)
+            if proxy_target:
+                return self._has_specific_value_for(proxy_target)
+        return res
 
 
 class OptimizerParams(types.SimpleNamespace):
@@ -4105,6 +4119,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # specification asks explicit dict setting of None to be the parameter default
                 if learning_rate is None:
                     learning_rate = self.learning_rate.default_value
+
+            if is_numeric(learning_rate):
+                learning_rate = np.asarray(learning_rate)
+
             return learning_rate
 
     class _CompilationData(ParametersBase):
@@ -6785,10 +6803,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                   PROXY_FOR:projection
                                   }
                              }
-                return self.add_projection(proj_spec,
+                proxy = self.add_projection(proj_spec,
                                            sender=projection.sender,
                                            receiver=projection.receiver,
                                            context=context)
+                # TODO: indicate here how to decide what composition (or
+                # priority order of compositions) to get optimizer
+                # params from
+                return proxy
 
         # Create Projection if it doesn't exist
         projection = projection or default_matrix
@@ -10328,14 +10350,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
 
         all_projections = [projection]
-        try:
-            proxy = projection._proxy_for
-        except AttributeError:
-            # TODO: most likely a string that didn't resolve to a
-            # projection. check here
-            pass
-        else:
-            all_projections.append(proxy)
+        # try:
+        #     proxy = projection._proxy_for
+        # except AttributeError:
+        #     # TODO: most likely a string that didn't resolve to a
+        #     # projection. check here
+        #     pass
+        # else:
+        #     all_projections.append(proxy)
 
         try:
             runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
@@ -10345,7 +10367,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         else:
             opt_params['runtime'] = runtime
             if projection and runtime.has_specific_value_for(projection):
-                return runtime.value(projection)
+                val = runtime.value(projection)
+                if val is not None:
+                    return val
 
         outer_compositions = set()
         queue = [self]
@@ -10385,6 +10409,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if v is not None:
                     return v
 
+
+        # def _accept_composition(self, proj, comp):
+
+
         # TODO: add learning mech then pathway
         all_items = [x for x in ['runtime', *all_compositions, *all_projections] if x is not None]
         for obj in all_items:
@@ -10403,11 +10431,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
                 obj_projs = getattr(obj, 'projections', None)
                 # if v is not None and (proj is None or obj_projs is None or obj in obj_projs):
+                # try:
+                #     obj_comps = proj.sender.owner.compositions
+                # except AttributeError:
+                #     # GRU/DummyProjection has no sender
+                #     obj_comps = set()
                 try:
-                    obj_comps = proj.sender.owner.compositions
+                    obj_comps = proj._proxy.compositions
                 except AttributeError:
-                    # GRU/DummyProjection has no sender
-                    obj_comps = set()
+                    obj_comps = proj.compositions
+
                 if v is not None and (proj is None or obj == 'runtime' or obj in obj_comps) and opt_param._user_specified:
                     print(self, 'get default opv as default value', v)
                     return v
@@ -12385,7 +12418,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         composition_optimizer_params = OptimizerParams.from_component(self, context)
         print('LEARN METHOD COMPOSITION OPT PARAMS', composition_optimizer_params)
 
-        runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
+        if runtime_optimizer_params is None:
+            runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
         try:
             self.runtime_optimizer_params[context.execution_id] = runtime_optimizer_params
         except AttributeError:
