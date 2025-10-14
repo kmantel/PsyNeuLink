@@ -8,6 +8,8 @@
 # ********************************************* PytorchComponent *************************************************
 
 """PyTorch wrappers for Composition, Mechanism, Projection, and Functions for use in AutodiffComposition"""
+import copy
+
 from h5py.h5f import namedtuple
 
 from psyneulink._typing import Iterable, Literal, Optional, Union
@@ -844,6 +846,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         optimizer_params_user_specs = {
             projection: self.composition.get_optimizer_param_value('learning_rate', context, projection=projection) for projection in optimizer_params_user_specs if optimizer_params_user_specs[projection] is not None and not isinstance(projection, str)
         }
+        optimizer_params_user_specs_unmod = copy.copy(optimizer_params_user_specs)
 
         if context.runmode == ContextFlags.LEARNING_MODE:
             if context.source == ContextFlags.COMPOSITION:
@@ -890,9 +893,9 @@ class PytorchCompositionWrapper(torch.nn.Module):
             self._update_constructor_param_groups(self.composition, optimizer_params_user_specs)
 
         self._assign_learning_rates(optimizer,
-                                    optimizer_params_user_parsed,
+                                    optimizer_params_user_specs_unmod,
                                     optimizer_torch_params_full_with_specified,
-                                    run_time_default_learning_rate,
+                                    None,
                                     source,
                                     context)
 
