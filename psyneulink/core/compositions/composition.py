@@ -3510,6 +3510,7 @@ class OptimizerParams(types.SimpleNamespace):
             try_extract_0d_array_item(learning_rate),
             param_group_name=cls_param.param_group_name,
             _default_key=cls_param._default_key,
+            _user_specified=True,
         )
 
     def __iter__(self):
@@ -10402,7 +10403,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
                 obj_projs = getattr(obj, 'projections', None)
                 # if v is not None and (proj is None or obj_projs is None or obj in obj_projs):
-                if v is not None and (proj is None or obj in proj.sender.owner.compositions) and opt_param._user_specified:
+                try:
+                    obj_comps = proj.sender.owner.compositions
+                except AttributeError:
+                    # GRU/DummyProjection has no sender
+                    obj_comps = set()
+                if v is not None and (proj is None or obj == 'runtime' or obj in obj_comps) and opt_param._user_specified:
                     print(self, 'get default opv as default value', v)
                     return v
 
