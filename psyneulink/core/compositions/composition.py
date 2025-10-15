@@ -3479,11 +3479,16 @@ class OptParam:
             return NotImplemented
 
         try:
-            return self._value[self._item_for(component)]
+            res = self._value[self._item_for(component)]
         except (IndexError, TypeError):
-            return self._value
+            res = self._value
         except KeyError:
-            return self.default
+            res = self.default
+
+        if res is True:
+            res = self.default
+
+        return res
 
     def value(self, component: Optional[Component] = None):
         if not self._has_specific_value_for(component):
@@ -10348,6 +10353,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         projection = proj
                         break
 
+        def _valid_specified_value(v):
+            return v is not None
+            return v is not None and v is not False
+
 
         all_projections = [projection]
         # try:
@@ -10368,7 +10377,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             opt_params['runtime'] = runtime
             if projection and runtime.has_specific_value_for(projection):
                 val = runtime.value(projection)
-                if val is not None:
+                # enable/disable this check changes set of tests that fail.....
+                if _valid_specified_value(val):
                     return val
 
         outer_compositions = set()
@@ -10384,8 +10394,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         nested_compositions = reversed(self._get_nested_compositions())
         all_compositions = [*nested_compositions, *outer_compositions]
+        comp_projections = {}
         # TODO: get matching composition param set here, handling nested
         for comp in all_compositions:
+            comp_projections[comp] = comp._get_all_projections()
+            proxies = {p: p._proxy_for for p in comp_projections[comp] if p._proxy_for}
+            for proxy, orig in proxies.items():
+                comp_projections[comp][orig] = comp_projections[comp][proxy]
+
             # TODO: add learning mech then pathway
             try:
                 comp_opt_params = OptimizerParams.from_component(comp, context)
@@ -10406,12 +10422,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 proj_opt_p = getattr(proj_opt_params, param)
                 opt_params[proj] = proj_opt_p
                 v = proj_opt_p.value(proj)
-                if v is not None:
+                if _valid_specified_value(v):
                     return v
 
 
         # def _accept_composition(self, proj, comp):
-
+        def _handle_return(op: OptParam, val):
+            return val
+            if val is True:
+                val = op.default
+            return val
 
         # TODO: add learning mech then pathway
         all_items = [x for x in ['runtime', *all_compositions] if x is not None]
@@ -10429,8 +10449,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     proj_sendcomps = []
 
                 print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
-                obj_projs = getattr(obj, 'projections', set())
-                # if v is not None and (proj is None or obj_projs is None or obj in obj_projs):
+                obj_projs = comp_projections.get(obj, set())
+                # if _valid_specified_value(v) and (proj is None or obj_projs is None or obj in obj_projs):
                 # try:
                 #     obj_comps = proj.sender.owner.compositions
                 # except AttributeError:
@@ -10441,21 +10461,23 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # except AttributeError:
                 #     obj_comps = proj.compositions
 
-                if v is not None and (proj is None or obj == 'runtime' or proj in obj_projs):
+                if _valid_specified_value(v) and (proj is None or obj == 'runtime' or proj in obj_projs):
                     if opt_param._user_specified:
                         print(self, 'get default opv as default value', v)
-                        return v
+                        return _handle_return(opt_param, v)
 
-        # no user-specified, check runtime then outermost relevant composition for default
-        for obj in ['runtime', all_compositions[-1]]:
+        for obj in ['runtime', *all_compositions]:
             try:
                 opt_param = opt_params[obj]
             except KeyError:
                 continue
 
-            obj_projs = getattr(obj, 'projections', set())
-            if v is not None and (proj is None or obj == 'runtime' or proj in obj_projs):
-                return opt_param.value(proj)
+            for proj in all_projections:
+                v = opt_param.value(proj)
+
+                obj_projs = comp_projections.get(obj, set())
+                if _valid_specified_value(v) and (proj is None or obj == 'runtime' or proj in obj_projs):
+                    return _handle_return(opt_param, v)
 
         # outermost_comp = all_compositions[-1]
         # return opt_params[outermost_comp].value(projection)
