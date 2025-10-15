@@ -10414,7 +10414,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
 
         # TODO: add learning mech then pathway
-        all_items = [x for x in ['runtime', *all_compositions, *all_projections] if x is not None]
+        all_items = [x for x in ['runtime', *all_compositions] if x is not None]
         for obj in all_items:
             try:
                 opt_param = opt_params[obj]
@@ -10429,24 +10429,36 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     proj_sendcomps = []
 
                 print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
-                obj_projs = getattr(obj, 'projections', None)
+                obj_projs = getattr(obj, 'projections', set())
                 # if v is not None and (proj is None or obj_projs is None or obj in obj_projs):
                 # try:
                 #     obj_comps = proj.sender.owner.compositions
                 # except AttributeError:
                 #     # GRU/DummyProjection has no sender
                 #     obj_comps = set()
-                try:
-                    obj_comps = proj._proxy.compositions
-                except AttributeError:
-                    obj_comps = proj.compositions
+                # try:
+                #     obj_comps = proj._proxy.compositions
+                # except AttributeError:
+                #     obj_comps = proj.compositions
 
-                if v is not None and (proj is None or obj == 'runtime' or obj in obj_comps) and opt_param._user_specified:
-                    print(self, 'get default opv as default value', v)
-                    return v
+                if v is not None and (proj is None or obj == 'runtime' or proj in obj_projs):
+                    if opt_param._user_specified:
+                        print(self, 'get default opv as default value', v)
+                        return v
 
-        outermost_comp = all_compositions[-1]
-        return opt_params[outermost_comp].value(projection)
+        # no user-specified, check runtime then outermost relevant composition for default
+        for obj in ['runtime', all_compositions[-1]]:
+            try:
+                opt_param = opt_params[obj]
+            except KeyError:
+                continue
+
+            obj_projs = getattr(obj, 'projections', set())
+            if v is not None and (proj is None or obj == 'runtime' or proj in obj_projs):
+                return opt_param.value(proj)
+
+        # outermost_comp = all_compositions[-1]
+        # return opt_params[outermost_comp].value(projection)
 
         # for obj in [*all_compositions, projection]:
         #     try:
