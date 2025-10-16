@@ -6798,10 +6798,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             sender_node = projection.sender.owner
             receiver_node = projection.receiver.owner
             # If sender or receiver is in a nested Node
-            if ((sender_node not in self.nodes
-                 and sender_node in [n[0] for n in self._get_nested_nodes()])
-                    or (receiver_node not in self.nodes
-                         and receiver_node in [n[0] for n in self._get_nested_nodes()])):
+            nested_nodes = [n[0] for n in self._get_nested_nodes()]
+            sender_in_nested = sender_node not in self.nodes and sender_node in nested_nodes
+            receiver_in_nested = receiver_node not in self.nodes and receiver_node in nested_nodes
+            if sender_in_nested or receiver_in_nested:
                 proj_spec = {PROJECTION_TYPE:projection.className,
                               PROJECTION_PARAMS:{
                                   FUNCTION:projection.function,
@@ -6815,9 +6815,18 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                            sender=projection.sender,
                                            receiver=projection.receiver,
                                            context=context)
-                # TODO: indicate here how to decide what composition (or
-                # priority order of compositions) to get optimizer
-                # params from
+
+                if sender_in_nested:
+                    _inner = sender_node
+                    _outer = receiver_node
+                else:
+                    # receiver_in_nested
+                    _inner = receiver_node
+                    _outer = sender_node
+
+                proxy._inner_node = _inner
+                proxy._outer_node = _outer
+
                 return proxy
 
         # Create Projection if it doesn't exist
@@ -10415,10 +10424,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         comp_projections = {}
         # TODO: get matching composition param set here, handling nested
         for comp in all_compositions:
-            comp_projections[comp] = comp._get_all_projections()
+            comp_projections[comp] = set(comp._get_all_projections())
             proxies = {p: p._proxy_for for p in comp_projections[comp] if p._proxy_for}
             for proxy, orig in proxies.items():
-                comp_projections[comp][orig] = comp_projections[comp][proxy]
+                # proxy goes between an inner and outer comp, locate it
+
+                if comp in proxy._inner_node.compositions:
+                    comp_projections[comp].discard(proxy)
+                    comp_projections[comp].discard(orig)
+                else:
+                    comp_projections[comp].add(orig)
+
+                # comp_projections[comp][orig] = comp_projections[comp][proxy]
+
 
             # TODO: add learning mech then pathway
             try:
