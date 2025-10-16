@@ -3485,8 +3485,11 @@ class OptParam:
         except KeyError:
             res = self.default
 
-        if res is True:
-            res = self.default
+        # TODO: this should happen for the user-facing method, but is
+        # avoided here because internally we need to be able to detect
+        # `True`
+        # if res is True:
+        #     res = self.default
 
         return res
 
@@ -10353,9 +10356,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         projection = proj
                         break
 
-        def _valid_specified_value(v):
-            return v is not None
-            return v is not None and v is not False
+        # def _valid_specified_value(v):
+        #     return v is not None
+        #     return v is not None and v is not False
 
 
         all_projections = [projection]
@@ -10368,6 +10371,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # else:
         #     all_projections.append(proxy)
 
+        # specifications of `False` as runtime or by compositions do not
+        # apply if there is another non-None non-False value lower on
+        # the list of priorities
+        learning_disabled_tentative = False
+        # but are 'protected' from being disabled if they are specified
+        # with `True` anywhere in the priority list
+        learning_force_enabled = False
+
         try:
             runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
         except (AttributeError, KeyError):
@@ -10378,8 +10389,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             if projection and runtime.has_specific_value_for(projection):
                 val = runtime.value(projection)
                 # enable/disable this check changes set of tests that fail.....
-                if _valid_specified_value(val):
-                    return val
+                if val is not None:
+                    if val is True:
+                        learning_force_enabled = True
+                        val = runtime.default
+
+                    if val is False:
+                        learning_disabled_tentative = True
+                    elif val is not None:  # runtime.default above may be None....
+                        return val
 
         outer_compositions = set()
         queue = [self]
@@ -10414,7 +10432,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             opt_params[comp] = comp_opt_p
             for proj in all_projections:
                 if proj and comp_opt_p.has_specific_value_for(proj):
-                    return comp_opt_p.value(proj)
+                    v = comp_opt_p.value(proj)
+
+                    if v is True:
+                        learning_force_enabled = True
+                        v = comp_opt_p.default
+
+                    if v is False:
+                        learning_disabled_tentative = True
+                    elif v is not None:
+                        return v
 
         for proj in all_projections:
             if proj:
@@ -10422,14 +10449,24 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 proj_opt_p = getattr(proj_opt_params, param)
                 opt_params[proj] = proj_opt_p
                 v = proj_opt_p.value(proj)
-                if _valid_specified_value(v):
-                    return v
+                if v is not None:
+                    if v is True:
+                        learning_force_enabled = True
+                        v = proj_opt_p.default
+
+                    # think incorrect/unneeded:
+                    # if v is False:
+                    #     learning_disabled_tentative = True
+                    # else:
+
+                    if v is not None:
+                        return v
 
 
         # def _accept_composition(self, proj, comp):
         def _handle_return(op: OptParam, val):
-            return val
-            if val is True:
+            # return val
+            if val is None or val is True:
                 val = op.default
             return val
 
@@ -10461,10 +10498,28 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # except AttributeError:
                 #     obj_comps = proj.compositions
 
-                if _valid_specified_value(v) and (proj is None or obj == 'runtime' or proj in obj_projs):
+                # False values will be handled next time
+                if v is not None and (proj is None or obj == 'runtime' or proj in obj_projs):
                     if opt_param._user_specified:
                         print(self, 'get default opv as default value', v)
-                        return _handle_return(opt_param, v)
+
+                        if v is True:
+                            learning_force_enabled = True
+                            v = opt_param.default
+
+                        if v is False:
+                            learning_disabled_tentative = True
+                        elif v is not None:
+                            return _handle_return(opt_param, v)
+
+        # NOTE: reference docs _Composition_Learning_Rate_False. since
+        # return was not reached before this point, there are no
+        # explicitly defined defaults. so, if a False value was
+        # specified for the projection by now, the result should be
+        # False instead of proceeding to return a non-user-specified
+        # default value
+        if learning_disabled_tentative and not learning_force_enabled:
+            return False
 
         for obj in ['runtime', *all_compositions]:
             try:
@@ -10476,11 +10531,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 v = opt_param.value(proj)
 
                 obj_projs = comp_projections.get(obj, set())
-                if _valid_specified_value(v) and (proj is None or obj == 'runtime' or proj in obj_projs):
-                    return _handle_return(opt_param, v)
+                if v is not None and v is not True and (proj is None or obj == 'runtime' or proj in obj_projs):
+                    if v is False:
+                        learning_disabled_tentative = True
+                    else:
+                        return _handle_return(opt_param, v)
 
-        # outermost_comp = all_compositions[-1]
-        # return opt_params[outermost_comp].value(projection)
+        outermost_comp = all_compositions[-1]
+        op = opt_params[outermost_comp]
+        v = op.value(projection)
+        if v is None or v is True:
+            return op.default
+        else:
+            return v
 
         # for obj in [*all_compositions, projection]:
         #     try:

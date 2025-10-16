@@ -312,14 +312,20 @@ class TestStructural:
         m2 = m2c = m2l = m2r = .98
         o1 = o1c = o1l = o1r = .99
 
+        import copy
+
         if isinstance(ic, str):
-            ic = test_nested_dicts(ic)
+            ic_tnd = test_nested_dicts(ic)
+            ic = copy.copy(ic_tnd)
         if isinstance(mc, str):
-            mc = test_nested_dicts(mc)
+            mc_tnd = test_nested_dicts(mc)
+            mc = copy.copy(mc_tnd)
         if isinstance(oc, str):
-            oc = test_nested_dicts(oc)
+            oc_tnd = test_nested_dicts(oc)
+            oc = copy.copy(oc_tnd)
         if isinstance(lr, str):
-            lr = test_nested_dicts(lr)
+            lr_tnd = test_nested_dicts(lr)
+            lr = copy.copy(lr_tnd)
 
         inner_mech_1 = pnl.ProcessingMechanism(name='INNER NODE 1')
         inner_mech_2 = pnl.ProcessingMechanism(name='INNER NODE 2')
@@ -373,7 +379,10 @@ class TestStructural:
                          learning_rate=lr)
         pytorch_rep = outer_comp.parameters.pytorch_representation.get('Outer Comp')
         outer_comp.get_optimizer_param_value('learning_rate', outer_comp, projection=inner_proj)
-        assert pytorch_rep.get_torch_learning_rate_for_projection(inner_proj) == ipl
+
+        if pytorch_rep.get_torch_learning_rate_for_projection(inner_proj) != ipl:
+            outer_comp.get_optimizer_param_value('learning_rate', outer_comp, projection=inner_proj)
+            assert pytorch_rep.get_torch_learning_rate_for_projection(inner_proj) == ipl
         assert pytorch_rep.get_torch_learning_rate_for_projection(middle_proj_1) == m1l
         assert pytorch_rep.get_torch_learning_rate_for_projection(middle_proj_2) == m2l
         assert pytorch_rep.get_torch_learning_rate_for_projection(outer_proj_1) == o1l
