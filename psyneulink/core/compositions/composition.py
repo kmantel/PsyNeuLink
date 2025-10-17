@@ -3459,11 +3459,12 @@ class OptParam:
     # (set during construction from Component)
     _user_specified: bool = False
 
-    def __post_init__(self):
+    @property
+    def default(self):
         try:
-            self.default = self._value[self._default_key]
+            return self._value[self._default_key]
         except (IndexError, KeyError, TypeError):
-            self.default = self._default
+            return self._default
 
     def _item_for(self, component):
         try:
