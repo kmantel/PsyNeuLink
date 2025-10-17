@@ -348,6 +348,8 @@ class TestStructural:
                                               pathways=[middle_mech_1, middle_proj_1,
                                                         inner_comp, middle_proj_2, middle_mech_2],
                                               learning_rate=mc)
+        print('mc', mc)
+        print('mc lr', middle_comp.parameters.learning_rate)
 
         # Outer Composition
         outer_mech_in = pnl.ProcessingMechanism(name='INPUT NODE')
@@ -361,6 +363,10 @@ class TestStructural:
         outer_comp = pnl.AutodiffComposition([outer_mech_in, outer_proj_1, middle_comp, outer_proj_2, outer_mech_out],
                                              name='Outer Comp',
                                              learning_rate=oc)
+
+        print('oc', oc)
+        print('oc lr', outer_comp.parameters.learning_rate)
+
         pytorch_rep = outer_comp._build_pytorch_representation()
 
         outer_comp.get_optimizer_param_value('learning_rate', projection=inner_proj)
