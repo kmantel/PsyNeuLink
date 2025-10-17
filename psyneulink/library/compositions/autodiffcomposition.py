@@ -1245,14 +1245,14 @@ class AutodiffComposition(Composition):
 
         if (old_opt is None or new) and new is not False:
             composition_optimizer_params = OptimizerParams.from_component(self, context)
-            print('PYTORCH REP COMPOSITION OPT PARAMS', composition_optimizer_params)
+            # print('PYTORCH REP COMPOSITION OPT PARAMS', composition_optimizer_params)
 
-            for proj in self.projections:
-                try:
-                    proj_params = OptimizerParams.from_component(proj, context)
-                    print(proj, 'OPTIMIZER PARAMS', proj_params)
-                except AttributeError:
-                    print(proj, ' no learning rate param but.....learning_rate attr?', getattr(proj, 'learning_rate', 'nope'))
+            # for proj in self.projections:
+            #     try:
+            #         proj_params = OptimizerParams.from_component(proj, context)
+            #         print(proj, 'OPTIMIZER PARAMS', proj_params)
+            #     except AttributeError:
+            #         print(proj, ' no learning rate param but.....learning_rate attr?', getattr(proj, 'learning_rate', 'nope'))
 
             # Instantiate a new optimizer if there isn't one yet or new has been called and is not blocked)
             if context.runmode == ContextFlags.LEARNING_MODE:
@@ -1744,8 +1744,8 @@ class AutodiffComposition(Composition):
             print('FROM DEPRECATION', learning_rate)
 
         runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
-        print('kwargs', kwargs)
-        print('RUNTIME OPT PARAMS', runtime_optimizer_params)
+        # print('kwargs', kwargs)
+        # print('RUNTIME OPT PARAMS', runtime_optimizer_params)
 
         if OPTIMIZER_PARAMS in kwargs:
             kwargs.update(learning_rate)

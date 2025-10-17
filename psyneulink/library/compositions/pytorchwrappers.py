@@ -1089,9 +1089,9 @@ class PytorchCompositionWrapper(torch.nn.Module):
                 from_opt_param_val = self.composition._get_optimizer_param_value('learning_rate', context, projection)
                 if specified_learning_rate is not False:
                     all_requires_grads_false = False
-                print(projection)
-                print('specified_learning_rate', specified_learning_rate)
-                print('from_opt_param_val', from_opt_param_val)
+                # print(projection)
+                # print('specified_learning_rate', specified_learning_rate)
+                # print('from_opt_param_val', from_opt_param_val)
                 self._update_torch_param_group(from_opt_param_val, param,
                                                old_param_group, new_param_group, new_param_groups, optimizer)
 
@@ -1394,7 +1394,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
          """
         # import ipdb
         # ipdb.set_trace()
-        print('DEF LEARN RATE', context.__dict__)
+        # print('DEF LEARN RATE', context.__dict__)
         comp_nesting_hierarchy = nested_comp._get_outer_compositions(outer_comp)
         for comp in comp_nesting_hierarchy:
             if comp.parameters.learning_rate._user_specified:

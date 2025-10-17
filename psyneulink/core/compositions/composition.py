@@ -10405,19 +10405,24 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # referenced and tested by
                     # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
                     if val is True:
+                        print('runtime', runtime.default, runtime._default, runtime._user_specified)
                         if runtime.default is not False:
                             learning_force_enabled = True
                         val = runtime.default
+
+                    # non-dict default value undoes a force_enable....
+                    # if runtime._default is False:
+                    #     learning_force_enabled = False
 
                     if val is False:
                         learning_disabled_tentative = True
                     elif (
                         # do not return here if learning disabled is set for projection and not overridden
                         val is not None
-                        and (
-                            not learning_disabled_tentative
-                            or learning_force_enabled
-                        )
+                        # and (
+                        #     not learning_disabled_tentative
+                        #     or learning_force_enabled
+                        # )
                     ):  # runtime.default above may be None....
                         return val
 
@@ -10470,9 +10475,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # referenced and tested by
                     # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
                     if v is True:
+                        print('spec val for', comp, comp_opt_p.default, comp_opt_p._default, comp_opt_p._user_specified)
                         if comp_opt_p.default is not False:
                             learning_force_enabled = True
                         v = comp_opt_p.default
+
+                    # non-dict default value undoes a force_enable....
+                    # if comp_opt_p._default is False:
+                    #     learning_force_enabled = False
 
                     if v is False:
                         learning_disabled_tentative = True
@@ -10535,7 +10545,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 except:
                     proj_sendcomps = []
 
-                print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
+                # print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
                 obj_projs = comp_projections.get(obj, set())
                 # if _valid_specified_value(v) and (proj is None or obj_projs is None or obj in obj_projs):
                 # try:
@@ -10551,16 +10561,21 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # False values will be handled next time
                 if v is not None and (proj is None or obj == 'runtime' or proj in obj_projs):
                     if opt_param._user_specified:
-                        print(self, 'get default opv as default value', v)
+                        # print(self, 'get default opv as default value', v)
 
                         # specification of False in default overrides a
                         # projection value of True (explicitly
                         # referenced and tested by
-                        # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
+                        # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc] and d_mcf)
                         if v is True:
+                            # only default specified originally (not in dictionary form) is not protected by value of True
+                            print('uspec op', obj, opt_param.default, opt_param._default, opt_param._user_specified)
                             if opt_param.default is not False:
                                 learning_force_enabled = True
                             v = opt_param.default
+
+                        # if opt_param._default is False:
+                        #     learning_force_enabled = False
 
                         if v is False:
                             learning_disabled_tentative = True
@@ -12575,7 +12590,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         runner = CompositionRunner(self)
 
         composition_optimizer_params = OptimizerParams.from_component(self, context)
-        print('LEARN METHOD COMPOSITION OPT PARAMS', composition_optimizer_params)
+        # print('LEARN METHOD COMPOSITION OPT PARAMS', composition_optimizer_params)
 
         if runtime_optimizer_params is None:
             runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
