@@ -10399,13 +10399,25 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 val = runtime.value(projection)
                 # enable/disable this check changes set of tests that fail.....
                 if val is not None:
+                    # specification of False in default overrides a
+                    # projection value of True (explicitly
+                    # referenced and tested by
+                    # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
                     if val is True:
-                        learning_force_enabled = True
+                        if runtime.default is not False:
+                            learning_force_enabled = True
                         val = runtime.default
 
                     if val is False:
                         learning_disabled_tentative = True
-                    elif val is not None:  # runtime.default above may be None....
+                    elif (
+                        # do not return here if learning disabled is set for projection and not overridden
+                        val is not None
+                        and (
+                            not learning_disabled_tentative
+                            or learning_force_enabled
+                        )
+                    ):  # runtime.default above may be None....
                         return val
 
         outer_compositions = set()
@@ -10452,13 +10464,25 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if proj and comp_opt_p.has_specific_value_for(proj):
                     v = comp_opt_p.value(proj)
 
+                    # specification of False in default overrides a
+                    # projection value of True (explicitly
+                    # referenced and tested by
+                    # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
                     if v is True:
-                        learning_force_enabled = True
+                        if comp_opt_p.default is not False:
+                            learning_force_enabled = True
                         v = comp_opt_p.default
 
                     if v is False:
                         learning_disabled_tentative = True
-                    elif v is not None:
+                    elif (
+                        # do not return here if learning disabled is set for projection and not overridden
+                        v is not None
+                        and (
+                            not learning_disabled_tentative
+                            or learning_force_enabled
+                        )
+                    ):
                         return v
 
         for proj in all_projections:
@@ -10477,7 +10501,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     #     learning_disabled_tentative = True
                     # else:
 
-                    if v is not None:
+                    if (
+                        # do not return here if learning disabled is set for projection and not overridden
+                        v is not None
+                        and (
+                            not learning_disabled_tentative
+                            or learning_force_enabled
+                        )
+                    ):
                         return v
 
 
@@ -10521,8 +10552,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     if opt_param._user_specified:
                         print(self, 'get default opv as default value', v)
 
+                        # specification of False in default overrides a
+                        # projection value of True (explicitly
+                        # referenced and tested by
+                        # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
                         if v is True:
-                            learning_force_enabled = True
+                            if opt_param.default is not False:
+                                learning_force_enabled = True
                             v = opt_param.default
 
                         if v is False:
