@@ -10527,7 +10527,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
                         if v is False:
                             learning_disabled_tentative = True
-                        elif v is not None:
+                        elif (
+                            # do not return here if learning disabled is set for projection and not overridden
+                            v is not None
+                            and (
+                                not learning_disabled_tentative
+                                or learning_force_enabled
+                            )
+                        ):
                             return _handle_return(opt_param, v)
 
         # NOTE: reference docs _Composition_Learning_Rate_False. since
