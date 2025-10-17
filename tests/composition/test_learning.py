@@ -379,10 +379,7 @@ class TestStructural:
                          learning_rate=lr)
         pytorch_rep = outer_comp.parameters.pytorch_representation.get('Outer Comp')
         outer_comp.get_optimizer_param_value('learning_rate', outer_comp, projection=inner_proj)
-
-        if pytorch_rep.get_torch_learning_rate_for_projection(inner_proj) != ipl:
-            outer_comp.get_optimizer_param_value('learning_rate', outer_comp, projection=inner_proj)
-            assert pytorch_rep.get_torch_learning_rate_for_projection(inner_proj) == ipl
+        assert pytorch_rep.get_torch_learning_rate_for_projection(inner_proj) == ipl
         assert pytorch_rep.get_torch_learning_rate_for_projection(middle_proj_1) == m1l
         assert pytorch_rep.get_torch_learning_rate_for_projection(middle_proj_2) == m2l
         assert pytorch_rep.get_torch_learning_rate_for_projection(outer_proj_1) == o1l
