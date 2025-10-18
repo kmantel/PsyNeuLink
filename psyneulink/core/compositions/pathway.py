@@ -353,7 +353,7 @@ from psyneulink._typing import Literal
 
 from psyneulink.core.components.component import UsesParametersMeta
 from psyneulink.core.components.shellclasses import Mechanism
-from psyneulink.core.compositions.composition import Composition, CompositionError, NodeRole
+from psyneulink.core.compositions.composition import Composition, CompositionError, NodeRole, _get_optimizer_Parameter_parser
 from psyneulink.core.globals.graph import EdgeType
 from psyneulink.core.globals.keywords import \
     ANY, CONTEXT, NODE, LEARNING_FUNCTION, OBJECTIVE_MECHANISM, PROJECTION, TARGET_MECHANISM
@@ -556,7 +556,9 @@ class Pathway(object, metaclass=UsesParametersMeta):
     name = componentName
 
     class Parameters(ParametersBase):
-        learning_rate = Parameter(None, stateful=False)
+        learning_rate = Parameter(None, stateful=False, aliases='learning_rate_TEMP_UNPROCESSED')
+
+        _parse_learning_rate = _get_optimizer_Parameter_parser('learning_rate')
 
     def __init__(
             self,

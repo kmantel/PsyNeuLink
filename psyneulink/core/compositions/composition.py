@@ -3591,6 +3591,32 @@ class OptimizerParams(types.SimpleNamespace):
         return params
 
 
+def _get_optimizer_Parameter_parser(
+    param_name: str,
+) -> Callable[[ParametersBase, Any], Any]:
+    # TODO: determine if this is needed in accordance with
+    # OptParam._default_key decision
+    default_key = f'DEFAULT_{param_name.upper()}'
+
+    def _parse_opt_param(self, opt_param_value):
+        if isinstance(opt_param_value, dict) and list(opt_param_value.keys()) == [
+            default_key
+        ]:
+            opt_param_value = opt_param_value[default_key]
+            # specification asks explicit dict setting of None to be the
+            # parameter default
+            if opt_param_value is None:
+                opt_param_value = self.opt_param_value.default_value
+
+        if is_numeric(opt_param_value):
+            opt_param_value = np.asarray(opt_param_value)
+
+        return opt_param_value
+
+    _parse_opt_param.__name__ = f'_parse_{param_name}'
+    return _parse_opt_param
+
+
 class Composition(Composition_Base, metaclass=ComponentsMeta):
     """
     Composition(                           \
@@ -4120,19 +4146,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 raise CompositionError(f"`optimizations_per_minibatch` ({optimizations_per_minibatch}) "
                                        f"must an int greater than or equal to 1.")
 
-        def _parse_learning_rate_TEMP_UNPROCESSED(self, learning_rate):
-            # import ipdb
-            # ipdb.set_trace()
-            if isinstance(learning_rate, dict) and list(learning_rate.keys()) == [DEFAULT_LEARNING_RATE]:
-                learning_rate = learning_rate[DEFAULT_LEARNING_RATE]
-                # specification asks explicit dict setting of None to be the parameter default
-                if learning_rate is None:
-                    learning_rate = self.learning_rate.default_value
+        _parse_learning_rate_TEMP_UNPROCESSED = _get_optimizer_Parameter_parser('learning_rate_TEMP_UNPROCESSED')
 
-            if is_numeric(learning_rate):
-                learning_rate = np.asarray(learning_rate)
-
-            return learning_rate
 
     class _CompilationData(ParametersBase):
         execution = None
@@ -8127,7 +8142,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 #  then treat as an individual Projection specification and not a default projection specification
                 possible_default_proj_spec = [proj_spec for proj_spec in all_proj_specs
                                               if (is_matrix(proj_spec)
-                                                  or (isinstance(proj_spec, Projection)
+                                                  or ((isinstance((proj_spec), Projection))
                                                       and proj_spec._initialization_status & ContextFlags.DEFERRED_INIT
                                                       and proj_spec._init_args[SENDER] is None
                                                       and proj_spec._init_args[RECEIVER] is None))]
@@ -8619,6 +8634,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # Update graph in case method is called again
             self._analyze_graph()
 
+        learning_pathway.parameters.learning_rate.set(learning_rate, context)
         # Assign any Projection-specific learning_rates from/to LearningMechanisms
         learning_mechanisms = learning_pathway.learning_components[LEARNING_MECHANISMS]
         for learnable_projection in [lp for lp in learning_pathway.learning_components[LEARNED_PROJECTIONS]
@@ -10527,6 +10543,38 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     ):
                         return v
 
+        # TODO: learning mechanisms for each projection...
+        for comp in all_compositions:
+            for pathway in comp.pathways:
+                for proj in all_projections:
+                    if proj not in pathway:
+                        continue
+
+                    try:
+                        pathway_opt_params = opt_params[pathway]
+                    except KeyError:
+                        pathway_opt_params = OptimizerParams.from_component(pathway, context)
+                        path_opt_p = getattr(pathway_opt_params, param)
+                        opt_params[pathway] = path_opt_p
+
+                    # pathway value takes priority over the rest
+                    # regardless of whether it is specified for a
+                    # specific projection
+                    v = path_opt_p.value(proj)
+                    if v is not None:
+                        if v is True:
+                            learning_force_enabled = True
+                            v = proj_opt_p.default
+
+                        if (
+                            # do not return here if learning disabled is set for projection and not overridden
+                            v is not None
+                            and (
+                                not learning_disabled_tentative
+                                or learning_force_enabled
+                            )
+                        ):
+                            return v
 
         # def _accept_composition(self, proj, comp):
         def _handle_return(op: OptParam, val):
