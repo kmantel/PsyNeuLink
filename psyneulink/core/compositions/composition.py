@@ -10545,10 +10545,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
             for proj in all_projections:
                 v = opt_param.value(proj)
-                try:
-                    proj_sendcomps = proj.sender.owner.compositions
-                except:
-                    proj_sendcomps = []
+                # try:
+                #     proj_sendcomps = proj.sender.owner.compositions
+                # except Exception:
+                #     proj_sendcomps = []
 
                 # print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
                 obj_projs = comp_projections.get(obj, set())
