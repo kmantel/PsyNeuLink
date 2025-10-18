@@ -843,10 +843,10 @@ class PytorchCompositionWrapper(torch.nn.Module):
             self.state_dict(): (local name of torch param, Tensor)
         """
         # These are used both for error messages (hence strings) as we well determining how to update param_groups
-        optimizer_params_user_specs = {
+        optimizer_params_user_specs_mine = {
             projection: self.composition.get_optimizer_param_value('learning_rate', context, projection=projection) for projection in optimizer_params_user_specs if optimizer_params_user_specs[projection] is not None and not isinstance(projection, str)
         }
-        optimizer_params_user_specs_unmod = copy.copy(optimizer_params_user_specs)
+        optimizer_params_user_specs_unmod = copy.copy(optimizer_params_user_specs_mine)
 
         if context.runmode == ContextFlags.LEARNING_MODE:
             if context.source == ContextFlags.COMPOSITION:
@@ -890,7 +890,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         if source == CONSTRUCTOR and self.optimizer:
             # If user has specified dict with learning_rates in call to _build_pytorch_representation,
             #    need to update the construct_param_groups with specififed values
-            self._update_constructor_param_groups(self.composition, optimizer_params_user_specs)
+            self._update_constructor_param_groups(self.composition, optimizer_params_user_specs_unmod)
 
         self._assign_learning_rates(optimizer,
                                     optimizer_params_user_specs_unmod,
@@ -962,6 +962,10 @@ class PytorchCompositionWrapper(torch.nn.Module):
         #     {torch param: learning_rate}
         optimizer_torch_params_full_with_specified = {}
         for pnl_param_name, param_tuple in projection_lr_specs.items():
+            # TODO: remove/clean up
+            if pnl_param_name == DEFAULT_LEARNING_RATE:
+                continue
+
             param_val = param_tuple.value
             param_orig_spec = param_tuple.orig_spec
             # Get torch parameter specification for Projection names specified in projection_lr_specs
@@ -1026,6 +1030,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
 
         for proj_spec in specs_to_validate.copy():
             if proj_spec in self._pnl_refs_to_torch_param_names:
+                specs_to_validate.remove(proj_spec)
+            if proj_spec.startswith('default_'):
                 specs_to_validate.remove(proj_spec)
 
         if specs_to_validate:

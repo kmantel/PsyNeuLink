@@ -3596,7 +3596,7 @@ def _get_optimizer_Parameter_parser(
 ) -> Callable[[ParametersBase, Any], Any]:
     # TODO: determine if this is needed in accordance with
     # OptParam._default_key decision
-    default_key = f'DEFAULT_{param_name.upper()}'
+    default_key = f'default_{param_name.upper()}'
 
     def _parse_opt_param(self, opt_param_value):
         if isinstance(opt_param_value, dict) and list(opt_param_value.keys()) == [
@@ -4146,7 +4146,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 raise CompositionError(f"`optimizations_per_minibatch` ({optimizations_per_minibatch}) "
                                        f"must an int greater than or equal to 1.")
 
-        _parse_learning_rate_TEMP_UNPROCESSED = _get_optimizer_Parameter_parser('learning_rate_TEMP_UNPROCESSED')
+        _parse_learning_rate_TEMP_UNPROCESSED = _get_optimizer_Parameter_parser('learning_rate')
 
 
     class _CompilationData(ParametersBase):
