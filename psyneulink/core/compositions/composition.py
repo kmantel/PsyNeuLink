@@ -10398,33 +10398,38 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             opt_params['runtime'] = runtime
             if projection and runtime.has_specific_value_for(projection):
                 val = runtime.value(projection)
-                # enable/disable this check changes set of tests that fail.....
-                if val is not None:
-                    # specification of False in default overrides a
-                    # projection value of True (explicitly
-                    # referenced and tested by
-                    # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
-                    if val is True:
-                        print('runtime', runtime.default, runtime._default, runtime._user_specified)
-                        if runtime.default is not False:
-                            learning_force_enabled = True
-                        val = runtime.default
 
-                    # non-dict default value undoes a force_enable....
-                    # if runtime._default is False:
-                    #     learning_force_enabled = False
+                # specification of False in default overrides a
+                # projection value of True (explicitly
+                # referenced and tested by
+                # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
+                if val is True:
+                    print('runtime', runtime.default, runtime._default, runtime._user_specified)
+                    if runtime.default is not False:
+                        learning_force_enabled = True
+                    val = runtime.default
 
-                    if val is False:
-                        learning_disabled_tentative = True
-                    elif (
-                        # do not return here if learning disabled is set for projection and not overridden
-                        val is not None
-                        # and (
-                        #     not learning_disabled_tentative
-                        #     or learning_force_enabled
-                        # )
-                    ):  # runtime.default above may be None....
-                        return val
+                # has_specific_value_for plus value of None uses default
+                # tested for explicitly by
+                # tests/composition/test_learning.py::TestStructural::test_single_level_proj_pathway_comp_learning_rates[proj_0.1-pway_0.2-comp_True]
+                if val is None:
+                    val = runtime.default
+
+                # non-dict default value undoes a force_enable....
+                # if runtime._default is False:
+                #     learning_force_enabled = False
+
+                if val is False:
+                    learning_disabled_tentative = True
+                elif (
+                    # do not return here if learning disabled is set for projection and not overridden
+                    val is not None
+                    # and (
+                    #     not learning_disabled_tentative
+                    #     or learning_force_enabled
+                    # )
+                ):  # runtime.default above may be None....
+                    return val
 
         outer_compositions = set()
         queue = [self]
