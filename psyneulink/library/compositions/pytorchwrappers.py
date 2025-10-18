@@ -1087,7 +1087,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
                                                                 run_time_default_learning_rate,
                                                                 source, context))
                 from_opt_param_val = self.composition._get_optimizer_param_value('learning_rate', context, projection)
-                if specified_learning_rate is not False:
+                if from_opt_param_val is not False:
                     all_requires_grads_false = False
                 # print(projection)
                 # print('specified_learning_rate', specified_learning_rate)
