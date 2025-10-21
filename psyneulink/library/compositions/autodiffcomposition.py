@@ -388,7 +388,7 @@ import numpy as np
 from packaging import version
 from pathlib import Path, PosixPath
 from collections import deque
-from typing import Any, Dict, Hashable, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Hashable, Set, Tuple, Union
 
 try:
     import torch
@@ -444,6 +444,10 @@ from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
 from psyneulink.core.scheduling.time import TimeScale
 from psyneulink.core import llvm as pnlvm
+
+
+if TYPE_CHECKING:
+    from psyneulink.library.compositions.grucomposition.pytorchGRUwrappers import DummyProjection
 
 
 logger = logging.getLogger(__name__)
@@ -1306,6 +1310,9 @@ class AutodiffComposition(Composition):
             learning_rate = optimizer_params.pop(DEFAULT_LEARNING_RATE,
                                                  self.parameters.learning_rate.default_value)
             self.parameters.learning_rate.set(learning_rate, context)
+
+        learning_rate = self._get_optimizer_param_value('learning_rate', context)
+
         if not is_numeric_scalar(learning_rate):
             raise AutodiffCompositionError(
                 f"A value ('{learning_rate}') specified in the 'learning_rate' arg of the learn() method "
@@ -2517,23 +2524,28 @@ class AutodiffComposition(Composition):
         except:
             raise AutodiffCompositionError(
                 f"PROGRAM ERROR:  problem accessing torch.named_parameters() for '{self.name}'.")
-    @property
-    def _dependent_components(self) -> Iterable[Component]:
-        res = super()._dependent_components
 
+    @property
+    def _dummy_projections(self) -> Set['DummyProjection']:
+        res = set()
         # NOTE: _dependent_components should possibly be reworked to be
         # a context-dependent method
         for pytorch_repr in self.parameters.pytorch_representation.values.values():
             if pytorch_repr is not None:
-                res.extend([w.projection for w in pytorch_repr.projection_wrappers])
+                res.update([w.projection for w in pytorch_repr.projection_wrappers])
                 try:
                     dummy_proj_pairs = pytorch_repr._projection_wrapper_pairs
                 except AttributeError:
                     # currently only GRU wrapper uses them
                     pass
                 else:
-                    res.extend([dummy_proj for dummy_proj, _ in dummy_proj_pairs])
+                    res.update([dummy_proj for dummy_proj, _ in dummy_proj_pairs])
+        return res
 
+    @property
+    def _dependent_components(self) -> Iterable[Component]:
+        res = super()._dependent_components
+        res.extend(self._dummy_projections)
         return res
 
     def _get_default_comp_learning_rate(self):
