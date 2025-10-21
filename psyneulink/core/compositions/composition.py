@@ -3551,7 +3551,7 @@ class OptimizerParams(types.SimpleNamespace):
 
     @staticmethod
     def _params_from_component(
-        component: Component, context: Context
+        component: Component, context: Optional[Context] = None,
     ) -> 'OptimizerParams':
         params = {}
         for param_name in OptimizerParams.__annotations__:
@@ -3565,13 +3565,18 @@ class OptimizerParams(types.SimpleNamespace):
                 key_name = param_name
                 if param_name == 'learning_rate':
                     key_name = 'learning_rate_TEMP_UNPROCESSED'
-                value = getattr(component.parameters, key_name)._get(context)
+                param = getattr(component.parameters, key_name)
+
+                if context is None:
+                    value = param.default_value
+                else:
+                    value = param._get(context)
                 params[param_name] = copy_parameter_value(value)
         return params
 
     @staticmethod
-    def from_component(
-        component: Component, context: Context
+    def _from_component(
+        component: Component, context: Optional[Context] = None,
     ) -> 'OptimizerParams':
         params = OptimizerParams._params_from_component(component, context)
         params = OptimizerParams(**params)
@@ -3586,9 +3591,22 @@ class OptimizerParams(types.SimpleNamespace):
             if param_name == 'learning_rate':
                 key_name = 'learning_rate_TEMP_UNPROCESSED'
             comp_param = getattr(component.parameters, key_name)
-            getattr(params, param_name)._user_specified = param._value is not None and comp_param._user_specified
+            getattr(params, param_name)._user_specified = (
+                (param._value is not None or comp_param.specify_none)
+                and comp_param._user_specified
+            )
 
         return params
+
+    @staticmethod
+    def from_component(
+        component: Component, context: Context
+    ) -> 'OptimizerParams':
+        return OptimizerParams._from_component(component, context)
+
+    @staticmethod
+    def from_component_defaults(component: Component) -> 'OptimizerParams':
+        return OptimizerParams._from_component(component)
 
 
 def _get_optimizer_Parameter_parser(
@@ -3599,14 +3617,13 @@ def _get_optimizer_Parameter_parser(
     default_key = f'default_{param_name.upper()}'
 
     def _parse_opt_param(self, opt_param_value):
-        if isinstance(opt_param_value, dict) and list(opt_param_value.keys()) == [
-            default_key
-        ]:
-            opt_param_value = opt_param_value[default_key]
-            # specification asks explicit dict setting of None to be the
-            # parameter default
-            if opt_param_value is None:
-                opt_param_value = self.opt_param_value.default_value
+        if isinstance(opt_param_value, dict):
+            if list(opt_param_value.keys()) == [default_key]:
+                opt_param_value = opt_param_value[default_key]
+                # specification asks explicit dict setting of None to be the
+                # parameter default
+                if opt_param_value is None:
+                    opt_param_value = getattr(self, param_name).default_value
 
         if is_numeric(opt_param_value):
             opt_param_value = np.asarray(opt_param_value)
@@ -10464,6 +10481,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # TODO: get matching composition param set here, handling nested
         for comp in all_compositions:
             comp_projections[comp] = set(comp._get_all_projections())
+            try:
+                comp_projections[comp].update(comp._dummy_projections)
+            except AttributeError:
+                # only AutodiffComposition has _dummy_projections
+                pass
+
             proxies = {p: p._proxy_for for p in comp_projections[comp] if p._proxy_for}
             for proxy, orig in proxies.items():
                 # proxy goes between an inner and outer comp, locate it
@@ -10651,6 +10674,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if learning_disabled_tentative and not learning_force_enabled:
             return False
 
+        outermost_comp = None
         for obj in ['runtime', *all_compositions]:
             try:
                 opt_param = opt_params[obj]
@@ -10661,19 +10685,52 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 v = opt_param.value(proj)
 
                 obj_projs = comp_projections.get(obj, set())
+                if proj in obj_projs:
+                    outermost_comp = obj
                 if v is not None and v is not True and (proj is None or obj == 'runtime' or proj in obj_projs):
                     if v is False:
                         learning_disabled_tentative = True
                     else:
                         return _handle_return(opt_param, v)
 
-        outermost_comp = all_compositions[-1]
-        op = opt_params[outermost_comp]
-        v = op.value(projection)
-        if v is None or v is True:
-            return op.default
-        else:
-            return v
+        matching_compositions = []
+        for obj in ['runtime', *all_compositions]:
+            try:
+                opt_param = opt_params[obj]
+            except KeyError:
+                continue
+
+            for proj in all_projections:
+                v = opt_param.value(proj)
+
+                obj_projs = comp_projections.get(obj, set())
+                if obj != 'runtime' and (not proj or proj in obj_projs):
+                    matching_compositions.append(obj)
+                if v is not None and v is not True and (proj is None or obj == 'runtime' or proj in obj_projs):
+                    if v is False:
+                        learning_disabled_tentative = True
+                    else:
+                        return _handle_return(opt_param, v)
+
+        assert len(all_projections) == 1
+        for comp in matching_compositions:
+            default_opt_params = OptimizerParams.from_component_defaults(comp)
+            opt_param = getattr(default_opt_params, param)
+            for proj in all_projections:
+                v = opt_param.value(proj)
+                if v is None or v is True:
+                    v = opt_param.default
+
+                if v is not None and v is not True:
+                    return v
+
+
+        for comp in matching_compositions:
+            for proj in all_projections:
+                v = getattr(comp.class_defaults, param)
+                return v
+
+        assert all_compositions == matching_compositions, f'A {all_compositions}\nM {matching_compositions}'
 
         # for obj in [*all_compositions, projection]:
         #     try:
