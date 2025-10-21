@@ -10564,7 +10564,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     if v is not None:
                         if v is True:
                             learning_force_enabled = True
-                            v = proj_opt_p.default
+                            v = path_opt_p.default
 
                         if (
                             # do not return here if learning disabled is set for projection and not overridden
