@@ -3459,6 +3459,9 @@ class OptParam:
     # (set during construction from Component)
     _user_specified: bool = False
 
+    def __post_init__(self):
+        self._value = copy(self._value)
+
     @property
     def default(self):
         try:
