@@ -1031,8 +1031,11 @@ class PytorchCompositionWrapper(torch.nn.Module):
         for proj_spec in specs_to_validate.copy():
             if proj_spec in self._pnl_refs_to_torch_param_names:
                 specs_to_validate.remove(proj_spec)
-            if proj_spec.startswith('default_'):
-                specs_to_validate.remove(proj_spec)
+            try:
+                if proj_spec.startswith('default_'):
+                    specs_to_validate.remove(proj_spec)
+            except AttributeError:
+                pass
 
         if specs_to_validate:
             # Give subclasses a chance to identify specs by calling _validate_optimizer_param_specs()

@@ -11,7 +11,7 @@ from psyneulink import RANDOM_CONNECTIVITY_MATRIX
 
 from psyneulink.core.components.functions.nonstateful.transferfunctions import Logistic
 from psyneulink.core.components.functions.nonstateful.learningfunctions import BackPropagation
-from psyneulink.core.compositions.composition import Composition
+from psyneulink.core.compositions.composition import Composition, CompositionError
 from psyneulink.core.globals import Context
 from psyneulink.core.globals.keywords import Loss, DEFAULT_LEARNING_RATE, TRAINING_SET
 from psyneulink.core.components.mechanisms.processing.transfermechanism import TransferMechanism
@@ -3872,9 +3872,8 @@ class TestMiscTrainingFunctionality:
                            "for 'OUTER' is not in that Composition or any nested within it: 'bad_proj'.")
             elif condition == 'bad_lr':
                 opt_params = {input_proj: condition}
-                err_msg = ("A value ('bad_lr') specified in the 'learning_rate' arg of the learn() method for 'OUTER' "
-                           "is not valid; it must be an int, float, bool or None.")
-            with pytest.raises(AutodiffCompositionError) as error_text:
+                err_msg = "must be an int, float, bool or None"
+            with pytest.raises(CompositionError) as error_text:
                 outer_comp = pnl.AutodiffComposition(
                     [input_mech, input_proj, nested_comp, output_proj, output_mech], name='OUTER')
                 outer_comp.learn(inputs=inputs, targets=targets, learning_rate=opt_params)

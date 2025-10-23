@@ -3242,6 +3242,7 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.log import CompositionLog, LogCondition
 from psyneulink.core.globals.parameters import (
     Parameter,
+    ParameterError,
     ParameterNoValueError,
     ParametersBase,
     check_user_specified,
@@ -3251,7 +3252,7 @@ from psyneulink.core.globals.preferences.basepreferenceset import BasePreference
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel, _assign_prefs
 from psyneulink.core.globals.registry import register_category
 from psyneulink.core.globals.utilities import (
-    ContentAddressableList, PNLStrEnum, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list,
+    ContentAddressableList, PNLStrEnum, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list, is_numeric_or_none, is_numeric_scalar,
     nesting_depth, convert_to_np_array, is_numeric, is_matrix, is_matrix_keyword, parse_valid_identifier, extended_array_equal, try_extract_0d_array_item,
 )
 from psyneulink.core.scheduling.condition import Always, Condition, Never
@@ -4167,6 +4168,20 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"must an int greater than or equal to 1.")
 
         _parse_learning_rate_TEMP_UNPROCESSED = _get_optimizer_Parameter_parser('learning_rate')
+
+        def _validate_learning_rate(self, learning_rate):
+            base_err = "must be an int, float, bool or None"
+            try:
+                lr_dict = learning_rate.items()
+            except AttributeError:
+                if learning_rate is not None and not is_numeric_scalar(learning_rate):
+                    return base_err
+            else:
+                for key, val in lr_dict:
+                    if val is not None and not is_numeric_scalar(val):
+                        return f'element {key} {base_err}'
+
+        _validate_learning_rate_TEMP_UNPROCESSED = _validate_learning_rate
 
 
     class _CompilationData(ParametersBase):
@@ -12712,8 +12727,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         except AttributeError:
             self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
 
-        # TODO: prioritize runtime and composition here
-        resolved_optimizer_params = None
+        try:
+            self.parameters._validate('learning_rate', self.runtime_optimizer_params[context.execution_id].learning_rate._value)
+        except ParameterError as e:
+            raise CompositionError(str(e)) from e
 
         if not isinstance(self, AutodiffComposition):
             if isinstance(learning_rate, dict):
