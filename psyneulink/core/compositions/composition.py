@@ -10484,30 +10484,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         nested_compositions = reversed(self._get_nested_compositions())
         all_compositions = [*nested_compositions, *outer_compositions]
+        all_pathways = []
 
         # TODO: check if should just filter all_compositions here...
         obj_projections = {}
         # TODO: get matching composition param set here, handling nested
         for comp in all_compositions:
-            obj_projections[comp] = set(comp._get_all_projections())
-            try:
-                obj_projections[comp].update(comp._dummy_projections)
-            except AttributeError:
-                # only AutodiffComposition has _dummy_projections
-                pass
-
-            proxies = {p: p._proxy_for for p in obj_projections[comp] if p._proxy_for}
-            for proxy, orig in proxies.items():
-                # proxy goes between an inner and outer comp, locate it
-
-                if comp in proxy._inner_node.compositions:
-                    obj_projections[comp].discard(proxy)
-                    obj_projections[comp].discard(orig)
-                else:
-                    obj_projections[comp].add(orig)
-
-                # obj_projections[comp][orig] = obj_projections[comp][proxy]
-
+            obj_projections[comp] = comp._optimization_projections
+            for pathway in comp.pathways:
+                all_pathways.append(pathway)
+                obj_projections[pathway] = pathway._optimization_projections
 
             # TODO: add learning mech then pathway
             try:
@@ -14748,6 +14734,31 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         ports = super()._receiver_ports
         ports.extend(self.parameter_CIM.input_ports)
         return ports
+
+    @property
+    def _optimization_projections(self) -> Set[Projection]:
+        """
+        Contains projections that can have optimization parameter values
+        defined by this Composition
+        """
+        opt_projections = set(self._get_all_projections())
+        try:
+            opt_projections.update(self._dummy_projections)
+        except AttributeError:
+            # only AutodiffComposition has _dummy_projections as of now
+            pass
+
+        proxies = {p: p._proxy_for for p in opt_projections if p._proxy_for}
+        for proxy, orig in proxies.items():
+            # proxy goes between an inner and outer comp, locate it.
+            # only the outer composition is allowed to give optimization
+            # parameter values
+            if self in proxy._inner_node.compositions:
+                opt_projections.discard(proxy)
+                opt_projections.discard(orig)
+            else:
+                opt_projections.add(orig)
+        return opt_projections
 
     # endregion PROPERTIES
 
