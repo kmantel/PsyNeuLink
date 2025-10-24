@@ -352,7 +352,7 @@ from enum import Enum
 from psyneulink._typing import Literal
 
 from psyneulink.core.components.component import UsesParametersMeta
-from psyneulink.core.components.shellclasses import Mechanism
+from psyneulink.core.components.shellclasses import Mechanism, Projection
 from psyneulink.core.compositions.composition import Composition, CompositionError, NodeRole, _get_optimizer_Parameter_parser
 from psyneulink.core.globals.graph import EdgeType
 from psyneulink.core.globals.keywords import \
@@ -720,3 +720,28 @@ class Pathway(object, metaclass=UsesParametersMeta):
                     assert False, f"PROGRAM ERROR: {self.__class__.__name__} {self.name} of {self.composition.name} " \
                                   f"has PathwayRole.LEARNING assigned but no 'learning_function' attribute."
                 return None
+
+    @property
+    def _optimization_projections(self):
+        """
+        Contains projections that can have optimization parameter values
+        defined by this Pathway
+        """
+        opt_projections = set(filter(lambda o: isinstance(o, Projection), self.pathway))
+        # can use only if self.composition is not None and the
+        # composition is (in?) the proxy outer node composition(s?)
+        proxies = {p: p._proxy_for for p in opt_projections if p._proxy_for}
+        for proxy, orig in proxies.items():
+            # proxy goes between an inner and outer comp, locate it.
+            # only the outer composition is allowed to give optimization
+            # parameter values
+            if (
+                self.composition is None
+                or self.composition in proxy._inner_node.compositions
+            ):
+                opt_projections.discard(proxy)
+                opt_projections.discard(orig)
+            else:
+                opt_projections.add(orig)
+
+        return opt_projections
