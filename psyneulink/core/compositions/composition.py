@@ -10495,27 +10495,29 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         nested_compositions = reversed(self._get_nested_compositions())
         all_compositions = [*nested_compositions, *outer_compositions]
-        comp_projections = {}
+
+        # TODO: check if should just filter all_compositions here...
+        obj_projections = {}
         # TODO: get matching composition param set here, handling nested
         for comp in all_compositions:
-            comp_projections[comp] = set(comp._get_all_projections())
+            obj_projections[comp] = set(comp._get_all_projections())
             try:
-                comp_projections[comp].update(comp._dummy_projections)
+                obj_projections[comp].update(comp._dummy_projections)
             except AttributeError:
                 # only AutodiffComposition has _dummy_projections
                 pass
 
-            proxies = {p: p._proxy_for for p in comp_projections[comp] if p._proxy_for}
+            proxies = {p: p._proxy_for for p in obj_projections[comp] if p._proxy_for}
             for proxy, orig in proxies.items():
                 # proxy goes between an inner and outer comp, locate it
 
                 if comp in proxy._inner_node.compositions:
-                    comp_projections[comp].discard(proxy)
-                    comp_projections[comp].discard(orig)
+                    obj_projections[comp].discard(proxy)
+                    obj_projections[comp].discard(orig)
                 else:
-                    comp_projections[comp].add(orig)
+                    obj_projections[comp].add(orig)
 
-                # comp_projections[comp][orig] = comp_projections[comp][proxy]
+                # obj_projections[comp][orig] = obj_projections[comp][proxy]
 
 
             # TODO: add learning mech then pathway
@@ -10640,7 +10642,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 #     proj_sendcomps = []
 
                 # print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
-                obj_projs = comp_projections.get(obj, set())
+                obj_projs = obj_projections.get(obj, set())
                 # if _valid_specified_value(v) and (proj is None or obj_projs is None or obj in obj_projs):
                 # try:
                 #     obj_comps = proj.sender.owner.compositions
@@ -10702,7 +10704,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             for proj in all_projections:
                 v = opt_param.value(proj)
 
-                obj_projs = comp_projections.get(obj, set())
+                obj_projs = obj_projections.get(obj, set())
                 if proj in obj_projs:
                     outermost_comp = obj
                 if v is not None and v is not True and (proj is None or obj == 'runtime' or proj in obj_projs):
@@ -10721,7 +10723,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             for proj in all_projections:
                 v = opt_param.value(proj)
 
-                obj_projs = comp_projections.get(obj, set())
+                obj_projs = obj_projections.get(obj, set())
                 if obj != 'runtime' and (not proj or proj in obj_projs):
                     matching_compositions.append(obj)
                 if v is not None and v is not True and (proj is None or obj == 'runtime' or proj in obj_projs):
