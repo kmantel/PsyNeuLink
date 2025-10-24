@@ -10421,17 +10421,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         #     return v is not None
         #     return v is not None and v is not False
 
-
-        all_projections = [projection]
-        # try:
-        #     proxy = projection._proxy_for
-        # except AttributeError:
-        #     # TODO: most likely a string that didn't resolve to a
-        #     # projection. check here
-        #     pass
-        # else:
-        #     all_projections.append(proxy)
-
         # specifications of `False` as runtime or by compositions do not
         # apply if there is another non-None non-False value lower on
         # the list of priorities
@@ -10530,51 +10519,87 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 continue
             comp_opt_p = getattr(comp_opt_params, param)
             opt_params[comp] = comp_opt_p
-            for proj in all_projections:
-                if proj and comp_opt_p.has_specific_value_for(proj):
-                    v = comp_opt_p.value(proj)
 
-                    # specification of False in default overrides a
-                    # projection value of True (explicitly
-                    # referenced and tested by
-                    # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
-                    if v is True:
-                        print('spec val for', comp, comp_opt_p.default, comp_opt_p._default, comp_opt_p._user_specified)
-                        if comp_opt_p.default is not False:
-                            learning_force_enabled = True
-                        v = comp_opt_p.default
+            if projection and comp_opt_p.has_specific_value_for(projection):
+                v = comp_opt_p.value(projection)
 
-                    # non-dict default value undoes a force_enable....
-                    # if comp_opt_p._default is False:
-                    #     learning_force_enabled = False
+                # specification of False in default overrides a
+                # projection value of True (explicitly
+                # referenced and tested by
+                # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
+                if v is True:
+                    print('spec val for', comp, comp_opt_p.default, comp_opt_p._default, comp_opt_p._user_specified)
+                    if comp_opt_p.default is not False:
+                        learning_force_enabled = True
+                    v = comp_opt_p.default
 
-                    if v is False:
-                        learning_disabled_tentative = True
-                    elif (
-                        # do not return here if learning disabled is set for projection and not overridden
-                        v is not None
-                        and (
-                            not learning_disabled_tentative
-                            or learning_force_enabled
-                        )
-                    ):
-                        return v
+                # non-dict default value undoes a force_enable....
+                # if comp_opt_p._default is False:
+                #     learning_force_enabled = False
 
-        for proj in all_projections:
-            if proj:
-                proj_opt_params = OptimizerParams.from_component(proj, context)
-                proj_opt_p = getattr(proj_opt_params, param)
-                opt_params[proj] = proj_opt_p
-                v = proj_opt_p.value(proj)
+                if v is False:
+                    learning_disabled_tentative = True
+                elif (
+                    # do not return here if learning disabled is set for projection and not overridden
+                    v is not None
+                    and (
+                        not learning_disabled_tentative
+                        or learning_force_enabled
+                    )
+                ):
+                    return v
+
+        if projection:
+            proj_opt_params = OptimizerParams.from_component(projection, context)
+            proj_opt_p = getattr(proj_opt_params, param)
+            opt_params[projection] = proj_opt_p
+            v = proj_opt_p.value(projection)
+            if v is not None:
+                if v is True:
+                    learning_force_enabled = True
+                    v = proj_opt_p.default
+
+                # think incorrect/unneeded:
+                # if v is False:
+                #     learning_disabled_tentative = True
+                # else:
+
+                if (
+                    # do not return here if learning disabled is set for projection and not overridden
+                    v is not None
+                    and (
+                        not learning_disabled_tentative
+                        or learning_force_enabled
+                    )
+                ):
+                    return v
+
+        # pathways should be AFTER runtime....
+        # TODO: learning mechanisms for each projection...
+        for comp in all_compositions:
+            for pathway in comp.pathways:
+                if projection not in pathway:
+                    continue
+
+                try:
+                    pathway_opt_params = opt_params[pathway]
+                except KeyError:
+                    pathway_opt_params = OptimizerParams.from_component(pathway, context)
+                    path_opt_p = getattr(pathway_opt_params, param)
+                    opt_params[pathway] = path_opt_p
+
+                # then check after other comp defaults? questionable... though maybe correct
+                if not path_opt_p._user_specified:
+                    continue
+
+                # pathway value takes priority over the rest
+                # regardless of whether it is specified for a
+                # specific projection
+                v = path_opt_p.value(projection)
                 if v is not None:
                     if v is True:
                         learning_force_enabled = True
-                        v = proj_opt_p.default
-
-                    # think incorrect/unneeded:
-                    # if v is False:
-                    #     learning_disabled_tentative = True
-                    # else:
+                        v = path_opt_p.default
 
                     if (
                         # do not return here if learning disabled is set for projection and not overridden
@@ -10586,40 +10611,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     ):
                         return v
 
-        # TODO: learning mechanisms for each projection...
-        for comp in all_compositions:
-            for pathway in comp.pathways:
-                for proj in all_projections:
-                    if proj not in pathway:
-                        continue
+        # NOW: non projection-specific values...
 
-                    try:
-                        pathway_opt_params = opt_params[pathway]
-                    except KeyError:
-                        pathway_opt_params = OptimizerParams.from_component(pathway, context)
-                        path_opt_p = getattr(pathway_opt_params, param)
-                        opt_params[pathway] = path_opt_p
-
-                    # pathway value takes priority over the rest
-                    # regardless of whether it is specified for a
-                    # specific projection
-                    v = path_opt_p.value(proj)
-                    if v is not None:
-                        if v is True:
-                            learning_force_enabled = True
-                            v = path_opt_p.default
-
-                        if (
-                            # do not return here if learning disabled is set for projection and not overridden
-                            v is not None
-                            and (
-                                not learning_disabled_tentative
-                                or learning_force_enabled
-                            )
-                        ):
-                            return v
-
-        # def _accept_composition(self, proj, comp):
+        # def _accept_composition(self, projection, comp):
         def _handle_return(op: OptParam, val):
             # return val
             if val is None or val is True:
@@ -10634,56 +10628,55 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             except KeyError:
                 continue
 
-            for proj in all_projections:
-                v = opt_param.value(proj)
-                # try:
-                #     proj_sendcomps = proj.sender.owner.compositions
-                # except Exception:
-                #     proj_sendcomps = []
+            v = opt_param.value(projection)
+            # try:
+            #     proj_sendcomps = projection.sender.owner.compositions
+            # except Exception:
+            #     proj_sendcomps = []
 
-                # print('---test for default opv obj', self, obj, 'projection', proj, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'proj compositions', [c for c in getattr(proj, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
-                obj_projs = obj_projections.get(obj, set())
-                # if _valid_specified_value(v) and (proj is None or obj_projs is None or obj in obj_projs):
-                # try:
-                #     obj_comps = proj.sender.owner.compositions
-                # except AttributeError:
-                #     # GRU/DummyProjection has no sender
-                #     obj_comps = set()
-                # try:
-                #     obj_comps = proj._proxy.compositions
-                # except AttributeError:
-                #     obj_comps = proj.compositions
+            # print('---test for default opv obj', self, obj, 'projection', projection, 'v', v, 'obj projections', getattr(obj, 'projections', set()), 'projection compositions', [c for c in getattr(projection, 'compositions', [])], 'proj_sendcomps', list(proj_sendcomps))
+            obj_projs = obj_projections.get(obj, set())
+            # if _valid_specified_value(v) and (projection is None or obj_projs is None or obj in obj_projs):
+            # try:
+            #     obj_comps = projection.sender.owner.compositions
+            # except AttributeError:
+            #     # GRU/DummyProjection has no sender
+            #     obj_comps = set()
+            # try:
+            #     obj_comps = projection._proxy.compositions
+            # except AttributeError:
+            #     obj_comps = projection.compositions
 
-                # False values will be handled next time
-                if v is not None and (proj is None or obj == 'runtime' or proj in obj_projs):
-                    if opt_param._user_specified:
-                        # print(self, 'get default opv as default value', v)
+            # False values will be handled next time
+            if v is not None and (projection is None or obj == 'runtime' or projection in obj_projs):
+                if opt_param._user_specified:
+                    # print(self, 'get default opv as default value', v)
 
-                        # specification of False in default overrides a
-                        # projection value of True (explicitly
-                        # referenced and tested by
-                        # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc] and d_mcf)
-                        if v is True:
-                            # only default specified originally (not in dictionary form) is not protected by value of True
-                            print('uspec op', obj, opt_param.default, opt_param._default, opt_param._user_specified)
-                            if opt_param.default is not False:
-                                learning_force_enabled = True
-                            v = opt_param.default
+                    # specification of False in default overrides a
+                    # projection value of True (explicitly
+                    # referenced and tested by
+                    # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc] and d_mcf)
+                    if v is True:
+                        # only default specified originally (not in dictionary form) is not protected by value of True
+                        print('uspec op', obj, opt_param.default, opt_param._default, opt_param._user_specified)
+                        if opt_param.default is not False:
+                            learning_force_enabled = True
+                        v = opt_param.default
 
-                        # if opt_param._default is False:
-                        #     learning_force_enabled = False
+                    # if opt_param._default is False:
+                    #     learning_force_enabled = False
 
-                        if v is False:
-                            learning_disabled_tentative = True
-                        elif (
-                            # do not return here if learning disabled is set for projection and not overridden
-                            v is not None
-                            and (
-                                not learning_disabled_tentative
-                                or learning_force_enabled
-                            )
-                        ):
-                            return _handle_return(opt_param, v)
+                    if v is False:
+                        learning_disabled_tentative = True
+                    elif (
+                        # do not return here if learning disabled is set for projection and not overridden
+                        v is not None
+                        and (
+                            not learning_disabled_tentative
+                            or learning_force_enabled
+                        )
+                    ):
+                        return _handle_return(opt_param, v)
 
         # NOTE: reference docs _Composition_Learning_Rate_False. since
         # return was not reached before this point, there are no
@@ -10701,17 +10694,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             except KeyError:
                 continue
 
-            for proj in all_projections:
-                v = opt_param.value(proj)
+            v = opt_param.value(projection)
 
-                obj_projs = obj_projections.get(obj, set())
-                if proj in obj_projs:
-                    outermost_comp = obj
-                if v is not None and v is not True and (proj is None or obj == 'runtime' or proj in obj_projs):
-                    if v is False:
-                        learning_disabled_tentative = True
-                    else:
-                        return _handle_return(opt_param, v)
+            obj_projs = obj_projections.get(obj, set())
+            if projection in obj_projs:
+                outermost_comp = obj
+            if v is not None and v is not True and (projection is None or obj == 'runtime' or projection in obj_projs):
+                if v is False:
+                    learning_disabled_tentative = True
+                else:
+                    return _handle_return(opt_param, v)
 
         matching_compositions = []
         for obj in ['runtime', *all_compositions]:
@@ -10720,35 +10712,30 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             except KeyError:
                 continue
 
-            for proj in all_projections:
-                v = opt_param.value(proj)
+            v = opt_param.value(projection)
 
-                obj_projs = obj_projections.get(obj, set())
-                if obj != 'runtime' and (not proj or proj in obj_projs):
-                    matching_compositions.append(obj)
-                if v is not None and v is not True and (proj is None or obj == 'runtime' or proj in obj_projs):
-                    if v is False:
-                        learning_disabled_tentative = True
-                    else:
-                        return _handle_return(opt_param, v)
+            obj_projs = obj_projections.get(obj, set())
+            if obj != 'runtime' and (not projection or projection in obj_projs):
+                matching_compositions.append(obj)
+            if v is not None and v is not True and (projection is None or obj == 'runtime' or projection in obj_projs):
+                if v is False:
+                    learning_disabled_tentative = True
+                else:
+                    return _handle_return(opt_param, v)
 
-        assert len(all_projections) == 1
         for comp in matching_compositions:
             default_opt_params = OptimizerParams.from_component_defaults(comp)
             opt_param = getattr(default_opt_params, param)
-            for proj in all_projections:
-                v = opt_param.value(proj)
-                if v is None or v is True:
-                    v = opt_param.default
+            v = opt_param.value(projection)
+            if v is None or v is True:
+                v = opt_param.default
 
-                if v is not None and v is not True:
-                    return v
-
+            if v is not None and v is not True:
+                return v
 
         for comp in matching_compositions:
-            for proj in all_projections:
-                v = getattr(comp.class_defaults, param)
-                return v
+            v = getattr(comp.class_defaults, param)
+            return v
 
         assert all_compositions == matching_compositions, f'A {all_compositions}\nM {matching_compositions}'
 
