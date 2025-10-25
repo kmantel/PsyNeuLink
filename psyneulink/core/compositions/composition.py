@@ -8669,7 +8669,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # Update graph in case method is called again
             self._analyze_graph()
 
+        # TODO: generalize
         learning_pathway.parameters.learning_rate.set(learning_rate, context)
+        # NOTE: this will not handle difference between user-passed None and default-None
+        if learning_rate is not None or learning_pathway.parameters.learning_rate.specify_none:
+            learning_pathway.parameters.learning_rate._user_specified = True
+
         # Assign any Projection-specific learning_rates from/to LearningMechanisms
         learning_mechanisms = learning_pathway.learning_components[LEARNING_MECHANISMS]
         for learnable_projection in [lp for lp in learning_pathway.learning_components[LEARNED_PROJECTIONS]
@@ -8861,6 +8866,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             BackPropagation `learning Pathway` <Composition_Learning_Pathway>` added to the Composition.
 
         """
+
+        # TODO: disable this, probably
         learning_rate = learning_rate if learning_rate is not None \
             else self.learning_rate if self.learning_rate is not None \
             else None
@@ -10495,7 +10502,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 all_pathways.append(pathway)
                 obj_projections[pathway] = pathway._optimization_projections
 
-            # TODO: add learning mech then pathway
+        # TODO: add learning mech then pathway
+        for comp in all_compositions:
             try:
                 comp_opt_params = OptimizerParams.from_component(comp, context)
             except ParameterNoValueError:
@@ -10562,9 +10570,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # pathways should be AFTER runtime....
         # TODO: learning mechanisms for each projection...
+        # TODO: handle possibility of projection being in multiple pathways with specified values?
         for comp in all_compositions:
             for pathway in comp.pathways:
-                if projection not in pathway:
+                if projection not in obj_projections[pathway]:
                     continue
 
                 try:
@@ -12702,10 +12711,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         except AttributeError:
             self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
 
+        rt_lr = self.runtime_optimizer_params[context.execution_id].learning_rate._value
         try:
-            self.parameters._validate('learning_rate', self.runtime_optimizer_params[context.execution_id].learning_rate._value)
+            self.parameters.learning_rate._validate(rt_lr)
         except ParameterError as e:
-            raise CompositionError(str(e)) from e
+            raise CompositionError(
+                f"A value ('{rt_lr}') specified in the 'learning_rate'"
+                f" arg of the learn() method for '{self.name}' is not valid;"
+                " it must be an int, float, bool or None."
+            ) from e
 
         if not isinstance(self, AutodiffComposition):
             if isinstance(learning_rate, dict):
