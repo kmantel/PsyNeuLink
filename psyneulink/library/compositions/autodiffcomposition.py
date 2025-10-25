@@ -1986,7 +1986,6 @@ class AutodiffComposition(Composition):
                            context=context)
 
                     self._build_pytorch_representation(optimizer_params=optimizer_params,
-                                                       learning_rate=self.parameters.learning_rate.get(context),
                                                        context=context, base_context=base_context)
                     trained_output_values, all_output_values = \
                                                     self.autodiff_forward(inputs=autodiff_inputs,
