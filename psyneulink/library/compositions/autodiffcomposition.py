@@ -2095,7 +2095,6 @@ class AutodiffComposition(Composition):
                                                f"Please install it with `pip install torch` or `pip3 install torch`")
 
             self._build_pytorch_representation(optimizer_params=kwargs.get('optimizer_params', None),
-                                               learning_rate=self.parameters.learning_rate.get(context),
                                                context=context,
                                                base_context=Context(execution_id=None))
 
