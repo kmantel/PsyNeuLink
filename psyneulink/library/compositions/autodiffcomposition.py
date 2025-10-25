@@ -381,6 +381,7 @@ Class Reference
 ---------------
 
 """
+import copy
 import logging
 import os
 import warnings
@@ -1195,6 +1196,13 @@ class AutodiffComposition(Composition):
         optimizer_params = optimizer_params or {}
         if self.scheduler is None:
             self.scheduler = Scheduler(graph=self.graph_processing)
+
+        # optimization parameters currently are used even if not building first time or rebuilding
+        if learning_rate is not None:
+            # TODO: remove this copy, only needed while old handling that modifies dict is present
+            learning_rate = copy.copy(learning_rate)
+            self.parameters.learning_rate_TEMP_UNPROCESSED.set(learning_rate, context)
+            self.parameters.learning_rate_TEMP_UNPROCESSED._user_specified = True
 
         # Construct a new pytorch_representation if none exists or new is specified
         if self.parameters.pytorch_representation._get(context=context) is None or new:
