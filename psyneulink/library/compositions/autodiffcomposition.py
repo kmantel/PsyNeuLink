@@ -1758,7 +1758,7 @@ class AutodiffComposition(Composition):
                                                                "currently supported, but will be in a future version.")
             print('FROM DEPRECATION', learning_rate)
 
-        runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
+        runtime_optimizer_params = OptimizerParams(learning_rate=copy.copy(learning_rate))
         # print('kwargs', kwargs)
         # print('RUNTIME OPT PARAMS', runtime_optimizer_params)
 
