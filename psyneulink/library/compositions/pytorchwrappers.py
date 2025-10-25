@@ -844,7 +844,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         """
         # These are used both for error messages (hence strings) as we well determining how to update param_groups
         optimizer_params_user_specs_mine = {
-            projection: self.composition.get_optimizer_param_value('learning_rate', context, projection=projection) for projection in optimizer_params_user_specs if optimizer_params_user_specs[projection] is not None and not isinstance(projection, str)
+            projection: self.composition.get_optimizer_param_value('learning_rate', context, projection=projection) for projection in optimizer_params_user_specs if optimizer_params_user_specs[projection] is not None and not projection == DEFAULT_LEARNING_RATE
         }
         optimizer_params_user_specs_unmod = copy.copy(optimizer_params_user_specs_mine)
 
@@ -1156,9 +1156,17 @@ class PytorchCompositionWrapper(torch.nn.Module):
         if optimizer_params_user_parsed:
             # Get Projection-specific learning_rate if specified in call to constructor or in learn()
             if projection.name in optimizer_params_user_parsed:
-                specified_learning_rate = optimizer_params_user_parsed[projection.name].value
+                # TODO: delete?
+                try:
+                    specified_learning_rate = optimizer_params_user_parsed[projection.name].value
+                except AttributeError:
+                    specified_learning_rate = optimizer_params_user_parsed[projection.name]
             elif projection._proxy_for is not None and projection._proxy_for.name in optimizer_params_user_parsed:
-                specified_learning_rate = optimizer_params_user_parsed[projection._proxy_for.name].value
+                # TODO: delete?
+                try:
+                    specified_learning_rate = optimizer_params_user_parsed[projection._proxy_for.name].value
+                except AttributeError:
+                    specified_learning_rate = optimizer_params_user_parsed[projection._proxy_for.name]
 
         if specified_learning_rate is None or specified_learning_rate is True:
             # No Projection-specific learning_rate specified, so get default one from a Composition in the hierarchy
