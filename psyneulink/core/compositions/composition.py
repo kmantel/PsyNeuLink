@@ -10399,7 +10399,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
     def get_optimizer_param_value(
         self,
         param: str,
-        context: Optional[Context] = None,
+        context: Optional[Union[Context, typing.Hashable]] = None,
         projection: Optional[Projection] = None,
     ):
         return self._get_optimizer_param_value(param, context, projection)
