@@ -10435,6 +10435,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # but are 'protected' from being disabled if they are specified
         # with `True` anywhere in the priority list
         learning_force_enabled = False
+        # typically dicts specifying a value for a projection have
+        # higher priority than values not specified for a certain
+        # projection, even if the projection-specific value is lower on
+        # the hierarchy. a projection-specific None value at
+        # learn/run-time overrides this and chooses the first specified
+        # value.
+        # tested in
+        prioritize_projection_specific_value = True
 
         try:
             runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
@@ -10460,6 +10468,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # tested for explicitly by
                 # tests/composition/test_learning.py::TestStructural::test_single_level_proj_pathway_comp_learning_rates[proj_0.1-pway_0.2-comp_True]
                 if val is None:
+                    prioritize_projection_specific_value = False
                     val = runtime.default
 
                 # non-dict default value undoes a force_enable....
@@ -10514,7 +10523,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             comp_opt_p = getattr(comp_opt_params, param)
             opt_params[comp] = comp_opt_p
 
-            if projection and comp_opt_p.has_specific_value_for(projection):
+            if projection and (projection is None or projection in obj_projections[comp]) and (comp_opt_p.has_specific_value_for(projection) or not prioritize_projection_specific_value):
                 v = comp_opt_p.value(projection)
 
                 # specification of False in default overrides a
