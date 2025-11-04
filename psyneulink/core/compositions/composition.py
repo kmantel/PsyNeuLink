@@ -10523,7 +10523,17 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             comp_opt_p = getattr(comp_opt_params, param)
             opt_params[comp] = comp_opt_p
 
-            if projection and (projection is None or projection in obj_projections[comp]) and (comp_opt_p.has_specific_value_for(projection) or not prioritize_projection_specific_value):
+            if (
+                projection
+                and (projection is None or projection in obj_projections[comp])
+                and (
+                    comp_opt_p.has_specific_value_for(projection)
+                    or (
+                        not prioritize_projection_specific_value
+                        and comp_opt_p._user_specified
+                    )
+                )
+            ):
                 v = comp_opt_p.value(projection)
 
                 # specification of False in default overrides a
