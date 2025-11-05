@@ -20,7 +20,8 @@ from torch import nn
 
 from psyneulink.core.compositions.composition import LearningScale
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
-from psyneulink.core.components.projections.projection import Projection, DuplicateProjectionError
+from psyneulink.core.components.projections.projection import Projection, Projection_Base, ProjectionRegistry
+from psyneulink.core.globals.registry import register_category
 from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
 from psyneulink.library.compositions.pytorchwrappers import PytorchCompositionWrapper, PytorchMechanismWrapper, \
     PytorchProjectionWrapper, PytorchFunctionWrapper, ENTER_NESTED, EXIT_NESTED, TorchParam, ParamNameCompositionTuple
@@ -784,6 +785,7 @@ class DummyProjection(Projection):
     so DummyProjections are used to provide access to their learning_rates
     """
     name = ""
+    componentName = 'DummyProjection'
 
     class Parameters(Projection.Parameters):
         learning_rate = Parameter(None, stateful=True)
@@ -799,6 +801,13 @@ class DummyProjection(Projection):
         self.parameters.learning_rate.set(None, None)
         self.learnable = True
 
+        register_category(
+            entry=self,
+            base_class=DummyProjection,
+            name=name,
+            registry=ProjectionRegistry,
+        )
+
     def __getattr__(self, name):
         obj_name = f"{self.name} "
         if name not in {'learning_rate', 'name', 'compositions', 'learning_rate_TEMP_UNPROCESSED'}:
@@ -807,3 +816,10 @@ class DummyProjection(Projection):
                                  f"that cannot be set directly.  It has only 'name', 'learnable', and"
                                  f"'learning_rate' as attributes, and no others.")
         return super().__getattribute__(name)
+
+
+register_category(
+    entry=DummyProjection,
+    base_class=Projection,
+    registry=ProjectionRegistry,
+)
