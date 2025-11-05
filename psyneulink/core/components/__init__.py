@@ -25,6 +25,7 @@ import inspect
 
 from psyneulink.core.globals.keywords import PROJECTION_SENDER, PROJECTION_TYPE
 from psyneulink.core.globals.registry import register_category
+from psyneulink.library.compositions.grucomposition.pytorchGRUwrappers import DummyProjection
 
 from . import component
 from . import functions
@@ -146,6 +147,11 @@ register_category(entry=GatingSignal,
 # Projection -----------------------------------------------------------------------------------------------------------
 
 # Projection registry
+register_category(
+    entry=Projection,
+    base_class=ShellClass,
+    registry=ProjectionRegistry,
+)
 
 # MappingProjection
 register_category(entry=MappingProjection,
@@ -210,7 +216,11 @@ for port_type in PortRegistry:
 
 # Validate / assign default sender for each Projection subclass (must be a Mechanism, Port or instance of one)
 for projection_type in ProjectionRegistry:
-    projection_sender = ProjectionRegistry[projection_type].subclass.projection_sender
+    try:
+        projection_sender = ProjectionRegistry[projection_type].subclass.projection_sender
+    except AttributeError:
+        # ignore no sender, assumption is DummyProjection
+        continue
 
     # If it is a subclass of Mechanism or Port, leave it alone
     if (inspect.isclass(projection_sender) and
