@@ -10464,8 +10464,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
                 if val is True:
                     print('runtime', runtime.default, runtime._default, runtime._user_specified)
-                    if runtime.default is not False:
-                        learning_force_enabled = True
+                    learning_force_enabled = True
                     val = runtime.default
 
                 # has_specific_value_for plus value of None uses default
@@ -10546,8 +10545,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
                 if v is True:
                     print('spec val for', comp, comp_opt_p.default, comp_opt_p._default, comp_opt_p._user_specified)
-                    if comp_opt_p.default is not False:
-                        learning_force_enabled = True
+                    learning_force_enabled = True
                     v = comp_opt_p.default
 
                 # non-dict default value undoes a force_enable....
@@ -10677,8 +10675,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     if v is True:
                         # only default specified originally (not in dictionary form) is not protected by value of True
                         print('uspec op', obj, opt_param.default, opt_param._default, opt_param._user_specified)
-                        if opt_param.default is not False:
-                            learning_force_enabled = True
+                        learning_force_enabled = True
                         v = opt_param.default
 
                     # if opt_param._default is False:

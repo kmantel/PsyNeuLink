@@ -269,8 +269,8 @@ class TestStructural:
         # Test that inner_proj=True in dict protects against False as default learning_rate for Middle_Comp
         ("d_mcf",     None,  None,  None, "d_mcf", .1, None,  None,  .001,   .4,  .1, .001, .4,    .1, .001,  .4,   .1),
         # Test that inner_proj=False even though it is assigned True in dict since outer_comp default=False
-        ("d_oc",      None,  None,  None, None, None, "d_oc", None,  False,False, .4, False,False, .4, False,False, .4),
-        ("d_lc",       .1,   None,   .2,  None, .3,   None,  "d_lc",  .1,    .2,  .3, False, .4,   .3,  .1,   .2,   .3),
+        ("d_oc",      None,  None,  None, None, None, "d_oc", None,  .001, False, .4, .001, False, .4, .001, False, .4),
+        ("d_lc",       .1,   None,   .2,  None, .3,   None,  "d_lc",  .1,    .2,  .3, .1,    .4,   .3,  .1,   .2,   .3),
         # Test that runtime assignment of True to inner_proj supersedes assignment of inner_comp=False
         ("d_icf_lct", None, "d_icf", .2, None,  .3,   None, "d_lct", False,  .2,  .3, .001,  .4,   .5, False, .2,   .3),
         ("d_icf_lct", None,  False,  .2, None,  .3,   None, "d_lct", False,  .2,  .3, .001,  .4,   .5, False, .2,   .3),
