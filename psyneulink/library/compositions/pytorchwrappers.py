@@ -1190,13 +1190,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
                                                                                             context,
                                                                                             ignore_false=True))
 
-        if not isinstance(specified_learning_rate, (int, float, bool)):
-            # Check for bad value
-            raise AutodiffCompositionError(
-                f"A value ('{specified_learning_rate}') specified in the 'learning_rate' arg of the "
-                f"{self.get_source_str(source)} for '{self.composition.name}' is not valid; "
-                f"it must be an int, float, bool or None.")
-
         if proj_composition.enable_learning is False or projection.learnable is False:
             # If learning is not enabled for the Projection or Composition, set learning_rate to False
             specified_learning_rate = False
