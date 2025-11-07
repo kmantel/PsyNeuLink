@@ -2000,7 +2000,7 @@ class AutodiffComposition(Composition):
         queue.append((receiver_port.owner, projection, comp))
 
     # BREADCRUMB: move some of what's done in the methods below to a "_validate_params" type of method
-    @handle_external_context()
+    @handle_external_context(fallback_most_recent=True)
     def _build_pytorch_representation(self,
                                       learning_rate=None,
                                       optimizer_params=None,
