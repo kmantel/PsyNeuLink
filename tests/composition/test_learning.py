@@ -312,20 +312,14 @@ class TestStructural:
         m2 = m2c = m2l = m2r = .98
         o1 = o1c = o1l = o1r = .99
 
-        import copy
-
         if isinstance(ic, str):
-            ic_tnd = test_nested_dicts(ic)
-            ic = copy.copy(ic_tnd)
+            ic = test_nested_dicts(ic)
         if isinstance(mc, str):
-            mc_tnd = test_nested_dicts(mc)
-            mc = copy.copy(mc_tnd)
+            mc = test_nested_dicts(mc)
         if isinstance(oc, str):
-            oc_tnd = test_nested_dicts(oc)
-            oc = copy.copy(oc_tnd)
+            oc = test_nested_dicts(oc)
         if isinstance(lr, str):
-            lr_tnd = test_nested_dicts(lr)
-            lr = copy.copy(lr_tnd)
+            lr = test_nested_dicts(lr)
 
         inner_mech_1 = pnl.ProcessingMechanism(name='INNER NODE 1')
         inner_mech_2 = pnl.ProcessingMechanism(name='INNER NODE 2')
@@ -348,8 +342,6 @@ class TestStructural:
                                               pathways=[middle_mech_1, middle_proj_1,
                                                         inner_comp, middle_proj_2, middle_mech_2],
                                               learning_rate=mc)
-        print('mc', mc)
-        print('mc lr', middle_comp.parameters.learning_rate)
 
         # Outer Composition
         outer_mech_in = pnl.ProcessingMechanism(name='INPUT NODE')
@@ -363,15 +355,8 @@ class TestStructural:
         outer_comp = pnl.AutodiffComposition([outer_mech_in, outer_proj_1, middle_comp, outer_proj_2, outer_mech_out],
                                              name='Outer Comp',
                                              learning_rate=oc)
-
-        print('oc', oc)
-        print('oc lr', outer_comp.parameters.learning_rate)
-
         pytorch_rep = outer_comp._build_pytorch_representation()
-
-        outer_comp.get_optimizer_param_value('learning_rate', projection=inner_proj)
         assert pytorch_rep.get_torch_learning_rate_for_projection(inner_proj) == ipc
-        outer_comp.get_optimizer_param_value('learning_rate', projection=middle_proj_1)
         assert pytorch_rep.get_torch_learning_rate_for_projection(middle_proj_1) == m1c
         assert pytorch_rep.get_torch_learning_rate_for_projection(middle_proj_2) == m2c
         assert pytorch_rep.get_torch_learning_rate_for_projection(outer_proj_1) == o1c
@@ -384,7 +369,6 @@ class TestStructural:
                          execution_mode=pnl.ExecutionMode.PyTorch,
                          learning_rate=lr)
         pytorch_rep = outer_comp.parameters.pytorch_representation.get('Outer Comp')
-        outer_comp.get_optimizer_param_value('learning_rate', outer_comp, projection=inner_proj)
         assert pytorch_rep.get_torch_learning_rate_for_projection(inner_proj) == ipl
         assert pytorch_rep.get_torch_learning_rate_for_projection(middle_proj_1) == m1l
         assert pytorch_rep.get_torch_learning_rate_for_projection(middle_proj_2) == m2l

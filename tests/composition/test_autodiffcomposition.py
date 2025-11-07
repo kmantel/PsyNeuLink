@@ -4037,12 +4037,6 @@ class TestMiscTrainingFunctionality:
         # Check inner_comp assignments from constructor
         inner_pytorch_rep = inner_comp._build_pytorch_representation()
         # Ensure that params were assigned appropriate lr for the inner_comp
-        def check_val_match(comp, proj, expected):
-            print('check val match', comp, proj, expected)
-            print('resolved as', comp.get_optimizer_param_value('learning_rate', None, proj))
-
-        check_val_match(inner_comp, inner_proj_1, expected_proj_1_inner)
-        check_val_match(inner_comp, inner_proj_2, expected_proj_2_inner)
         assert inner_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_1) == expected_proj_1_inner
         assert inner_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_2) == expected_proj_2_inner
 
@@ -4056,11 +4050,8 @@ class TestMiscTrainingFunctionality:
         # BREADCRUMB
         outer_pytorch_rep = outer_comp._build_pytorch_representation()
         outer_proj = outer_comp.nodes[-1].afferents[0]
-        check_val_match(outer_comp, inner_proj_1, expected_proj_1_inner)
-        check_val_match(outer_comp, inner_proj_2, expected_proj_2_inner)
         assert outer_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_1) == expected_proj_1_inner
         assert outer_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_2) == expected_proj_2_inner
-        check_val_match(outer_comp, outer_proj, outer_comp_lr or self.default)
         assert outer_pytorch_rep.get_torch_learning_rate_for_projection(outer_proj) == outer_comp_lr or self.default
 
         # Check outer_comp assignments after learn() method
