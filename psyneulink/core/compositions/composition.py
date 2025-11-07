@@ -3555,7 +3555,7 @@ class OptimizerParams(types.SimpleNamespace):
 
     @staticmethod
     def _params_from_component(
-        component: Component, context: Optional[Context] = NotImplemented,
+        component: Component, context: Optional[Context] = None,
     ) -> 'OptimizerParams':
         params = {}
         for param_name in OptimizerParams.__annotations__:
@@ -3571,7 +3571,7 @@ class OptimizerParams(types.SimpleNamespace):
                     key_name = 'learning_rate_TEMP_UNPROCESSED'
                 param = getattr(component.parameters, key_name)
 
-                if context is NotImplemented:
+                if context is None:
                     value = param.default_value
                 else:
                     value = param._get(context)
