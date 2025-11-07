@@ -581,7 +581,6 @@ if torch_available:
                     [input_mech, input_proj, gru, output_proj, output_mech],
                         learning_rate=learning_rates_dict if constr else None)
                 pytorch_rep = outer._build_pytorch_representation()
-                outer.get_optimizer_param_value('learning_rate', projection=input_proj)
                 assert pytorch_rep.get_torch_learning_rate_for_projection(input_proj) == (input_proj_lr if constr else .001)
                 assert pytorch_rep.get_torch_learning_rate_for_projection(output_proj) == (output_proj_lr if constr else .001)
                 assert pytorch_rep.get_torch_learning_rate_for_projection(pnl.INPUT_TO_HIDDEN) == (ih_lr if constr else .001)
