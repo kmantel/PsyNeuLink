@@ -472,6 +472,7 @@ class MappingProjection(PathwayProjection_Base):
                     :type: ``str``
 
         """
+        learnable = Parameter(True, stateful=False, aliases=['enable_learning_rate'])
         learning_rate = Parameter(None, stateful=True)
         learning_rate_TEMP_UNPROCESSED = Parameter(None)
         function = Parameter(MatrixTransform, stateful=False, loggable=False)
@@ -530,8 +531,7 @@ class MappingProjection(PathwayProjection_Base):
 
         self.learning_mechanism = None
         self.has_learning_projection = None
-        self.learnable = bool(learnable)
-        if not self.learnable and not isinstance(learning_rate, bool) and is_numeric_scalar(learning_rate):
+        if not learnable and not isinstance(learning_rate, bool) and is_numeric_scalar(learning_rate):
             raise MappingError(f"The 'learning_rate' argument ({learning_rate}) cannot be specified as a "
                                f"float or int when 'learnable' is False.")
         if PROXY_FOR in kwargs:
@@ -549,6 +549,7 @@ class MappingProjection(PathwayProjection_Base):
                          weight=weight,
                          exponent=exponent,
                          matrix=matrix,
+                         learnable=learnable,
                          learning_rate=learning_rate,
                          learning_rate_TEMP_UNPROCESSED=copy_parameter_value(learning_rate),
                          function=function,

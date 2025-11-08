@@ -3451,7 +3451,10 @@ unmodifiable_node_roles = {NodeRole.ORIGIN,
 class OptParam:
     _value: Any
     _default: Optional[Any] = None  # value if dict and no component-specific entry
+
+    name: Optional[str] = None
     param_group_name: Optional[str] = None
+
     # NOTE: added for compatibility with DEFAULT_LEARNING_RATE keyword;
     # consider if just using DEFAULT is ok
     _default_key: Optional[str] = DEFAULT
@@ -3459,6 +3462,8 @@ class OptParam:
     # NOTE: suggests integration with regular Parameter type
     # (set during construction from Component)
     _user_specified: bool = False
+
+    _pnl_param_enabled_prefix: str = 'enable_'
 
     def __post_init__(self):
         self._value = copy(self._value)
@@ -3469,6 +3474,16 @@ class OptParam:
             return self._value[self._default_key]
         except (IndexError, KeyError, TypeError):
             return self._default
+
+    @property
+    def pnl_param_enabled_name(self) -> Optional[str]:
+        """
+        name of Parameter on a Component that enables/disables this optparam with highest priority
+        (ex: learning_rate and Composition.enable_learning)
+        """
+        if self.name is None:
+            return None
+        return f'{self._pnl_param_enabled_prefix}{self.name}'
 
     def _item_for(self, component):
         try:
@@ -3522,7 +3537,9 @@ class OptParam:
 
 class OptimizerParams(types.SimpleNamespace):
     learning_rate: OptParam = OptParam(
-        NotImplemented, param_group_name='lr', _default_key=DEFAULT_LEARNING_RATE
+        NotImplemented,
+        param_group_name='lr',
+        _default_key=DEFAULT_LEARNING_RATE,
     )
 
     def __init__(
@@ -3535,6 +3552,7 @@ class OptimizerParams(types.SimpleNamespace):
         cls_param = OptimizerParams.learning_rate
         self.learning_rate = OptParam(
             try_extract_0d_array_item(learning_rate),
+            name='learning_rate',
             param_group_name=cls_param.param_group_name,
             _default_key=cls_param._default_key,
             _user_specified=True,
@@ -4149,7 +4167,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     :default value: []
                     :type: ``list``
         """
-        enable_learning = Parameter(True, structural=True)
+        enable_learning = Parameter(True, structural=True, aliases=['enable_learning_rate'])
         learning_rate = Parameter(.05)
         learning_rates_dict = Parameter({}, stateful=True, pnl_internal=True, modulable=False, loggable=False)
         learning_rate_TEMP_UNPROCESSED = Parameter(.05)
@@ -10414,23 +10432,96 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         context: Optional[Context] = None,
         projection: Optional[Projection] = None,
     ):
+        def _get_opt_param(
+            obj: Component, opt_params: Dict[Union[Component, str]]
+        ) -> OptParam:
+            comp_opt_params = OptimizerParams.from_component(obj, context)
+            opt_param = getattr(comp_opt_params, param)
+            opt_params[obj] = opt_param
+            return opt_param
+
+        def _param_is_enabled(
+            obj: Component, opt_params: Dict[Union[Component, str]]
+        ) -> bool:
+            opt_param = _get_opt_param(obj, opt_params)
+            try:
+                pnl_param = getattr(obj.parameters, opt_param.pnl_param_enabled_name)
+            except AttributeError:
+                return True
+            return pnl_param._get(context)
+
+        def _get_from_registry(obj_name: str, registry: dict) -> Optional[Component]:
+            # TODO: replace this with maybe storing only projections in
+            # OptParam, then allowing get by name as well
+            for reg in registry.values():
+                print(reg)
+                for o in reg.instanceDict.values():
+                    if o.name == obj_name:
+                        print('found key', projection, o)
+                        return o
+            return None
+
         opt_params = {}
 
-        # TODO: replace this with maybe storing only projections in
-        # OptParam, then allowing get by name as well
         if isinstance(projection, str):
             import psyneulink as pnl
-            for reg in pnl.ProjectionRegistry.values():
-                print(reg)
-                for proj in reg.instanceDict.values():
-                    if proj.name == projection:
-                        print('found key', projection, proj)
-                        projection = proj
-                        break
 
-        # def _valid_specified_value(v):
-        #     return v is not None
-        #     return v is not None and v is not False
+            reg_projection = _get_from_registry(projection, pnl.ProjectionRegistry)
+            if reg_projection:
+                projection = reg_projection
+
+        if (
+            projection is not None
+            and not isinstance(projection, str)
+            and not _param_is_enabled(projection, opt_params)
+        ):
+            return False
+
+        outer_compositions = set()
+        queue = [self]
+        while True:
+            try:
+                next_comp = queue.pop()
+            except IndexError:
+                break
+            if next_comp not in outer_compositions:
+                outer_compositions.add(next_comp)
+                queue.extend(next_comp.compositions)
+
+        nested_compositions = list(reversed(self._get_nested_compositions()))
+        all_compositions = [*nested_compositions, *outer_compositions]
+        all_pathways = []
+
+        # TODO: check if should just filter all_compositions here...
+        obj_projections = {}
+        # TODO: get matching composition param set here, handling nested
+        for comp in all_compositions:
+            obj_projections[comp] = comp._optimization_projections
+            for pathway in comp.pathways:
+                all_pathways.append(pathway)
+                obj_projections[pathway] = pathway._optimization_projections
+
+        # ###
+        # check for force disable from `enable_<...>` Parameters
+        # ###
+
+        # force disable for nested compositions only applies if for a
+        # specific projection belonging to a nested composition
+        for comp in nested_compositions:
+            if (
+                projection is not None
+                and projection in obj_projections[comp]
+                and not _param_is_enabled(comp, opt_params)
+            ):
+                return False
+
+        # force disable for current and outer compositions applies to
+        # all nested objects.
+        # NOTE: `self` is included in `outer_compositions` when created
+        # above.
+        for comp in outer_compositions:
+            if not _param_is_enabled(comp, opt_params):
+                return False
 
         # specifications of `False` as runtime or by compositions do not
         # apply if there is another non-None non-False value lower on
@@ -10490,41 +10581,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 ):  # runtime.default above may be None....
                     return val
 
-        outer_compositions = set()
-        queue = [self]
-        while True:
-            try:
-                next_comp = queue.pop()
-            except IndexError:
-                break
-            if next_comp not in outer_compositions:
-                outer_compositions.add(next_comp)
-                queue.extend(next_comp.compositions)
-
-        nested_compositions = reversed(self._get_nested_compositions())
-        all_compositions = [*nested_compositions, *outer_compositions]
-        all_pathways = []
-
-        # TODO: check if should just filter all_compositions here...
-        obj_projections = {}
-        # TODO: get matching composition param set here, handling nested
-        for comp in all_compositions:
-            obj_projections[comp] = comp._optimization_projections
-            for pathway in comp.pathways:
-                all_pathways.append(pathway)
-                obj_projections[pathway] = pathway._optimization_projections
-
         # TODO: add learning mech then pathway
         for comp in all_compositions:
-            try:
-                comp_opt_params = OptimizerParams.from_component(comp, context)
-            except ParameterNoValueError:
-                if comp == self:
-                    raise
-                # comp is an outer composition, but run context is (presumably) that for a run of the inner composition by itself
-                continue
-            comp_opt_p = getattr(comp_opt_params, param)
-            opt_params[comp] = comp_opt_p
+            # self is added at very beginning
+            if comp not in opt_params:
+                try:
+                    comp_opt_params = OptimizerParams.from_component(comp, context)
+                except ParameterNoValueError:
+                    if comp == self:
+                        raise
+                    # comp is an outer composition, but run context is (presumably) that for a run of the inner composition by itself
+                    continue
+                opt_params[comp] = getattr(comp_opt_params, param)
+            comp_opt_p = opt_params[comp]
 
             if (
                 projection
@@ -10565,9 +10634,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     return v
 
         if projection:
-            proj_opt_params = OptimizerParams.from_component(projection, context)
-            proj_opt_p = getattr(proj_opt_params, param)
-            opt_params[projection] = proj_opt_p
+            if projection not in opt_params:
+                proj_opt_params = OptimizerParams.from_component(projection, context)
+                opt_params[projection] = getattr(proj_opt_params, param)
+            proj_opt_p = opt_params[projection]
             v = proj_opt_p.value(projection)
             if v is not None:
                 if v is True:
