@@ -14868,6 +14868,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 opt_projections.discard(orig)
             else:
                 opt_projections.add(orig)
+
+
+
         return opt_projections
 
     # endregion PROPERTIES
