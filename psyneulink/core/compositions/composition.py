@@ -14873,19 +14873,24 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 opt_projections.add(orig)
 
         # non proxy
-        outer_only_projs = set()
-        for p in opt_projections:
-            if p in proxies:
-                continue
-            try:
-                comps = p.sender.owner.compositions
-            except AttributeError:
-                # DummyProjection won't have sender
-                pass
-            else:
-                if self not in comps:
-                    outer_only_projs.add(p)
-        opt_projections.difference_update(outer_only_projs)
+        # outer_only_projs = set()
+        # for p in opt_projections:
+        #     if p in proxies:
+        #         continue
+        #     try:
+        #         sender_comps = p.sender.owner.compositions
+        #         receiver_comps = p.receiver.owner.compositions
+        #     except AttributeError:
+        #         # DummyProjection won't have sender/receiver
+        #         pass
+        #     else:
+        #         if (
+        #             (self not in sender_comps and self in receiver_comps)
+        #             or (self in sender_comps and self not in receiver_comps)
+        #         ):
+        #             outer_only_projs.add(p)
+        # print(self, 'REMOVING', outer_only_projs)
+        # opt_projections.difference_update(outer_only_projs)
 
         return opt_projections
 
