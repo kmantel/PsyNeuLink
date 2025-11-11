@@ -14878,8 +14878,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         proxies = {p: p._proxy_for for p in opt_projections if p._proxy_for}
         for proxy, orig in proxies.items():
             # proxy goes between an inner and outer comp, locate it.
-            # only the outer composition is allowed to give optimization
-            # parameter values
             if self in proxy._inner_node.compositions:
                 opt_projections.discard(proxy)
                 opt_projections.discard(orig)
