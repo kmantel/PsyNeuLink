@@ -10514,6 +10514,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if projection is None:
             if not _param_is_enabled(self, opt_params):
                 return False
+        else:
+            for comp in all_compositions:
+                if projection in obj_projections[comp]:
+                    if not _param_is_enabled(comp, opt_params):
+                        return False
+                    else:
+                        # do not keep checking enabled outside of its
+                        # immediate composition
+                        break
 
         # force disable for current and outer compositions applies to
         # all nested objects.
