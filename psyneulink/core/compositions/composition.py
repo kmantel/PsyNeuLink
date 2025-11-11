@@ -10511,12 +10511,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # force disable for nested compositions only applies if for a
         # specific projection belonging to a nested composition
-        for comp in nested_compositions:
-            if (
-                projection is not None
-                and projection in obj_projections[comp]
-                and not _param_is_enabled(comp, opt_params)
-            ):
+        if projection is None:
+            if not _param_is_enabled(self, opt_params):
                 return False
 
         # force disable for current and outer compositions applies to
