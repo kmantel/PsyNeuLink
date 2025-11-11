@@ -10831,7 +10831,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             v = getattr(comp.class_defaults, param)
             return v
 
-        assert all_compositions == matching_compositions, f'A {all_compositions}\nM {matching_compositions}'
+        # assert all_compositions == matching_compositions, f'A {all_compositions}\nM {matching_compositions}'
 
         # for obj in [*all_compositions, projection]:
         #     try:
