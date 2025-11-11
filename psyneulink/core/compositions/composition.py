@@ -14863,18 +14863,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # only an outer composition is allowed to give optimization
         # parameter values
-        outer_only_projs = set()
-        for p in opt_projections:
-            try:
-                comps = p.sender.owner.compositions
-            except AttributeError:
-                # DummyProjection won't have sender
-                pass
-            else:
-                if self not in comps:
-                    outer_only_projs.add(p)
-        opt_projections.difference_update(outer_only_projs)
-
         proxies = {p: p._proxy_for for p in opt_projections if p._proxy_for}
         for proxy, orig in proxies.items():
             # proxy goes between an inner and outer comp, locate it.
@@ -14884,7 +14872,20 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             else:
                 opt_projections.add(orig)
 
-
+        # non proxy
+        outer_only_projs = set()
+        for p in opt_projections:
+            if p in proxies:
+                continue
+            try:
+                comps = p.sender.owner.compositions
+            except AttributeError:
+                # DummyProjection won't have sender
+                pass
+            else:
+                if self not in comps:
+                    outer_only_projs.add(p)
+        opt_projections.difference_update(outer_only_projs)
 
         return opt_projections
 
