@@ -10443,7 +10443,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         def _param_is_enabled(
             obj: Component, opt_params: Dict[Union[Component, str]]
         ) -> bool:
-            opt_param = _get_opt_param(obj, opt_params)
+            try:
+                opt_param = _get_opt_param(obj, opt_params)
+            except ParameterNoValueError:
+                # obj doesn't have opt param values for this context. likely scenario is obj is an outer composition when an inner composition is running in its own context
+                return True
             try:
                 pnl_param = getattr(obj.parameters, opt_param.pnl_param_enabled_name)
             except AttributeError:
