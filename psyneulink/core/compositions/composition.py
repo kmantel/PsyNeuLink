@@ -10528,9 +10528,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # all nested objects.
         # NOTE: `self` is included in `outer_compositions` when created
         # above.
-        for comp in outer_compositions:
-            if not _param_is_enabled(comp, opt_params):
-                return False
+        # for comp in outer_compositions:
+        #     if not _param_is_enabled(comp, opt_params):
+        #         return False
 
         # specifications of `False` as runtime or by compositions do not
         # apply if there is another non-None non-False value lower on
