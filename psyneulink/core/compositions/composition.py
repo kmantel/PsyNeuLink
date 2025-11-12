@@ -6155,6 +6155,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # if the node is a nested Composition, activate the Projection for the nested Composition as well
                     if isinstance(node, Composition):
                         projection._activate_for_compositions(node)
+                        projection._inner_node = node
+                        projection._outer_node = self
 
         # compare the set of ports in input_CIM_ports to the set of input ports of input nodes that currently exist in
         # the composition, so that we can remove ports on the input CIM that correspond to nodes that no longer should
@@ -6284,6 +6286,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # if the Node is a nested Composition, activate the Projection for the nested Composition as well
                     if isinstance(node, Composition):
                         proj._activate_for_compositions(node)
+                        proj._inner_node = node
+                        proj._outer_node = self
 
         # Compare the set of ports in output_CIM_ports to the set of output_ports of OUTPUT Nodes that currently
         # exist in the Composition, so that ports can be removed from the output_CIM that correspond to Nodes
@@ -6387,7 +6391,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # add sender and receiver to self.parameter_CIM_ports dict
                 self.parameter_CIM_ports[receiver] = (interface_input_port, control_signal)
                 # projection name
-                proj_name = "(" + comp_projection.sender.name + ") to (" + interface_input_port.name + ")"
+                proj_name = "(" + comp_projection.sender.name + ") !!!!! to (" + interface_input_port.name + ")"
                 # instantiate the projection
                 proj = MappingProjection(
                     sender=comp_projection.sender,
@@ -6820,6 +6824,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self._pre_existing_pathway_components = {NODES: [], PROJECTIONS: []}
 
         existing_projections = False
+        nested_nodes = None
 
         # If a sender and receiver have been specified but not a projection,
         #    check whether there is *any* projection like that
@@ -6917,6 +6922,26 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self._parse_sender_spec(projection, sender, is_learning_projection)
         receiver,receiver_mechanism,graph_receiver,receiver_input_port,nested_compositions,is_learning_projection = \
             self._parse_receiver_spec(projection, receiver, sender, is_learning_projection)
+
+        # sender_node = projection.sender.owner
+        # receiver_node = projection.receiver.owner
+        # if nested_nodes is None:
+        #     nested_nodes = [n[0] for n in self._get_nested_nodes()]
+        # sender_in_nested = sender_node not in self.nodes and sender_node in nested_nodes
+        # receiver_in_nested = receiver_node not in self.nodes and receiver_node in nested_nodes
+
+        # _inner = None
+        # _outer = None
+        # if sender_in_nested:
+        #     _inner = sender_node
+        #     _outer = receiver_node
+        # elif receiver_in_nested:
+        #     # receiver_in_nested
+        #     _inner = receiver_node
+        #     _outer = sender_node
+
+        # projection._inner_node = _inner
+        # projection._outer_node = _outer
 
         if (isinstance(receiver_input_port, InputPort)
                 and receiver_input_port.default_input == DEFAULT_VARIABLE):
@@ -14468,10 +14493,18 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             return pnlvm.codegen.gen_composition_exec(ctx, self, tags=tags)
 
     def _delete_compilation_data(self, context: Context, from_parameter: Parameter = None):
+        try:
+            _compilation_data = self._compilation_data
+        except AttributeError:
+            # this method can be called for CIMs created in Composition
+            # __init__, before the Composition._compilation_data is
+            # created
+            return
+
         if from_parameter is None:
-            self._compilation_data.execution.delete(context)
+            _compilation_data.execution.delete(context)
         else:
-            execution_dict = self._compilation_data.execution._get(context, fallback_value=None)
+            execution_dict = _compilation_data.execution._get(context, fallback_value=None)
             if execution_dict is None:
                 return
 
@@ -14873,23 +14906,27 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 opt_projections.add(orig)
 
         # non proxy
-        # outer_only_projs = set()
-        # for p in opt_projections:
-        #     if p in proxies:
-        #         continue
-        #     try:
-        #         sender_comps = p.sender.owner.compositions
-        #         receiver_comps = p.receiver.owner.compositions
-        #     except AttributeError:
-        #         # DummyProjection won't have sender/receiver
-        #         pass
-        #     else:
-        #         if (
-        #             (self not in sender_comps and self in receiver_comps)
-        #             or (self in sender_comps and self not in receiver_comps)
-        #         ):
-        #             outer_only_projs.add(p)
-        # print(self, 'REMOVING', outer_only_projs)
+        outer_only_projs = set()
+        for p in opt_projections:
+            if (
+                p in proxies
+                or p._outer_node is self
+            ):
+                continue
+            try:
+                sender_comps = p.sender.owner.compositions
+                receiver_comps = p.receiver.owner.compositions
+            except AttributeError:
+                # DummyProjection won't have sender/receiver
+                pass
+            else:
+                if (
+                    (self not in sender_comps and self in receiver_comps)
+                    or (self in sender_comps and self not in receiver_comps)
+                ):
+                    outer_only_projs.add(p)
+        import pprint
+        print(self, 'intendignt o to REMOVING', pprint.pformat(outer_only_projs))
         # opt_projections.difference_update(outer_only_projs)
 
         return opt_projections
