@@ -109,6 +109,7 @@ Class Reference
 """
 
 import warnings
+import weakref
 from collections.abc import Iterable
 
 from beartype import beartype
@@ -204,6 +205,7 @@ class CompositionInterfaceMechanism(ProcessingMechanism_Base):
                                                             name=name,
                                                             prefs=prefs,
                                                             )
+        self.compositions.add(composition)
 
     @handle_external_context()
     def add_ports(self, ports, context=None):
