@@ -723,10 +723,6 @@ class Projection_Base(Projection):
         from psyneulink.core.components.ports.parameterport import ParameterPort
         from psyneulink.core.components.ports.port import Port_Base
 
-        # for use with proxy projections
-        self._inner_node = None
-        self._outer_node = None
-
         if self.initialization_status == ContextFlags.DEFERRED_INIT:
             self._assign_deferred_init_name(name)
             self._store_deferred_init_args(**locals())
