@@ -14935,13 +14935,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # only an outer composition is allowed to give optimization
         # parameter values
         proxies = {p: p._proxy_for for p in opt_projections if p._proxy_for}
-        for proxy, orig in proxies.items():
-            # proxy goes between an inner and outer comp, locate it.
-            if self in proxy._inner_node.compositions:
-                opt_projections.discard(proxy)
-                opt_projections.discard(orig)
-            else:
-                opt_projections.add(orig)
+        opt_projections.update(proxies)
 
         outer_only_projs = set()
         nested_comps = self._get_nested_compositions()
