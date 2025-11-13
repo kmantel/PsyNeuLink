@@ -6156,8 +6156,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # if the node is a nested Composition, activate the Projection for the nested Composition as well
                     if isinstance(node, Composition):
                         projection._activate_for_compositions(node)
-                        projection._inner_node = node
-                        projection._outer_node = self
 
         # compare the set of ports in input_CIM_ports to the set of input ports of input nodes that currently exist in
         # the composition, so that we can remove ports on the input CIM that correspond to nodes that no longer should
@@ -6287,8 +6285,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # if the Node is a nested Composition, activate the Projection for the nested Composition as well
                     if isinstance(node, Composition):
                         proj._activate_for_compositions(node)
-                        proj._inner_node = node
-                        proj._outer_node = self
 
         # Compare the set of ports in output_CIM_ports to the set of output_ports of OUTPUT Nodes that currently
         # exist in the Composition, so that ports can be removed from the output_CIM that correspond to Nodes
@@ -6890,23 +6886,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                   PROXY_FOR:projection
                                   }
                              }
-                proxy = self.add_projection(proj_spec,
+                return self.add_projection(proj_spec,
                                            sender=projection.sender,
                                            receiver=projection.receiver,
                                            context=context)
-
-                if sender_in_nested:
-                    _inner = sender_node
-                    _outer = receiver_node
-                else:
-                    # receiver_in_nested
-                    _inner = receiver_node
-                    _outer = sender_node
-
-                proxy._inner_node = _inner
-                proxy._outer_node = _outer
-
-                return proxy
 
         # Create Projection if it doesn't exist
         projection = projection or default_matrix
