@@ -3169,6 +3169,7 @@ import sys
 import typing
 import warnings
 import weakref
+from collections.abc import Iterable
 from copy import deepcopy, copy
 from inspect import isgenerator, isgeneratorfunction
 
@@ -14881,6 +14882,43 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         ports.extend(self.parameter_CIM.input_ports)
         return ports
 
+    def _controls_optimization_for_projection(
+        self,
+        projection: Projection,
+        nested_comps: Optional[Iterable['Composition']] = None,
+    ) -> bool:
+        if nested_comps is None:
+            nested_comps = self._get_nested_compositions()
+        nested_comps = set(nested_comps)
+
+        try:
+            sender = projection.sender
+            receiver = projection.receiver
+            sender_comps = sender.owner.compositions
+            receiver_comps = receiver.owner.compositions
+        except AttributeError:
+            try:
+                proj_comps = projection.compositions
+            except AttributeError:
+                return False
+            else:
+                return self in proj_comps or nested_comps.intersection(proj_comps)
+
+        if self in sender_comps and self in receiver_comps:
+            # projection does not span compositions
+            return True
+        elif self in sender_comps:
+            return all(rc in nested_comps for rc in receiver_comps)
+        elif self in receiver_comps:
+            return all(sc in nested_comps for sc in sender_comps)
+        else:
+            # projection does not belong to this composition
+            return (
+                sender_comps.intersection(nested_comps)
+                and receiver_comps.intersection(nested_comps)
+            )
+            return False
+
     @property
     def _optimization_projections(self) -> Set[Projection]:
         """
@@ -14905,29 +14943,40 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             else:
                 opt_projections.add(orig)
 
-        # non proxy
         outer_only_projs = set()
+        nested_comps = self._get_nested_compositions()
         for p in opt_projections:
-            if (
-                p in proxies
-                or p._outer_node is self
-            ):
-                continue
-            try:
-                sender_comps = p.sender.owner.compositions
-                receiver_comps = p.receiver.owner.compositions
-            except AttributeError:
-                # DummyProjection won't have sender/receiver
-                pass
-            else:
-                if (
-                    (self not in sender_comps and self in receiver_comps)
-                    or (self in sender_comps and self not in receiver_comps)
-                ):
-                    outer_only_projs.add(p)
-        import pprint
-        print(self, 'intendignt o to REMOVING', pprint.pformat(outer_only_projs))
-        # opt_projections.difference_update(outer_only_projs)
+            if not self._controls_optimization_for_projection(p, nested_comps):
+                outer_only_projs.add(p)
+
+        # # non proxy
+        # outer_only_projs = set()
+        # for p in opt_projections:
+        #     if (
+        #         p in proxies
+        #         or p._outer_node is self
+        #         or (p._outer_node is not None and self in p._outer_node.compositions)
+        #     ):
+        #         continue
+        #     try:
+        #         sender_comps = p.sender.owner.compositions
+        #         receiver_comps = p.receiver.owner.compositions
+        #     except AttributeError:
+        #         # DummyProjection won't have sender/receiver
+        #         pass
+        #     else:
+        #         if (
+        #             (self not in sender_comps and self in receiver_comps)
+        #             or (self in sender_comps and self not in receiver_comps)
+        #         ):
+        #             outer_only_projs.add(p)
+        if len(outer_only_projs):
+            import pprint
+            print(self, 'intendignt o to REMOVING', pprint.pformat(outer_only_projs))
+            rms = list(outer_only_projs)
+            # import ipdb
+            # ipdb.set_trace()
+            opt_projections.difference_update(outer_only_projs)
 
         return opt_projections
 
