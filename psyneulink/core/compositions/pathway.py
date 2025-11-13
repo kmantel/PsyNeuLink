@@ -731,17 +731,20 @@ class Pathway(object, metaclass=UsesParametersMeta):
         # can use only if self.composition is not None and the
         # composition is (in?) the proxy outer node composition(s?)
         proxies = {p: p._proxy_for for p in opt_projections if p._proxy_for}
-        for proxy, orig in proxies.items():
-            # proxy goes between an inner and outer comp, locate it.
-            # only the outer composition is allowed to give optimization
-            # parameter values
-            if (
-                self.composition is None
-                or self.composition in proxy._inner_node.compositions
-            ):
-                opt_projections.discard(proxy)
-                opt_projections.discard(orig)
-            else:
-                opt_projections.add(orig)
+        opt_projections.update(proxies)
+
+        outer_only_projs = set()
+        nested_comps = self.composition._get_nested_compositions()
+        for p in opt_projections:
+            if not self.composition._controls_optimization_for_projection(p, nested_comps):
+                outer_only_projs.add(p)
+
+        if len(outer_only_projs):
+            import pprint
+            print(self, 'pathway intending to REMOVE', pprint.pformat(outer_only_projs))
+            rms = list(outer_only_projs)
+            # import ipdb
+            # ipdb.set_trace()
+            opt_projections.difference_update(outer_only_projs)
 
         return opt_projections
