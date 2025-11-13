@@ -205,7 +205,8 @@ class CompositionInterfaceMechanism(ProcessingMechanism_Base):
                                                             name=name,
                                                             prefs=prefs,
                                                             )
-        self.compositions.add(composition)
+        if composition is not None:
+            self.compositions.add(composition)
 
     @handle_external_context()
     def add_ports(self, ports, context=None):
