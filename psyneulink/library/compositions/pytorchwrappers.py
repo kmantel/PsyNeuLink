@@ -903,7 +903,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
 
         self._assign_learning_rates(optimizer,
                                     optimizer_params_user_specs_unmod,
-                                    optimizer_torch_params_full_with_specified,
                                     None,
                                     source,
                                     context)
@@ -1037,6 +1036,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
     def _validate_optimizer_param_specs(self, specs_to_validate:set, source:str, context, nested=False):
         """Allow override by subclasses for custom handling of optimizer_params_user_specs (e.g., pytorchGRUWrappers)"""
 
+        not_learnable = []
         for proj_spec in specs_to_validate.copy():
             if proj_spec in self._pnl_refs_to_torch_param_names:
                 specs_to_validate.remove(proj_spec)
@@ -1069,13 +1069,22 @@ class PytorchCompositionWrapper(torch.nn.Module):
                            f"or any nested within it: '{', '.join(list(specs_to_validate))}'.")
             raise AutodiffCompositionError(err_msg)
 
-    def _assign_learning_rates(self,
-                               optimizer:torch.optim.Optimizer,
-                               optimizer_params_user_parsed:dict,
-                               optimizer_torch_params_full_with_specified:dict,
-                               run_time_default_learning_rate:Union[float, bool, None],
-                               source:str,
-                               context:Context):
+        if not_learnable:
+            from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
+            raise AutodiffCompositionError(
+                f"Projection specified in 'learning_rate' arg of the {self.get_source_str(source)} for "
+                f"'{self.composition.name}' ('{not_learnable[0]}') is not associated with "
+                f'a learnable Pytorch parameter.'
+            )
+
+    def _assign_learning_rates(
+        self,
+        optimizer: torch.optim.Optimizer,
+        optimizer_params_user_parsed: dict,
+        run_time_default_learning_rate: Union[float, bool, None],
+        source: str,
+        context: Context,
+    ):
         """Assign parsed learning_rate specifications."""
 
         from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
