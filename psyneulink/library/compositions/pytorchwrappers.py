@@ -896,7 +896,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
 
         self._assign_learning_rates(optimizer,
                                     optimizer_params_user_specs_unmod,
-                                    None,
                                     source,
                                     context)
 
@@ -1076,7 +1075,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
     def _assign_learning_rates(
         self,
         optimizer: torch.optim.Optimizer,
-        optimizer_params_user_parsed: dict,
         run_time_default_learning_rate: Union[float, bool, None],
         source: str,
         context: Context,
@@ -1101,32 +1099,14 @@ class PytorchCompositionWrapper(torch.nn.Module):
         # Use old_param_groups for reference, and modify new_param_groups (now assigned to optimizer)
         for old_param_group, new_param_group in zip(old_param_groups, new_param_groups):
             # Get each param in the param_groups
-            default_learning_rate = old_param_group['lr']
             for param in old_param_group['params']:
                 projection = self._torch_params_to_projections(old_param_groups)[param]
-                specified_learning_rate = (
-                    self._get_specified_learning_rate_for_param(param, projection,
-                                                                optimizer_params_user_parsed,
-                                                                run_time_default_learning_rate,
-                                                                source, context))
                 from_opt_param_val = self.composition._get_optimizer_param_value('learning_rate', context, projection)
-
-                if specified_learning_rate != from_opt_param_val:
-                    print('proj', projection, 'param', param)
-                    print('DIFF:')
-                    print('specified lr', specified_learning_rate)
-                    print('from opt param', from_opt_param_val)
-                    # import ipdb
-                    # ipdb.set_trace()
-                    self._get_specified_learning_rate_for_param(
-                        param, projection, optimizer_params_user_parsed, run_time_default_learning_rate, source, context
-                    )
 
                 if from_opt_param_val is not False:
                     all_requires_grads_false = False
                 param.requires_grad = from_opt_param_val is not False
                 # print(projection)
-                # print('specified_learning_rate', specified_learning_rate)
                 # print('from_opt_param_val', from_opt_param_val)
                 self._update_torch_param_group(from_opt_param_val, param,
                                                old_param_group, new_param_group, new_param_groups, optimizer)
