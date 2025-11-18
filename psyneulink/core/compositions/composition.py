@@ -12798,14 +12798,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
 
         rt_lr = self.runtime_optimizer_params[context.execution_id].learning_rate._value
-        try:
-            self.parameters.learning_rate._validate(rt_lr)
-        except ParameterError as e:
-            raise CompositionError(
-                f"A value ('{rt_lr}') specified in the 'learning_rate'"
-                f" arg of the learn() method for '{self.name}' is not valid;"
-                " it must be an int, float, bool or None."
-            ) from e
 
         if not isinstance(self, AutodiffComposition):
             if isinstance(learning_rate, dict):
