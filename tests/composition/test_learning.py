@@ -205,7 +205,7 @@ class TestStructural:
             return
         pytorch_rep = autodiff._build_pytorch_representation()
         assert pytorch_rep.get_torch_learning_rate_for_projection(proj) == proj_exp_lr
-        assert autodiff.learning_rate == comp_exp_lr
+        assert autodiff.get_optimizer_param_value('learning_rate') == comp_exp_lr
 
         # Test learning_rate specs assinged in learn()
         autodiff.learn(inputs=autodiff.get_input_format(),
@@ -215,13 +215,13 @@ class TestStructural:
         pytorch_rep = autodiff.parameters.pytorch_representation.get(autodiff.name)
         assert pytorch_rep.get_torch_learning_rate_for_projection(proj) == 99
         assert proj.parameters.learning_rate.get(autodiff.name) == proj_lr
-        assert autodiff.learning_rate == comp_exp_lr
+        assert autodiff.get_optimizer_param_value('learning_rate') == comp_exp_lr
 
         # Test that learning_rate specs are restored to their original values at construction
         autodiff.learn(inputs=autodiff.get_input_format(),
                        execution_mode=pnl.ExecutionMode.PyTorch)
         assert pytorch_rep.get_torch_learning_rate_for_projection(proj) == proj_exp_lr
-        assert autodiff.learning_rate == comp_exp_lr
+        assert autodiff.get_optimizer_param_value('learning_rate') == comp_exp_lr
 
     test_nested_args = [
         # NOTE Have to explicitly specify default_lr in constructor here (when it is expected to have an effect),
