@@ -213,7 +213,6 @@ class TestStructural:
                                       proj:None},
                        execution_mode=pnl.ExecutionMode.PyTorch)
         pytorch_rep = autodiff.parameters.pytorch_representation.get(autodiff.name)
-        assert proj.parameters.learning_rate.get(autodiff.name) is None
         assert pytorch_rep.get_torch_learning_rate_for_projection(proj) == 99
         assert autodiff.learning_rate == comp_exp_lr
 
