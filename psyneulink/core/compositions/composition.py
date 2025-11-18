@@ -9712,28 +9712,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # Convert all entries to Projection names for consistency in later processing
             _lr_dict_arg = {(k.name if isinstance(k, MappingProjection) else k): v for k,v in _lr_dict_arg.items()}
 
-            # Get default dict for Composition
-            # MODIFIED 7/21/25 OLD:
-            # # BREADCRUMB: KATHERINE: THE FOLLOWING ASSIGNMENT SEEMS TO BE PERSISTING FROM PREVIOUS ASSIGNMENT
-            # if self.parameters.learning_rates_dict.values:
-            #     # BREADCRUMB: KATHERINE, WHY HAS NONE CONTEXT NOT YET BEEN ASSIGNED?:
-            #     lr_dict = self.parameters.learning_rates_dict.get(None)
-            # else:
-            #     self.parameters.learning_rates_dict.set(_lr_dict_arg, None)
-            # MODIFIED 7/21/25 NEW:
-            # lr_dict = self.parameters.learning_rates_dict.set(_lr_dict_arg, None)
-            # MODIFIED 7/21/25 END
-            # BREADCRUMB: KATHERINE: THE learning_rates_dict ASSIGNMENT FROM THE PRECEDING TEST IS PERSISTING:
-            #             test_projection_specific_learning_rates(): hidden_dict_constructor -> input_dict_learn
-            try:
-                lr_dict = copy(self.parameters.learning_rates_dict.get(context))
-            except ParameterNoValueError:
-                lr_dict = _lr_dict_arg
-            else:
-                # If called in an execution context (i.e., from learn()), get learning_rates for all nested comps
-                for comp in self._get_nested_compositions():
-                    lr_dict.update(comp.parameters.learning_rates_dict.get(context))
-                lr_dict.update(_lr_dict_arg)
 
         if context is not None and context.execution_id is not None:
             lr_dict = self.parameters.learning_rates_dict.get(context)
