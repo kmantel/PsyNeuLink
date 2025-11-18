@@ -875,6 +875,15 @@ class PytorchCompositionWrapper(torch.nn.Module):
                 # just assign default optimizer.param_groups and store learning_rates for Projections
                 return
 
+        if optimizer_params_user_specs:
+            optimizer_params_validation = {
+                (k.name if isinstance(k, Projection) else k): TorchParamTuple(k, v)
+                for k, v in optimizer_params_user_specs.items()
+            }
+            self._validate_optimizer_param_specs(
+                set(optimizer_params_validation.keys()), source, context
+            )
+
         # Proceed to either construct new optimizer.param_groups (if called from constructor)
         #   or update existing ones (if called from learn() method)
 
