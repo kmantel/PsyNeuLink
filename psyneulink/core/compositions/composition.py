@@ -9700,7 +9700,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"for the 'learning_rate' arg of '{source_str}' must each be "
                                        f"a float, int, bool, or None: '{bad_vals}'.")
             # Get default learning rate if there is one and remove it from the dict
-            learning_rate = _lr_dict_arg.pop(DEFAULT_LEARNING_RATE, None)
+            learning_rate = _lr_dict_arg.get(DEFAULT_LEARNING_RATE, None)
 
             # Check that all keys in remaining entries are a Projection or a name (str)
             bad_keys = [spec for spec in _lr_dict_arg.keys() if not isinstance(spec, (str, MappingProjection))]
