@@ -889,13 +889,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
 
         run_time_default_learning_rate = optimizer_params_user_specs.get(DEFAULT_LEARNING_RATE, None)
 
-        optimizer_params_user_parsed, optimizer_torch_params_full_with_specified = (
-            self._parse_learning_rate_specs(optimizer,
-                                            optimizer_params_user_specs,
-                                            run_time_default_learning_rate,
-                                            source,
-                                            context))
-
         if source == CONSTRUCTOR and self.optimizer:
             # If user has specified dict with learning_rates in call to _build_pytorch_representation,
             #    need to update the construct_param_groups with specififed values
