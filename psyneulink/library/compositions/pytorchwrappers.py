@@ -1033,6 +1033,9 @@ class PytorchCompositionWrapper(torch.nn.Module):
         for proj_spec in specs_to_validate.copy():
             if proj_spec in self._pnl_refs_to_torch_param_names:
                 specs_to_validate.remove(proj_spec)
+            elif proj_spec != DEFAULT_LEARNING_RATE:
+                not_learnable.append(proj_spec)
+
             try:
                 if proj_spec.startswith('default_'):
                     specs_to_validate.remove(proj_spec)
