@@ -675,7 +675,7 @@ class TestAutodiffLearningRateArgs:
 
         comp_lr = comp_lr or {DEFAULT_LEARNING_RATE: default_lr, key_spec: val_spec}
 
-        with pytest.raises(error_type) as error_text:
+        with pytest.raises(pnl.CompositionError) as error_text:
             outer_comp = pnl.AutodiffComposition(pathway, name='Outer Comp')
             outer_comp.learn(inputs={outer_mech_in: [[1.0]]}, learning_rate=comp_lr)
         assert error_msg in str(error_text.value)

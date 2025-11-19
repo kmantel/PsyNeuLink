@@ -4193,16 +4193,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         _parse_learning_rate_TEMP_UNPROCESSED = _get_optimizer_Parameter_parser('learning_rate')
 
         def _validate_learning_rate(self, learning_rate):
-            base_err = "must be an int, float, bool or None"
             try:
                 lr_dict = learning_rate.items()
             except AttributeError:
                 if learning_rate is not None and not is_numeric_scalar(learning_rate):
-                    return base_err
+                    return 'must be a float, int, bool, None, or a dict.'
             else:
                 for key, val in lr_dict:
+                    if not isinstance(key, (str, MappingProjection)):
+                        return f'entry key {key} must be a Projection or name of a Projection'
                     if val is not None and not is_numeric_scalar(val):
-                        return f'element {key} {base_err}'
+                        if isinstance(val, str):
+                            val = f"'{val}'"
+                        return f'entry value for {key}: {val} must be a float, int, bool, or None'
 
         _validate_learning_rate_TEMP_UNPROCESSED = _validate_learning_rate
 
@@ -12798,6 +12801,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
 
         rt_lr = self.runtime_optimizer_params[context.execution_id].learning_rate._value
+        try:
+            self.parameters.learning_rate._validate(rt_lr)
+        except ParameterError as e:
+            raise CompositionError(
+                f"A value ('{rt_lr}') specified in the 'learning_rate'"
+                f" arg of the learn() method for '{self.name}' is not valid;"
+                " it must be an int, float, bool or None."
+            ) from e
 
         if not isinstance(self, AutodiffComposition):
             if isinstance(learning_rate, dict):
