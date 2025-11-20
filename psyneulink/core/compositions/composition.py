@@ -14916,11 +14916,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         #         ):
         #             outer_only_projs.add(p)
         if len(outer_only_projs):
-            import pprint
-            print(self, 'intendignt o to REMOVING', pprint.pformat(outer_only_projs))
-            rms = list(outer_only_projs)
-            # import ipdb
-            # ipdb.set_trace()
             opt_projections.difference_update(outer_only_projs)
 
         return opt_projections
