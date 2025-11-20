@@ -605,16 +605,16 @@ class TestAutodiffLearningRateArgs:
     error_test_args = [
         ("comp_lr_spec_str",
          "A value ('hello') specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
-         "is not valid; it must be an int, float, bool or None."),
+         "is not valid; it must be an int, float, bool, or None."),
         ("comp_lr_spec_proj",
          "A value ('(MappingProjection INPUT PROJECTION)') specified in the 'learning_rate' arg of the learn() method "
-         "for 'Outer Comp' is not valid; it must be an int, float, bool or None."),
+         "for 'Outer Comp' is not valid; it must be an int, float, bool, or None."),
         ("dict_lr_val_str",
          "A value ('goodbye') specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
          "is not valid; it must be an int, float, bool or None."),
         ("dict_lr_val_proj",
          "A value ('(MappingProjection INPUT PROJECTION)') specified in the 'learning_rate' arg of the learn() method "
-         "for 'Outer Comp' is not valid; it must be an int, float, bool or None."),
+         "for 'Outer Comp' is not valid; it must be an int, float, bool, or None."),
         ("dict_illegal_key_str",
          "The following Projection specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
          "is not in that Composition or any nested within it: 'woa a woa'."),
@@ -651,13 +651,10 @@ class TestAutodiffLearningRateArgs:
         key_spec = input_proj
         val_spec = .2
 
-        error_type = AutodiffCompositionError
         if condition == 'comp_lr_spec_str':
             comp_lr = 'hello'
-            error_type = pnl.CompositionError
         elif condition == 'comp_lr_spec_proj':
             comp_lr = input_proj
-            error_type = pnl.CompositionError
         elif condition == "dict_lr_val_str":
             val_spec = "goodbye"
         elif condition == "dict_lr_val_proj":
@@ -669,13 +666,12 @@ class TestAutodiffLearningRateArgs:
         elif condition == "dict_key_bad_proj":
             key_spec = pnl.MappingProjection(nested_mech_2, outer_mech_out, learning_rate=.4, name="BAD PROJECTION")
         elif condition == "dict_proj_not_learnable":
-            error_type = AutodiffCompositionError
             comp_lr = None
             input_proj.learnable = False
 
         comp_lr = comp_lr or {DEFAULT_LEARNING_RATE: default_lr, key_spec: val_spec}
 
-        with pytest.raises(error_type, match=error_msg):
+        with pytest.raises(CompositionError, match=error_msg):
             outer_comp = pnl.AutodiffComposition(pathway, name='Outer Comp')
             outer_comp.learn(inputs={outer_mech_in: [[1.0]]}, learning_rate=comp_lr)
 
@@ -3871,7 +3867,7 @@ class TestMiscTrainingFunctionality:
                            "for 'OUTER' is not in that Composition or any nested within it: 'bad_proj'.")
             elif condition == 'bad_lr':
                 opt_params = {input_proj: condition}
-                err_msg = "must be an int, float, bool or None"
+                err_msg = "must be an int, float, bool, or None"
             with pytest.raises(CompositionError) as error_text:
                 outer_comp = pnl.AutodiffComposition(
                     [input_mech, input_proj, nested_comp, output_proj, output_mech], name='OUTER')

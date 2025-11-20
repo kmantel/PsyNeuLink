@@ -474,7 +474,7 @@ class GRUComposition(AutodiffComposition):
         determines whether learning is enabled for the GRUComposition
         (see `Learning Arguments <GRUComposition_Learning_Arguments>` for additional details).
 
-    learning_rate : float, int, bool or None
+    learning_rate : float, int, bool, or None
         determines the default learning_rate for the parameters of the Pytorch `GRU
         <https://pytorch.org/docs/stable/generated/torch.nn.GRU.html>`_ module that are not specified
         for individual parameters in the **optimizer_params** argument of the AutodiffComposition's

@@ -3536,10 +3536,15 @@ class OptParam:
         return res
 
     # TODO: refactor as Parameter sub/alt class
-    def _validate(self, component: Component, value = NotImplemented):
+    def _validate(self, component: Component, value=NotImplemented):
         if value is NotImplemented:
             value = self._value
         getattr(component.parameters, self.name)._validate(value)
+
+    def _get_validation_error_message(self, component: Component, value=NotImplemented) -> str:
+        if value is NotImplemented:
+            value = self._value
+        return getattr(component.parameters, self.name)._get_validation_error_message(value)
 
 
 class OptimizerParams(types.SimpleNamespace):
@@ -4202,16 +4207,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         _parse_learning_rate_TEMP_UNPROCESSED = _get_optimizer_Parameter_parser('learning_rate')
 
         def _validate_learning_rate(self, learning_rate):
-            base_err = "must be an int, float, bool or None"
             try:
                 lr_dict = learning_rate.items()
             except AttributeError:
                 if learning_rate is not None and not is_numeric_scalar(learning_rate):
-                    return base_err
+                    return 'must be an int, float, bool, None, or a dict.'
             else:
                 for key, val in lr_dict:
+                    if not isinstance(key, (str, MappingProjection)):
+                        return f'entry key {key} must be a Projection or name of a Projection'
                     if val is not None and not is_numeric_scalar(val):
-                        return f'element {key} {base_err}'
+                        if isinstance(val, str):
+                            val = f"'{val}'"
+                        return f'entry value for {key}: {val} must be an int, float, bool, or None'
 
         _validate_learning_rate_TEMP_UNPROCESSED = _validate_learning_rate
 
@@ -12808,7 +12816,16 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         rt_lr = self.runtime_optimizer_params[context.execution_id].learning_rate._value
         # TODO: loop over each optimizer param
-        self.runtime_optimizer_params[context.execution_id].learning_rate._validate(self)
+        # self.runtime_optimizer_params[context.execution_id].learning_rate._validate(self)
+        lr_invalid_err = self.runtime_optimizer_params[context.execution_id].learning_rate._get_validation_error_message(self)
+        if lr_invalid_err is not None:
+            if isinstance(rt_lr, str):
+                rt_lr = f"'{rt_lr}'"
+            raise CompositionError(
+                f"A value ({rt_lr}) specified in the 'learning_rate'"
+                f" arg of the learn() method for '{self.name}' is not valid:"
+                f" {lr_invalid_err}"
+            )
 
         if not isinstance(self, AutodiffComposition):
             if isinstance(learning_rate, dict):

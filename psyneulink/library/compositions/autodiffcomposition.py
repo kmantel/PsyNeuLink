@@ -1323,7 +1323,7 @@ class AutodiffComposition(Composition):
         if not is_numeric_scalar(learning_rate):
             raise AutodiffCompositionError(
                 f"A value ('{learning_rate}') specified in the 'learning_rate' arg of the learn() method "
-                f"for '{self.name}' is not valid; it must be an int, float, bool or None.")
+                f"for '{self.name}' is not valid; it must be an int, float, bool, or None.")
         if self.optimizer_type not in ['sgd', 'adam']:
             raise AutodiffCompositionError("Invalid optimizer specified. Optimizer argument must be a string. "
                                            "Currently, Stochastic Gradient Descent and Adam are the only available "
