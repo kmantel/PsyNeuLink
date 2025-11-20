@@ -3535,6 +3535,12 @@ class OptParam:
                 return self._has_specific_value_for(proxy_target)
         return res
 
+    # TODO: refactor as Parameter sub/alt class
+    def _validate(self, component: Component, value = NotImplemented):
+        if value is NotImplemented:
+            value = self._value
+        getattr(component.parameters, self.name)._validate(value)
+
 
 class OptimizerParams(types.SimpleNamespace):
     learning_rate: OptParam = OptParam(
@@ -3618,10 +3624,13 @@ class OptimizerParams(types.SimpleNamespace):
             if param_name == 'learning_rate':
                 key_name = 'learning_rate_TEMP_UNPROCESSED'
             comp_param = getattr(component.parameters, key_name)
-            getattr(params, param_name)._user_specified = (
+            opt_param = getattr(params, param_name)
+            opt_param._user_specified = (
                 (param._value is not None or comp_param.specify_none)
                 and comp_param._user_specified
             )
+            print(component, param._value)
+            opt_param._validate(component, param._value)
 
         return params
 
@@ -12798,6 +12807,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
 
         rt_lr = self.runtime_optimizer_params[context.execution_id].learning_rate._value
+        # TODO: loop over each optimizer param
+        self.runtime_optimizer_params[context.execution_id].learning_rate._validate(self)
 
         if not isinstance(self, AutodiffComposition):
             if isinstance(learning_rate, dict):
