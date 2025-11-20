@@ -610,8 +610,8 @@ class TestAutodiffLearningRateArgs:
          "A value ('(MappingProjection INPUT PROJECTION)') specified in the 'learning_rate' arg of the learn() method "
          "for 'Outer Comp' is not valid; it must be an int, float, bool, or None."),
         ("dict_lr_val_str",
-         "A value ('goodbye') specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
-         "is not valid; it must be an int, float, bool or None."),
+         r"A value.*'goodbye'.*specified in the 'learning_rate' arg of the learn\(\) method for 'Outer Comp'.*"
+         r"'goodbye' must be an int, float, bool, or None"),
         ("dict_lr_val_proj",
          "A value ('(MappingProjection INPUT PROJECTION)') specified in the 'learning_rate' arg of the learn() method "
          "for 'Outer Comp' is not valid; it must be an int, float, bool, or None."),
