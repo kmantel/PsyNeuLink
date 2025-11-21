@@ -9763,8 +9763,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             else:
                 # Assign Projection's learning_rate to learning_rates_dict if it is not already specified in the dict
                 learning_rates_dict[proj_name] = proj.parameters.learning_rate.get(None) if proj.learnable else False
-            # Set Projection's learning_rate to specified value in <Composition.name>_default context
-            proj.parameters.learning_rate.set(learning_rates_dict[proj_name], context)
 
         if not_learnable:
             raise CompositionError(f"The following Projection(s) in the dict specified for the 'learning_rate' arg of "
