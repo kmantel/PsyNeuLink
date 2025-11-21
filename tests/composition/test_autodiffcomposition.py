@@ -1,4 +1,5 @@
 import logging
+import re
 import timeit as timeit
 import os
 import numpy as np
@@ -605,16 +606,16 @@ class TestAutodiffLearningRateArgs:
     error_test_args = [
         ("comp_lr_spec_str",
          "A value ('hello') specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
-         "is not valid; it must be an int, float, bool, or None."),
+         "is not valid: it must be an int, float, bool, None, or a dict"),
         ("comp_lr_spec_proj",
          "A value ('(MappingProjection INPUT PROJECTION)') specified in the 'learning_rate' arg of the learn() method "
-         "for 'Outer Comp' is not valid; it must be an int, float, bool, or None."),
+         "for 'Outer Comp' is not valid: it must be an int, float, bool, None, or a dict"),
         ("dict_lr_val_str",
-         r"A value.*'goodbye'.*specified in the 'learning_rate' arg of the learn\(\) method for 'Outer Comp'.*"
-         r"'goodbye' must be an int, float, bool, or None"),
+         "A value.*'goodbye'.*specified in the 'learning_rate' arg of the learn() method for 'Outer Comp'.*"
+         "'goodbye' must be an int, float, bool, or None"),
         ("dict_lr_val_proj",
-         "A value ('(MappingProjection INPUT PROJECTION)') specified in the 'learning_rate' arg of the learn() method "
-         "for 'Outer Comp' is not valid; it must be an int, float, bool, or None."),
+         "A value.*'(MappingProjection INPUT PROJECTION)'.*specified in the 'learning_rate' arg of the learn() method "
+         "for 'Outer Comp'.*it must be an int, float, bool, None, or a dict"),
         ("dict_illegal_key_str",
          "The following Projection specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
          "is not in that Composition or any nested within it: 'woa a woa'."),
@@ -626,7 +627,7 @@ class TestAutodiffLearningRateArgs:
          "is not in that Composition or any nested within it: 'BAD PROJECTION'."),
         ("dict_proj_not_learnable",
          "Projection ('INPUT PROJECTION') specified in the dict for the 'learning_rate' arg of the learn() method for "
-         "'Outer Comp' is not learnable; check that its 'learnable' attribute is set to 'True' and its learning_rate "
+         "'Outer Comp' is not learnable: check that its 'learnable' attribute is set to 'True' and its learning_rate "
          "is not 'False', or remove it from the dict.")
          ]
     @pytest.mark.pytorch
@@ -671,7 +672,8 @@ class TestAutodiffLearningRateArgs:
 
         comp_lr = comp_lr or {DEFAULT_LEARNING_RATE: default_lr, key_spec: val_spec}
 
-        with pytest.raises(CompositionError, match=error_msg):
+        error_re = re.sub(r'([\(\)])', r'\\\1', error_msg)
+        with pytest.raises(CompositionError, match=error_re):
             outer_comp = pnl.AutodiffComposition(pathway, name='Outer Comp')
             outer_comp.learn(inputs={outer_mech_in: [[1.0]]}, learning_rate=comp_lr)
 
