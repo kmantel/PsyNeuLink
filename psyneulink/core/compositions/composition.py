@@ -9765,8 +9765,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 learning_rates_dict[proj_name] = proj.parameters.learning_rate.get(None) if proj.learnable else False
             # Set Projection's learning_rate to specified value in <Composition.name>_default context
             proj.parameters.learning_rate.set(learning_rates_dict[proj_name], context)
-            if proj._proxy_for is not None:
-                proj._proxy_for.parameters.learning_rate.set(learning_rates_dict[proj_name], context)
+
         if not_learnable:
             raise CompositionError(f"The following Projection(s) in the dict specified for the 'learning_rate' arg of "
                                    f"'{self.name}' are not learnable: '{', '.join(not_learnable)}'; check that their "
@@ -12796,6 +12795,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self._initialize_from_context(context, base_context, override=False)
 
         runner = CompositionRunner(self)
+
+        for proj in self._get_all_projections():
+            if proj._proxy_for is not None:
+                proxy_lr = proj._proxy_for.parameters.learning_rate._get(context)
+                proj._proxy_for.parameters.learning_rate._set(proxy_lr, context, skip_history=True)
 
         composition_optimizer_params = OptimizerParams.from_component(self, context)
         # print('LEARN METHOD COMPOSITION OPT PARAMS', composition_optimizer_params)
