@@ -1,3 +1,4 @@
+import re
 import psyneulink as pnl
 
 # np.set_printoptions(suppress=True)
@@ -446,12 +447,13 @@ class TestStructural:
 
         comp_lr = comp_lr or {DEFAULT_LEARNING_RATE: default_lr, key_spec: val_spec}
 
+        error_re = re.sub(r'([\(\)])', r'\\\1', error_msg)
         if not check_learn:
-            with pytest.raises(CompositionError, match=error_msg):
+            with pytest.raises(CompositionError, match=error_re):
                 pnl.Composition(learning_rate=comp_lr, name='Comp')
             return
 
-        with pytest.raises(CompositionError, match=error_msg):
+        with pytest.raises(CompositionError, match=error_re):
             comp = pnl.Composition([mech_1, input_proj, mech_2], learning_rate=comp_lr, name='Comp')
             comp.learn(inputs={mech_1: [[1.0]]},)
 
