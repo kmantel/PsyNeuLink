@@ -9760,13 +9760,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # Flag for error if anything other than False is specifieD for a Projection that is not learnable
                 if learning_rates_dict[proj_name] is not False and not proj.learnable:
                     not_learnable.append(proj.name)
-            else:
-                # Assign Projection's learning_rate to learning_rates_dict if it is not already specified in the dict
-                learning_rates_dict[proj_name] = proj.parameters.learning_rate.get(None) if proj.learnable else False
-            # Set Projection's learning_rate to specified value in <Composition.name>_default context
-            proj.parameters.learning_rate.set(learning_rates_dict[proj_name], context)
-            if proj._proxy_for is not None:
-                proj._proxy_for.parameters.learning_rate.set(learning_rates_dict[proj_name], context)
         if not_learnable:
             raise CompositionError(f"The following Projection(s) in the dict specified for the 'learning_rate' arg of "
                                    f"'{self.name}' are not learnable: '{', '.join(not_learnable)}'; check that their "
