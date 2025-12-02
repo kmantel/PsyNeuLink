@@ -392,9 +392,12 @@ class TestStructural:
     error_test_args = [
         ("comp_lr_spec_str", True,
          "The 'learning_rate' arg for 'Comp' ('hello') must be a float, int, bool, None, or a dict."),
-        ("comp_lr_spec_proj", True,
-         "The 'learning_rate' arg for 'Comp' ('(MappingProjection INPUT PROJECTION)') "
-         "must be a float, int, bool, None, or a dict."),
+        (
+            "comp_lr_spec_proj",
+            True,
+            "The 'learning_rate' arg for 'Comp' ((MappingProjection INPUT PROJECTION)) "
+            "must be a float, int, bool, None, or a dict."
+        ),
         ("dict_lr_val_str", False,
         "The following values of the entries in the dict specified for the 'learning_rate' arg of 'Comp' "
         "must each be a float, int, bool, or None: '[{(MappingProjection INPUT PROJECTION): 'goodbye'}]'."),
@@ -448,7 +451,7 @@ class TestStructural:
 
         comp_lr = comp_lr or {DEFAULT_LEARNING_RATE: default_lr, key_spec: val_spec}
 
-        error_re = re.sub(r'([\(\)])', r'\\\1', error_msg)
+        error_re = re.sub(r'([\(\)\[\{])', r'\\\1', error_msg)
         if not check_learn:
             with pytest.raises(CompositionError, match=error_re):
                 pnl.Composition(learning_rate=comp_lr, name='Comp')
