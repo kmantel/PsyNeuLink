@@ -4211,7 +4211,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 lr_dict = learning_rate.items()
             except AttributeError:
                 if learning_rate is not None and not is_numeric_scalar(learning_rate):
-                    return 'it must be an int, float, bool, None, or a dict.'
+                    return 'must be an int, float, bool, None, or a dict'
             else:
                 for key, val in lr_dict:
                     if not isinstance(key, (str, MappingProjection)):
@@ -9695,8 +9695,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             source_str = f"the learn() method of " + source_str
 
         if not isinstance(learning_rate, (float, int, bool, dict, type(None))):
+            if isinstance(learning_rate, str):
+                learning_rate = f"'{learning_rate}'"
             raise CompositionError(
-                f"The 'learning_rate' arg for '{source_str}' ('{learning_rate}') "
+                f"The 'learning_rate' arg for '{source_str}' ({learning_rate}) "
                 f"must be a float, int, bool, None, or a dict.")
         if learning_rate is True:
             learning_rate = None
