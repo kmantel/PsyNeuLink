@@ -1186,8 +1186,7 @@ class TestClearLog:
 
         assert list(log_dict_T_1.keys()) == [COMP.default_execution_id]
         assert list(log_dict_T_2.keys()) == [COMP.default_execution_id]
-        assert sorted(log_dict_PJ.keys()) == [COMP.default_execution_id,
-                                              COMP.default_execution_id + pnl.DEFAULT_SUFFIX]
+        assert sorted(log_dict_PJ.keys()) == [COMP.default_execution_id]
 
         # Confirm that values were logged correctly
         sys_log_dict = log_dict_T_1[COMP.default_execution_id]
