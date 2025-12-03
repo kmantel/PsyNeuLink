@@ -3645,14 +3645,7 @@ class OptimizerParams(types.SimpleNamespace):
 
         # TODO: clean up. or find a better way to do this
         for param in params:
-            # TODO: REMOVE THIS - TEMP FOR TESTING ONLY USE ONLY THE
-            #       ELSE CLAUSE IN FINAL VERSION this is to leave
-            #       original behavior intact while developing, but
-            #       this will be assigned as Parameter values
-            key_name = param.name
-            if param.name == 'learning_rate':
-                key_name = 'learning_rate_TEMP_UNPROCESSED'
-            comp_param = getattr(component.parameters, key_name)
+            comp_param = getattr(component.parameters, param.name)
             opt_param = getattr(params, param.name)
             opt_param._user_specified = (
                 (param._value is not None or comp_param.specify_none)
