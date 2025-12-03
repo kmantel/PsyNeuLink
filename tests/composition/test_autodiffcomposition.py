@@ -632,8 +632,9 @@ class TestAutodiffLearningRateArgs:
         (
             'dict_proj_not_learnable',
             (
-                ".*(MappingProjection INPUT PROJECTION) specified in the dict.*is not enabled; check that its 'enable_learning_rate' attribute is set to 'True' and its learning_rate"
-                " is not 'False', or remove it from the dict."
+                ".*(MappingProjection INPUT PROJECTION) specified in the dict.*is not enabled;"
+                " check that its enable_learning_rate attribute is set to True and its"
+                " learning_rate is not False, or remove it from the dict."
             ),
         ),
          ]
@@ -3889,14 +3890,16 @@ class TestMiscTrainingFunctionality:
             hidden_proj.learnable = False
             output_proj.learnable = False
             opt_params = {input_proj: 1.16, hidden_proj: 21.6, output_proj: 3.99}
-            with pytest.raises(AutodiffCompositionError) as error_text:  # Warn, since default_input is NOT set
+
+            error_msg = (
+                ".*(MappingProjection MappingProjection from nested_1[OutputPort-0] to nested_2[InputPort-0])"
+                " specified in the dict.*is not enabled; check that its enable_learning_rate attribute is"
+                " set to True and its learning_rate is not False, or remove it from the dict."
+            )
+            error_re = re.sub(r'([\(\)\[\{])', r'\\\1', error_msg)
+            with pytest.raises(CompositionError, match=error_re):  # Warn, since default_input is NOT set
                 outer_comp = pnl.AutodiffComposition([input_mech, input_proj, nested_comp, output_proj, output_mech])
                 outer_comp.learn(inputs=inputs, targets=targets, learning_rate=opt_params)
-            assert ("Projection ('MappingProjection from nested_1[OutputPort-0] to nested_2[InputPort-0]') specified "
-                    "in the dict for the 'learning_rate' arg of the learn() method for 'autodiff_composition' "
-                    "is not learnable; check that its 'learnable' attribute is set to 'True' and its learning_rate "
-                    "is not 'False', or remove it from the dict."
-                    in str(error_text.value))
             return
 
         elif condition == 'cnstr_False_lrn_val':
