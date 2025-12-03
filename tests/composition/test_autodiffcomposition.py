@@ -629,10 +629,13 @@ class TestAutodiffLearningRateArgs:
         ("dict_key_bad_proj",
          "The following Projection specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
          "is not in that Composition or any nested within it: 'BAD PROJECTION'."),
-        ("dict_proj_not_learnable",
-         "Projection ('INPUT PROJECTION') specified in the dict for the 'learning_rate' arg of the learn() method for "
-         "'Outer Comp' is not learnable: check that its 'learnable' attribute is set to 'True' and its learning_rate "
-         "is not 'False', or remove it from the dict.")
+        (
+            'dict_proj_not_learnable',
+            (
+                ".*(MappingProjection INPUT PROJECTION) specified in the dict.*is not enabled; check that its 'enable_learning_rate' attribute is set to 'True' and its learning_rate"
+                " is not 'False', or remove it from the dict."
+            ),
+        ),
          ]
     @pytest.mark.pytorch
     @pytest.mark.parametrize("condition, error_msg", error_test_args,
