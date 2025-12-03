@@ -398,10 +398,6 @@ class LLVMBuilderContext:
         used_param_ids.add('termination_measure')
         used_state_ids.add('termination_measure')
 
-
-        # TODO: remove!
-        used_param_ids.add('learning_rate_TEMP_UNPROCESSED')
-
         # 'num_trials_per_estimate' is only used in "evaluate" variants
         if hasattr(component, 'evaluate_agent_rep'):
             used_param_ids.add('num_trials_per_estimate')
