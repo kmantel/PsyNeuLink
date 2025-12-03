@@ -3625,14 +3625,7 @@ class OptimizerParams(types.SimpleNamespace):
             if param_name not in component.parameters:
                 params[param_name] = NotImplemented
             else:
-                # TODO: REMOVE THIS - TEMP FOR TESTING ONLY USE ONLY THE
-                #       ELSE CLAUSE IN FINAL VERSION this is to leave
-                #       original behavior intact while developing, but
-                #       this will be assigned as Parameter values
-                key_name = param_name
-                if param_name == 'learning_rate':
-                    key_name = 'learning_rate_TEMP_UNPROCESSED'
-                param = getattr(component.parameters, key_name)
+                param = getattr(component.parameters, param_name)
 
                 if defaults:
                     value = param.default_value

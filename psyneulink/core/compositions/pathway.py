@@ -556,7 +556,7 @@ class Pathway(object, metaclass=UsesParametersMeta):
     name = componentName
 
     class Parameters(ParametersBase):
-        learning_rate = Parameter(None, stateful=False, aliases='learning_rate_TEMP_UNPROCESSED')
+        learning_rate = Parameter(None, stateful=False)
 
         _parse_learning_rate = _get_optimizer_Parameter_parser('learning_rate')
 
