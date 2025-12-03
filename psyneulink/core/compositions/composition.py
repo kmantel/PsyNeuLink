@@ -3602,7 +3602,7 @@ class OptimizerParams(types.SimpleNamespace):
             _user_specified=True,
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[OptParam]:
         return (getattr(self, p) for p in OptimizerParams.__annotations__)
 
     def optim_args(self, component: Optional[Component] = None) -> Dict[str, Any]:
@@ -4371,6 +4371,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             retain_old_simulation_data=retain_old_simulation_data,
             context=context
         )
+
+        composition_optimizer_params = OptimizerParams.from_component(self, context)
+        self._validate_optimizer_params(composition_optimizer_params, context)
 
         if lr_dict is not None:
             self.parameters.learning_rates_dict._set(lr_dict, context)
@@ -12652,6 +12655,27 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
             return trial_output
 
+    def _validate_optimizer_params(
+        self,
+        opt_params: OptimizerParams,
+        context: Context,
+        err_source: str = '',
+    ):
+        if err_source:
+            err_source = f' in {err_source}'
+
+        for o_param in opt_params:
+            val = o_param._value
+            err = o_param._get_validation_error_message(self, val, context)
+            if err is not None:
+                if isinstance(val, str):
+                    val = f"'{val}'"
+                raise CompositionError(
+                    f"A value ({val}) specified for the {o_param.name} of"
+                    f" '{self.name}'{err_source} is not valid: {err}"
+                )
+
+
     @handle_external_context(fallback_default=True)
     def learn(
             self,
@@ -12839,27 +12863,18 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 proj._proxy_for.parameters.learning_rate._set(proxy_lr, context, skip_history=True)
 
         composition_optimizer_params = OptimizerParams.from_component(self, context)
+        self._validate_optimizer_params(composition_optimizer_params, context)
         # print('LEARN METHOD COMPOSITION OPT PARAMS', composition_optimizer_params)
 
         if runtime_optimizer_params is None:
             runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
+
+        self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method')
+
         try:
             self.runtime_optimizer_params[context.execution_id] = runtime_optimizer_params
         except AttributeError:
             self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
-
-        rt_lr = self.runtime_optimizer_params[context.execution_id].learning_rate._value
-        # TODO: loop over each optimizer param
-        # self.runtime_optimizer_params[context.execution_id].learning_rate._validate(self)
-        lr_invalid_err = self.runtime_optimizer_params[context.execution_id].learning_rate._get_validation_error_message(self)
-        if lr_invalid_err is not None:
-            if isinstance(rt_lr, str):
-                rt_lr = f"'{rt_lr}'"
-            raise CompositionError(
-                f"A value ({rt_lr}) specified in the 'learning_rate'"
-                f" arg of the learn() method for '{self.name}' is not valid:"
-                f" {lr_invalid_err}"
-            )
 
         if not isinstance(self, AutodiffComposition):
             if isinstance(learning_rate, dict):
@@ -12870,6 +12885,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"argument the constructor(s) for the corresponding MappingProjection(s).")
 
             # parse and then assign any learning_rate specs to learning_rates_dict for execution context
+            rt_lr = self.runtime_optimizer_params[context.execution_id].learning_rate._value
             self._parse_and_validate_learning_rate_arg(rt_lr, context)
             self._assign_learning_rates(context=context)
 

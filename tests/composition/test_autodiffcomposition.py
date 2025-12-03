@@ -604,40 +604,39 @@ class TestAutodiffLearningRateArgs:
 
 
     error_test_args = [
-        ("comp_lr_spec_str",
-         "A value ('hello') specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
-         "is not valid: must be an int, float, bool, None, or a dict"),
-        ("comp_lr_spec_proj",
-         "A value ((MappingProjection INPUT PROJECTION)) specified in the 'learning_rate' arg of the learn() method "
-         "for 'Outer Comp' is not valid: must be an int, float, bool, None, or a dict"),
-        ("dict_lr_val_str",
-         "A value.*'goodbye'.*specified in the 'learning_rate' arg of the learn() method for 'Outer Comp'.*"
-         "'goodbye' must be an int, float, bool, or None"),
         (
-            "dict_lr_val_proj",
-            "A value.*(MappingProjection INPUT PROJECTION).*specified in the 'learning_rate' arg of the learn() method "
-            "for 'Outer Comp'.*must be an int, float, bool, or None"
+            'comp_lr_spec_str',
+            "A value ('hello') specified for the learning_rate of 'Outer Comp' in the learn() method is not valid: must be an int, float, bool, None, or a dict",
         ),
-        ("dict_illegal_key_str",
-         "The following Projection specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
-         "is not in that Composition or any nested within it: 'woa a woa'."),
+        (
+            'comp_lr_spec_proj',
+            "A value ((MappingProjection INPUT PROJECTION)) specified for the learning_rate of 'Outer Comp' in the learn() method is not valid: must be an int, float, bool, None, or a dict",
+        ),
+        (
+            'dict_lr_val_str',
+            "A value.*'goodbye'.*specified for the learning_rate of 'Outer Comp' in the learn() method.*'goodbye' must be an int, float, bool, or None",
+        ),
+        (
+            'dict_lr_val_proj',
+            "A value.*(MappingProjection INPUT PROJECTION).*specified for the learning_rate of 'Outer Comp' in the learn() method.*must be an int, float, bool, or None",
+        ),
+        (
+            'dict_illegal_key_str',
+            "The following Projection specified for the learning_rate of 'Outer Comp' in the learn() method is not in that Composition or any nested within it: 'woa a woa'.",
+        ),
         (
             'dict_illegal_key_int',
-            "A value ({'default_learning_rate': 0.1, 23: 0.2}) specified in the 'learning_rate' arg of the"
-            " learn() method for 'Outer Comp' is not valid: entry key 23 must be a Projection or name of a Projection",
+            "A value ({'default_learning_rate': 0.1, 23: 0.2}) specified for the learning_rate of 'Outer Comp' in the learn() method is not valid: entry key 23 must be a Projection or name of a Projection",
         ),
-        ("dict_key_bad_proj",
-         "The following Projection specified in the 'learning_rate' arg of the learn() method for 'Outer Comp' "
-         "is not in that Composition or any nested within it: 'BAD PROJECTION'."),
+        (
+            'dict_key_bad_proj',
+            "The following Projection specified for the learning_rate of 'Outer Comp' in the learn() method is not in that Composition or any nested within it: 'BAD PROJECTION'.",
+        ),
         (
             'dict_proj_not_learnable',
-            (
-                ".*(MappingProjection INPUT PROJECTION) specified in the dict.*is not enabled;"
-                " check that its enable_learning_rate attribute is set to True and its"
-                " learning_rate is not False, or remove it from the dict."
-            ),
+            '.*(MappingProjection INPUT PROJECTION) specified in the dict is not enabled; check that its enable_learning_rate attribute is set to True and its learning_rate is not False, or remove it from the dict.',
         ),
-         ]
+    ]
     @pytest.mark.pytorch
     @pytest.mark.parametrize("condition, error_msg", error_test_args,
                              ids=[f"{x[0]}" for x in error_test_args])
@@ -3873,7 +3872,7 @@ class TestMiscTrainingFunctionality:
             err_msg = None
             if condition == 'bad_proj':
                 opt_params = {condition: .66}
-                err_msg = ("The following Projection specified in the 'learning_rate' arg of the learn() method "
+                err_msg = ("The following Projection specified for the learning_rate of the learn() method "
                            "for 'OUTER' is not in that Composition or any nested within it: 'bad_proj'.")
             elif condition == 'bad_lr':
                 opt_params = {input_proj: condition}
