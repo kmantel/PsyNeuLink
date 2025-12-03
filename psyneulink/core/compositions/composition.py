@@ -3541,9 +3541,41 @@ class OptParam:
             value = self._value
         getattr(component.parameters, self.name)._validate(value)
 
-    def _get_validation_error_message(self, component: Component, value=NotImplemented) -> str:
+    def _validate_param_is_enabled(self, context: Context) -> Union[str, None]:
+        try:
+            items = self._value.items()
+        except AttributeError:
+            # not a dict
+            return
+
+        for key, val in items:
+            try:
+                pnl_param = getattr(key.parameters, self.pnl_param_enabled_name)
+            except AttributeError:
+                enabled = True
+            else:
+                enabled = pnl_param._get(context)
+
+            if not enabled and val is not False:
+                return (
+                    f"'{self.name}' of the Projection {key} specified in the dict is not enabled;"
+                    f" check that its '{self.pnl_param_enabled_name}' attribute is set to 'True'"
+                    f" and its {self.name} is not 'False', or remove it from the dict."
+                )
+
+    def _get_validation_error_message(
+        self,
+        component: Component,
+        value=NotImplemented,
+        context: Optional[Context] = None,
+    ) -> Union[str, None]:
         if value is NotImplemented:
             value = self._value
+
+        validate_enabled = self._validate_param_is_enabled(context)
+        if validate_enabled is not None:
+            return validate_enabled
+
         return getattr(component.parameters, self.name)._get_validation_error_message(value)
 
 
