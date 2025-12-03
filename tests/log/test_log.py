@@ -95,6 +95,7 @@ class TestLog:
             'variable': 'OFF'
         }
         assert PJ.loggable_items == {
+            'enable_learning_rate': 'OFF',
             'execute_until_finished': 'OFF',
             'exponent': 'OFF',
             'func_execute_until_finished': 'OFF',
@@ -106,6 +107,7 @@ class TestLog:
             'func_operation': 'OFF',
             'func_value': 'OFF',
             'has_initializers': 'OFF',
+            'learnable': 'OFF',
             'learning_rate': 'OFF',
             'func_variable': 'OFF',
             'matrix': 'OFF',
@@ -200,6 +202,7 @@ class TestLog:
             'variable': 'OFF'
         }
         assert PJ.loggable_items == {
+            'enable_learning_rate': 'OFF',
             'execute_until_finished': 'OFF',
             'exponent': 'OFF',
             'func_execute_until_finished': 'OFF',
@@ -212,6 +215,7 @@ class TestLog:
             'func_value': 'OFF',
             'func_variable': 'OFF',
             'has_initializers': 'OFF',
+            'learnable': 'OFF',
             'learning_rate': 'OFF',
             'matrix': 'OFF',
             'max_executions_before_finished': 'OFF',
@@ -366,6 +370,7 @@ class TestLog:
             'variable': 'OFF'
         }
         assert PJ.loggable_items == {
+            'enable_learning_rate': 'OFF',
             'execute_until_finished': 'OFF',
             'exponent': 'OFF',
             'func_execute_until_finished': 'OFF',
@@ -378,6 +383,7 @@ class TestLog:
             'func_value': 'OFF',
             'func_variable': 'OFF',
             'has_initializers': 'OFF',
+            'learnable': 'OFF',
             'learning_rate': 'OFF',
             'matrix': 'OFF',
             'max_executions_before_finished': 'OFF',
@@ -475,6 +481,7 @@ class TestLog:
             'variable': 'OFF'
         }
         assert PJ.loggable_items == {
+            'enable_learning_rate': 'OFF',
             'execute_until_finished': 'OFF',
             'exponent': 'OFF',
             'func_execute_until_finished': 'OFF',
@@ -487,6 +494,7 @@ class TestLog:
             'func_value': 'OFF',
             'func_variable': 'OFF',
             'has_initializers': 'OFF',
+            'learnable': 'OFF',
             'learning_rate': 'OFF',
             'matrix': 'OFF',
             'max_executions_before_finished': 'OFF',
