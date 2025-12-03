@@ -8735,7 +8735,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                  f"learning_components for {learning_pathway.name} being constructed for '{self.name}'.")
             learning_mech_lr = learning_mech.parameters.learning_rate.get(context)
             proj_lr = learnable_projection.parameters.learning_rate.get(context)
-            if proj_lr not in {None, True}:
+            if proj_lr is not None and proj_lr is not True:
                 # Keep Projection's specified learning_rate, as it takes precedence over pathway learning_rate
                 #   (see `Composition_Learning_Rate_Precedence_Hierarchy`)
                 # if Projection has a learning_rate, assign to LearningMechanism
