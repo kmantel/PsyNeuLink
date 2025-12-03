@@ -810,7 +810,7 @@ class DummyProjection(Projection):
 
     def __getattr__(self, name):
         obj_name = f"{self.name} "
-        if name not in {'learning_rate', 'name', 'compositions', 'learning_rate_TEMP_UNPROCESSED'}:
+        if name not in {'learning_rate', 'name', 'compositions'}:
             raise AttributeError(f"This object is used to convey the learning rate for the torch parameters "
                                  f"corresponding to the set of {obj_name}Projections of a GRUComposition, "
                                  f"that cannot be set directly.  It has only 'name', 'learnable', and"
