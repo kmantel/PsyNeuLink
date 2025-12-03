@@ -776,7 +776,6 @@ class DummyProjection(Projection):
     class Parameters(Projection.Parameters):
         learnable = Parameter(True, stateful=False, aliases=['enable_learning_rate'])
         learning_rate = Parameter(None, stateful=True)
-        learning_rate_TEMP_UNPROCESSED = Parameter(None)
 
     @check_user_specified
     def __init__(self, name, composition=None):
@@ -784,7 +783,7 @@ class DummyProjection(Projection):
         self.compositions = weakref.WeakSet()
         if composition is not None:
             self.compositions.add(composition)
-        self._initialize_parameters(learning_rate=None, learning_rate_TEMP_UNPROCESSED=None, context=Context(execution_id=None))
+        self._initialize_parameters(learning_rate=None, context=Context(execution_id=None))
         self.parameters.learning_rate.set(None, None)
 
         register_category(
