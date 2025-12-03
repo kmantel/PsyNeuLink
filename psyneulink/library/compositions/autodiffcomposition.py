@@ -1200,8 +1200,8 @@ class AutodiffComposition(Composition):
         # optimization parameters currently are used even if not building first time or rebuilding
         if learning_rate is not None:
             # TODO: remove this copy, only needed while old handling that modifies dict is present
-            self.parameters.learning_rate_TEMP_UNPROCESSED.set(learning_rate, context)
-            self.parameters.learning_rate_TEMP_UNPROCESSED._user_specified = True
+            self.parameters.learning_rate.set(learning_rate, context)
+            self.parameters.learning_rate._user_specified = True
 
         # Construct a new pytorch_representation if none exists or new is specified
         if self.parameters.pytorch_representation._get(context=context) is None or new:
