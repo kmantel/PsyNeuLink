@@ -3603,7 +3603,7 @@ class OptimizerParams(types.SimpleNamespace):
         )
 
     def __iter__(self):
-        return ((p, getattr(self, p)) for p in OptimizerParams.__annotations__)
+        return (getattr(self, p) for p in OptimizerParams.__annotations__)
 
     def optim_args(self, component: Optional[Component] = None) -> Dict[str, Any]:
         res = {}
@@ -3652,16 +3652,16 @@ class OptimizerParams(types.SimpleNamespace):
         params = OptimizerParams(**params)
 
         # TODO: clean up. or find a better way to do this
-        for param_name, param in params:
+        for param in params:
             # TODO: REMOVE THIS - TEMP FOR TESTING ONLY USE ONLY THE
             #       ELSE CLAUSE IN FINAL VERSION this is to leave
             #       original behavior intact while developing, but
             #       this will be assigned as Parameter values
-            key_name = param_name
-            if param_name == 'learning_rate':
+            key_name = param.name
+            if param.name == 'learning_rate':
                 key_name = 'learning_rate_TEMP_UNPROCESSED'
             comp_param = getattr(component.parameters, key_name)
-            opt_param = getattr(params, param_name)
+            opt_param = getattr(params, param.name)
             opt_param._user_specified = (
                 (param._value is not None or comp_param.specify_none)
                 and comp_param._user_specified
