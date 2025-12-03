@@ -3558,9 +3558,9 @@ class OptParam:
 
             if not enabled and val is not False:
                 return (
-                    f"'{self.name}' of the Projection {key} specified in the dict is not enabled;"
-                    f" check that its '{self.pnl_param_enabled_name}' attribute is set to 'True'"
-                    f" and its {self.name} is not 'False', or remove it from the dict."
+                    f"{self.name} of the Projection {key} specified in the dict is not enabled;"
+                    f" check that its {self.pnl_param_enabled_name} attribute is set to True"
+                    f" and its {self.name} is not False, or remove it from the dict."
                 )
 
     def _get_validation_error_message(
