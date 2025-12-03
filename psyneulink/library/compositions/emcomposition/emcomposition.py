@@ -2720,7 +2720,6 @@ class EMComposition(AutodiffComposition):
             else:
                 projection.learnable = False
                 projection.learning_rate = False
-                projection.learning_rate_TEMP_UNPROCESSED = False
 
         constructor_learning_rate = self._optimizer_constructor_params
         learn_field_weights = self.parameters.learn_field_weights.spec
@@ -2737,7 +2736,6 @@ class EMComposition(AutodiffComposition):
             for projection in field_weight_projections:
                 projection.learnable = False
                 projection.learning_rate = False
-                projection.learning_rate_TEMP_UNPROCESSED = False
                 lr_dict[projection] = False
             self._enable_learning_warning_flag = True
 
@@ -2763,7 +2761,7 @@ class EMComposition(AutodiffComposition):
                         raise EMCompositionError(f"PROGRAM ERROR: learning_rate for {field.name} "
                                                  f"({learn_field_weights[i]}) is not a valid value.")
 
-        self.parameters.learning_rate_TEMP_UNPROCESSED._set(lr_dict, context=Context(execution_id=None))
+        self.parameters.learning_rate._set(lr_dict, context=Context(execution_id=None))
 
         self.parameters.learning_rates_dict.set(lr_dict, context=None)
         self._optimizer_constructor_params = lr_dict
