@@ -4337,6 +4337,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self.parsed_inputs = False
 
         learning_rate_TEMP_UNPROCESSED = copy_parameter_value(learning_rate)
+        lr_us = self._user_specified_args.get('learning_rate', NotImplemented)
+        if lr_us is not NotImplemented:
+            self._user_specified_args['learning_rate_TEMP_UNPROCESSED'] = copy_parameter_value(lr_us)
         composition_learning_rate, lr_dict = self._parse_and_validate_learning_rate_arg(learning_rate)
         self._runtime_learning_rate = None
         self.execute_in_additional_optimizations = execute_in_additional_optimizations or {}  # BREADCRUMB: MOVE TO AUTODIFF
