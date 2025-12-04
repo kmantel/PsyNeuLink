@@ -3872,8 +3872,7 @@ class TestMiscTrainingFunctionality:
             err_msg = None
             if condition == 'bad_proj':
                 opt_params = {condition: .66}
-                err_msg = ("The following Projection specified for the learning_rate of the learn() method "
-                           "for 'OUTER' is not in that Composition or any nested within it: 'bad_proj'.")
+                err_msg = "'bad_proj' is not in that Composition or any nested within it"
             elif condition == 'bad_lr':
                 opt_params = {input_proj: condition}
                 err_msg = "must be an int, float, bool, or None"
