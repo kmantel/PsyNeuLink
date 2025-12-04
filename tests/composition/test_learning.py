@@ -417,9 +417,11 @@ class TestStructural:
             True,
             ".*(MappingProjection BAD PROJECTION) is not in that Composition or any nested within it",
         ),
-        ("dict_proj_not_learnable", True,
-         "The following Projection(s) in the dict specified for the 'learning_rate' arg of 'Comp' are not learnable: "
-         "'INPUT PROJECTION'; check that their 'learnable' attribute is set to True or remove them from the dict."),
+        (
+            'dict_proj_not_learnable',
+            True,
+            '.*(MappingProjection INPUT PROJECTION) specified in the dict is not enabled; check that its enable_learning_rate attribute is set to True and its learning_rate is not False, or remove it from the dict.',
+        ),
     ]
     @pytest.mark.parametrize("condition, check_learn, error_msg", error_test_args,
                              ids=[f"{x[0]}" for x in error_test_args])
