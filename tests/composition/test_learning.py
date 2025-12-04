@@ -404,15 +404,19 @@ class TestStructural:
         ("dict_lr_val_proj", False,
          "The following values of the entries in the dict specified for the 'learning_rate' arg of 'Comp' must each be "
          "a float, int, bool, or None: '[{(MappingProjection INPUT PROJECTION): (MappingProjection INPUT PROJECTION)}]'."),
-        ("dict_illegal_key_str", True,
-         "The following entry appears in the dict specified for the 'learning_rate' arg of 'Comp' but its key is not "
-         "a Projection or the name of one in that Composition: 'woa a woa'."),
+        (
+            'dict_illegal_key_str',
+            True,
+            ".*'woa a woa' is not in that Composition or any nested within it",
+        ),
         ("dict_illegal_key_int", False,
          "The following keys in the dict specified for the 'learning_rate' arg of Comp are not MappingProjections "
          "(or names of ones) in that Composition: '23'."),
-        ("dict_key_bad_proj", True,
-         "The following entry appears in the dict specified for the 'learning_rate' arg of 'Comp' "
-         "but its key is not a Projection or the name of one in that Composition: 'BAD PROJECTION'."),
+        (
+            'dict_key_bad_proj',
+            True,
+            ".*(MappingProjection BAD PROJECTION) is not in that Composition or any nested within it",
+        ),
         ("dict_proj_not_learnable", True,
          "The following Projection(s) in the dict specified for the 'learning_rate' arg of 'Comp' are not learnable: "
          "'INPUT PROJECTION'; check that their 'learnable' attribute is set to True or remove them from the dict."),

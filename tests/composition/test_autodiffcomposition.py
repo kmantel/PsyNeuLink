@@ -622,7 +622,7 @@ class TestAutodiffLearningRateArgs:
         ),
         (
             'dict_illegal_key_str',
-            "The following Projection specified for the learning_rate of 'Outer Comp' in the learn() method is not in that Composition or any nested within it: 'woa a woa'.",
+            ".*'woa a woa' is not in that Composition or any nested within it",
         ),
         (
             'dict_illegal_key_int',
@@ -630,7 +630,7 @@ class TestAutodiffLearningRateArgs:
         ),
         (
             'dict_key_bad_proj',
-            "The following Projection specified for the learning_rate of 'Outer Comp' in the learn() method is not in that Composition or any nested within it: 'BAD PROJECTION'.",
+            ".*(MappingProjection BAD PROJECTION) is not in that Composition or any nested within it",
         ),
         (
             'dict_proj_not_learnable',
