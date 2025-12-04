@@ -3666,7 +3666,6 @@ class OptimizerParams(types.SimpleNamespace):
                 (param._value is not None or comp_param.specify_none)
                 and comp_param._user_specified
             )
-            print(component, param._value)
             opt_param._validate(component, param._value)
 
         return params
