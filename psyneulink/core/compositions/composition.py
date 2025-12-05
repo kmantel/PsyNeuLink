@@ -4374,7 +4374,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         )
 
         composition_optimizer_params = OptimizerParams.from_component(self, context)
-        self._validate_optimizer_params(composition_optimizer_params, context)
+        self._validate_optimizer_params(composition_optimizer_params, context, runtime=False)
 
         if lr_dict is not None:
             self.parameters.learning_rates_dict._set(lr_dict, context)
@@ -12652,12 +12652,27 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         opt_params: OptimizerParams,
         context: Context,
         err_source: str = '',
+        runtime: bool = True,
     ):
         if err_source:
             err_source = f' in {err_source}'
 
         def _full_err_msg(param_name: str, err_val: Any, msg_detail: str) -> str:
             return f"A value ({repr(err_val)}) specified for the {param_name} of '{self.name}'{err_source} is not valid: {msg_detail}"
+
+        if not runtime:
+            return
+
+        all_projections = self._optimization_projections
+
+        # all_projections = set(self._get_all_projections())
+        # proxy_projections = set()
+        # for proj in all_projections:
+        #     for attr in ['_proxy', '_proxy_for']:
+        #         proxy = getattr(proj, attr, None)
+        #         if proxy is not None:
+        #             proxy_projections.add(proxy)
+        # all_projections.update(proxy_projections)
 
         for o_param in opt_params:
             val = o_param._value
@@ -12670,9 +12685,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             except (AttributeError, TypeError):
                 # opt param value is not dictionary spec
                 val_items = []
-                all_projections = set()
-            else:
-                all_projections = self._get_all_projections()
 
             for proj_key, _ in val_items:
                 if proj_key == o_param._default_key:
