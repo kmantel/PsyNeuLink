@@ -3169,7 +3169,6 @@ import sys
 import typing
 import warnings
 import weakref
-from collections.abc import Iterable
 from copy import deepcopy, copy
 from inspect import isgenerator, isgeneratorfunction
 
@@ -3602,7 +3601,7 @@ class OptimizerParams(types.SimpleNamespace):
             _user_specified=True,
         )
 
-    def __iter__(self) -> Iterable[OptParam]:
+    def __iter__(self) -> typing.Iterable[OptParam]:
         return (getattr(self, p) for p in OptimizerParams.__annotations__)
 
     def optim_args(self, component: Optional[Component] = None) -> Dict[str, Any]:
@@ -14916,7 +14915,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
     def _controls_optimization_for_projection(
         self,
         projection: Projection,
-        nested_comps: Optional[Iterable['Composition']] = None,
+        nested_comps: Optional[typing.Iterable['Composition']] = None,
     ) -> bool:
         if nested_comps is None:
             nested_comps = self._get_nested_compositions()
