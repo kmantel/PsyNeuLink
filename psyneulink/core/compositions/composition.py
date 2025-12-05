@@ -12641,16 +12641,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if err_source:
             err_source = f' in {err_source}'
 
+        def _full_err_msg(param_name: str, err_val: Any, msg_detail: str) -> str:
+            return f"A value ({repr(err_val)}) specified for the {param_name} of '{self.name}'{err_source} is not valid: {msg_detail}"
+
         for o_param in opt_params:
             val = o_param._value
             err = o_param._get_validation_error_message(self, val, context)
             if err is not None:
-                if isinstance(val, str):
-                    val = f"'{val}'"
-                raise CompositionError(
-                    f"A value ({val}) specified for the {o_param.name} of"
-                    f" '{self.name}'{err_source} is not valid: {err}"
-                )
+                raise CompositionError(_full_err_msg(o_param.name, val, err))
 
 
     @handle_external_context(fallback_default=True)
