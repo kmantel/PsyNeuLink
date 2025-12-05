@@ -14977,7 +14977,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # only an outer composition is allowed to give optimization
         # parameter values
         proxies = {p: p._proxy_for for p in opt_projections if p._proxy_for}
-        opt_projections.update(proxies)
+        opt_projections.update(proxies.values())
 
         outer_only_projs = set()
         nested_comps = self._get_nested_compositions()
