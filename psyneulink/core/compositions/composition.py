@@ -3214,7 +3214,7 @@ from psyneulink.core.components.projections.pathway.mappingprojection import \
     MappingProjection, MappingError, PROXY_FOR
 from psyneulink.core.components.projections.pathway.pathwayprojection import PathwayProjection_Base
 from psyneulink.core.components.projections.projection import \
-    Projection_Base, ProjectionError, DuplicateProjectionError
+    Projection_Base, ProjectionError, DuplicateProjectionError, ProjectionRegistry
 from psyneulink.core.components.shellclasses import Composition_Base
 from psyneulink.core.components.shellclasses import Mechanism, Projection
 from psyneulink.core.compositions.report import Report, \
@@ -3252,7 +3252,7 @@ from psyneulink.core.globals.preferences.basepreferenceset import BasePreference
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel, _assign_prefs
 from psyneulink.core.globals.registry import register_category
 from psyneulink.core.globals.utilities import (
-    ContentAddressableList, PNLStrEnum, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list, is_numeric_or_none, is_numeric_scalar,
+    ContentAddressableList, PNLStrEnum, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list, get_from_registry, is_numeric_or_none, is_numeric_scalar,
     nesting_depth, convert_to_np_array, is_numeric, is_matrix, is_matrix_keyword, parse_valid_identifier, extended_array_equal, try_extract_0d_array_item,
 )
 from psyneulink.core.scheduling.condition import Always, Condition, Never
@@ -10478,23 +10478,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 return True
             return pnl_param._get(context)
 
-        def _get_from_registry(obj_name: str, registry: dict) -> Optional[Component]:
-            # TODO: replace this with maybe storing only projections in
-            # OptParam, then allowing get by name as well
-            for reg in registry.values():
-                print(reg)
-                for o in reg.instanceDict.values():
-                    if o.name == obj_name:
-                        print('found key', projection, o)
-                        return o
-            return None
-
         opt_params = {}
 
         if isinstance(projection, str):
             import psyneulink as pnl
 
-            reg_projection = _get_from_registry(projection, pnl.ProjectionRegistry)
+            # TODO: replace this with maybe storing only projections in
+            # OptParam, then allowing get by name as well
+            reg_projection = get_from_registry(projection, pnl.ProjectionRegistry)
             if reg_projection:
                 projection = reg_projection
 
