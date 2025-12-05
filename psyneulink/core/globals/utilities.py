@@ -2572,9 +2572,10 @@ def get_stacklevel_skip_file_prefixes(
 
 def get_from_registry(obj_name: str, registry: dict):
     for reg in registry.values():
-        for o in reg.instanceDict.values():
-            if o.name == obj_name:
-                return o
+        try:
+            return reg.instanceDict[obj_name]
+        except KeyError:
+            pass
     return None
 
 #endregion
