@@ -853,7 +853,6 @@ class AutodiffComposition(Composition):
             weight_decay = weight_decay,
             enable_learning = enable_learning,
             learning_rate = learning_rate,
-            learning_rate_TEMP_UNPROCESSED=learning_rate_TEMP_UNPROCESSED,
             synch_projection_matrices_with_torch = synch_projection_matrices_with_torch,
             synch_node_variables_with_torch = synch_node_variables_with_torch,
             synch_node_values_with_torch = synch_node_values_with_torch,
