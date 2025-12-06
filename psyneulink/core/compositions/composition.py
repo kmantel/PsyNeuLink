@@ -4236,9 +4236,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             val = f"'{val}'"
                         return f'entry value for {key}: {val} must be an int, float, bool, or None'
 
-        _validate_learning_rate_TEMP_UNPROCESSED = _validate_learning_rate
-
-
     class _CompilationData(ParametersBase):
         execution = None
 
