@@ -8509,6 +8509,30 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
     # region ------------------------------------ LEARNING -------------------------------------------------------------
 
+    def _get_learning_mechanism_initial_opt_param_value(
+        self,
+        mechanism_or_name: Union[LearningMechanism, str],
+        opt_param_name: str,
+        context: Context,
+    ):
+        # this method exists because the learning mechanisms cannot wait
+        # to have a numeric value, otherwise parameter ports will not be
+        # created
+        opt_param = getattr(self.optimizer_params[context.execution_id], opt_param_name)
+        value = opt_param.value(mechanism_or_name)
+        if value is None:
+            comp_param = getattr(self.parameters, opt_param_name)
+            for v in [
+                comp_param._get(context),
+                comp_param.default_value,
+                getattr(self.class_defaults, opt_param_name),
+            ]:
+                print('lrm', v, value)
+                if v is not None and not isinstance(v, dict):
+                    value = v
+                    break
+        return value
+
     @beartype
     @handle_external_context()
     def add_linear_learning_pathway(self,
@@ -8687,7 +8711,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                                                               learning_function,
                                                                                               learned_projection,
                                                                                               learning_rate,
-                                                                                              learning_update)
+                                                                                              learning_update,
+                                                                                              context,
+                                                                                              )
 
             # Suppress warning regarding no efferent projections from Comparator (since it is a TERMINAL node)
             for s in comparator.output_ports:
@@ -9004,12 +9030,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                     learned_projection,
                                     learning_rate,
                                     learning_update,
+                                    context,
                                     target_mech=None,
                                     **kwargs                  # Use of type-specific learning arguments
                                     ):
 
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
-        learning_mech_lr = self.optimizer_params[context.execution_id].learning_rate.value(learning_mech_name)
+        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+            learning_mech_name, 'learning_rate', context
+        )
         learning_mechanism = LearningMechanism(function=learning_function(),
                                                default_variable=[sender_activity_source.output_ports[0].value,
                                                                  receiver_activity_source.output_ports[0].value,
@@ -9018,7 +9047,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                learning_enabled=learning_update,
                                                learning_rate=learning_mech_lr,
                                                in_composition=True,
-                                               name="Learning Mechanism for " + learned_projection.name,
+                                               name=learning_mech_name,
                                                **kwargs)
 
         return learning_mechanism
@@ -9030,7 +9059,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                             learning_function,
                                             learned_projection,
                                             learning_rate,
-                                            learning_update):
+                                            learning_update,
+                                            context,
+                                            ):
         """Creates *TARGET_MECHANISM*, `ComparatorMechanism` and `LearningMechanism` for RL and TD learning"""
 
         if isinstance(learning_function, type):
@@ -9052,7 +9083,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                                                         error_function,
                                                                                         learned_projection,
                                                                                         learning_rate,
-                                                                                        learning_update)
+                                                                                        learning_update,
+                                                                                        context,
+                                                                                        )
 
         elif is_function_type(learning_function):
             # target_mechanism = ProcessingMechanism(name='Target')
@@ -9066,7 +9099,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                       output_ports=[OUTCOME, Loss.MSE.name],
                                                       )
             learning_mech_name = "Learning Mechanism for " + learned_projection.name
-            learning_mech_lr = self.optimizer_params[context.execution_id].learning_rate.value(learning_mech_name)
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+                learning_mech_name, 'learning_rate', context
+            )
             learning_mechanism = \
                 LearningMechanism(
                     function=learning_function(default_variable=[input_source_output_port.value,
@@ -9079,7 +9114,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     learning_enabled=learning_update,
                     learning_rate=learning_mech_lr,
                     in_composition=True,
-                    name="Learning Mechanism for " + learned_projection.name)
+                    name=learning_mech_name,
+                )
 
             objective_mechanism.modulatory_mechanism = learning_mechanism
 
@@ -9148,7 +9184,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                       error_function,
                                       learned_projection,
                                       learning_rate,
-                                      learning_update):
+                                      learning_update,
+                                      context
+                                      ):
 
         # target_mechanism = ProcessingMechanism(name='Target')
         target_mechanism = ProcessingMechanism(name=self._get_target_name(output_source))
@@ -9162,6 +9200,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                   output_ports=[OUTCOME, Loss.MSE.name],
                                                   )
 
+        learning_mech_name = "Learning Mechanism for " + learned_projection.name
+        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+            learning_mech_name, 'learning_rate', context
+        )
         learning_mechanism = \
             LearningMechanism(function=Reinforcement(default_variable=[input_source.output_ports[0].value,
                                                                        output_source.output_ports[0].value,
@@ -9171,9 +9213,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                 objective_mechanism.output_ports[0].value],
                               error_sources=objective_mechanism,
                               learning_enabled=learning_update,
-                              learning_rate=learning_rate,
+                              learning_rate=learning_mech_lr,
                               in_composition=True,
-                              name="Learning Mechanism for " + learned_projection.name)
+                              name=learning_mech_name
+                             )
 
         objective_mechanism.modulatory_mechanism = learning_mechanism
 
@@ -9185,7 +9228,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                       error_function,
                                       learned_projection,
                                       learning_rate,
-                                      learning_update):
+                                      learning_update,
+                                      context
+                                      ):
 
         # target_mechanism = ProcessingMechanism(name="Target",
         target_mechanism = ProcessingMechanism(name=self._get_target_name(output_source),
@@ -9200,15 +9245,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                                    output_source.output_ports[0].defaults.value)},
                                                        function=PredictionErrorDeltaFunction(gamma=1.0))
 
+        learning_mech_name = "Learning Mechanism for " + learned_projection.name
+        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+            learning_mech_name, 'learning_rate', context
+        )
         learning_mechanism = LearningMechanism(function=TDLearning(),
                                                default_variable=[input_source.output_ports[0].defaults.value,
                                                                  output_source.output_ports[0].defaults.value,
                                                                  objective_mechanism.output_ports[0].defaults.value],
                                                error_sources=objective_mechanism,
                                                learning_enabled=learning_update,
-                                               learning_rate=learning_rate,
+                                               learning_rate=learning_mech_lr,
                                                in_composition=True,
-                                               name="Learning Mechanism for " + learned_projection.name)
+                                               name=learning_mech_name)
 
         return target_mechanism, objective_mechanism, learning_mechanism
 
@@ -9488,7 +9537,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                             loss_spec=loss_spec)
 
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
-        learning_mech_lr = self.optimizer_params[context.execution_id].learning_rate.value(learning_mech_name)
+        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+            learning_mech_name, 'learning_rate', context
+        )
         learning_mechanism = LearningMechanism(function=learning_function,
                                                default_variable=[input_source_output_port.value,
                                                                  output_source_input_port.value,
@@ -9646,7 +9697,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # Use all error_signal_templates since LearningMechanisms handles all sources of error
         # Include any covariates_sources in default_variable so that it aligns with number of InputPorts
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
-        learning_mech_lr = self.optimizer_params[context.execution_id].learning_rate.value(learning_mech_name)
+        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+            learning_mech_name, 'learning_rate', context
+        )
         learning_mechanism = LearningMechanism(function=learning_function,
                                                default_variable=activation_input +
                                                                 activation_output +
@@ -9657,7 +9710,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                learning_enabled=learning_update,
                                                learning_rate=learning_mech_lr,
                                                in_composition=True,
-                                               name="Learning Mechanism for " + learned_projection.name)
+                                               name=learning_mech_name
+                                              )
 
         # Create MappingProjections from ERROR_SIGNAL OutputPort of each error_source to corresponding error_input_ports
         error_projections = [MappingProjection(sender=error_source,
