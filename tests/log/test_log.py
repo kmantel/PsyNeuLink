@@ -386,6 +386,7 @@ class TestLog:
             'has_initializers': 'OFF',
             'learnable': 'OFF',
             'learning_rate': 'OFF',
+            'learning_rate_TEMP_UNPROCESSED': 'OFF',
             'matrix': 'OFF',
             'max_executions_before_finished': 'OFF',
             'mod_matrix': 'OFF',

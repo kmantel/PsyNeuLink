@@ -4363,9 +4363,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         composition_optimizer_params = OptimizerParams.from_component(self, context)
         self._validate_optimizer_params(composition_optimizer_params, context, runtime=False)
 
-        if lr_dict is not None:
-            self.parameters.learning_rates_dict._set(lr_dict, context)
-
         # Compiled resources
         self._compilation_data = self._CompilationData(owner=self)
 
