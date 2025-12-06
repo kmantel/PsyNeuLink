@@ -1176,15 +1176,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
         """Restore Composition constructor-specified learning_rates and torch parameters for Projections"""
         try:
             self.optimizer.param_groups = self._copy_torch_param_groups(self._constructor_param_groups)
-            for proj in self.wrapped_projections:
-                try:
-                    lr = self._constructor_proj_learning_rates[proj]
-                except KeyError:
-                    pass
-                else:
-                    proj.parameters.learning_rate.set(lr, context)
-            comp_constructor_learning_rate = self.composition.parameters.learning_rate.get(None)
-            self.composition.parameters.learning_rate.set(comp_constructor_learning_rate, context)
         except AttributeError:
             assert self.optimizer, (
                 f"PROGRAM ERROR: _restore_constructor_proj_learning_rates_and_torch_params() called for "
