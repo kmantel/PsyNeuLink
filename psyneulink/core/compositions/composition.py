@@ -4315,12 +4315,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self._partially_added_nodes = []
         self.parsed_inputs = False
 
-        learning_rate_TEMP_UNPROCESSED = copy_parameter_value(learning_rate)
-        lr_us = self._user_specified_args.get('learning_rate', NotImplemented)
-        if lr_us is not NotImplemented:
-            self._user_specified_args['learning_rate_TEMP_UNPROCESSED'] = copy_parameter_value(lr_us)
-        composition_learning_rate, lr_dict = self._parse_and_validate_learning_rate_arg(learning_rate)
-        self._runtime_learning_rate = None
         self.runtime_optimizer_params = {}
         self.execute_in_additional_optimizations = execute_in_additional_optimizations or {}  # BREADCRUMB: MOVE TO AUTODIFF
 
@@ -4346,8 +4340,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         self._initialize_parameters(
             **param_defaults,
-            learning_rate=composition_learning_rate,
-            learning_rate_TEMP_UNPROCESSED=learning_rate_TEMP_UNPROCESSED,
+            learning_rate=learning_rate,
             enable_learning=enable_learning,
             minibatch_size=minibatch_size,
             optimizations_per_minibatch=optimizations_per_minibatch,
