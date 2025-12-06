@@ -12886,10 +12886,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"or specify Projection-specific learning_rate(s) in the **learning_rate** "
                                        f"argument the constructor(s) for the corresponding MappingProjection(s).")
 
-            # parse and then assign any learning_rate specs to learning_rates_dict for execution context
-            rt_lr = self.runtime_optimizer_params[context.execution_id].learning_rate._value
-            self._parse_and_validate_learning_rate_arg(rt_lr, context)
-            self._assign_learning_rates(context=context)
 
         # Non-Python (i.e. PyTorch and LLVM) learning modes only supported for AutodiffComposition
         if execution_mode is not pnlvm.ExecutionMode.Python and not isinstance(self, AutodiffComposition):
