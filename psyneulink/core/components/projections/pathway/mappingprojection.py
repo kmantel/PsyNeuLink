@@ -474,7 +474,6 @@ class MappingProjection(PathwayProjection_Base):
         """
         learnable = Parameter(True, stateful=False, aliases=['enable_learning_rate'])
         learning_rate = Parameter(None, stateful=True)
-        learning_rate_TEMP_UNPROCESSED = Parameter(None)
         function = Parameter(MatrixTransform, stateful=False, loggable=False)
         matrix = FunctionParameter(
             DEFAULT_MATRIX,
