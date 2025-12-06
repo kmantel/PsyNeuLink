@@ -551,7 +551,7 @@ class MappingProjection(PathwayProjection_Base):
                          matrix=matrix,
                          learnable=learnable,
                          learning_rate=learning_rate,
-                         learning_rate_TEMP_UNPROCESSED=copy_parameter_value(learning_rate),
+                        #  learning_rate_TEMP_UNPROCESSED=copy_parameter_value(learning_rate),
                          function=function,
                          params=params,
                          name=name,
