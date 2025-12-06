@@ -1171,14 +1171,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
     def _store_constructor_proj_learning_rates_and_torch_params(self, optimizer:torch.optim.Optimizer, context):
         """Store Composition constructor-specified learning_rates and torch parameters for Projections"""
         self._constructor_param_groups = self._copy_torch_param_groups(optimizer.param_groups)
-        self._constructor_proj_learning_rates = {}
-        for proj in self.wrapped_projections:
-            try:
-                lr = proj.parameters.learning_rate.get(context)
-            except ParameterNoValueError:
-                pass
-            else:
-                self._constructor_proj_learning_rates[proj] = lr
 
     def _restore_constructor_proj_learning_rates_and_torch_params(self, optimizer:torch.optim.Optimizer, context):
         """Restore Composition constructor-specified learning_rates and torch parameters for Projections"""
