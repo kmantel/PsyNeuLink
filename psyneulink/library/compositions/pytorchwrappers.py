@@ -29,7 +29,7 @@ else:
 
 import warnings
 from enum import Enum, auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 from psyneulink.core.components.functions.stateful import StatefulFunction
 from psyneulink.core.components.mechanisms.mechanism import Mechanism
@@ -312,10 +312,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
                 for k, v in node_wrapper.nodes_map.items():
                     self._add_node_to_nodes_map(k, v)
                 self._pnl_refs_to_torch_param_names.update(node_wrapper._pnl_refs_to_torch_param_names)
-                # Get any optimizer_constructor_params from nested Composition, but give precedence to any in outer comp
-                for k, v in node_wrapper.composition._optimizer_constructor_params.items():
-                    if k not in self.composition._optimizer_constructor_params:
-                        self.composition._optimizer_constructor_params[k] = v
 
         # Purge nodes_map of entries for nested Compositions (their nodes are now in self.nodes_map)
         nodes_to_remove = [k for k, v in self.nodes_map.items() if isinstance(v, PytorchCompositionWrapper)]
@@ -843,28 +839,17 @@ class PytorchCompositionWrapper(torch.nn.Module):
             self.state_dict(): (local name of torch param, Tensor)
         """
         # These are used both for error messages (hence strings) as we well determining how to update param_groups
-        optimizer_params_user_specs_mine = {
-            projection: self.composition.get_optimizer_param_value(
-                'learning_rate', context, projection=projection
-            )
-            for projection in optimizer_params_user_specs
-            if optimizer_params_user_specs[projection] is not None
-            and not projection == DEFAULT_LEARNING_RATE
-        }
-        optimizer_params_user_specs_unmod = copy.copy(optimizer_params_user_specs_mine)
 
         if context.runmode == ContextFlags.LEARNING_MODE:
             if context.source == ContextFlags.COMPOSITION:
                 source = LEARN_CONSTRUCTION
                 assert not self.optimizer, (f"PROGRAM ERROR: '{self.name}' is being constructed in learning mode "
                                             f"but optimizer is already specified ")
-                self._store_constructor_proj_learning_rates_and_torch_params(optimizer, context)
 
             elif context.source == ContextFlags.METHOD:
                 source = LEARN_OVERRIDE
                 assert self.optimizer, (f"PROGRAM ERROR: 'no optimizer in call to learn() for '{self.name}' ")
                 # revert to learning_rate assignments made in constructor before assigning any new values
-                self._restore_constructor_proj_learning_rates_and_torch_params(self.optimizer, context)
 
             else:
                 assert False, f"PROGRAM ERROR: {self.name} called in learning mode with an unexpected context.source"
@@ -892,15 +877,8 @@ class PytorchCompositionWrapper(torch.nn.Module):
         # Proceed to either construct new optimizer.param_groups (if called from constructor)
         #   or update existing ones (if called from learn() method)
 
-        run_time_default_learning_rate = optimizer_params_user_specs.get(DEFAULT_LEARNING_RATE, None)
-
-        if source == CONSTRUCTOR and self.optimizer:
-            # If user has specified dict with learning_rates in call to _build_pytorch_representation,
-            #    need to update the construct_param_groups with specififed values
-            self._update_constructor_param_groups(self.composition, optimizer_params_user_specs_unmod)
-
         self._assign_learning_rates(optimizer,
-                                    optimizer_params_user_specs_unmod,
+                                    {},
                                     source,
                                     context)
 
@@ -1080,18 +1058,13 @@ class PytorchCompositionWrapper(torch.nn.Module):
     def _assign_learning_rates(
         self,
         optimizer: torch.optim.Optimizer,
-        run_time_default_learning_rate: Union[float, bool, None],
+        optimizer_params: Dict,
         source: str,
         context: Context,
     ):
         """Assign parsed learning_rate specifications."""
 
         from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
-
-        # BREADCRUMB: ?IS THIS STILL NEEDED:
-        # Set Composition default learning rate for the current context
-        comp_lr = run_time_default_learning_rate or self.composition.parameters.learning_rate.get(context)
-        self.composition.parameters.learning_rate.set(comp_lr, context)
 
         # Process *every* parameter in the optimizer's param_groups
         # Get fresh copy of param_groups and assign to optimizer_params
