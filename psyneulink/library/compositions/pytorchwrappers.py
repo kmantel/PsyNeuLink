@@ -1277,27 +1277,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
     def _torch_params_for_execution(self)->dict:
         return {proj: self.get_torch_learning_rate_for_projection(proj) for proj in self.wrapped_projections}
 
-    def _get_default_composition_learning_rate(self, nested_comp, outer_comp, context, ignore_false=False):
-        """Get learning_rate for first Composition for which a learning_rate has been explicitly specified
-        Search recursively through Composition hierarchy, from nested_comp to outer_comp, for first Composition
-        that has a learning_rate that is explicitly specified with a numeric value, returning default_learning_rate
-        for outer_comp if not is found;
-        If **ignore_false** is True, then search continues if the learning_rate for a Composition is False;
-        this is to accomodate assigning  a Projection's learning_rate as``True``, which "protects" if from False
-        and uses the first learning_rate found above its Composition in the hierarchy.
-         """
-        # import ipdb
-        # ipdb.set_trace()
-        # print('DEF LEARN RATE', context.__dict__)
-        comp_nesting_hierarchy = nested_comp._get_outer_compositions(outer_comp)
-        for comp in comp_nesting_hierarchy:
-            if comp.parameters.learning_rate._user_specified:
-                comp_lr = comp.parameters.learning_rate.get(context)
-                if comp_lr is False and ignore_false:
-                    continue
-                return comp_lr
-        return comp.parameters.learning_rate.get(context)
-
     def _optimizer_error(self, method:str):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffCompositionError
         raise AutodiffCompositionError(
