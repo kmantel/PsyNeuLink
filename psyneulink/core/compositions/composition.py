@@ -4219,7 +4219,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"must an int greater than or equal to 1.")
 
         _parse_learning_rate = _get_optimizer_Parameter_parser('learning_rate')
-        _parse_learning_rate_TEMP_UNPROCESSED = _get_optimizer_Parameter_parser('learning_rate')
 
         def _validate_learning_rate(self, learning_rate):
             try:
