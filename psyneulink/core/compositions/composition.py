@@ -4340,6 +4340,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self._user_specified_args['learning_rate_TEMP_UNPROCESSED'] = copy_parameter_value(lr_us)
         composition_learning_rate, lr_dict = self._parse_and_validate_learning_rate_arg(learning_rate)
         self._runtime_learning_rate = None
+        self.runtime_optimizer_params = {}
         self.execute_in_additional_optimizations = execute_in_additional_optimizations or {}  # BREADCRUMB: MOVE TO AUTODIFF
 
         # graph and scheduler status attributes
@@ -12660,6 +12661,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         def _full_err_msg(param_name: str, err_val: Any, msg_detail: str) -> str:
             return f"A value ({repr(err_val)}) specified for the {param_name} of '{self.name}'{err_source} is not valid: {msg_detail}"
 
+        for o_param in opt_params:
+            val = o_param._value
+            err = o_param._get_validation_error_message(self, val, context)
+            if err is not None:
+                raise CompositionError(_full_err_msg(o_param.name, val, err))
+
         if not runtime:
             return
 
@@ -12676,10 +12683,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         for o_param in opt_params:
             val = o_param._value
-            err = o_param._get_validation_error_message(self, val, context)
-            if err is not None:
-                raise CompositionError(_full_err_msg(o_param.name, val, err))
-
             try:
                 val_items = iter(val.items())
             except (AttributeError, TypeError):
