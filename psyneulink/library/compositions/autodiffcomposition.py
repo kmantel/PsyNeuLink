@@ -1963,6 +1963,7 @@ class AutodiffComposition(Composition):
                                                f"but Pytorch module ('torch') is not installed. "
                                                f"Please install it with `pip install torch` or `pip3 install torch`")
 
+
             if scheduler is None:
                 scheduler = self.scheduler
 
@@ -1984,8 +1985,25 @@ class AutodiffComposition(Composition):
                            content='trial_start',
                            context=context)
 
+                    composition_optimizer_params = OptimizerParams.from_component(self, context)
+                    # checks for existence of projections should happen
+                    # after building representation, because for GRU,
+                    # the DummyProjections don't exist before then
+                    self._validate_optimizer_params(composition_optimizer_params, context, runtime=False)
+                    try:
+                        runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
+                    except KeyError:
+                        runtime_optimizer_params = None
+                    else:
+                        self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method', runtime=False)
+
                     self._build_pytorch_representation(optimizer_params=optimizer_params,
                                                        context=context, base_context=base_context)
+
+                    self._validate_optimizer_params(composition_optimizer_params, context)
+                    if runtime_optimizer_params:
+                        self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method')
+
                     trained_output_values, all_output_values = \
                                                     self.autodiff_forward(inputs=autodiff_inputs,
                                                                           targets=autodiff_targets,
