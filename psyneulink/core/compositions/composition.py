@@ -4201,7 +4201,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         enable_learning = Parameter(True, structural=True, aliases=['enable_learning_rate'])
         learning_rate = Parameter(.05)
         learning_rates_dict = Parameter({}, stateful=True, pnl_internal=True, modulable=False, loggable=False)
-        learning_rate_TEMP_UNPROCESSED = Parameter(.05)
         minibatch_size = Parameter(1, modulable=True, pnl_internal=True)
         optimizations_per_minibatch = Parameter(1, modulable=True, pnl_internal=True)
         results = Parameter([], loggable=False, pnl_internal=True)
