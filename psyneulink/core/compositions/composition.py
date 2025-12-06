@@ -8915,11 +8915,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             BackPropagation `learning Pathway` <Composition_Learning_Pathway>` added to the Composition.
 
         """
-
-        # TODO: disable this, probably
-        learning_rate = learning_rate if learning_rate is not None \
-            else self.learning_rate if self.learning_rate is not None \
-            else None
         return self.add_linear_learning_pathway(pathway,
                                                 learning_rate=learning_rate,
                                                 learning_function=BackPropagation,
