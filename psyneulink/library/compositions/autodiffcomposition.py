@@ -816,7 +816,6 @@ class AutodiffComposition(Composition):
                  loss_spec: Loss = Loss.MSE,
                  weight_decay: float = 0.0,
                  learning_rate: Optional[Union[float,int,bool,dict,]]=.001,
-                 learning_rate_TEMP_UNPROCESSED = .001,
                  enable_learning: bool = True,
                  force_no_retain_graph: bool = False,
                  refresh_losses: bool = False,
