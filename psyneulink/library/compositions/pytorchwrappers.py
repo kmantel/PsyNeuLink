@@ -932,8 +932,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
         projection_lr_specs.update(optimizer_params_user_parsed)
 
         if not projection_lr_specs and not run_time_default_learning_rate:
-            if source == CONSTRUCTOR:
-                self._store_constructor_proj_learning_rates_and_torch_params(optimizer, context)
             return {}, {}
 
         # Replace Projection names (in projection_lr_specs) for torch params (used in state_dict())
