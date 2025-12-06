@@ -845,8 +845,6 @@ class AutodiffComposition(Composition):
                 opt_params_arg[DEFAULT_LEARNING_RATE] = learning_rate
             learning_rate = opt_params_arg.pop(LEARNING_RATE)
 
-        learning_rate_TEMP_UNPROCESSED = copy_parameter_value(learning_rate)
-
         super(AutodiffComposition, self).__init__(
             name = name,
             pathways=pathways,
