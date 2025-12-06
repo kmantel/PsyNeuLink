@@ -4200,7 +4200,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         """
         enable_learning = Parameter(True, structural=True, aliases=['enable_learning_rate'])
         learning_rate = Parameter(.05)
-        learning_rates_dict = Parameter({}, stateful=True, pnl_internal=True, modulable=False, loggable=False)
         minibatch_size = Parameter(1, modulable=True, pnl_internal=True)
         optimizations_per_minibatch = Parameter(1, modulable=True, pnl_internal=True)
         results = Parameter([], loggable=False, pnl_internal=True)
@@ -4720,10 +4719,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 p.pathway.remove(node)
             except ValueError:
                 pass
-
-        for lr_dict in self.parameters.learning_rates_dict.values.values():
-            for proj in (node.path_afferents + node.efferents):
-                lr_dict.pop(proj.name, None)
 
         self.needs_update_graph_processing = True
         self.needs_update_scheduler = True
@@ -9734,22 +9729,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"{source_str} are not MappingProjections (or names of ones) in that "
                                        f"Composition: '{', '.join([str(k) if not isinstance(k, str) else k for k in bad_keys])}'.")
 
-            # Convert all entries to Projection names for consistency in later processing
-            _lr_dict_arg = {(k.name if isinstance(k, MappingProjection) else k): v for k,v in _lr_dict_arg.items()}
-
-
-        if context is not None and context.execution_id is not None:
-            lr_dict = self.parameters.learning_rates_dict.get(context)
-            # If called from learn(), check that all entries in lr_dict are for Projections in the Composition
-            bad_keys = [proj_name for proj_name in lr_dict.keys() if proj_name not in self.projections]
-            if bad_keys:
-                singular = ["entry appears", "its key is not a Projection", "name of one"]
-                plural = ["entries appear", "their keys are not Projections", "names of ones"]
-                filler = singular if len(bad_keys) == 1 else plural
-                err_msg = (f"The following {filler[0]} in the dict specified for the 'learning_rate' arg of "
-                           f"'{self.name}' but {filler[1]} or the {filler[2]} in that Composition:")
-                raise CompositionError(err_msg + f" '{', '.join(list(bad_keys))}'.")
-
         return learning_rate, lr_dict
 
     def _assign_learning_rates(self, projections=None, context=None):
@@ -9762,22 +9741,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                        for item in (sub_item if isinstance(sub_item, (list, tuple, set))
                                     else [sub_item])]
         not_learnable = []
-        # Get learning_rates_dict for Composition's constructor
-        learning_rates_dict = self.parameters.learning_rates_dict.get(None)
-        context = context or self.name + DEFAULT_SUFFIX
-
         for proj in projections:
             try:
                 proj_name = proj._proxy_for.name
             except AttributeError:
                 proj_name = proj.name
-            if proj_name in learning_rates_dict:
-                # Flag for error if anything other than False is specifieD for a Projection that is not learnable
-                if learning_rates_dict[proj_name] is not False and not proj.learnable:
-                    not_learnable.append(proj.name)
-            else:
-                # Assign Projection's learning_rate to learning_rates_dict if it is not already specified in the dict
-                learning_rates_dict[proj_name] = proj.parameters.learning_rate.get(None) if proj.learnable else False
+
 
     def _get_back_prop_error_sources(self, efferents, learning_mech=None, context=None):
         # FIX CROSSED_PATHWAYS [JDC]:  GENERALIZE THIS TO HANDLE COMPARATOR/TARGET ASSIGNMENTS IN BACKPROP
