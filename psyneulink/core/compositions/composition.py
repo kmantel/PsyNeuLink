@@ -9808,11 +9808,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 # Assign Projection's learning_rate to learning_rates_dict if it is not already specified in the dict
                 learning_rates_dict[proj_name] = proj.parameters.learning_rate.get(None) if proj.learnable else False
 
-        if not_learnable:
-            raise CompositionError(f"The following Projection(s) in the dict specified for the 'learning_rate' arg of "
-                                   f"'{self.name}' are not learnable: '{', '.join(not_learnable)}'; check that their "
-                                   f"'learnable' attribute is set to True or remove them from the dict.")
-
     def _get_back_prop_error_sources(self, efferents, learning_mech=None, context=None):
         # FIX CROSSED_PATHWAYS [JDC]:  GENERALIZE THIS TO HANDLE COMPARATOR/TARGET ASSIGNMENTS IN BACKPROP
         #                              AND THEN TO HANDLE ALL FORMS OF LEARNING (AS BELOW)
@@ -12890,14 +12885,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 proxy_lr = proj._proxy_for.parameters.learning_rate._get(context)
                 proj._proxy_for.parameters.learning_rate._set(proxy_lr, context, skip_history=True)
 
-        composition_optimizer_params = OptimizerParams.from_component(self, context)
-        self._validate_optimizer_params(composition_optimizer_params, context)
         # print('LEARN METHOD COMPOSITION OPT PARAMS', composition_optimizer_params)
 
         if runtime_optimizer_params is None:
             runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
-
-        self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method')
 
         try:
             self.runtime_optimizer_params[context.execution_id] = runtime_optimizer_params
