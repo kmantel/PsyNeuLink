@@ -2575,7 +2575,11 @@ def get_from_registry(obj_name: str, registry: dict):
         try:
             return reg.instanceDict[obj_name]
         except KeyError:
-            pass
+            # sometimes the name attr is different than the instanceDict key
+            for o in reg.instanceDict.values():
+                if o.name == obj_name:
+                    return o
+
     return None
 
 #endregion
