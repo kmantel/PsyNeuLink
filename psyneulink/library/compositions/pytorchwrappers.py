@@ -917,10 +917,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
                 if proj.learnable is False and proj_lr is None:
                     proj_lr = False
                 if source == CONSTRUCTOR:
-                    # comp_name = self.composition.name
-                    comp_name = self._pnl_refs_to_torch_param_names[proj.name].composition.name
-                    proj.parameters.learning_rate.set(proj_lr, comp_name + DEFAULT_SUFFIX)
-                else:
                     proj.parameters.learning_rate.set(proj_lr, context)
             else:
                 assert False, (f"PROGRAM ERROR: Projection '{proj_name}', for which a learning_rate has been specified "
