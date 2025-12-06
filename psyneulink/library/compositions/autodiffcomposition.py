@@ -1274,12 +1274,11 @@ class AutodiffComposition(Composition):
                                                                     self._optimizer_constructor_params,
                                                                     context)
                 # Then update optimizer params with any specified in the call to learn()
-                if optimizer_params:
-                    pytorch_rep._update_optimizer_params(pytorch_rep.optimizer,
-                                                         optimizer_params,
-                                                         Context(source=ContextFlags.METHOD,
-                                                                 runmode=context.runmode,
-                                                                 execution_id=context.execution_id))
+                pytorch_rep._update_optimizer_params(pytorch_rep.optimizer,
+                                                        {},
+                                                        Context(source=ContextFlags.METHOD,
+                                                                runmode=context.runmode,
+                                                                execution_id=context.execution_id))
             else:
                 # Otherwise, if call is from Composition constructor, use params specified by user in that call
                 opt_params = optimizer_params or self._optimizer_constructor_params
