@@ -4249,7 +4249,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             include_probes_in_output: bool = False,
             enable_learning: bool = True,
             learning_rate:Optional[Union[float, int, dict]] = None,
-            learning_rate_TEMP_UNPROCESSED=None,
             minibatch_size:int = 1,
             optimizations_per_minibatch:int = 1,
             execute_in_additional_optimizations=None,  # BREADCRUMB: MOVE TO AUTODIFF
