@@ -856,14 +856,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
 
         else:
             source = CONSTRUCTOR
-            if self.optimizer and not optimizer_params_user_specs:
-                # No need to construct (optimizer exists) or to update_optimizer (no new params)
-                return
-
-            if not optimizer_params_user_specs and not self.get_all_learnable_projection_wrappers(context=context):
-                # If user didn't provide any specs, and there are no learnable Projections, not much to do;
-                # just assign default optimizer.param_groups and store learning_rates for Projections
-                return
 
         if optimizer_params_user_specs:
             optimizer_params_validation = {
