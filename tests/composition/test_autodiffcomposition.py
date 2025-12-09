@@ -614,11 +614,11 @@ class TestAutodiffLearningRateArgs:
         ),
         (
             'dict_lr_val_str',
-            "A value.*'goodbye'.*specified for the learning_rate of 'Outer Comp' in the learn() method.*'goodbye' must be an int, float, bool, or None",
+            "A value ({'default_learning_rate': 0.1, (MappingProjection INPUT PROJECTION): 'goodbye'}).*specified for the learning_rate of 'Outer Comp' in the learn() method.*'goodbye' must be an int, float, bool, or None",
         ),
         (
             'dict_lr_val_proj',
-            "A value.*(MappingProjection INPUT PROJECTION).*specified for the learning_rate of 'Outer Comp' in the learn() method.*must be an int, float, bool, or None",
+            "A value ({'default_learning_rate': 0.1, (MappingProjection INPUT PROJECTION): (MappingProjection INPUT PROJECTION)}).*specified for the learning_rate of 'Outer Comp' in the learn() method.*must be an int, float, bool, or None",
         ),
         (
             'dict_illegal_key_str',
@@ -630,7 +630,7 @@ class TestAutodiffLearningRateArgs:
         ),
         (
             'dict_key_bad_proj',
-            ".*(MappingProjection BAD PROJECTION) is not in that Composition or any nested within it",
+            '.*(MappingProjection BAD PROJECTION) is not in that Composition or any nested within it',
         ),
         (
             'dict_proj_not_learnable',

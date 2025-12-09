@@ -12,6 +12,7 @@ from psyneulink.core.compositions.composition import Composition, CompositionErr
 from psyneulink.core.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.core.components.functions.nonstateful.learningfunctions import BackPropagation
 from psyneulink.core.globals.keywords import Loss
+from psyneulink.core.globals.parameters import ParameterError
 
 
 def xor_network(comp_type, comp_learning_rate, pathway_learning_rate):
@@ -388,44 +389,66 @@ class TestStructural:
         assert pytorch_rep.get_torch_learning_rate_for_projection(outer_proj_1) == o1r
         assert pytorch_rep.get_torch_learning_rate_for_projection(outer_proj_2) == o2r
 
-
+    # NOTE: check_learn=False below passes value to Composition
+    # constructor, which results in assignment to a Parameter value, and
+    # so invalid assignments raise ParameterError as would other
+    # Parameter values. check_learn=True is validated in
+    # Composition.learn and re-raised as CompositionError to match
+    # previous behavior
     error_test_args = [
-        ("comp_lr_spec_str", True,
-         "The 'learning_rate' arg for 'Comp' ('hello') must be a float, int, bool, None, or a dict."),
         (
-            "comp_lr_spec_proj",
+            'comp_lr_spec_str',
             True,
-            "The 'learning_rate' arg for 'Comp' ((MappingProjection INPUT PROJECTION)) "
-            "must be a float, int, bool, None, or a dict."
+            "('hello') assigned to parameter 'learning_rate'.*must be an int, float, bool, None, or a dict",
+            ParameterError,
         ),
-        ("dict_lr_val_str", False,
-        "The following values of the entries in the dict specified for the 'learning_rate' arg of 'Comp' "
-        "must each be a float, int, bool, or None: '[{(MappingProjection INPUT PROJECTION): 'goodbye'}]'."),
-        ("dict_lr_val_proj", False,
-         "The following values of the entries in the dict specified for the 'learning_rate' arg of 'Comp' must each be "
-         "a float, int, bool, or None: '[{(MappingProjection INPUT PROJECTION): (MappingProjection INPUT PROJECTION)}]'."),
+        (
+            'comp_lr_spec_proj',
+            True,
+            "((MappingProjection INPUT PROJECTION)) assigned to parameter 'learning_rate'.*must be an int, float, bool, None, or a dict",
+            ParameterError,
+        ),
+        (
+            'dict_lr_val_str',
+            False,
+            "({'default_learning_rate': 0.1, (MappingProjection INPUT PROJECTION): 'goodbye'}) assigned to parameter 'learning_rate'.*entry value for (MappingProjection INPUT PROJECTION): 'goodbye' must be an int, float, bool, or None",
+            ParameterError,
+        ),
+        (
+            'dict_lr_val_proj',
+            False,
+            "({'default_learning_rate': 0.1, (MappingProjection INPUT PROJECTION): (MappingProjection INPUT PROJECTION)}) assigned to parameter 'learning_rate'.*entry value for (MappingProjection INPUT PROJECTION): (MappingProjection INPUT PROJECTION) must be an int, float, bool, or None",
+            ParameterError,
+        ),
         (
             'dict_illegal_key_str',
             True,
             ".*'woa a woa' is not in that Composition or any nested within it",
+            CompositionError,
         ),
-        ("dict_illegal_key_int", False,
-         "The following keys in the dict specified for the 'learning_rate' arg of Comp are not MappingProjections "
-         "(or names of ones) in that Composition: '23'."),
+        (
+            'dict_illegal_key_int',
+            False,
+            "({'default_learning_rate': 0.1, 23: 0.2}) assigned to parameter 'learning_rate'.*is not valid: entry key 23 must be a Projection or name of a Projection",
+            ParameterError,
+        ),
         (
             'dict_key_bad_proj',
             True,
-            ".*(MappingProjection BAD PROJECTION) is not in that Composition or any nested within it",
+            '.*(MappingProjection BAD PROJECTION) is not in that Composition or any nested within it',
+            CompositionError,
         ),
         (
             'dict_proj_not_learnable',
             True,
             '.*(MappingProjection INPUT PROJECTION) specified in the dict is not enabled; check that its enable_learning_rate attribute is set to True and its learning_rate is not False, or remove it from the dict.',
+            CompositionError,
         ),
     ]
-    @pytest.mark.parametrize("condition, check_learn, error_msg", error_test_args,
+
+    @pytest.mark.parametrize("condition, check_learn, error_msg, error_type", error_test_args,
                              ids=[f"{x[0]}" for x in error_test_args])
-    def test_learning_rate_specification_errors(self, condition, check_learn, error_msg):
+    def test_learning_rate_specification_errors(self, condition, check_learn, error_msg, error_type):
         # Test for errors with learning_rates specified in Composition constructor
         mech_1 = pnl.ProcessingMechanism(name='Mech 1')
         mech_2 = pnl.ProcessingMechanism(name='Mech 2')
@@ -459,11 +482,11 @@ class TestStructural:
 
         error_re = re.sub(r'([\(\)\[\{])', r'\\\1', error_msg)
         if not check_learn:
-            with pytest.raises(CompositionError, match=error_re):
+            with pytest.raises(error_type, match=error_re):
                 pnl.Composition(learning_rate=comp_lr, name='Comp')
             return
 
-        with pytest.raises(CompositionError, match=error_re):
+        with pytest.raises(error_type, match=error_re):
             comp = pnl.Composition([mech_1, input_proj, mech_2], learning_rate=comp_lr, name='Comp')
             comp.learn(inputs={mech_1: [[1.0]]},)
 
