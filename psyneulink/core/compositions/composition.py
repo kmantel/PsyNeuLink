@@ -12918,6 +12918,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
 
         if not isinstance(self, AutodiffComposition):
+            composition_optimizer_params = OptimizerParams.from_component(self, context)
+            self._validate_optimizer_params(composition_optimizer_params, context, runtime=True)
             if isinstance(learning_rate, dict):
                 # learning_rate dict specification is not (yet) allowed for learn() method of Composition
                 raise CompositionError(f"The 'learning_rate' arg in a call to learn for '{self.name}' is a dict, which "
