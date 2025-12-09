@@ -8505,8 +8505,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # this method exists because the learning mechanisms cannot wait
         # to have a numeric value, otherwise parameter ports will not be
         # created
-        opt_param = getattr(self.optimizer_params[context.execution_id], opt_param_name)
-        value = opt_param.value(mechanism_or_name)
+        try:
+            opt_param = getattr(self.optimizer_params[context.execution_id], opt_param_name)
+        except KeyError:
+            value = None
+        else:
+            value = opt_param.value(mechanism_or_name)
         if value is None:
             comp_param = getattr(self.parameters, opt_param_name)
             for v in [
@@ -8930,11 +8934,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             BackPropagation `learning Pathway` <Composition_Learning_Pathway>` added to the Composition.
 
         """
-
-        # No! keep this! this is a pathway time thing not learn()!
-        learning_rate = learning_rate if learning_rate is not None \
-            else self.learning_rate if self.learning_rate is not None \
-            else None
         return self.add_linear_learning_pathway(pathway,
                                                 learning_rate=learning_rate,
                                                 learning_function=BackPropagation,
@@ -9023,9 +9022,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                     ):
 
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
-        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
             learning_mech_name, 'learning_rate', context
         )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function(),
                                                default_variable=[sender_activity_source.output_ports[0].value,
                                                                  receiver_activity_source.output_ports[0].value,
@@ -9086,9 +9088,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                       output_ports=[OUTCOME, Loss.MSE.name],
                                                       )
             learning_mech_name = "Learning Mechanism for " + learned_projection.name
-            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+            if learning_rate is None:
+                learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
                 learning_mech_name, 'learning_rate', context
             )
+            else:
+                learning_mech_lr = learning_rate
             learning_mechanism = \
                 LearningMechanism(
                     function=learning_function(default_variable=[input_source_output_port.value,
@@ -9188,9 +9193,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                   )
 
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
-        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
             learning_mech_name, 'learning_rate', context
         )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = \
             LearningMechanism(function=Reinforcement(default_variable=[input_source.output_ports[0].value,
                                                                        output_source.output_ports[0].value,
@@ -9233,9 +9241,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                        function=PredictionErrorDeltaFunction(gamma=1.0))
 
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
-        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
             learning_mech_name, 'learning_rate', context
         )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=TDLearning(),
                                                default_variable=[input_source.output_ports[0].defaults.value,
                                                                  output_source.output_ports[0].defaults.value,
@@ -9524,9 +9535,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                             loss_spec=loss_spec)
 
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
-        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
             learning_mech_name, 'learning_rate', context
         )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function,
                                                default_variable=[input_source_output_port.value,
                                                                  output_source_input_port.value,
@@ -9684,9 +9698,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # Use all error_signal_templates since LearningMechanisms handles all sources of error
         # Include any covariates_sources in default_variable so that it aligns with number of InputPorts
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
-        learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
             learning_mech_name, 'learning_rate', context
         )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function,
                                                default_variable=activation_input +
                                                                 activation_output +
