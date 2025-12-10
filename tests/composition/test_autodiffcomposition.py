@@ -299,6 +299,8 @@ input_proj = [[1.0479138, 1.0479138, 1.0479138, 1.0479138, 1.0479138]]
 hidden_proj = [[5.55952143, 5.55952143, 5.55952143, 5.55952143, 5.55952143]]
 inpt_learn_ovrd = [[0.00768, 0.00768, 0.00768, 0.00768, 0.00768]]
 hid_learn_ovrd = [[-0.49108492, -0.49108492, -0.49108492, -0.49108492, -0.49108492]]
+inpt_learn_ovrd_post_constr = [[-3.964796, -3.964796, -3.964796, -3.964796, -3.964796]]
+hid_learn_ovrd_post_constr = [[43.157145, 43.157145, 43.157145, 43.157145, 43.157145]]
 input_dict_cnstr = [[3.2844555, 3.2844555, 3.2844555, 3.2844555, 3.2844555]]
 hid_dict_constr = [[11.45824471, 11.45824471, 11.45824471, 11.45824471, 11.45824471]]
 inp_cnstr_ovrd = [[0.12288, 0.12288, 0.12288, 0.12288, 0.12288]]
@@ -346,8 +348,8 @@ class TestAutodiffLearningRateArgs:
         ("inpt_learn_constructor", default_lr,     .1,      .4,     None,  'input',  'input',   False,   inpt_learn_ovrd),
         ("hid_learn_constructor",  default_lr,     .1,     None,     .4,   'hidden', 'hidden',  False,   hid_learn_ovrd),
         # Projection spec made after AutodiffComposition contruction (should have no effect, since post-construction)
-        ("inpt_learn_constructor", default_lr,     .1,      .4,     None,  'input',  'input',   True,    inpt_learn_ovrd),
-        ("hid_learn_constructor",  default_lr,     .1,     None,     .4,   'hidden', 'hidden',  True,    hid_learn_ovrd),
+        ("inpt_learn_constructor", default_lr,     .1,      .4,     None,  'input',  'input',   True,    inpt_learn_ovrd_post_constr),
+        ("hid_learn_constructor",  default_lr,     .1,     None,     .4,   'hidden', 'hidden',  True,    hid_learn_ovrd_post_constr),
     ]
     # NOTE: this should be kept consistent with test_learning/test_projection_specific_learning_rates()
     #       to additionally test for identicality of effects with Python learning
@@ -448,11 +450,13 @@ class TestAutodiffLearningRateArgs:
             input_proj_exp = input_lr
         # else learn_method_lr if (pnl.DEFAULT_LEARNING_RATE in learn_method_learning_rate_dict and
         #                          learn_method_learning_rate_dict[pnl.DEFAULT_LEARNING_RATE] not in {None, True})
-        elif (learn_method_learning_rate_dict and learn_method_lr not in {None, True}):
-            input_proj_exp = learn_method_lr
         elif post_constr:
             input_proj_exp = .9
+        elif (learn_method_learning_rate_dict and learn_method_lr not in {None, True}):
+            # this case is DEFAULT_LEARNING_RATE entry
+            input_proj_exp = learn_method_lr
         else:
+            print('using default')
             input_proj_exp = default_lr
 
         assert pytorch_rep.get_torch_learning_rate_for_projection(input_proj) == input_proj_exp
@@ -463,10 +467,11 @@ class TestAutodiffLearningRateArgs:
             nested_proj_exp = constructor_learning_rate_dict[nested_proj]
         elif hidden_lr not in {None, True}:
             nested_proj_exp = hidden_lr
-        elif (learn_method_learning_rate_dict and learn_method_lr not in {None, True}):
-            nested_proj_exp = learn_method_lr
         elif post_constr:
             nested_proj_exp = .7
+        elif (learn_method_learning_rate_dict and learn_method_lr not in {None, True}):
+            # this case is DEFAULT_LEARNING_RATE entry
+            nested_proj_exp = learn_method_lr
         else:
             nested_proj_exp = default_lr
         assert pytorch_rep.get_torch_learning_rate_for_projection(nested_proj) == nested_proj_exp
