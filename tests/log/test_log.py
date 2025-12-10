@@ -231,8 +231,7 @@ class TestLog:
         PS.run(inputs={T_1:[3,4]})
 
         assert T_1.logged_items == {'RESULT': 'EXECUTION', 'mod_noise': 'EXECUTION'}
-        assert PJ.logged_items == {'mod_matrix': 'EXECUTION',
-                                   'learning_rate': 'OFF'}
+        assert PJ.logged_items == {'mod_matrix': 'EXECUTION'}
 
         T_1.log.print_entries(contexts=PS)
         # assert T_1.log.print_entries() ==
@@ -515,8 +514,7 @@ class TestLog:
         assert T2.logged_items == {'RESULT': 'EXECUTION',
                                    'mod_slope': 'EXECUTION',
                                    'value': 'EXECUTION'}
-        assert PJ.logged_items == {'mod_matrix': 'EXECUTION',
-                                   'learning_rate': 'OFF'}
+        assert PJ.logged_items == {'mod_matrix': 'EXECUTION'}
 
         log_dict_T1 = T1.log.nparray_dictionary(entries=['value', 'mod_slope', 'RESULT'])
 
