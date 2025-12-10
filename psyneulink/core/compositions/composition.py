@@ -10488,7 +10488,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         projection: Optional[Projection] = None,
     ):
         def _get_opt_param(
-            obj: Component, opt_params: Dict[Union[Component, str]]
+            obj: Component, opt_params: Dict[Union[Component, str], OptParam]
         ) -> OptParam:
             comp_opt_params = OptimizerParams.from_component(obj, context)
             opt_param = getattr(comp_opt_params, param)
