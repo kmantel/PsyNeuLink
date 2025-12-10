@@ -425,32 +425,52 @@ class TestAutodiffLearningRateArgs:
 
         # Test learning
         targets = outer_comp.infer_backpropagation_learning_pathways(pnl.ExecutionMode.PyTorch)
+        if "learn" in condition:
+            used_learn_method_lr = learn_method_learning_rate_dict
+        else:
+            used_learn_method_lr = {pnl.DEFAULT_LEARNING_RATE: learn_method_lr}
         pytorch_result = outer_comp.learn(
             inputs={outer_mech_in:input_stims, targets[0]: target_vals},
             num_trials=num_trials,
             execution_mode=pnl.ExecutionMode.PyTorch,
             # learning_rate=learn_method_lr
-            learning_rate=(learn_method_learning_rate_dict if "learn" in condition
-                           else {pnl.DEFAULT_LEARNING_RATE: learn_method_lr}))
+            learning_rate=used_learn_method_lr,
+        )
 
         pytorch_rep = outer_comp.parameters.pytorch_representation.get('Outer Comp')
         # assert pytorch_rep.get_torch_learning_rate_for_projection(input_proj) == 0.3 # (vs. .2 in "...lr_2_MOD"
-        assert (pytorch_rep.get_torch_learning_rate_for_projection(input_proj) ==
-                (learn_method_learning_rate_dict[input_proj] if learn_dict_param == 'input'
-                 else constructor_learning_rate_dict[input_proj] if constructor_dict_param == 'input'
-                else input_lr if input_lr not in {None, True}
-                # else learn_method_lr if (pnl.DEFAULT_LEARNING_RATE in learn_method_learning_rate_dict and
-                #                          learn_method_learning_rate_dict[pnl.DEFAULT_LEARNING_RATE] not in {None, True})
-                else learn_method_lr if (learn_method_learning_rate_dict and learn_method_lr not in {None, True})
-                else .9 if post_constr
-                else default_lr))
-        assert (pytorch_rep.get_torch_learning_rate_for_projection(nested_proj) ==
-                (learn_method_learning_rate_dict[nested_proj] if learn_dict_param == 'hidden'
-                 else constructor_learning_rate_dict[nested_proj] if constructor_dict_param == 'hidden'
-                else hidden_lr if hidden_lr not in {None, True}
-                else learn_method_lr if (learn_method_learning_rate_dict and learn_method_lr not in {None, True})
-                else .7 if post_constr
-                else default_lr))
+
+        if learn_dict_param == 'input':
+            input_proj_exp = learn_method_learning_rate_dict[input_proj]
+        elif constructor_dict_param == 'input':
+            input_proj_exp = constructor_learning_rate_dict[input_proj]
+        elif input_lr not in {None, True}:
+            input_proj_exp = input_lr
+        # else learn_method_lr if (pnl.DEFAULT_LEARNING_RATE in learn_method_learning_rate_dict and
+        #                          learn_method_learning_rate_dict[pnl.DEFAULT_LEARNING_RATE] not in {None, True})
+        elif (learn_method_learning_rate_dict and learn_method_lr not in {None, True}):
+            input_proj_exp = learn_method_lr
+        elif post_constr:
+            input_proj_exp = .9
+        else:
+            input_proj_exp = default_lr
+
+        assert pytorch_rep.get_torch_learning_rate_for_projection(input_proj) == input_proj_exp
+
+        if learn_dict_param == 'hidden':
+            nested_proj_exp = learn_method_learning_rate_dict[nested_proj]
+        elif constructor_dict_param == 'hidden':
+            nested_proj_exp = constructor_learning_rate_dict[nested_proj]
+        elif hidden_lr not in {None, True}:
+            nested_proj_exp = hidden_lr
+        elif (learn_method_learning_rate_dict and learn_method_lr not in {None, True}):
+            nested_proj_exp = learn_method_lr
+        elif post_constr:
+            nested_proj_exp = .7
+        else:
+            nested_proj_exp = default_lr
+        assert pytorch_rep.get_torch_learning_rate_for_projection(nested_proj) == nested_proj_exp
+
         assert (pytorch_rep.get_torch_learning_rate_for_projection(outer_comp.projections[1]) ==
                 (learn_method_lr if learn_method_lr is not None
                  else constructor_lr if constructor_lr is not None
