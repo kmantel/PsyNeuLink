@@ -503,7 +503,6 @@ class MappingProjection(PathwayProjection_Base):
 
     projection_sender = OutputPort
 
-    _proxy_for_ref = None
     _proxy_ref = None
 
     @check_user_specified
@@ -533,10 +532,6 @@ class MappingProjection(PathwayProjection_Base):
         if not learnable and not isinstance(learning_rate, bool) and is_numeric_scalar(learning_rate):
             raise MappingError(f"The 'learning_rate' argument ({learning_rate}) cannot be specified as a "
                                f"float or int when 'learnable' is False.")
-        if PROXY_FOR in kwargs:
-            # Identifies Projection into or out of a nested Composition for which this is the proxy
-            #  (created to Projection to/from input_CIM/output_CIM of nested Composition)
-            self._proxy_for = kwargs.pop(PROXY_FOR)
 
         # If sender or receiver has not been assigned, defer init to Port.instantiate_projection_to_state()
         if sender is None or receiver is None:
@@ -694,22 +689,6 @@ class MappingProjection(PathwayProjection_Base):
     def logPref(self, setting):
         self.prefs.logPref = setting
         self.parameter_ports[MATRIX].logPref = setting
-
-    @property
-    def _proxy_for(self):
-        try:
-            return self._proxy_for_ref()
-        except TypeError:
-            return None
-
-    @_proxy_for.setter
-    def _proxy_for(self, value):
-        try:
-            self._proxy_for_ref = weakref.ref(value)
-        except TypeError:
-            self._proxy_for_ref = value
-        else:
-            value._proxy = self
 
     @property
     def _proxy(self):
