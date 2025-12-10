@@ -308,7 +308,7 @@ from psyneulink.core.globals.keywords import \
     (AUTO_ASSIGN_MATRIX, DEFAULT, DEFAULT_MATRIX, FULL_CONNECTIVITY_MATRIX, HOLLOW_MATRIX,
      IDENTITY_MATRIX, INPUT_PORT, MAPPING_PROJECTION, MATRIX, OUTPUT_PORT, VALUE)
 from psyneulink.core.globals.log import ContextFlags
-from psyneulink.core.globals.parameters import FunctionParameter, Parameter, check_user_specified, copy_parameter_value
+from psyneulink.core.globals.parameters import FunctionParameter, Parameter, SharedParameter, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.basepreferenceset import ValidPrefSet
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.utilities import is_numeric_scalar
@@ -715,3 +715,32 @@ class MappingProjection(PathwayProjection_Base):
     #     proxy_for = self._proxy_for
     #     if proxy_for is not None:
     #         self._proxy_for._remove_to_composition(composition)
+
+
+class ProxyProjection(MappingProjection):
+    _proxy_for_ref = None
+
+    class Parameters(MappingProjection.Parameters):
+        learning_rate = SharedParameter(None, attribute_name='_proxy_for')
+
+    def __init__(self, proxy_for, **kwargs):
+        # Identifies Projection into or out of a nested Composition for which this is the proxy
+        #  (created to Projection to/from input_CIM/output_CIM of nested Composition)
+        self._proxy_for = proxy_for
+        super().__init__(**kwargs)
+
+    @property
+    def _proxy_for(self):
+        try:
+            return self._proxy_for_ref()
+        except TypeError:
+            return None
+
+    @_proxy_for.setter
+    def _proxy_for(self, value):
+        try:
+            self._proxy_for_ref = weakref.ref(value)
+        except TypeError:
+            self._proxy_for_ref = value
+        else:
+            value._proxy = self
