@@ -10573,6 +10573,14 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         # immediate composition
                         break
 
+        def _handle_return(op: OptParam, val, set_none_to_default: bool = False):
+            if (
+                set_none_to_default
+                and (val is None or val is True)
+            ):
+                val = op.default
+            return val
+
         # force disable for current and outer compositions applies to
         # all nested objects.
         # NOTE: `self` is included in `outer_compositions` when created
@@ -10637,7 +10645,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     #     or learning_force_enabled
                     # )
                 ):  # runtime.default above may be None....
-                    return val
+                    return _handle_return(runtime, val)
 
         # TODO: add learning mech then pathway
         for comp in all_compositions:
@@ -10689,7 +10697,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         or learning_force_enabled
                     )
                 ):
-                    return v
+                    return _handle_return(comp_opt_p, v)
 
         if projection:
             if projection not in opt_params:
@@ -10715,7 +10723,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         or learning_force_enabled
                     )
                 ):
-                    return v
+                    return _handle_return(proj_opt_p, v)
 
         # pathways should be AFTER runtime....
         # TODO: learning mechanisms for each projection...
@@ -10753,16 +10761,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             or learning_force_enabled
                         )
                     ):
-                        return v
+                        return _handle_return(path_opt_p, v)
 
         # NOW: non projection-specific values...
 
         # def _accept_composition(self, projection, comp):
-        def _handle_return(op: OptParam, val):
-            # return val
-            if val is None or val is True:
-                val = op.default
-            return val
 
         # TODO: add learning mech then pathway
         all_items = [x for x in ['runtime', *all_compositions] if x is not None]
@@ -10819,7 +10822,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                             or learning_force_enabled
                         )
                     ):
-                        return _handle_return(opt_param, v)
+                        return _handle_return(opt_param, v, True)
 
         # NOTE: reference docs _Composition_Learning_Rate_False. since
         # return was not reached before this point, there are no
@@ -10846,7 +10849,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if v is False:
                     learning_disabled_tentative = True
                 else:
-                    return _handle_return(opt_param, v)
+                    return _handle_return(opt_param, v, True)
 
         matching_compositions = []
         for obj in ['runtime', *all_compositions]:
@@ -10864,7 +10867,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if v is False:
                     learning_disabled_tentative = True
                 else:
-                    return _handle_return(opt_param, v)
+                    return _handle_return(opt_param, v, True)
 
         for comp in matching_compositions:
             default_opt_params = OptimizerParams.from_component_defaults(comp)
@@ -10874,11 +10877,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 v = opt_param.default
 
             if v is not None and v is not True:
-                return v
+                return _handle_return(opt_param, v)
 
         for comp in matching_compositions:
             v = getattr(comp.class_defaults, param)
-            return v
+            return _handle_return('comp_default', v)
 
         # assert all_compositions == matching_compositions, f'A {all_compositions}\nM {matching_compositions}'
 
