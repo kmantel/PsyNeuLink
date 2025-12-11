@@ -12715,9 +12715,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if not runtime:
             return
 
-        for comp in self._get_nested_compositions():
-            comp._validate_optimizer_params(opt_params, context, err_source, runtime)
-
         all_projections = self._optimization_projections
 
         # all_projections = set(self._get_all_projections())
