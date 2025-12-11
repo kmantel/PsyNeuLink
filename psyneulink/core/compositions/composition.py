@@ -12684,6 +12684,17 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
             return trial_output
 
+    def _opt_param_err_msg(
+        self,
+        param_name: str,
+        err_val: Any,
+        msg_detail: str,
+        err_source: str = '',
+    ) -> str:
+        if err_source:
+            err_source = f' in {err_source}'
+        return f"A value ({repr(err_val)}) specified for the {param_name} of '{self.name}'{err_source} is not valid: {msg_detail}"
+
     def _validate_optimizer_params(
         self,
         opt_params: OptimizerParams,
@@ -12691,20 +12702,19 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         err_source: str = '',
         runtime: bool = True,
     ):
-        if err_source:
-            err_source = f' in {err_source}'
-
-        def _full_err_msg(param_name: str, err_val: Any, msg_detail: str) -> str:
-            return f"A value ({repr(err_val)}) specified for the {param_name} of '{self.name}'{err_source} is not valid: {msg_detail}"
-
         for o_param in opt_params:
             val = o_param._value
             err = o_param._get_validation_error_message(self, val, context)
             if err is not None:
-                raise CompositionError(_full_err_msg(o_param.name, val, err))
+                raise CompositionError(
+                    self._opt_param_err_msg(o_param.name, val, err, err_source)
+                )
 
         if not runtime:
             return
+
+        for comp in self._get_nested_compositions():
+            comp._validate_optimizer_params(opt_params, context, err_source, runtime)
 
         all_projections = self._optimization_projections
 
@@ -12733,10 +12743,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     proj_key = reg_proj
                 if proj_key not in all_projections:
                     raise CompositionError(
-                        _full_err_msg(
+                        self._opt_param_err_msg(
                             o_param.name,
                             val,
                             f'{repr(proj_key)} is not in that Composition or any nested within it',
+                            err_source,
                         )
                     )
 

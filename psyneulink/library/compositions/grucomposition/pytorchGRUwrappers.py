@@ -11,38 +11,37 @@
 
 import weakref
 import numpy as np
-import graph_scheduler
 import torch
 
-from typing import Union, Optional, Literal, Tuple
+from typing import Union, Literal, Tuple
 
 from torch import nn
 
 from psyneulink.core.compositions.composition import LearningScale
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
-from psyneulink.core.components.projections.projection import Projection, Projection_Base, ProjectionRegistry
+from psyneulink.core.components.projections.projection import Projection, ProjectionRegistry
 from psyneulink.core.globals.registry import register_category
 from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
+from psyneulink.library.compositions.grucomposition.grucomposition import (
+    BIAS_HIDDEN_TO_HIDDEN,
+    BIAS_INPUT_TO_HIDDEN,
+    HIDDEN_BIAS_SETS,
+    HIDDEN_PROJECTION_SETS,
+    HIDDEN_TO_HIDDEN,
+    INPUT_TO_HIDDEN,
+)
 from psyneulink.library.compositions.pytorchwrappers import PytorchCompositionWrapper, PytorchMechanismWrapper, \
     PytorchProjectionWrapper, PytorchFunctionWrapper, ENTER_NESTED, EXIT_NESTED, TorchParam, ParamNameCompositionTuple
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
 from psyneulink.core.globals.utilities import convert_to_list
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.globals.keywords import (
-    ALL, ANY, CONTEXT, DEFAULT, INPUT, INPUTS, LEARNING, NODE_VALUES, SHOW_PYTORCH, SYNCH, SYNCH_WITH_PNL_OPTIONS,
+    ANY, INPUT, LEARNING, NODE_VALUES, SHOW_PYTORCH, SYNCH,
 )
 from psyneulink.core.globals.log import LogCondition
 
-__all__ = ['PytorchGRUCompositionWrapper',
-           'BIAS_INPUT_TO_HIDDEN', 'BIAS_HIDDEN_TO_HIDDEN', 'B_IH_NAME', 'B_HH_NAME',
-           'HIDDEN_TO_HIDDEN', 'INPUT_TO_HIDDEN', 'W_IH_NAME', 'W_HH_NAME']
+__all__ = ['PytorchGRUCompositionWrapper', 'B_IH_NAME', 'B_HH_NAME', 'W_IH_NAME', 'W_HH_NAME']
 
-INPUT_TO_HIDDEN = 'INPUT TO HIDDEN'
-HIDDEN_TO_HIDDEN = 'HIDDEN TO HIDDEN'
-BIAS_INPUT_TO_HIDDEN = 'BIAS INPUT TO HIDDEN'
-BIAS_HIDDEN_TO_HIDDEN = 'BIAS HIDDEN TO HIDDEN'
-HIDDEN_PROJECTION_SETS = [INPUT_TO_HIDDEN, HIDDEN_TO_HIDDEN]
-HIDDEN_BIAS_SETS = [BIAS_INPUT_TO_HIDDEN, BIAS_HIDDEN_TO_HIDDEN]
 W_IH_NAME = 'weight_ih_l0'
 W_HH_NAME = 'weight_hh_l0'
 B_IH_NAME = 'bias_ih_l0'
