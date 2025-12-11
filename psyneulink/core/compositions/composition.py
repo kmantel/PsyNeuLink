@@ -10517,7 +10517,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             try:
                 opt_param = _get_opt_param(obj, opt_params)
             except ParameterNoValueError:
-                # obj doesn't have opt param values for this context. likely scenario is obj is an outer composition when an inner composition is running in its own context
+                # obj doesn't have opt param values for this context.
+                # likely scenario is obj is an outer composition when an
+                # inner composition is running in its own context
                 return True
             try:
                 pnl_param = getattr(obj.parameters, opt_param.pnl_param_enabled_name)
