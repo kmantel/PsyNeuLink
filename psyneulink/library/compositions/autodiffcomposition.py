@@ -1140,6 +1140,30 @@ class AutodiffComposition(Composition):
         dependency_dict[projection] = sender
         queue.append((receiver, comp))
 
+    def _validate_optimizer_params(
+        self,
+        opt_params: OptimizerParams,
+        context: Context,
+        err_source: str = '',
+        runtime: bool = True,
+    ):
+        if runtime:
+            for comp in [self] + self._get_nested_compositions():
+                if not hasattr(comp, '_validate_optimizer_param_invalid_GRU_projections'):
+                    continue
+
+                for o_param in opt_params:
+                    comp._validate_optimizer_param_invalid_GRU_projections(
+                        o_param, err_source=f'via {self}.learn()'
+                    )
+
+        super()._validate_optimizer_params(
+            opt_params=opt_params,
+            context=context,
+            err_source=err_source,
+            runtime=runtime,
+        )
+
     # BREADCRUMB: move some of what's done in the methods below to a "_validate_params" type of method
     @handle_external_context(fallback_most_recent=True)
     def _build_pytorch_representation(self,
@@ -1249,8 +1273,7 @@ class AutodiffComposition(Composition):
                                                                     {},
                                                                     context)
                 # Then update optimizer params with any specified in the call to learn()
-                pytorch_rep._update_optimizer_params(pytorch_rep.optimizer,
-                                                        {},
+                self._update_optimizer_params(pytorch_rep.optimizer,
                                                         Context(source=ContextFlags.METHOD,
                                                                 runmode=context.runmode,
                                                                 execution_id=context.execution_id))
@@ -1265,8 +1288,7 @@ class AutodiffComposition(Composition):
             pass
         else:
             # Otherwise, just update it
-            pytorch_rep._update_optimizer_params(old_opt,
-                                                 {},
+            self._update_optimizer_params(old_opt,
                                                  Context(source=ContextFlags.METHOD,
                                                          runmode=context.runmode,
                                                          execution_id=context.execution_id))
@@ -1303,8 +1325,21 @@ class AutodiffComposition(Composition):
             optimizer = optim.SGD(params, lr=learning_rate, weight_decay=self.weight_decay)
         else:
             optimizer = optim.Adam(params, lr=learning_rate, weight_decay=self.weight_decay)
-        pytorch_rep._update_optimizer_params(optimizer, optimizer_params, context)
+        self._update_optimizer_params(optimizer, context)
         return optimizer
+
+    def _update_optimizer_params(self, optimizer, context):
+        composition_optimizer_params = OptimizerParams.from_component(self, context)
+        self._validate_optimizer_params(composition_optimizer_params, context)
+        try:
+            runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
+        except KeyError:
+            runtime_optimizer_params = None
+        else:
+            self._validate_optimizer_params(runtime_optimizer_params, context, 'upd opt params the learn() method')
+
+        pytorch_rep = self.parameters.pytorch_representation._get(context)
+        pytorch_rep._update_optimizer_params(optimizer, {}, context)
 
     def get_target_nodes(self, execution_mode=pnlvm.ExecutionMode.PyTorch):
         """Return `TARGET` `Nodes <Composition_Nodes>` of the AutodiffComposition."""
