@@ -1347,14 +1347,17 @@ class GRUComposition(AutodiffComposition):
     ):
         if runtime:
             for o_param in opt_params:
-                self._validate_optimizer_param_invalid_GRU_projections(o_param, err_source)
+                self._validate_optimizer_param_invalid_GRU_projections(
+                    o_param, err_source
+                )
 
-        super()._validate_optimizer_params(
-            opt_params,
-            context,
-            err_source,
-            runtime,
-        )
+        super()._validate_optimizer_params(opt_params, context, err_source, runtime)
+
+    def _instantiate_optimizer(self, learning_rate, optimizer_params, context):
+        # TODO: replace with self.optimizer_parameters /similar...
+        composition_optimizer_params = OptimizerParams.from_component(self, context)
+        self._validate_optimizer_params(composition_optimizer_params, context, err_source='learn()', runtime=True)
+        return super()._instantiate_optimizer(learning_rate, optimizer_params, context)
 
     @property
     def w_ih_learning_rate(self):
