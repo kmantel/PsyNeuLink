@@ -10512,7 +10512,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             return opt_param
 
         def _param_is_enabled(
-            obj: Component, opt_params: Dict[Union[Component, str]]
+            obj: Component, opt_params: Dict[Union[Component, str], OptParam]
         ) -> bool:
             try:
                 opt_param = _get_opt_param(obj, opt_params)
