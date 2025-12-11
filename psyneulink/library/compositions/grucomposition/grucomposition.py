@@ -309,7 +309,7 @@ from psyneulink.core.components.functions.function import (
     DEFAULT_SEED, get_matrix, _random_state_getter, _seed_setter)
 from psyneulink.core.components.ports.inputport import InputPort
 from psyneulink.core.components.ports.outputport import OutputPort
-from psyneulink.core.compositions.composition import CompositionError, NodeRole, OptimizerParams
+from psyneulink.core.compositions.composition import CompositionError, NodeRole, OptParam, OptimizerParams
 from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition, torch_available
 from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.core.components.mechanisms.modulatory.control.gating.gatingmechanism import GatingMechanism
@@ -1264,6 +1264,80 @@ class GRUComposition(AutodiffComposition):
             raise CompositionError(f"Projections cannot be added to a {self.componentCategory}: ('{self.name}'.")
         return super().add_projection(*args, **kwargs)
 
+    def _validate_optimizer_param_invalid_GRU_projections(
+        self,
+        o_param: OptParam,
+        err_source: str = '',
+    ):
+        val = o_param._value
+        try:
+            val_items = iter(val.items())
+        except (AttributeError, TypeError):
+            # opt param value is not dictionary spec
+            return
+
+        bias_keys = set()
+        bad_ih_keys = set()
+        bad_hh_keys = set()
+
+        for proj_key, _ in val_items:
+            # check both key as str and Projection (.name)
+            proj_key_spec_set = {proj_key, getattr(proj_key, 'name', proj_key)}
+
+            if (
+                not self.bias
+                and proj_key_spec_set.intersection({BIAS_INPUT_TO_HIDDEN, BIAS_HIDDEN_TO_HIDDEN})
+            ):
+                try:
+                    bias_keys.add(proj_key.replace(' ', '_'))
+                except AttributeError:
+                    bias_keys.add(proj_key)
+
+            if proj_key_spec_set.intersection(set(INPUT_TO_HIDDEN_WEIGHTS)):
+                bad_ih_keys.add(proj_key)
+
+            if proj_key_spec_set.intersection(set(HIDDEN_TO_HIDDEN_WEIGHTS)):
+                bad_hh_keys.add(proj_key)
+
+        # Raise error for attempt to specify bias parameters when bias=False
+        if not self.bias and bias_keys:
+            err_msg = self._opt_param_err_msg(
+                o_param.name,
+                val,
+                (
+                    f"Attempt to set {o_param.name} for bias(es) of GRU using '{' ,'.join(bias_keys)}'"
+                    f" when {self} bias option is set to False; the spec(s) must be removed or bias set to True.",
+                ),
+                err_source,
+            )
+            raise GRUCompositionError(err_msg)
+
+        # Raise error for attempt to specify individual input_to_hidden or hidden_to_hidden Projections
+        def _hid_err_msg(proj_type_name: str, bad_keys: Set) -> str:
+            return (
+                f"GRUComposition does not support setting {o_param.name} for individual"
+                f" {proj_type_name.lower()} Projections ({' ,'.join(bad_keys)});"
+                f" use '{proj_type_name.upper()}' to set {o_param.name} for all such weights."
+            )
+
+        if bad_ih_keys:
+            err_msg = self._opt_param_err_msg(
+                o_param.name,
+                val,
+                _hid_err_msg('INPUT_TO_HIDDEN', bad_ih_keys),
+                err_source,
+            )
+            raise GRUCompositionError(err_msg)
+
+        if bad_hh_keys:
+            err_msg = self._opt_param_err_msg(
+                o_param.name,
+                val,
+                _hid_err_msg('HIDDEN_TO_HIDDEN', bad_hh_keys),
+                err_source,
+            )
+            raise GRUCompositionError(err_msg)
+
     def _validate_optimizer_params(
         self,
         opt_params: OptimizerParams,
@@ -1271,67 +1345,9 @@ class GRUComposition(AutodiffComposition):
         err_source: str = '',
         runtime: bool = True,
     ):
-        bias_keys = set()
-        bad_ih_keys = set()
-        bad_hh_keys = set()
-
-        for o_param in opt_params:
-            val = o_param._value
-            try:
-                val_items = iter(val.items())
-            except (AttributeError, TypeError):
-                # opt param value is not dictionary spec
-                continue
-
-            for proj_key, _ in val_items:
-                proj_key_spec_set = {proj_key, getattr(proj_key, 'name', proj_key)}
-
-                if (
-                    not self.bias
-                    and proj_key_spec_set.intersection({BIAS_INPUT_TO_HIDDEN, BIAS_HIDDEN_TO_HIDDEN})
-                ):
-                    try:
-                        bias_keys.add(proj_key.replace(' ', '_'))
-                    except AttributeError:
-                        bias_keys.add(proj_key)
-
-                if proj_key_spec_set.intersection(set(INPUT_TO_HIDDEN_WEIGHTS)):
-                    bad_ih_keys.add(proj_key)
-
-                if proj_key_spec_set.intersection(set(HIDDEN_TO_HIDDEN_WEIGHTS)):
-                    bad_hh_keys.add(proj_key)
-
-            # Raise error for attempt to specify bias parameters when bias=False
-            if not self.bias and bias_keys:
-                err_msg = self._opt_param_err_msg(
-                    o_param.name,
-                    val,
-                    f"Attempt to set {o_param.name} for bias(es) of GRU using '{' ,'.join(bias_keys)}' when {self} bias option is set to False; the spec(s) must be removed or bias set to True.",
-                    err_source,
-                )
-                raise GRUCompositionError(err_msg)
-
-            # Raise error for attempt to specify individual input_to_hidden or hidden_to_hidden Projections
-            def _ih_msg(proj_type_name: str, bad_keys: Set) -> str:
-                return f"GRUComposition does not support setting {o_param.name} for individual {proj_type_name.lower()} Projections ({' ,'.join(bad_keys)}); use '{proj_type_name.upper()}' to set learning rate for all such weights."
-
-            if bad_ih_keys:
-                err_msg = self._opt_param_err_msg(
-                    o_param.name,
-                    val,
-                    _ih_msg('INPUT_TO_HIDDEN', bad_ih_keys),
-                    err_source,
-                )
-                raise GRUCompositionError(err_msg)
-
-            if bad_hh_keys:
-                err_msg = self._opt_param_err_msg(
-                    o_param.name,
-                    val,
-                    _ih_msg('HIDDEN_TO_HIDDEN', bad_hh_keys),
-                    err_source,
-                )
-                raise GRUCompositionError(err_msg)
+        if runtime:
+            for o_param in opt_params:
+                self._validate_optimizer_param_invalid_GRU_projections(o_param, err_source)
 
         super()._validate_optimizer_params(
             opt_params,
