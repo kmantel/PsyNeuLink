@@ -1306,7 +1306,7 @@ class GRUComposition(AutodiffComposition):
                 val,
                 (
                     f"Attempt to set {o_param.name} for bias(es) of GRU using '{' ,'.join(bias_keys)}'"
-                    f" when {self} bias option is set to False; the spec(s) must be removed or bias set to True.",
+                    f" when the bias option of {self} is set to False; the spec(s) must be removed or bias set to True.",
                 ),
                 err_source,
             )
