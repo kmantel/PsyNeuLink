@@ -540,9 +540,9 @@ if torch_available:
 
             # Test for error on attempt to set individual Projection learning rate
             if gru_proj == "HIDDEN TO UPDATE WEIGHTS":
-                error_msg = ("GRUComposition does not support setting of learning rates for individual "
+                error_msg = ("GRUComposition does not support setting learning_rate for individual "
                              "hidden_to_hidden Projections (HIDDEN TO UPDATE WEIGHTS); use 'HIDDEN_TO_HIDDEN' "
-                             "to set learning rate for all such weights.")
+                             "to set learning_rate for all such weights.")
                 with pytest.raises(pnl.GRUCompositionError) as error_text:
                     outer = pnl.AutodiffComposition(
                         [input_mech, input_proj, gru, output_proj, output_mech],
@@ -556,8 +556,7 @@ if torch_available:
             elif gru_proj in {BIAS_INPUT_TO_HIDDEN,
                               BIAS_HIDDEN_TO_HIDDEN}:
                 bias_spec = 'BIAS_INPUT_TO_HIDDEN' if gru_proj == BIAS_INPUT_TO_HIDDEN else "BIAS_HIDDEN_TO_HIDDEN"
-                error_msg = (f"Attempt to set learning rate for bias(es) of GRU using '{bias_spec}' in the "
-                             f"'learning_rate' arg of the learn() method for 'GRU Composition' when its bias option "
+                error_msg = (f"Attempt to set learning_rate for bias(es) of GRU using '{bias_spec}' when the bias option of (GRUComposition GRU Composition) "
                              f"is set to False; the spec(s) must be removed or bias set to True.")
                 with pytest.raises(pnl.GRUCompositionError) as error_text:
                     outer = pnl.AutodiffComposition(
