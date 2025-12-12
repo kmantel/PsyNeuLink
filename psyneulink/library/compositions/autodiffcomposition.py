@@ -1154,7 +1154,7 @@ class AutodiffComposition(Composition):
 
                 for o_param in opt_params:
                     comp._validate_optimizer_param_invalid_GRU_projections(
-                        o_param, err_source=f'via {self}.learn()'
+                        o_param, err_source=f'{self}.learn()'
                     )
 
         super()._validate_optimizer_params(
