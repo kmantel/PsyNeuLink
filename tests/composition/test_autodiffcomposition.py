@@ -4080,7 +4080,15 @@ class TestMiscTrainingFunctionality:
         # BREADCRUMB
         outer_pytorch_rep = outer_comp._build_pytorch_representation()
         outer_proj = outer_comp.nodes[-1].afferents[0]
-        assert outer_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_1) == expected_proj_1_inner
+
+        assert inner_proj_1.parameters.learning_rate.get() == proj_1_lr
+        if expected_proj_1_inner == self.default and outer_comp_lr is not None:
+            expected_proj_1_outer = outer_comp_lr
+        else:
+            expected_proj_1_outer = expected_proj_1_inner
+        assert inner_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_1) == expected_proj_1_inner
+        assert outer_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_1) == expected_proj_1_outer
+
         assert outer_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_2) == expected_proj_2_inner
         assert outer_pytorch_rep.get_torch_learning_rate_for_projection(outer_proj) == outer_comp_lr or self.default
 
@@ -4119,7 +4127,8 @@ class TestMiscTrainingFunctionality:
         # BREADCRUMB
         # Check that learning_rates return to those at construction after another call to learn() w/o learning_rate_arg
         outer_comp.learn(inputs={inner_node_input:[[1]]})
-        assert learn_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_1) == expected_proj_1_inner
+        assert inner_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_1) == expected_proj_1_inner
+        assert learn_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_1) == expected_proj_1_outer
         assert learn_pytorch_rep.get_torch_learning_rate_for_projection(inner_proj_2) == expected_proj_2_inner
         assert learn_pytorch_rep.get_torch_learning_rate_for_projection(outer_proj) == outer_comp_lr or self.default
 
