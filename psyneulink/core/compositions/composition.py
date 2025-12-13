@@ -9048,8 +9048,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
         if learning_rate is None:
             learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
-            learning_mech_name, 'learning_rate', context
-        )
+                learning_mech_name, 'learning_rate', context
+            )
         else:
             learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function(),
@@ -9114,8 +9114,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             learning_mech_name = "Learning Mechanism for " + learned_projection.name
             if learning_rate is None:
                 learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
-                learning_mech_name, 'learning_rate', context
-            )
+                    learning_mech_name, 'learning_rate', context
+                )
             else:
                 learning_mech_lr = learning_rate
             learning_mechanism = \
@@ -9219,8 +9219,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
         if learning_rate is None:
             learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
-            learning_mech_name, 'learning_rate', context
-        )
+                learning_mech_name, 'learning_rate', context
+            )
         else:
             learning_mech_lr = learning_rate
         learning_mechanism = \
@@ -9267,8 +9267,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
         if learning_rate is None:
             learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
-            learning_mech_name, 'learning_rate', context
-        )
+                learning_mech_name, 'learning_rate', context
+            )
         else:
             learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=TDLearning(),
@@ -9561,8 +9561,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
         if learning_rate is None:
             learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
-            learning_mech_name, 'learning_rate', context
-        )
+                learning_mech_name, 'learning_rate', context
+            )
         else:
             learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function,
@@ -9724,8 +9724,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         learning_mech_name = "Learning Mechanism for " + learned_projection.name
         if learning_rate is None:
             learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
-            learning_mech_name, 'learning_rate', context
-        )
+                learning_mech_name, 'learning_rate', context
+            )
         else:
             learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function,
