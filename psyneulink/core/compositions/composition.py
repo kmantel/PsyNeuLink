@@ -8791,11 +8791,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 #   (see `Composition_Learning_Rate_Precedence_Hierarchy`)
                 # if Projection has a learning_rate, assign to LearningMechanism
                 learning_mech.parameters.learning_rate.set(proj_lr, context)
-            else:
-                # otherwise assign LearningMechanism's learning rate or default to Projection
-                _lr = (learning_mech_lr if (learning_mech_lr is not None and learning_mech_lr is not True)
-                       else learning_rate)
-                learnable_projection.parameters.learning_rate.set(_lr, context)
 
         return learning_pathway
 
