@@ -2091,24 +2091,20 @@ class AutodiffComposition(Composition):
                 raise AutodiffCompositionError(f"'{self.name}.learn()' has been called with ExecutionMode.Pytorch, "
                                                f"but Pytorch module ('torch') is not installed. "
                                                f"Please install it with `pip install torch` or `pip3 install torch`")
+            self._build_pytorch_representation(optimizer_params=kwargs.get('optimizer_params', None),
+                                               context=context,
+                                               base_context=Context(execution_id=None))
+
             composition_optimizer_params = OptimizerParams.from_component(self, context)
             # checks for existence of projections should happen
             # after building representation, because for GRU,
             # the DummyProjections don't exist before then
-            self._validate_optimizer_params(composition_optimizer_params, context, runtime=False)
+            self._validate_optimizer_params(composition_optimizer_params, context)
             try:
                 runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
             except KeyError:
                 runtime_optimizer_params = None
             else:
-                self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method', runtime=False)
-
-            self._build_pytorch_representation(optimizer_params=kwargs.get('optimizer_params', None),
-                                               context=context,
-                                               base_context=Context(execution_id=None))
-
-            self._validate_optimizer_params(composition_optimizer_params, context)
-            if runtime_optimizer_params:
                 self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method')
 
         # Run AutodiffComposition
