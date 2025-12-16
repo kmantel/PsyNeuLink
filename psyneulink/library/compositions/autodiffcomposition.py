@@ -1329,18 +1329,19 @@ class AutodiffComposition(Composition):
             optimizer = optim.SGD(params, lr=learning_rate, weight_decay=self.weight_decay)
         else:
             optimizer = optim.Adam(params, lr=learning_rate, weight_decay=self.weight_decay)
-        self._update_optimizer_params(optimizer, context)
+        self._update_optimizer_params(optimizer, context, validate=False)
         return optimizer
 
-    def _update_optimizer_params(self, optimizer, context):
-        composition_optimizer_params = OptimizerParams.from_component(self, context)
-        self._validate_optimizer_params(composition_optimizer_params, context)
-        try:
-            runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
-        except KeyError:
-            runtime_optimizer_params = None
-        else:
-            self._validate_optimizer_params(runtime_optimizer_params, context, 'upd opt params the learn() method')
+    def _update_optimizer_params(self, optimizer, context, validate=True):
+        if validate:
+            composition_optimizer_params = OptimizerParams.from_component(self, context)
+            self._validate_optimizer_params(composition_optimizer_params, context)
+            try:
+                runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
+            except KeyError:
+                runtime_optimizer_params = None
+            else:
+                self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method')
 
         pytorch_rep = self.parameters.pytorch_representation._get(context)
         pytorch_rep._update_optimizer_params(optimizer, {}, context)
