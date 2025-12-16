@@ -1356,7 +1356,7 @@ class GRUComposition(AutodiffComposition):
     def _instantiate_optimizer(self, learning_rate, optimizer_params, context):
         # TODO: replace with self.optimizer_parameters /similar...
         composition_optimizer_params = OptimizerParams.from_component(self, context)
-        self._validate_optimizer_params(composition_optimizer_params, context, err_source='learn()', runtime=True)
+        self._validate_optimizer_params(composition_optimizer_params, context, err_source='inst optimizer learn()', runtime=True)
         return super()._instantiate_optimizer(learning_rate, optimizer_params, context)
 
     @property
