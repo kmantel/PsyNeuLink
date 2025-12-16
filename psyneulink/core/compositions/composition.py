@@ -9780,48 +9780,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         return learning_mechanism
 
-    def _parse_and_validate_learning_rate_arg(self, learning_rate, context=None):
-        """Parse and validate learning_rate specified in Composition constructor or learn() method
-        If learning_rate is:
-          - a single value, use as Composition's learning_rate.
-          - a dict, move parsed entries to self.learning_rates_dict for specified context (None if from constructor).
-        Assumes context=None if called from Composition constructor.
-        Otherwise, assumes call is from learn() method, and gets learning_rats for Projections in all nested comps
-        """
-        source_str = self.name
-        lr_dict = None
-        if context:
-            source_str = f"the learn() method of " + source_str
-
-        if not isinstance(learning_rate, (float, int, bool, dict, type(None))):
-            if isinstance(learning_rate, str):
-                learning_rate = f"'{learning_rate}'"
-            raise CompositionError(
-                f"The 'learning_rate' arg for '{source_str}' ({learning_rate}) "
-                f"must be a float, int, bool, None, or a dict.")
-        if learning_rate is True:
-            learning_rate = None
-        if isinstance(learning_rate, dict):
-            _lr_dict_arg = learning_rate
-            # Check that the learning_rate specification(s) are all legal
-            bad_vals = [{spec: val} for spec, val in _lr_dict_arg.items()
-                        if not isinstance(val, (float, int, bool, type(None)))]
-            if bad_vals:
-                raise CompositionError(f"The following values of the entries in the dict specified "
-                                       f"for the 'learning_rate' arg of '{source_str}' must each be "
-                                       f"a float, int, bool, or None: '{bad_vals}'.")
-            # Get default learning rate if there is one and remove it from the dict
-            learning_rate = _lr_dict_arg.get(DEFAULT_LEARNING_RATE, None)
-
-            # Check that all keys in remaining entries are a Projection or a name (str)
-            bad_keys = [spec for spec in _lr_dict_arg.keys() if not isinstance(spec, (str, MappingProjection))]
-            if bad_keys:
-                raise CompositionError(f"The following keys in the dict specified for the 'learning_rate' arg of "
-                                       f"{source_str} are not MappingProjections (or names of ones) in that "
-                                       f"Composition: '{', '.join([str(k) if not isinstance(k, str) else k for k in bad_keys])}'.")
-
-        return learning_rate, lr_dict
-
     def _get_back_prop_error_sources(self, efferents, learning_mech=None, context=None):
         # FIX CROSSED_PATHWAYS [JDC]:  GENERALIZE THIS TO HANDLE COMPARATOR/TARGET ASSIGNMENTS IN BACKPROP
         #                              AND THEN TO HANDLE ALL FORMS OF LEARNING (AS BELOW)
