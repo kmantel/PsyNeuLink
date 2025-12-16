@@ -1096,10 +1096,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
             if not param_group['params']:
                 optimizer.param_groups.remove(param_group)
 
-        if source in {CONSTRUCTOR, LEARN_CONSTRUCTION}:
-            # Store constructor-specified learning_rates (for reversion after learn())
-            self._store_constructor_proj_learning_rates_and_torch_params(optimizer, context)
-
     def _update_torch_param_group(self,
                                   specified_learning_rate,
                                   param,
@@ -1159,26 +1155,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
                         new_param_group['params'] = [torch_param]
                         new_param_group['lr'] = lr
                         param_groups.append(new_param_group)
-
-    def _store_constructor_proj_learning_rates_and_torch_params(self, optimizer:torch.optim.Optimizer, context):
-        """Store Composition constructor-specified learning_rates and torch parameters for Projections"""
-        self._constructor_param_groups = self._copy_torch_param_groups(optimizer.param_groups)
-
-    def _restore_constructor_proj_learning_rates_and_torch_params(self, optimizer:torch.optim.Optimizer, context):
-        """Restore Composition constructor-specified learning_rates and torch parameters for Projections"""
-        try:
-            self.optimizer.param_groups = self._copy_torch_param_groups(self._constructor_param_groups)
-        except AttributeError:
-            assert self.optimizer, (
-                f"PROGRAM ERROR: _restore_constructor_proj_learning_rates_and_torch_params() called for "
-                f"'{self.composition.name}' but it does not (yet) have an optimizer."
-                f"for its pytorch_representation have not been constructed.")
-            assert self._constructor_param_groups, (
-                f"PROGRAM ERROR: learn() called for '{self.composition.name} but the _constructor_param_groups "
-                f"for its pytorch_representation have not been constructed.")
-            assert self._constructor_param_groups, (
-                f"PROGRAM ERROR: learn() called for '{self.composition.name} but the _constructor_proj_learning_rates "
-                f"for its pytorch_representation have not been constructed.")
 
     def _copy_torch_param_groups(self, param_groups:list)->list:
         """Return copy of param_groups with copies of the lists of parameters in the 'params' entry
