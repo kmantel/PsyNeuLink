@@ -1305,6 +1305,14 @@ class AutodiffComposition(Composition):
 
     def _instantiate_optimizer(self, learning_rate, optimizer_params, context):
         learning_rate = self._get_optimizer_param_value('learning_rate', context)
+        composition_optimizer_params = OptimizerParams.from_component(self, context)
+        self._validate_optimizer_params(composition_optimizer_params, context)
+        try:
+            runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
+        except KeyError:
+            runtime_optimizer_params = None
+        else:
+            self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method')
 
         if self.optimizer_type not in ['sgd', 'adam']:
             raise AutodiffCompositionError("Invalid optimizer specified. Optimizer argument must be a string. "
