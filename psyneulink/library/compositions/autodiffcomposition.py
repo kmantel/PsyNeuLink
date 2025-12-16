@@ -2095,18 +2095,6 @@ class AutodiffComposition(Composition):
                                                context=context,
                                                base_context=Context(execution_id=None))
 
-            composition_optimizer_params = OptimizerParams.from_component(self, context)
-            # checks for existence of projections should happen
-            # after building representation, because for GRU,
-            # the DummyProjections don't exist before then
-            self._validate_optimizer_params(composition_optimizer_params, context)
-            try:
-                runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
-            except KeyError:
-                runtime_optimizer_params = None
-            else:
-                self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method')
-
         # Run AutodiffComposition
         results = super(AutodiffComposition, self).run(*args, execution_mode=execution_mode, context=context, **kwargs)
 
