@@ -1059,7 +1059,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
         optimizer.param_groups = new_param_groups
         all_requires_grads_false = True
 
-        print(self, self.composition)
         # Use old_param_groups for reference, and modify new_param_groups (now assigned to optimizer)
         for old_param_group, new_param_group in zip(old_param_groups, new_param_groups):
             # Get each param in the param_groups
