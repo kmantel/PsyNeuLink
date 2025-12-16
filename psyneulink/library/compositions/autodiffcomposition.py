@@ -1330,13 +1330,13 @@ class AutodiffComposition(Composition):
 
     def _update_optimizer_params(self, optimizer, context):
         composition_optimizer_params = OptimizerParams.from_component(self, context)
-        self._validate_optimizer_params(composition_optimizer_params, context)
+        self._validate_optimizer_params(composition_optimizer_params, context, 'upd opt params comp')
         try:
             runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
         except KeyError:
             runtime_optimizer_params = None
         else:
-            self._validate_optimizer_params(runtime_optimizer_params, context, 'upd opt params the learn() method')
+            self._validate_optimizer_params(runtime_optimizer_params, context, 'upd opt params rt the learn() method')
 
         pytorch_rep = self.parameters.pytorch_representation._get(context)
         pytorch_rep._update_optimizer_params(optimizer, {}, context)
@@ -2099,13 +2099,13 @@ class AutodiffComposition(Composition):
             # checks for existence of projections should happen
             # after building representation, because for GRU,
             # the DummyProjections don't exist before then
-            self._validate_optimizer_params(composition_optimizer_params, context)
+            self._validate_optimizer_params(composition_optimizer_params, context, 'RUN comp post bpr')
             try:
                 runtime_optimizer_params = self.runtime_optimizer_params[context.execution_id]
             except KeyError:
                 runtime_optimizer_params = None
             else:
-                self._validate_optimizer_params(runtime_optimizer_params, context, 'the learn() method')
+                self._validate_optimizer_params(runtime_optimizer_params, context, 'RUN post bpr the learn() method')
 
         # Run AutodiffComposition
         results = super(AutodiffComposition, self).run(*args, execution_mode=execution_mode, context=context, **kwargs)
