@@ -1353,12 +1353,6 @@ class GRUComposition(AutodiffComposition):
 
         super()._validate_optimizer_params(opt_params, context, err_source, runtime)
 
-    def _instantiate_optimizer(self, learning_rate, optimizer_params, context):
-        # TODO: replace with self.optimizer_parameters /similar...
-        composition_optimizer_params = OptimizerParams.from_component(self, context)
-        self._validate_optimizer_params(composition_optimizer_params, context, err_source='learn()', runtime=True)
-        return super()._instantiate_optimizer(learning_rate, optimizer_params, context)
-
     @property
     def w_ih_learning_rate(self):
         pytorch_rep = self._build_pytorch_representation()
