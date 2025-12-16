@@ -1118,39 +1118,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
                 # Create new param_group for the specified learning_rate
                 optimizer.add_param_group({'params': [param], 'lr': specified_learning_rate})
 
-    def _update_constructor_param_groups(cls, composition, optimizer_params_user_specs:dict):
-        for pytorch_rep in composition.parameters.pytorch_representation.values.values():
-            for proj, lr in optimizer_params_user_specs.items():
-                torch_param = pytorch_rep.get_torch_param_for_projection(proj)
-                param_groups = pytorch_rep._constructor_param_groups
-                for i, param_group in enumerate(param_groups.copy()):
-                    # if id(torch_param) in [id(p) for p in param_group['params']]:
-                    # id's for all params in param_groups: [id(p) for pg in param_groups for p in pg['params']]
-                    param_idx = next((j for j, p_id in enumerate([id(p) for p in param_group['params']])
-                                      if p_id == id(torch_param)),None)
-                    if not param_idx:
-                        continue
-                    # Found torch_param in param_group i
-                    if lr == param_group['lr']:
-                        # Already has specified value
-                        warnings.warn(f"'{proj.name}' already has learning_rate of {lr} being assigned"
-                                      f"in constructor for '{self.composition.name}'.")
-                        return
-                    del param_group['params'][param_idx]
-
-                    # Check if a param_group already exists for the specified learning_rate
-                    exisiting_param_group_with_specified_lr = next((param_group for param_group in param_groups
-                                                                   if param_group['lr'] == lr),None)
-                    if exisiting_param_group_with_specified_lr:
-                        # Move to exisiting param_group with specified learning_rate
-                        exisiting_param_group_with_specified_lr['params'].append(torch_param)
-                    else:
-                        # Create new param_group for the specified learning_rate
-                        new_param_group = param_group.copy()
-                        new_param_group['params'] = [torch_param]
-                        new_param_group['lr'] = lr
-                        param_groups.append(new_param_group)
-
     def _copy_torch_param_groups(self, param_groups:list)->list:
         """Return copy of param_groups with copies of the lists of parameters in the 'params' entry
         NOTE: can't use deepcopy, as want to isolate the actual torch parameters in the 'params' lists;
