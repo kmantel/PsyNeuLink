@@ -8442,8 +8442,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if isinstance(n, tuple):
                     nodes[nodes.index(n)] = n[0]
 
-        self._assign_learning_rates(projections)
-
         specified_pathway = pathway
         # interleave (sets of) Nodes and (sets or lists of) Projections
         parsed_pathway = [node_entries[0]]
@@ -9823,23 +9821,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"Composition: '{', '.join([str(k) if not isinstance(k, str) else k for k in bad_keys])}'.")
 
         return learning_rate, lr_dict
-
-    def _assign_learning_rates(self, projections=None, context=None):
-        """Assign specified learning_rates for context to Projections & build learning_rates_dict for all Projections
-        """
-        from psyneulink.library.compositions import AutodiffComposition
-        projections = projections or []
-        # Flatten any sets or tuples
-        projections = [item for sub_item in projections
-                       for item in (sub_item if isinstance(sub_item, (list, tuple, set))
-                                    else [sub_item])]
-        not_learnable = []
-        for proj in projections:
-            try:
-                proj_name = proj._proxy_for.name
-            except AttributeError:
-                proj_name = proj.name
-
 
     def _get_back_prop_error_sources(self, efferents, learning_mech=None, context=None):
         # FIX CROSSED_PATHWAYS [JDC]:  GENERALIZE THIS TO HANDLE COMPARATOR/TARGET ASSIGNMENTS IN BACKPROP

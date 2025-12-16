@@ -870,8 +870,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
         #   or update existing ones (if called from learn() method)
 
         self._assign_learning_rates(optimizer,
-                                    {},
-                                    source,
                                     context)
 
     def _parse_learning_rate_specs(self,
@@ -1044,8 +1042,6 @@ class PytorchCompositionWrapper(torch.nn.Module):
     def _assign_learning_rates(
         self,
         optimizer: torch.optim.Optimizer,
-        optimizer_params: Dict,
-        source: str,
         context: Context,
     ):
         """Assign parsed learning_rate specifications."""
