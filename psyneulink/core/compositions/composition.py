@@ -3178,6 +3178,7 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
+import psyneulink
 from psyneulink._typing import Callable, Literal, List, Mapping, Optional, Set, Type, Union
 
 from psyneulink.core import llvm as pnlvm
@@ -3210,7 +3211,7 @@ from psyneulink.core.components.projections.modulatory.controlprojection import 
 from psyneulink.core.components.projections.modulatory.learningprojection import LearningProjection
 from psyneulink.core.components.projections.modulatory.modulatoryprojection import ModulatoryProjection_Base
 from psyneulink.core.components.projections.pathway.mappingprojection import \
-    MappingProjection, MappingError, PROXY_FOR
+    MappingProjection, MappingError, PROXY_FOR, ProxyProjection
 from psyneulink.core.components.projections.pathway.pathwayprojection import PathwayProjection_Base
 from psyneulink.core.components.projections.projection import \
     Projection_Base, ProjectionError, DuplicateProjectionError
@@ -6572,6 +6573,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             self._pre_existing_pathway_components = {NODES: [], PROJECTIONS: []}
 
         existing_projections = False
+        nested_nodes = None
 
         # If a sender and receiver have been specified but not a projection,
         #    check whether there is *any* projection like that
@@ -6623,11 +6625,15 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             sender_node = projection.sender.owner
             receiver_node = projection.receiver.owner
             # If sender or receiver is in a nested Node
-            if ((sender_node not in self.nodes
-                 and sender_node in [n[0] for n in self._get_nested_nodes()])
-                    or (receiver_node not in self.nodes
-                         and receiver_node in [n[0] for n in self._get_nested_nodes()])):
-                proj_spec = {PROJECTION_TYPE:projection.className,
+            nested_nodes = [n[0] for n in self._get_nested_nodes()]
+            sender_in_nested = sender_node not in self.nodes and sender_node in nested_nodes
+            receiver_in_nested = receiver_node not in self.nodes and receiver_node in nested_nodes
+            if sender_in_nested or receiver_in_nested:
+                # although projection is only explicitly a
+                # PathwayProjection_Base, the other parameters here
+                # indicate it is a MappingProjection
+                proj_spec = {
+                    PROJECTION_TYPE: ProxyProjection,
                               PROJECTION_PARAMS:{
                                   FUNCTION:projection.function,
                                   MATRIX:projection.matrix.base,
@@ -6855,7 +6861,18 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if isinstance(projection, dict):
             proj_type = projection.pop(PROJECTION_TYPE, None) or MappingProjection
             params = projection.pop(PROJECTION_PARAMS, None)
-            projection = MappingProjection(**params)
+            try:
+                proj_type = getattr(psyneulink.core.components.projections, proj_type)
+            except AttributeError:
+                # TODO: proj_type is generally specified as a string
+                # elsewhere, but before adding this try/except block,
+                # proj_type was ignored. consider if this is still
+                # correct.
+                proj_type = MappingProjection
+            except TypeError:
+                # assume specified as a class
+                pass
+            projection = proj_type(**params)
         elif isinstance(projection, (np.ndarray, np.matrix, list, RandomMatrix)):
             return MappingProjection(matrix=projection, sender=sender, receiver=receiver, name=name)
         elif isinstance(projection, str):
