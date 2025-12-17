@@ -295,7 +295,6 @@ import weakref
 
 import numpy as np
 from typing import Union
-
 from psyneulink._typing import Optional
 
 from psyneulink.core.components.component import parameter_keywords
@@ -410,7 +409,7 @@ class MappingProjection(PathwayProjection_Base):
         or of any for the Composition to which the MappingProjection belongs, and any attempts to assign a
         `learning_rate <MappingProjection.learning_rate>' (other than False) raises an error.
 
-    learning_rate : float, int, bool or None
+    learning_rate : float, int, bool, or None
         determines Projection-specific learning_rate, that takes effect only if the MappingProjection's `learnable
         <MappingProjection.learnable>` attribute is True. If it is a numeric value, that value is used, unless it
         is overridden by a value specified for the MappingProjection in the `learn method
@@ -473,6 +472,7 @@ class MappingProjection(PathwayProjection_Base):
                     :type: ``str``
 
         """
+        learnable = Parameter(True, stateful=False, aliases=['enable_learning_rate'])
         learning_rate = Parameter(None, stateful=True)
         function = Parameter(MatrixTransform, stateful=False, loggable=False)
         matrix = FunctionParameter(
@@ -529,8 +529,7 @@ class MappingProjection(PathwayProjection_Base):
 
         self.learning_mechanism = None
         self.has_learning_projection = None
-        self.learnable = bool(learnable)
-        if not self.learnable and not isinstance(learning_rate, bool) and is_numeric_scalar(learning_rate):
+        if not learnable and not isinstance(learning_rate, bool) and is_numeric_scalar(learning_rate):
             raise MappingError(f"The 'learning_rate' argument ({learning_rate}) cannot be specified as a "
                                f"float or int when 'learnable' is False.")
 
@@ -544,6 +543,7 @@ class MappingProjection(PathwayProjection_Base):
                          weight=weight,
                          exponent=exponent,
                          matrix=matrix,
+                         learnable=learnable,
                          learning_rate=learning_rate,
                          function=function,
                          params=params,
@@ -703,6 +703,18 @@ class MappingProjection(PathwayProjection_Base):
             self._proxy_ref = weakref.ref(value)
         except TypeError:
             self._proxy_ref = value
+
+    # def _add_to_composition(self, composition):
+    #     super()._add_to_composition(composition)
+    #     proxy_for = self._proxy_for
+    #     if proxy_for is not None:
+    #         self._proxy_for._add_to_composition(composition)
+
+    # def _remove_from_composition(self, composition):
+    #     super()._remove_to_composition(composition)
+    #     proxy_for = self._proxy_for
+    #     if proxy_for is not None:
+    #         self._proxy_for._remove_to_composition(composition)
 
 
 class ProxyProjection(MappingProjection):

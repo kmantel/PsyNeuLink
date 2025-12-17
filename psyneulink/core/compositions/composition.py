@@ -3162,6 +3162,7 @@ Class Reference
 """
 
 import collections
+from dataclasses import dataclass
 import enum
 import functools
 import inspect
@@ -3184,7 +3185,8 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
-from psyneulink._typing import Callable, Literal, List, Mapping, Optional, Set, Type, Union
+import psyneulink
+from psyneulink._typing import Any, Callable, Dict, Literal, List, Mapping, Optional, Set, Type, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.component import Component, ComponentError, ComponentsMeta
@@ -3219,7 +3221,7 @@ from psyneulink.core.components.projections.pathway.mappingprojection import \
     MappingProjection, MappingError, PROXY_FOR, ProxyProjection
 from psyneulink.core.components.projections.pathway.pathwayprojection import PathwayProjection_Base
 from psyneulink.core.components.projections.projection import \
-    Projection_Base, ProjectionError, DuplicateProjectionError
+    Projection_Base, ProjectionError, DuplicateProjectionError, ProjectionRegistry
 from psyneulink.core.components.shellclasses import Composition_Base
 from psyneulink.core.components.shellclasses import Mechanism, Projection
 from psyneulink.core.compositions.report import Report, \
@@ -3230,7 +3232,7 @@ from psyneulink.core.globals.context import Context, ContextFlags, handle_extern
 from psyneulink.core.globals.graph import EdgeType, Graph
 from psyneulink.core.globals.keywords import \
     (AFTER, ALL, ALLOW_PROBES, ANY, BEFORE, COMPONENT, COMPOSITION, CONTROL, CONTROL_SIGNAL, CONTROLLER, CROSS_ENTROPY,
-     DEFAULT, DEFAULT_LEARNING_RATE, DEFAULT_SUFFIX, DEFAULT_VARIABLE, DICT, FULL, FUNCTION, HARD_CLAMP,
+     DEFAULT, DEFAULT_LEARNING_RATE, DEFAULT_VARIABLE, DICT, FULL, FUNCTION, HARD_CLAMP,
      IDENTITY_MATRIX, INPUT, INPUT_PORTS, INPUTS, INPUT_CIM_NAME,
      LEARNABLE, LEARNED_PROJECTIONS, LEARNING_FUNCTION, LEARNING_MECHANISM, LEARNING_MECHANISMS, LEARNING_PATHWAY,
      LEARNING_RATE, LEARNING_SIGNAL, Loss,
@@ -3247,6 +3249,8 @@ from psyneulink.core.globals.keywords import \
 from psyneulink.core.globals.log import CompositionLog, LogCondition
 from psyneulink.core.globals.parameters import (
     Parameter,
+    ParameterError,
+    ParameterNoValueError,
     ParametersBase,
     check_user_specified,
     copy_parameter_value,
@@ -3255,10 +3259,10 @@ from psyneulink.core.globals.preferences.basepreferenceset import BasePreference
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel, _assign_prefs
 from psyneulink.core.globals.registry import register_category
 from psyneulink.core.globals.utilities import (
-    ContentAddressableList, PNLStrEnum, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list,
-    nesting_depth, convert_to_np_array, is_numeric, is_matrix, is_matrix_keyword, parse_valid_identifier, extended_array_equal,
+    ContentAddressableList, PNLStrEnum, call_with_pruned_args, convert_all_elements_to_np_array, convert_to_list, get_from_registry, is_numeric_or_none, is_numeric_scalar,
+    nesting_depth, convert_to_np_array, is_numeric, is_matrix, is_matrix_keyword, parse_valid_identifier, extended_array_equal, try_extract_0d_array_item,
 )
-from psyneulink.core.scheduling.condition import All, AllHaveRun, Always, Any, Condition, Never, AtNCalls, BeforeNCalls
+from psyneulink.core.scheduling.condition import Always, Condition, Never
 from psyneulink.core.scheduling.scheduler import Scheduler, SchedulingMode
 from psyneulink.core.scheduling.time import Time, TimeScale
 from psyneulink.library.components.mechanisms.modulatory.learning.autoassociativelearningmechanism import \
@@ -3271,11 +3275,18 @@ from psyneulink.library.components.mechanisms.processing.transfer.recurrenttrans
     RecurrentTransferMechanism
 from psyneulink.library.components.projections.pathway.autoassociativeprojection import AutoAssociativeProjection
 
+
 __all__ = [
     'Composition', 'CompositionError', 'CompositionRegistry', 'get_compositions', 'NodeRole', 'LearningScale',
+    'OptimizerParams',
     ]
 
 logger = logging.getLogger(__name__)
+
+
+LearningRate = Optional[Union[numbers.Number, bool]]
+LearningRateArg = Union[LearningRate, Dict[Union[Component, str], LearningRate]]
+
 
 CompositionRegistry = {}
 
@@ -3442,6 +3453,250 @@ unmodifiable_node_roles = {NodeRole.ORIGIN,
                            NodeRole.SINGLETON,
                            NodeRole.TERMINAL,
                            NodeRole.CYCLE}
+
+
+@dataclass
+class OptParam:
+    _value: Any
+    _default: Optional[Any] = None  # value if dict and no component-specific entry
+
+    name: Optional[str] = None
+    param_group_name: Optional[str] = None
+
+    # NOTE: added for compatibility with DEFAULT_LEARNING_RATE keyword;
+    # consider if just using DEFAULT is ok
+    _default_key: Optional[str] = DEFAULT
+
+    # NOTE: suggests integration with regular Parameter type
+    # (set during construction from Component)
+    _user_specified: bool = False
+
+    _pnl_param_enabled_prefix: str = 'enable_'
+
+    def __post_init__(self):
+        self._value = copy(self._value)
+
+    @property
+    def default(self):
+        try:
+            return self._value[self._default_key]
+        except (IndexError, KeyError, TypeError):
+            return self._default
+
+    @property
+    def pnl_param_enabled_name(self) -> Optional[str]:
+        """
+        name of Parameter on a Component that enables/disables this optparam with highest priority
+        (ex: learning_rate and Composition.enable_learning)
+        """
+        if self.name is None:
+            return None
+        return f'{self._pnl_param_enabled_prefix}{self.name}'
+
+    def _item_for(self, component):
+        try:
+            if component.name in self._value:
+                return component.name
+        except AttributeError:
+            pass
+
+        return component
+
+    def _get_value(self, component: Optional[Component] = None):
+        if self._value is NotImplemented:
+            return NotImplemented
+
+        try:
+            res = self._value[self._item_for(component)]
+        except (IndexError, TypeError):
+            res = self._value
+        except KeyError:
+            res = self.default
+
+        # TODO: this should happen for the user-facing method, but is
+        # avoided here because internally we need to be able to detect
+        # `True`
+        # if res is True:
+        #     res = self.default
+
+        return res
+
+    def value(self, component: Optional[Component] = None):
+        if not self._has_specific_value_for(component):
+            proxy_target = getattr(component, '_proxy_for', None)
+            if proxy_target and self._has_specific_value_for(proxy_target):
+                return self._get_value(proxy_target)
+        return self._get_value(component)
+
+    def _has_specific_value_for(self, component: Optional[Component]) -> bool:
+        try:
+            return self._item_for(component) in self._value
+        except (KeyError, TypeError):
+            return False
+
+    def has_specific_value_for(self, component: Optional[Component]) -> bool:
+        res = self._has_specific_value_for(component)
+        if not res:
+            proxy_target = getattr(component, '_proxy_for', None)
+            if proxy_target:
+                return self._has_specific_value_for(proxy_target)
+        return res
+
+    # TODO: refactor as Parameter sub/alt class
+    def _validate(self, component: Component, value=NotImplemented):
+        if value is NotImplemented:
+            value = self._value
+        getattr(component.parameters, self.name)._validate(value)
+
+    def _validate_param_is_enabled(self, context: Context) -> Union[str, None]:
+        try:
+            items = self._value.items()
+        except AttributeError:
+            # not a dict
+            return
+
+        for key, val in items:
+            try:
+                pnl_param = getattr(key.parameters, self.pnl_param_enabled_name)
+            except AttributeError:
+                enabled = True
+            else:
+                enabled = pnl_param._get(context)
+
+            if not enabled and val is not False:
+                return (
+                    f"{self.name} of the Projection {key} specified in the dict is not enabled;"
+                    f" check that its {self.pnl_param_enabled_name} attribute is set to True"
+                    f" and its {self.name} is not False, or remove it from the dict."
+                )
+
+    def _get_validation_error_message(
+        self,
+        component: Component,
+        value=NotImplemented,
+        context: Optional[Context] = None,
+    ) -> Union[str, None]:
+        if value is NotImplemented:
+            value = self._value
+
+        validate_enabled = self._validate_param_is_enabled(context)
+        if validate_enabled is not None:
+            return validate_enabled
+
+        return getattr(component.parameters, self.name)._get_validation_error_message(value)
+
+
+class OptimizerParams(types.SimpleNamespace):
+    learning_rate: OptParam = OptParam(
+        NotImplemented,
+        param_group_name='lr',
+        _default_key=DEFAULT_LEARNING_RATE,
+    )
+
+    def __init__(
+        self,
+        learning_rate: LearningRateArg,
+    ):
+        # NOTE: written in this way to facilitate future generalization
+        # over attrs in __annotations__ to keep template consistent and
+        # not repeat code
+        cls_param = OptimizerParams.learning_rate
+        self.learning_rate = OptParam(
+            try_extract_0d_array_item(learning_rate),
+            name='learning_rate',
+            param_group_name=cls_param.param_group_name,
+            _default_key=cls_param._default_key,
+            _user_specified=True,
+        )
+
+    def __iter__(self) -> typing.Iterable[OptParam]:
+        return (getattr(self, p) for p in OptimizerParams.__annotations__)
+
+    def optim_args(self, component: Optional[Component] = None) -> Dict[str, Any]:
+        res = {}
+        for param_name in OptimizerParams.__annotations__:
+            param = getattr(self, param_name)
+            res[param.param_group_name] = param.value(component)
+        return res
+
+    def from_optimizerparam(test):
+        pass
+
+    @staticmethod
+    def _params_from_component(
+        component: Component,
+        context: Optional[Context] = None,
+        defaults: bool = False,
+    ) -> 'OptimizerParams':
+        params = {}
+        for param_name in OptimizerParams.__annotations__:
+            if param_name not in component.parameters:
+                params[param_name] = NotImplemented
+            else:
+                param = getattr(component.parameters, param_name)
+
+                if defaults:
+                    value = param.default_value
+                else:
+                    value = param._get(context)
+                params[param_name] = copy_parameter_value(value)
+        return params
+
+    @staticmethod
+    def _from_component(
+        component: Component,
+        context: Optional[Context] = None,
+        defaults: bool = False,
+    ) -> 'OptimizerParams':
+        params = OptimizerParams._params_from_component(component, context, defaults)
+        params = OptimizerParams(**params)
+
+        # TODO: clean up. or find a better way to do this
+        for param in params:
+            comp_param = getattr(component.parameters, param.name)
+            opt_param = getattr(params, param.name)
+            opt_param._user_specified = (
+                (param._value is not None or comp_param.specify_none)
+                and comp_param._user_specified
+            )
+            opt_param._validate(component, param._value)
+
+        return params
+
+    @staticmethod
+    def from_component(
+        component: Component, context: Optional[Context] = None
+    ) -> 'OptimizerParams':
+        return OptimizerParams._from_component(component, context)
+
+    @staticmethod
+    def from_component_defaults(component: Component) -> 'OptimizerParams':
+        return OptimizerParams._from_component(component, defaults=True)
+
+
+def _get_optimizer_Parameter_parser(
+    param_name: str,
+) -> Callable[[ParametersBase, Any], Any]:
+    # TODO: determine if this is needed in accordance with
+    # OptParam._default_key decision
+    default_key = f'default_{param_name.upper()}'
+
+    def _parse_opt_param(self, opt_param_value):
+        if isinstance(opt_param_value, dict):
+            if list(opt_param_value.keys()) == [default_key]:
+                opt_param_value = opt_param_value[default_key]
+                # specification asks explicit dict setting of None to be the
+                # parameter default
+                if opt_param_value is None:
+                    opt_param_value = getattr(self, param_name).default_value
+
+        if is_numeric(opt_param_value):
+            opt_param_value = np.asarray(opt_param_value)
+
+        return opt_param_value
+
+    _parse_opt_param.__name__ = f'_parse_{param_name}'
+    return _parse_opt_param
 
 
 class Composition(Composition_Base, metaclass=ComponentsMeta):
@@ -3954,9 +4209,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     :default value: []
                     :type: ``list``
         """
-        enable_learning = Parameter(True, structural=True)
+        enable_learning = Parameter(True, structural=True, aliases=['enable_learning_rate'])
         learning_rate = Parameter(.05)
-        learning_rates_dict = Parameter({}, stateful=True, pnl_internal=True, modulable=False, loggable=False)
         minibatch_size = Parameter(1, modulable=True, pnl_internal=True)
         optimizations_per_minibatch = Parameter(1, modulable=True, pnl_internal=True)
         results = Parameter([], loggable=False, pnl_internal=True)
@@ -3974,6 +4228,23 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             if optimizations_per_minibatch < 1:
                 raise CompositionError(f"`optimizations_per_minibatch` ({optimizations_per_minibatch}) "
                                        f"must an int greater than or equal to 1.")
+
+        _parse_learning_rate = _get_optimizer_Parameter_parser('learning_rate')
+
+        def _validate_learning_rate(self, learning_rate):
+            try:
+                lr_dict = learning_rate.items()
+            except AttributeError:
+                if learning_rate is not None and not is_numeric_scalar(learning_rate):
+                    return 'must be an int, float, bool, None, or a dict'
+            else:
+                for key, val in lr_dict:
+                    if not isinstance(key, (str, MappingProjection)):
+                        return f'entry key {key} must be a Projection or name of a Projection'
+                    if val is not None and not is_numeric_scalar(val):
+                        if isinstance(val, str):
+                            val = f"'{val}'"
+                        return f'entry value for {key}: {val} must be an int, float, bool, or None'
 
     class _CompilationData(ParametersBase):
         execution = None
@@ -4053,8 +4324,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self._partially_added_nodes = []
         self.parsed_inputs = False
 
-        composition_learning_rate = self._parse_and_validate_learning_rate_arg(learning_rate)
-        self._runtime_learning_rate = None
+        self.optimizer_params = {}
+        self.runtime_optimizer_params = {}
 
         # graph and scheduler status attributes
         self.graph_consistent = True  # Tracks if Composition is in runnable state (no dangling projections (what else?)
@@ -4073,17 +4344,21 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self.nodes_to_roles = collections.OrderedDict()
         self.cycle_vertices = set()
 
+
         context = Context(source=ContextFlags.CONSTRUCTOR, execution_id=None)
 
         self._initialize_parameters(
             **param_defaults,
-            learning_rate=composition_learning_rate,
+            learning_rate=learning_rate,
             enable_learning=enable_learning,
             minibatch_size=minibatch_size,
             optimizations_per_minibatch=optimizations_per_minibatch,
             retain_old_simulation_data=retain_old_simulation_data,
             context=context
         )
+
+        composition_optimizer_params = OptimizerParams.from_component(self, context)
+        self._validate_optimizer_params(composition_optimizer_params, context, runtime=False)
 
         # Compiled resources
         self._compilation_data = self._CompilationData(owner=self)
@@ -4454,10 +4729,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 p.pathway.remove(node)
             except ValueError:
                 pass
-
-        for lr_dict in self.parameters.learning_rates_dict.values.values():
-            for proj in (node.path_afferents + node.efferents):
-                lr_dict.pop(proj.name, None)
 
         self.needs_update_graph_processing = True
         self.needs_update_scheduler = True
@@ -8187,8 +8458,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                 if isinstance(n, tuple):
                     nodes[nodes.index(n)] = n[0]
 
-        self._assign_learning_rates(projections)
-
         specified_pathway = pathway
         # interleave (sets of) Nodes and (sets or lists of) Projections
         parsed_pathway = [node_entries[0]]
@@ -8270,13 +8539,40 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
     # region ------------------------------------ LEARNING -------------------------------------------------------------
 
+    def _get_learning_mechanism_initial_opt_param_value(
+        self,
+        mechanism_or_name: Union[LearningMechanism, str],
+        opt_param_name: str,
+        context: Context,
+    ):
+        # this method exists because the learning mechanisms cannot wait
+        # to have a numeric value, otherwise parameter ports will not be
+        # created
+        try:
+            opt_param = getattr(self.optimizer_params[context.execution_id], opt_param_name)
+        except KeyError:
+            value = None
+        else:
+            value = opt_param.value(mechanism_or_name)
+        if value is None:
+            comp_param = getattr(self.parameters, opt_param_name)
+            for v in [
+                comp_param._get(context),
+                comp_param.default_value,
+                getattr(self.class_defaults, opt_param_name),
+            ]:
+                if v is not None and not isinstance(v, dict):
+                    value = v
+                    break
+        return value
+
     @beartype
     @handle_external_context()
     def add_linear_learning_pathway(self,
                                     pathway,
                                     learning_function: Union[Type[LearningFunction], LearningFunction, Callable] = None,
                                     loss_spec: Optional[Loss] = Loss.MSE,
-                                    learning_rate: Optional[Union[int, float, np.ndarray]] = None,
+                                    learning_rate: Optional[Union[int, float, np.ndarray, Dict]] = None,
                                     error_function=LinearCombination,
                                     learning_update: Union[bool, Literal['online', 'after']] = 'after',
                                     default_projection_matrix=None,
@@ -8410,6 +8706,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # Handle BackPropagation specially, since it is potentially multi-layered
         if isinstance(learning_function, type) and issubclass(learning_function, BackPropagation):
+            self.optimizer_params[context.execution_id] = OptimizerParams.from_component(self, context)
             learning_pathway = (
                 self._create_backpropagation_learning_pathway(pathway,
                                                               learning_rate,
@@ -8451,7 +8748,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                                                               learning_function,
                                                                                               learned_projection,
                                                                                               learning_rate,
-                                                                                              learning_update)
+                                                                                              learning_update,
+                                                                                              context,
+                                                                                              )
 
             # Suppress warning regarding no efferent projections from Comparator (since it is a TERMINAL node)
             for s in comparator.output_ports:
@@ -8486,6 +8785,12 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             # Update graph in case method is called again
             self._analyze_graph()
 
+        # TODO: generalize
+        learning_pathway.parameters.learning_rate.set(learning_rate, context)
+        # NOTE: this will not handle difference between user-passed None and default-None
+        if learning_rate is not None or learning_pathway.parameters.learning_rate.specify_none:
+            learning_pathway.parameters.learning_rate._user_specified = True
+
         # Assign any Projection-specific learning_rates from/to LearningMechanisms
         learning_mechanisms = learning_pathway.learning_components[LEARNING_MECHANISMS]
         for learnable_projection in [lp for lp in learning_pathway.learning_components[LEARNED_PROJECTIONS]
@@ -8498,18 +8803,11 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                  f"learning_components for {learning_pathway.name} being constructed for '{self.name}'.")
             learning_mech_lr = learning_mech.parameters.learning_rate.get(context)
             proj_lr = learnable_projection.parameters.learning_rate.get(context)
-            if proj_lr not in {None, True}:
+            if proj_lr is not None and proj_lr is not True:
                 # Keep Projection's specified learning_rate, as it takes precedence over pathway learning_rate
                 #   (see `Composition_Learning_Rate_Precedence_Hierarchy`)
                 # if Projection has a learning_rate, assign to LearningMechanism
                 learning_mech.parameters.learning_rate.set(proj_lr, context)
-            else:
-                # otherwise assign LearningMechanism's learning rate or default to Projection
-                _lr = (learning_mech_lr if (learning_mech_lr is not None and learning_mech_lr is not True)
-                       else learning_rate)
-                _context = context if context and context.execution_id is not None else self.name + DEFAULT_SUFFIX
-                learnable_projection.parameters.learning_rate.set(_lr, _context)
-                self.parameters.learning_rates_dict._get(context)[learnable_projection.name] = _lr
 
         return learning_pathway
 
@@ -8677,9 +8975,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             BackPropagation `learning Pathway` <Composition_Learning_Pathway>` added to the Composition.
 
         """
-        learning_rate = learning_rate if learning_rate is not None \
-            else self.learning_rate if self.learning_rate is not None \
-            else None
         return self.add_linear_learning_pathway(pathway,
                                                 learning_rate=learning_rate,
                                                 learning_function=BackPropagation,
@@ -8762,19 +9057,27 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                     learned_projection,
                                     learning_rate,
                                     learning_update,
+                                    context,
                                     target_mech=None,
                                     **kwargs                  # Use of type-specific learning arguments
                                     ):
 
+        learning_mech_name = "Learning Mechanism for " + learned_projection.name
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+                learning_mech_name, 'learning_rate', context
+            )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function(),
                                                default_variable=[sender_activity_source.output_ports[0].value,
                                                                  receiver_activity_source.output_ports[0].value,
                                                                  error_sources.output_ports[0].value],
                                                error_sources=error_sources,
                                                learning_enabled=learning_update,
-                                               learning_rate=learning_rate,
+                                               learning_rate=learning_mech_lr,
                                                in_composition=True,
-                                               name="Learning Mechanism for " + learned_projection.name,
+                                               name=learning_mech_name,
                                                **kwargs)
 
         return learning_mechanism
@@ -8786,7 +9089,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                             learning_function,
                                             learned_projection,
                                             learning_rate,
-                                            learning_update):
+                                            learning_update,
+                                            context,
+                                            ):
         """Creates *TARGET_MECHANISM*, `ComparatorMechanism` and `LearningMechanism` for RL and TD learning"""
 
         if isinstance(learning_function, type):
@@ -8808,7 +9113,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                                                         error_function,
                                                                                         learned_projection,
                                                                                         learning_rate,
-                                                                                        learning_update)
+                                                                                        learning_update,
+                                                                                        context,
+                                                                                        )
 
         elif is_function_type(learning_function):
             # target_mechanism = ProcessingMechanism(name='Target')
@@ -8821,6 +9128,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                       function=error_function,
                                                       output_ports=[OUTCOME, Loss.MSE.name],
                                                       )
+            learning_mech_name = "Learning Mechanism for " + learned_projection.name
+            if learning_rate is None:
+                learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+                    learning_mech_name, 'learning_rate', context
+                )
+            else:
+                learning_mech_lr = learning_rate
             learning_mechanism = \
                 LearningMechanism(
                     function=learning_function(default_variable=[input_source_output_port.value,
@@ -8831,9 +9145,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                       objective_mechanism.output_ports[0].value],
                     error_sources=objective_mechanism,
                     learning_enabled=learning_update,
-                    learning_rate=learning_rate,
+                    learning_rate=learning_mech_lr,
                     in_composition=True,
-                    name="Learning Mechanism for " + learned_projection.name)
+                    name=learning_mech_name,
+                )
 
             objective_mechanism.modulatory_mechanism = learning_mechanism
 
@@ -8902,7 +9217,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                       error_function,
                                       learned_projection,
                                       learning_rate,
-                                      learning_update):
+                                      learning_update,
+                                      context
+                                      ):
 
         # target_mechanism = ProcessingMechanism(name='Target')
         target_mechanism = ProcessingMechanism(name=self._get_target_name(output_source))
@@ -8916,6 +9233,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                   output_ports=[OUTCOME, Loss.MSE.name],
                                                   )
 
+        learning_mech_name = "Learning Mechanism for " + learned_projection.name
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+                learning_mech_name, 'learning_rate', context
+            )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = \
             LearningMechanism(function=Reinforcement(default_variable=[input_source.output_ports[0].value,
                                                                        output_source.output_ports[0].value,
@@ -8925,9 +9249,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                 objective_mechanism.output_ports[0].value],
                               error_sources=objective_mechanism,
                               learning_enabled=learning_update,
-                              learning_rate=learning_rate,
+                              learning_rate=learning_mech_lr,
                               in_composition=True,
-                              name="Learning Mechanism for " + learned_projection.name)
+                              name=learning_mech_name
+                             )
 
         objective_mechanism.modulatory_mechanism = learning_mechanism
 
@@ -8939,7 +9264,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                       error_function,
                                       learned_projection,
                                       learning_rate,
-                                      learning_update):
+                                      learning_update,
+                                      context
+                                      ):
 
         # target_mechanism = ProcessingMechanism(name="Target",
         target_mechanism = ProcessingMechanism(name=self._get_target_name(output_source),
@@ -8954,15 +9281,22 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                                    output_source.output_ports[0].defaults.value)},
                                                        function=PredictionErrorDeltaFunction(gamma=1.0))
 
+        learning_mech_name = "Learning Mechanism for " + learned_projection.name
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+                learning_mech_name, 'learning_rate', context
+            )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=TDLearning(),
                                                default_variable=[input_source.output_ports[0].defaults.value,
                                                                  output_source.output_ports[0].defaults.value,
                                                                  objective_mechanism.output_ports[0].defaults.value],
                                                error_sources=objective_mechanism,
                                                learning_enabled=learning_update,
-                                               learning_rate=learning_rate,
+                                               learning_rate=learning_mech_lr,
                                                in_composition=True,
-                                               name="Learning Mechanism for " + learned_projection.name)
+                                               name=learning_mech_name)
 
         return target_mechanism, objective_mechanism, learning_mechanism
 
@@ -9242,15 +9576,23 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                             activation_derivative_fct=output_source.function.derivative,
                                             loss_spec=loss_spec)
 
+        learning_mech_name = "Learning Mechanism for " + learned_projection.name
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+                learning_mech_name, 'learning_rate', context
+            )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function,
                                                default_variable=[input_source_output_port.value,
                                                                  output_source_input_port.value,
                                                                  objective_mechanism.output_ports[0].value],
                                                error_sources=objective_mechanism,
                                                learning_enabled=learning_update,
-                                               learning_rate=learning_rate,
+                                               learning_rate=learning_mech_lr,
                                                in_composition=True,
-                                               name="Learning Mechanism for " + learned_projection.name)
+                                               name=learning_mech_name
+                                               )
 
         objective_mechanism.modulatory_mechanism = learning_mechanism
 
@@ -9397,6 +9739,13 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         # Use all error_signal_templates since LearningMechanisms handles all sources of error
         # Include any covariates_sources in default_variable so that it aligns with number of InputPorts
+        learning_mech_name = "Learning Mechanism for " + learned_projection.name
+        if learning_rate is None:
+            learning_mech_lr = self._get_learning_mechanism_initial_opt_param_value(
+                learning_mech_name, 'learning_rate', context
+            )
+        else:
+            learning_mech_lr = learning_rate
         learning_mechanism = LearningMechanism(function=learning_function,
                                                default_variable=activation_input +
                                                                 activation_output +
@@ -9405,9 +9754,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                covariates_sources = covariates_sources,
                                                error_sources=error_sources,
                                                learning_enabled=learning_update,
-                                               learning_rate=learning_rate,
+                                               learning_rate=learning_mech_lr,
                                                in_composition=True,
-                                               name="Learning Mechanism for " + learned_projection.name)
+                                               name=learning_mech_name
+                                              )
 
         # Create MappingProjections from ERROR_SIGNAL OutputPort of each error_source to corresponding error_input_ports
         error_projections = [MappingProjection(sender=error_source,
@@ -9449,125 +9799,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         self.add_projection(learning_projection, is_learning_projection=True, feedback=True, context=context)
 
         return learning_mechanism
-
-    def _parse_and_validate_learning_rate_arg(self, learning_rate, context=None):
-        """Parse and validate learning_rate specified in Composition constructor or learn() method
-        If learning_rate is:
-          - a single value, use as Composition's learning_rate.
-          - a dict, move parsed entries to self.learning_rates_dict for specified context (None if from constructor).
-        Assumes context=None if called from Composition constructor.
-        Otherwise, assumes call is from learn() method, and gets learning_rats for Projections in all nested comps
-        """
-        source_str = self.name
-        if context:
-            source_str = f"the learn() method of " + source_str
-
-        if not isinstance(learning_rate, (float, int, bool, dict, type(None))):
-            raise CompositionError(
-                f"The 'learning_rate' arg for '{source_str}' ('{learning_rate}') "
-                f"must be a float, int, bool, None, or a dict.")
-        if learning_rate is True:
-            learning_rate = None
-        if isinstance(learning_rate, dict):
-            _lr_dict_arg = learning_rate
-            # Check that the learning_rate specification(s) are all legal
-            bad_vals = [{spec: val} for spec, val in _lr_dict_arg.items()
-                        if not isinstance(val, (float, int, bool, type(None)))]
-            if bad_vals:
-                raise CompositionError(f"The following values of the entries in the dict specified "
-                                       f"for the 'learning_rate' arg of '{source_str}' must each be "
-                                       f"a float, int, bool, or None: '{bad_vals}'.")
-            # Get default learning rate if there is one and remove it from the dict
-            learning_rate = _lr_dict_arg.pop(DEFAULT_LEARNING_RATE, None)
-
-            # Check that all keys in remaining entries are a Projection or a name (str)
-            bad_keys = [spec for spec in _lr_dict_arg.keys() if not isinstance(spec, (str, MappingProjection))]
-            if bad_keys:
-                raise CompositionError(f"The following keys in the dict specified for the 'learning_rate' arg of "
-                                       f"{source_str} are not MappingProjections (or names of ones) in that "
-                                       f"Composition: '{', '.join([str(k) if not isinstance(k, str) else k for k in bad_keys])}'.")
-
-            # Convert all entries to Projection names for consistency in later processing
-            _lr_dict_arg = {(k.name if isinstance(k, MappingProjection) else k): v for k,v in _lr_dict_arg.items()}
-
-            # Get default dict for Composition
-            # MODIFIED 7/21/25 OLD:
-            # # BREADCRUMB: KATHERINE: THE FOLLOWING ASSIGNMENT SEEMS TO BE PERSISTING FROM PREVIOUS ASSIGNMENT
-            # if self.parameters.learning_rates_dict.values:
-            #     # BREADCRUMB: KATHERINE, WHY HAS NONE CONTEXT NOT YET BEEN ASSIGNED?:
-            #     lr_dict = self.parameters.learning_rates_dict.get(None)
-            # else:
-            #     self.parameters.learning_rates_dict.set(_lr_dict_arg, None)
-            # MODIFIED 7/21/25 NEW:
-            # lr_dict = self.parameters.learning_rates_dict.set(_lr_dict_arg, None)
-            # MODIFIED 7/21/25 END
-            # BREADCRUMB: KATHERINE: THE learning_rates_dict ASSIGNMENT FROM THE PRECEDING TEST IS PERSISTING:
-            #             test_projection_specific_learning_rates(): hidden_dict_constructor -> input_dict_learn
-            if context is None:
-                lr_dict = self.parameters.learning_rates_dict.set(_lr_dict_arg, None)
-            else:
-                lr_dict = self.parameters.learning_rates_dict.get(context)
-                # If called in an execution context (i.e., from learn()), get learning_rates for all nested comps
-                for comp in self._get_nested_compositions():
-                    lr_dict.update(comp.parameters.learning_rates_dict.get(None))
-                lr_dict.update(_lr_dict_arg)
-
-                # Assign learning_rates_dict to context for the current execution
-                self.parameters.learning_rates_dict.set(lr_dict, context)
-
-        # BREADCRUMB:  NEEDEED DUE TO PERSISTENCE PROBLEM NOTED ABOVE
-        else:
-            # BREADCRUMB: IS THIS OK IF THE CALL IS FROM learn() AND THERE IS NO DICT?  WIPES OUT CONSTRUCDTOR-SPECIFIED
-            self.parameters.learning_rates_dict.set({}, None)
-
-        if context is not None and context.execution_id is not None:
-            lr_dict = self.parameters.learning_rates_dict.get(context)
-            # If called from learn(), check that all entries in lr_dict are for Projections in the Composition
-            bad_keys = [proj_name for proj_name in lr_dict.keys() if proj_name not in self.projections]
-            if bad_keys:
-                singular = ["entry appears", "its key is not a Projection", "name of one"]
-                plural = ["entries appear", "their keys are not Projections", "names of ones"]
-                filler = singular if len(bad_keys) == 1 else plural
-                err_msg = (f"The following {filler[0]} in the dict specified for the 'learning_rate' arg of "
-                           f"'{self.name}' but {filler[1]} or the {filler[2]} in that Composition:")
-                raise CompositionError(err_msg + f" '{', '.join(list(bad_keys))}'.")
-
-        return learning_rate
-
-    def _assign_learning_rates(self, projections=None, context=None):
-        """Assign specified learning_rates for context to Projections & build learning_rates_dict for all Projections
-        """
-        from psyneulink.library.compositions import AutodiffComposition
-        projections = projections or []
-        # Flatten any sets or tuples
-        projections = [item for sub_item in projections
-                       for item in (sub_item if isinstance(sub_item, (list, tuple, set))
-                                    else [sub_item])]
-        not_learnable = []
-        # Get learning_rates_dict for Composition's constructor
-        learning_rates_dict = self.parameters.learning_rates_dict.get(None)
-        context = context or self.name + DEFAULT_SUFFIX
-
-        for proj in projections:
-            try:
-                proj_name = proj._proxy_for.name
-            except AttributeError:
-                proj_name = proj.name
-            if proj_name in learning_rates_dict:
-                # Flag for error if anything other than False is specifieD for a Projection that is not learnable
-                if learning_rates_dict[proj_name] is not False and not proj.learnable:
-                    not_learnable.append(proj.name)
-            else:
-                # Assign Projection's learning_rate to learning_rates_dict if it is not already specified in the dict
-                learning_rates_dict[proj_name] = proj.parameters.learning_rate.get(None) if proj.learnable else False
-            # Set Projection's learning_rate to specified value in <Composition.name>_default context
-            proj.parameters.learning_rate.set(learning_rates_dict[proj_name], context)
-            if proj._proxy_for is not None:
-                proj._proxy_for.parameters.learning_rate.set(learning_rates_dict[proj_name], context)
-        if not_learnable:
-            raise CompositionError(f"The following Projection(s) in the dict specified for the 'learning_rate' arg of "
-                                   f"'{self.name}' are not learnable: '{', '.join(not_learnable)}'; check that their "
-                                   f"'learnable' attribute is set to True or remove them from the dict.")
 
     def _get_back_prop_error_sources(self, efferents, learning_mech=None, context=None):
         # FIX CROSSED_PATHWAYS [JDC]:  GENERALIZE THIS TO HANDLE COMPARATOR/TARGET ASSIGNMENTS IN BACKPROP
@@ -10210,6 +10441,402 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                                       and hasattr(m.function, MULTIPLICATIVE_PARAM))]:
             modulated_mechanisms.append(mech)
         return modulated_mechanisms
+
+    @handle_external_context(fallback_most_recent=True)
+    def get_optimizer_param_value(
+        self,
+        param: str,
+        context: Optional[Union[Context, typing.Hashable]] = None,
+        projection: Optional[Projection] = None,
+    ):
+        return self._get_optimizer_param_value(param, context, projection)
+
+    def _get_optimizer_param_value(
+        self,
+        param: str,
+        context: Optional[Context] = None,
+        projection: Optional[Projection] = None,
+    ):
+        def _get_opt_param(
+            obj: Component, opt_params: Dict[Union[Component, str], OptParam]
+        ) -> OptParam:
+            comp_opt_params = OptimizerParams.from_component(obj, context)
+            opt_param = getattr(comp_opt_params, param)
+            opt_params[obj] = opt_param
+            return opt_param
+
+        def _param_is_enabled(
+            obj: Component, opt_params: Dict[Union[Component, str], OptParam]
+        ) -> bool:
+            try:
+                opt_param = _get_opt_param(obj, opt_params)
+            except ParameterNoValueError:
+                # obj doesn't have opt param values for this context.
+                # likely scenario is obj is an outer composition when an
+                # inner composition is running in its own context
+                return True
+            try:
+                pnl_param = getattr(obj.parameters, opt_param.pnl_param_enabled_name)
+            except AttributeError:
+                return True
+            return pnl_param._get(context)
+
+        opt_params = {}
+
+        if isinstance(projection, str):
+            import psyneulink as pnl
+
+            # TODO: replace this with maybe storing only projections in
+            # OptParam, then allowing get by name as well
+            reg_projection = get_from_registry(projection, pnl.ProjectionRegistry)
+            if reg_projection:
+                projection = reg_projection
+
+        if (
+            projection is not None
+            and not isinstance(projection, str)
+            and not _param_is_enabled(projection, opt_params)
+        ):
+            return False
+
+        outer_compositions = set()
+        queue = [self]
+        while True:
+            try:
+                next_comp = queue.pop()
+            except IndexError:
+                break
+            if next_comp not in outer_compositions:
+                outer_compositions.add(next_comp)
+                queue.extend(next_comp.compositions)
+
+        nested_compositions = list(reversed(self._get_nested_compositions()))
+        all_compositions = [*nested_compositions, *outer_compositions]
+        all_pathways = []
+
+        # TODO: check if should just filter all_compositions here...
+        obj_projections = {}
+        # TODO: get matching composition param set here, handling nested
+        for comp in all_compositions:
+            obj_projections[comp] = comp._optimization_projections
+            for pathway in comp.pathways:
+                all_pathways.append(pathway)
+                obj_projections[pathway] = pathway._optimization_projections
+
+        # ###
+        # check for force disable from `enable_<...>` Parameters
+        # ###
+
+        # force disable for nested compositions only applies if for a
+        # specific projection belonging to a nested composition
+        if projection is None:
+            if not _param_is_enabled(self, opt_params):
+                return False
+        else:
+            for comp in all_compositions:
+                if projection in obj_projections[comp]:
+                    if not _param_is_enabled(comp, opt_params):
+                        return False
+                    else:
+                        # do not keep checking enabled outside of its
+                        # immediate composition
+                        break
+
+        def _handle_return(op: OptParam, val, set_none_to_default: bool = False):
+            if (
+                set_none_to_default
+                and (val is None or val is True)
+            ):
+                val = op.default
+            return val
+
+        # force disable for current and outer compositions applies to
+        # all nested objects.
+        # NOTE: `self` is included in `outer_compositions` when created
+        # above.
+        # for comp in outer_compositions:
+        #     if not _param_is_enabled(comp, opt_params):
+        #         return False
+
+        # specifications of `False` as runtime or by compositions do not
+        # apply if there is another non-None non-False value lower on
+        # the list of priorities
+        learning_disabled_tentative = False
+        # but are 'protected' from being disabled if they are specified
+        # with `True` anywhere in the priority list
+        learning_force_enabled = False
+        # typically dicts specifying a value for a projection have
+        # higher priority than values not specified for a certain
+        # projection, even if the projection-specific value is lower on
+        # the hierarchy. a projection-specific None value at
+        # learn/run-time overrides this and chooses the first specified
+        # value.
+        # tested in
+        prioritize_projection_specific_value = True
+
+        try:
+            runtime = getattr(self.runtime_optimizer_params[context.execution_id], param)
+        except (AttributeError, KeyError):
+            # should keyerror be handled here?
+            pass
+        else:
+            opt_params['runtime'] = runtime
+            if projection and runtime.has_specific_value_for(projection):
+                val = runtime.value(projection)
+
+                # specification of False in default overrides a
+                # projection value of True (explicitly
+                # referenced and tested by
+                # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
+                if val is True:
+                    print('runtime', runtime.default, runtime._default, runtime._user_specified)
+                    learning_force_enabled = True
+                    val = runtime.default
+
+                # has_specific_value_for plus value of None uses default
+                # tested for explicitly by
+                # tests/composition/test_learning.py::TestStructural::test_single_level_proj_pathway_comp_learning_rates[proj_0.1-pway_0.2-comp_True]
+                if val is None:
+                    prioritize_projection_specific_value = False
+                    val = runtime.default
+
+                # non-dict default value undoes a force_enable....
+                # if runtime._default is False:
+                #     learning_force_enabled = False
+
+                if val is False:
+                    learning_disabled_tentative = True
+                elif (
+                    # do not return here if learning disabled is set for projection and not overridden
+                    val is not None
+                    # and (
+                    #     not learning_disabled_tentative
+                    #     or learning_force_enabled
+                    # )
+                ):  # runtime.default above may be None....
+                    return _handle_return(runtime, val)
+
+        # TODO: add learning mech then pathway
+        for comp in all_compositions:
+            # self is added at very beginning
+            if comp not in opt_params:
+                try:
+                    comp_opt_params = OptimizerParams.from_component(comp, context)
+                except ParameterNoValueError:
+                    if comp == self:
+                        raise
+                    # comp is an outer composition, but run context is (presumably) that for a run of the inner composition by itself
+                    continue
+                opt_params[comp] = getattr(comp_opt_params, param)
+            comp_opt_p = opt_params[comp]
+
+            if (
+                projection
+                and (projection is None or projection in obj_projections[comp])
+                and (
+                    comp_opt_p.has_specific_value_for(projection)
+                    or (
+                        not prioritize_projection_specific_value
+                        and comp_opt_p._user_specified
+                    )
+                )
+            ):
+                v = comp_opt_p.value(projection)
+
+                # specification of False in default overrides a
+                # projection value of True (explicitly
+                # referenced and tested by
+                # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc])
+                if v is True:
+                    print('spec val for', comp, comp_opt_p.default, comp_opt_p._default, comp_opt_p._user_specified)
+                    learning_force_enabled = True
+                    v = comp_opt_p.default
+
+                # non-dict default value undoes a force_enable....
+                # if comp_opt_p._default is False:
+                #     learning_force_enabled = False
+
+                if v is False:
+                    learning_disabled_tentative = True
+                elif (
+                    # do not return here if learning disabled is set for projection and not overridden
+                    v is not None
+                    and (
+                        not learning_disabled_tentative
+                        or learning_force_enabled
+                    )
+                ):
+                    return _handle_return(comp_opt_p, v)
+
+        if projection:
+            if projection not in opt_params:
+                proj_opt_params = OptimizerParams.from_component(projection, context)
+                opt_params[projection] = getattr(proj_opt_params, param)
+            proj_opt_p = opt_params[projection]
+            v = proj_opt_p.value(projection)
+            if v is not None:
+                if v is True:
+                    learning_force_enabled = True
+                    v = proj_opt_p.default
+
+                # think incorrect/unneeded:
+                # if v is False:
+                #     learning_disabled_tentative = True
+                # else:
+
+                if (
+                    # do not return here if learning disabled is set for projection and not overridden
+                    v is not None
+                    and (
+                        not learning_disabled_tentative
+                        or learning_force_enabled
+                    )
+                ):
+                    return _handle_return(proj_opt_p, v)
+
+        # pathways should be AFTER runtime....
+        # TODO: learning mechanisms for each projection...
+        # TODO: handle possibility of projection being in multiple pathways with specified values?
+        for comp in all_compositions:
+            for pathway in comp.pathways:
+                if projection not in obj_projections[pathway]:
+                    continue
+
+                try:
+                    pathway_opt_params = opt_params[pathway]
+                except KeyError:
+                    pathway_opt_params = OptimizerParams.from_component(pathway, context)
+                    path_opt_p = getattr(pathway_opt_params, param)
+                    opt_params[pathway] = path_opt_p
+
+                # then check after other comp defaults? questionable... though maybe correct
+                if not path_opt_p._user_specified:
+                    continue
+
+                # pathway value takes priority over the rest
+                # regardless of whether it is specified for a
+                # specific projection
+                v = path_opt_p.value(projection)
+                if v is not None:
+                    if v is True:
+                        learning_force_enabled = True
+                        v = path_opt_p.default
+
+                    if (
+                        # do not return here if learning disabled is set for projection and not overridden
+                        v is not None
+                        and (
+                            not learning_disabled_tentative
+                            or learning_force_enabled
+                        )
+                    ):
+                        return _handle_return(path_opt_p, v)
+
+        # NOW: non projection-specific values...
+
+        # def _accept_composition(self, projection, comp):
+
+        # TODO: add learning mech then pathway
+        all_items = [x for x in ['runtime', *all_compositions] if x is not None]
+        for obj in all_items:
+            try:
+                opt_param = opt_params[obj]
+            except KeyError:
+                continue
+
+            v = opt_param.value(projection)
+            obj_projs = obj_projections.get(obj, set())
+
+            # False values will be handled next time
+            if v is not None and (projection is None or obj == 'runtime' or projection in obj_projs):
+                if opt_param._user_specified:
+                    # print(self, 'get default opv as default value', v)
+
+                    # specification of False in default overrides a
+                    # projection value of True (explicitly
+                    # referenced and tested by
+                    # tests/composition/test_learning.py::TestStructural::test_3_level_nested_learning_rates[d_oc] and d_mcf)
+                    if v is True:
+                        # only default specified originally (not in dictionary form) is not protected by value of True
+                        print('uspec op', obj, opt_param.default, opt_param._default, opt_param._user_specified)
+                        learning_force_enabled = True
+                        v = opt_param.default
+
+                    # if opt_param._default is False:
+                    #     learning_force_enabled = False
+
+                    if v is False:
+                        learning_disabled_tentative = True
+                    elif (
+                        # do not return here if learning disabled is set for projection and not overridden
+                        v is not None
+                        and (
+                            not learning_disabled_tentative
+                            or learning_force_enabled
+                        )
+                    ):
+                        return _handle_return(opt_param, v, True)
+
+        # NOTE: reference docs _Composition_Learning_Rate_False. since
+        # return was not reached before this point, there are no
+        # explicitly defined defaults. so, if a False value was
+        # specified for the projection by now, the result should be
+        # False instead of proceeding to return a non-user-specified
+        # default value
+        if learning_disabled_tentative and not learning_force_enabled:
+            return False
+
+        outermost_comp = None
+        for obj in ['runtime', *all_compositions]:
+            try:
+                opt_param = opt_params[obj]
+            except KeyError:
+                continue
+
+            v = opt_param.value(projection)
+
+            obj_projs = obj_projections.get(obj, set())
+            if projection in obj_projs:
+                outermost_comp = obj
+            if v is not None and v is not True and (projection is None or obj == 'runtime' or projection in obj_projs):
+                if v is False:
+                    learning_disabled_tentative = True
+                else:
+                    return _handle_return(opt_param, v, True)
+
+        matching_compositions = []
+        for obj in ['runtime', *all_compositions]:
+            try:
+                opt_param = opt_params[obj]
+            except KeyError:
+                continue
+
+            v = opt_param.value(projection)
+
+            obj_projs = obj_projections.get(obj, set())
+            if obj != 'runtime' and (not projection or projection in obj_projs):
+                matching_compositions.append(obj)
+            if v is not None and v is not True and (projection is None or obj == 'runtime' or projection in obj_projs):
+                if v is False:
+                    learning_disabled_tentative = True
+                else:
+                    return _handle_return(opt_param, v, True)
+
+        for comp in matching_compositions:
+            default_opt_params = OptimizerParams.from_component_defaults(comp)
+            opt_param = getattr(default_opt_params, param)
+            v = opt_param.value(projection)
+            if v is None or v is True:
+                v = opt_param.default
+
+            if v is not None and v is not True:
+                return _handle_return(opt_param, v)
+
+        for comp in matching_compositions:
+            v = getattr(comp.class_defaults, param)
+            return _handle_return('comp_default', v)
+
+        return None
 
     # endregion CONTROL
 
@@ -12025,6 +12652,60 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
             return trial_output
 
+    def _opt_param_err_msg(
+        self,
+        param_name: str,
+        err_val: Any,
+        msg_detail: str,
+        err_source: str = '',
+    ) -> str:
+        if err_source:
+            err_source = f' in {err_source}'
+        return f"A value ({repr(err_val)}) specified for the {param_name} of '{self.name}'{err_source} is not valid: {msg_detail}"
+
+    def _validate_optimizer_params(
+        self,
+        opt_params: OptimizerParams,
+        context: Context,
+        err_source: str = '',
+        runtime: bool = True,
+    ):
+        for o_param in opt_params:
+            val = o_param._value
+            err = o_param._get_validation_error_message(self, val, context)
+            if err is not None:
+                raise CompositionError(
+                    self._opt_param_err_msg(o_param.name, val, err, err_source)
+                )
+
+        if not runtime:
+            return
+
+        all_projections = self._optimization_projections
+        for o_param in opt_params:
+            val = o_param._value
+            try:
+                val_items = iter(val.items())
+            except (AttributeError, TypeError):
+                # opt param value is not dictionary spec
+                val_items = []
+
+            for proj_key, _ in val_items:
+                if proj_key == o_param._default_key:
+                    continue
+                reg_proj = get_from_registry(proj_key, ProjectionRegistry)
+                if reg_proj:
+                    proj_key = reg_proj
+                if proj_key not in all_projections:
+                    raise CompositionError(
+                        self._opt_param_err_msg(
+                            o_param.name,
+                            val,
+                            f'{repr(proj_key)} is not in that Composition or any nested within it',
+                            err_source,
+                        )
+                    )
+
     @handle_external_context(fallback_default=True)
     def learn(
             self,
@@ -12041,6 +12722,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             randomize_minibatches=False,
             call_before_minibatch=None,
             call_after_minibatch=None,
+            runtime_optimizer_params: Optional[OptimizerParams] = None,
             context: Optional[Context] = None,
             *args,
             base_context: Context = Context(execution_id=None),
@@ -12177,7 +12859,22 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         runner = CompositionRunner(self)
 
+        for proj in self._get_all_projections():
+            if proj._proxy_for is not None:
+                proxy_lr = proj._proxy_for.parameters.learning_rate._get(context)
+                proj._proxy_for.parameters.learning_rate._set(proxy_lr, context, skip_history=True)
+
+        if runtime_optimizer_params is None:
+            runtime_optimizer_params = OptimizerParams(learning_rate=learning_rate)
+
+        try:
+            self.runtime_optimizer_params[context.execution_id] = runtime_optimizer_params
+        except AttributeError:
+            self.runtime_optimizer_params = {context.execution_id: runtime_optimizer_params}
+
         if not isinstance(self, AutodiffComposition):
+            composition_optimizer_params = OptimizerParams.from_component(self, context)
+            self._validate_optimizer_params(composition_optimizer_params, context, runtime=True)
             if isinstance(learning_rate, dict):
                 # learning_rate dict specification is not (yet) allowed for learn() method of Composition
                 raise CompositionError(f"The 'learning_rate' arg in a call to learn for '{self.name}' is a dict, which "
@@ -12185,9 +12882,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                                        f"or specify Projection-specific learning_rate(s) in the **learning_rate** "
                                        f"argument the constructor(s) for the corresponding MappingProjection(s).")
 
-            # parse and then assign any learning_rate specs to learning_rates_dict for execution context
-            self._parse_and_validate_learning_rate_arg(learning_rate, context)
-            self._assign_learning_rates(context=context)
 
         # Non-Python (i.e. PyTorch and LLVM) learning modes only supported for AutodiffComposition
         if execution_mode is not pnlvm.ExecutionMode.Python and not isinstance(self, AutodiffComposition):
@@ -12230,6 +12924,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             execution_mode=execution_mode,
             skip_initialization=skip_initialization,
             *args, **kwargs)
+
+        del self.runtime_optimizer_params[context.execution_id]
 
         context.remove_flag(ContextFlags.LEARNING_MODE)
         return result
@@ -13821,10 +14517,18 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             return pnlvm.codegen.gen_composition_exec(ctx, self, tags=tags)
 
     def _delete_compilation_data(self, context: Context, from_parameter: Parameter = None):
+        try:
+            _compilation_data = self._compilation_data
+        except AttributeError:
+            # this method can be called for CIMs created in Composition
+            # __init__, before the Composition._compilation_data is
+            # created
+            return
+
         if from_parameter is None:
-            self._compilation_data.execution.delete(context)
+            _compilation_data.execution.delete(context)
         else:
-            execution_dict = self._compilation_data.execution._get(context, fallback_value=None)
+            execution_dict = _compilation_data.execution._get(context, fallback_value=None)
             if execution_dict is None:
                 return
 
@@ -14200,6 +14904,72 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         ports = super()._receiver_ports
         ports.extend(self.parameter_CIM.input_ports)
         return ports
+
+    def _controls_optimization_for_projection(
+        self,
+        projection: Projection,
+        nested_comps: Optional[typing.Iterable['Composition']] = None,
+    ) -> bool:
+        if nested_comps is None:
+            nested_comps = self._get_nested_compositions()
+        nested_comps = set(nested_comps)
+
+        try:
+            sender = projection.sender
+            receiver = projection.receiver
+            sender_comps = sender.owner.compositions
+            receiver_comps = receiver.owner.compositions
+        except AttributeError:
+            try:
+                proj_comps = projection.compositions
+            except AttributeError:
+                return False
+            else:
+                return self in proj_comps or nested_comps.intersection(proj_comps)
+
+        if self in sender_comps and self in receiver_comps:
+            # projection does not span compositions
+            return True
+        elif self in sender_comps:
+            return all(rc in nested_comps for rc in receiver_comps)
+        elif self in receiver_comps:
+            return all(sc in nested_comps for sc in sender_comps)
+        else:
+            # projection does not belong to this composition
+            return (
+                sender_comps.intersection(nested_comps)
+                and receiver_comps.intersection(nested_comps)
+            )
+            return False
+
+    @property
+    def _optimization_projections(self) -> Set[Projection]:
+        """
+        Contains projections that can have optimization parameter values
+        defined by this Composition
+        """
+        opt_projections = set(self._get_all_projections())
+        try:
+            opt_projections.update(self._dummy_projections)
+        except AttributeError:
+            # only AutodiffComposition has _dummy_projections as of now
+            pass
+
+        # only an outer composition is allowed to give optimization
+        # parameter values
+        proxies = {p: p._proxy_for for p in opt_projections if p._proxy_for}
+        opt_projections.update(proxies.values())
+
+        outer_only_projs = set()
+        nested_comps = self._get_nested_compositions()
+        for p in opt_projections:
+            if not self._controls_optimization_for_projection(p, nested_comps):
+                outer_only_projs.add(p)
+
+        if len(outer_only_projs):
+            opt_projections.difference_update(outer_only_projs)
+
+        return opt_projections
 
     # endregion PROPERTIES
 
