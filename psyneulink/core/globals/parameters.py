@@ -323,7 +323,7 @@ import weakref
 
 import toposort
 
-from psyneulink._typing import Iterable, Optional, Set, Union
+from psyneulink._typing import Dict, Iterable, Optional, Set, Union
 from psyneulink.core.globals.context import Context, ContextError, ContextFlags, _get_time, handle_external_context
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.keywords import DEFAULT, SHARED_COMPONENT_TYPES
@@ -342,6 +342,11 @@ from psyneulink.core.globals.utilities import (
     update_array_in_place,
 )
 from psyneulink.core.rpc.graph_pb2 import Entry, ndArray
+
+
+if typing.TYPE_CHECKING:
+    from psyneulink.core.components.component import Component
+
 
 __all__ = [
     'Defaults', 'get_validator_by_function', 'Parameter', 'ParameterAlias', 'ParameterError',
@@ -1828,6 +1833,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
             skip_log=skip_log,
             skip_delivery=skip_delivery,
             compilation_sync=compilation_sync,
+            **kwargs,
         )
 
         assert 'DEBUGGING BREAKPOINT: PARAMETER SETTING'
@@ -1843,6 +1849,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
         skip_log=False,
         skip_delivery=False,
         compilation_sync=False,
+        **kwargs,  # noqa: U100
     ):
         value_is_array_like = is_array_like(value)
         # store history
@@ -2508,6 +2515,137 @@ class FunctionParameter(SharedParameter):
     @shared_parameter_name.setter
     def shared_parameter_name(self, value):
         self.function_parameter_name = value
+
+
+class OptimizationParameter(Parameter):
+    enabled: bool
+    runtime_values: Dict
+
+    _entry_default_key: str
+    # NOTE: not implemented
+    #: if specified, makes OptimizationParameter.enabled depend on a Parameter
+    #: ex: 'learning_rate' and 'learnable'
+    _enabled_parameter_name: Optional[str] = None
+
+    def __init__(
+        self,
+        default_value=None,
+        *,
+        name=None,
+        enabled: bool = True,
+        runtime_values: Dict = None,
+        _entry_default_key: str = None,
+        **kwargs,
+    ):
+        if runtime_values is None:
+            runtime_values = {}
+
+        if _entry_default_key is None:
+            _entry_default_key = f'{DEFAULT}_{name}'.upper()
+
+        super().__init__(
+            default_value=default_value,
+            enabled=enabled,
+            _entry_default_key=_entry_default_key,
+            **kwargs,
+        )
+
+    @handle_external_context()
+    def get(
+        self,
+        context: Union[Context, typing.Hashable] = None,
+        component: Optional[Union['Component', str]] = None,
+        *,
+        fallback_value=ParameterNoValueError,
+        **kwargs,
+    ):
+        base_val = self._get(context, component, fallback_value=fallback_value, **kwargs)
+        if self._scalar_converted:
+            base_val = try_extract_0d_array_item(base_val)
+        if is_array_like(base_val):
+            base_val = copy_parameter_value(base_val)
+
+    def _get(
+        self,
+        context: Context,
+        component: Optional[Union['Component', str]] = None,
+        runtime: bool = False,
+        *,
+        fallback_value=ParameterNoValueError,
+        **kwargs,
+    ):
+        pass
+
+    def _set(
+        self,
+        value,
+        context,
+        skip_history=False,
+        skip_log=False,
+        skip_delivery=False,
+        compilation_sync=False,
+        runtime: bool = False,
+        **kwargs,
+    ):
+        return super()._set(
+            value=value,
+            context=context,
+            skip_history=skip_history,
+            skip_log=skip_log,
+            skip_delivery=skip_delivery,
+            compilation_sync=compilation_sync,
+            runtime=runtime,
+            **kwargs,
+        )
+
+    def _set_value(
+        self,
+        value,
+        execution_id=None,
+        context=None,
+        skip_history=False,
+        skip_log=False,
+        skip_delivery=False,
+        compilation_sync=False,
+        runtime: bool = False,
+        **kwargs,
+    ):
+        if runtime:
+            # TODO: consider if needs to be synced with LLVM like normal values
+            execution_id = self._get_values_key(context)
+            if is_array_like(value):
+                value = copy_parameter_value(value)
+            self.runtime_values[execution_id] = value
+        else:
+            return super()._set_value(
+                value=value,
+                execution_id=execution_id,
+                context=context,
+                skip_history=skip_history,
+                skip_log=skip_log,
+                skip_delivery=skip_delivery,
+                compilation_sync=compilation_sync,
+                **kwargs,
+            )
+
+    def _entry_default(self, execution_id: typing.Hashable, runtime: bool = False):
+        if runtime:
+            values = self.runtime_values
+        else:
+            values = self.values
+
+        try:
+            return values[execution_id]
+        except KeyError as e:
+            raise ParameterNoValueError(self, execution_id) from e
+
+    @handle_external_context()
+    def delete(self, context=None):
+        try:
+            del self.runtime_values[context.execution_id]
+        except KeyError:
+            pass
+        super().delete(context)
 
 
 # KDM 6/29/18: consider assuming that ALL parameters are stateful
