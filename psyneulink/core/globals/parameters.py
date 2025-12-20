@@ -2529,7 +2529,7 @@ class OptimizationParameter(Parameter):
 
     def __init__(
         self,
-        default_value=None,
+        default_value=NotImplemented,
         *,
         name=None,
         enabled: bool = True,
@@ -2545,11 +2545,57 @@ class OptimizationParameter(Parameter):
 
         super().__init__(
             default_value=default_value,
-            enabled=enabled,
+            _enabled=enabled,
             _entry_default_key=_entry_default_key,
             **kwargs,
         )
 
+    def _entry_default(self, entry_value):
+        try:
+            return entry_value[self._entry_default_key]
+        except (IndexError, KeyError, TypeError):
+            return entry_value
+            raise ParameterNoValueError(self, execution_id) from e
+
+    def _item_for(self, obj, entry_value):
+        try:
+            if obj.name in entry_value:
+                return obj.name
+        except AttributeError:
+            # obj not a Component with name
+            pass
+        except TypeError:
+            # entry_value may not be in dict format, handle in caller
+            raise
+
+        return obj
+
+    def __has_specific_value_for(self, obj, entry_value) -> bool:
+        try:
+            return self._item_for(obj) in entry_value
+        except (KeyError, TypeError):
+            return False
+
+    def _has_specific_value_for(
+        self, obj, execution_id: typing.Hashable, entry_value
+    ) -> bool:
+        res = self.__has_specific_value_for(obj, execution_id, entry_value)
+        if not res:
+            proxy_target = getattr(obj, '_proxy_for', None)
+            if proxy_target:
+                return self.__has_specific_value_for(
+                    proxy_target, execution_id, entry_value
+                )
+        return res
+
+    def _is_enabled(self, execution_id: typing.Hashable) -> bool:
+        pass
+
+    @handle_external_context()
+    def is_enabled(self, context: Context) -> bool:
+        return self._is_enabled(context)
+
+    # needed?
     @handle_external_context()
     def get(
         self,
@@ -2574,12 +2620,21 @@ class OptimizationParameter(Parameter):
         fallback_value=ParameterNoValueError,
         **kwargs,
     ):
-        pass
+        if (
+            component is not None
+            and not isinstance(component, str)
+            and not self._is_enabled(context.execution_id)
+        ):
+            return False
+
+    def _parse(self, value, check_scalar: bool = False):
+        value = super()._parse(value, check_scalar=check_scalar)
 
     def _set(
         self,
         value,
         context,
+        *,
         skip_history=False,
         skip_log=False,
         skip_delivery=False,
@@ -2628,24 +2683,15 @@ class OptimizationParameter(Parameter):
                 **kwargs,
             )
 
-    def _entry_default(self, execution_id: typing.Hashable, runtime: bool = False):
-        if runtime:
-            values = self.runtime_values
-        else:
-            values = self.values
-
-        try:
-            return values[execution_id]
-        except KeyError as e:
-            raise ParameterNoValueError(self, execution_id) from e
-
-    @handle_external_context()
-    def delete(self, context=None):
+    def _delete_runtime(self, context: Context):
         try:
             del self.runtime_values[context.execution_id]
         except KeyError:
             pass
-        super().delete(context)
+
+    def _delete(self, context: Context):
+        self._delete_runtime(context)
+        super()._delete(context)
 
 
 # KDM 6/29/18: consider assuming that ALL parameters are stateful
