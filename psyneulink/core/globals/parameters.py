@@ -335,6 +335,7 @@ from psyneulink.core.globals.utilities import (
     convert_all_elements_to_np_array,
     create_union_set,
     get_deepcopy_with_shared,
+    get_from_registry,
     get_function_sig_default_value,
     is_numeric,
     safe_equals,
@@ -2529,6 +2530,7 @@ class OptimizationParameter(Parameter):
 
     def __init__(
         self,
+        # `None` has same meaning as `True` here, so don't use it as argument default
         default_value=NotImplemented,
         *,
         name=None,
@@ -2555,7 +2557,6 @@ class OptimizationParameter(Parameter):
             return entry_value[self._entry_default_key]
         except (IndexError, KeyError, TypeError):
             return entry_value
-            raise ParameterNoValueError(self, execution_id) from e
 
     def _item_for(self, obj, entry_value):
         try:
@@ -2611,6 +2612,17 @@ class OptimizationParameter(Parameter):
         if is_array_like(base_val):
             base_val = copy_parameter_value(base_val)
 
+        # TODO: this is just parent behavior, so remove this method
+        return base_val
+
+        # Most likely, do not do this, it won't work.
+        # # TODO: consider if this should happen or if it's less confusing
+        # # to just return True truthfully
+        # if base_val is True:
+        #     return self._entry_default(self.values)
+        # else:
+        #     return base_val
+
     def _get(
         self,
         context: Context,
@@ -2620,12 +2632,48 @@ class OptimizationParameter(Parameter):
         fallback_value=ParameterNoValueError,
         **kwargs,
     ):
-        if (
-            projection is not None
-            and not isinstance(projection, str)
-            and not self._is_enabled(context.execution_id)
-        ):
+        execution_id = self._get_values_key(context)
+
+        if not self._is_enabled(execution_id):
             return False
+
+        if runtime:
+            try:
+                value = self.runtime_values[execution_id]
+            except KeyError as e:
+                value = self._handle_fallback_value(execution_id, fallback_value, e)
+        else:
+            value = super()._get(context, fallback_value=fallback_value, **kwargs)
+
+        if value is NotImplemented:
+            return NotImplemented
+
+        if isinstance(projection, str):
+            import psyneulink as pnl
+
+            # TODO: replace this with maybe storing only projections in
+            # OptParam, then allowing get by name as well
+            reg_projection = get_from_registry(projection, pnl.ProjectionRegistry)
+            if reg_projection:
+                projection = reg_projection
+
+        # the ProxyProjection corresponding to a projection may also be
+        # used to specify a value for the projection
+        if not self._has_specific_value_for(projection, execution_id, value):
+            proxy_target = getattr(projection, '_proxy_for', None)
+            if proxy_target and self._has_specific_value_for(proxy_target):
+                projection = proxy_target
+
+        try:
+            res = value[self._item_for(projection)]
+        except (IndexError, TypeError):
+            # value is not a dictionary
+            res = value
+        except KeyError:
+            # value is a dictionary, but does not have a key for projection
+            res = self._entry_default(value)
+
+        return res
 
     def _parse(self, value, check_scalar: bool = False):
         value = super()._parse(value, check_scalar=check_scalar)
