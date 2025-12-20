@@ -345,7 +345,7 @@ from psyneulink.core.rpc.graph_pb2 import Entry, ndArray
 
 
 if typing.TYPE_CHECKING:
-    from psyneulink.core.components.component import Component
+    from psyneulink.core.components.shellclasses import Projection
 
 
 __all__ = [
@@ -2600,12 +2600,12 @@ class OptimizationParameter(Parameter):
     def get(
         self,
         context: Union[Context, typing.Hashable] = None,
-        component: Optional[Union['Component', str]] = None,
+        projection: Optional[Union['Projection', str]] = None,
         *,
         fallback_value=ParameterNoValueError,
         **kwargs,
     ):
-        base_val = self._get(context, component, fallback_value=fallback_value, **kwargs)
+        base_val = self._get(context, projection, fallback_value=fallback_value, **kwargs)
         if self._scalar_converted:
             base_val = try_extract_0d_array_item(base_val)
         if is_array_like(base_val):
@@ -2614,15 +2614,15 @@ class OptimizationParameter(Parameter):
     def _get(
         self,
         context: Context,
-        component: Optional[Union['Component', str]] = None,
+        projection: Optional[Union['Projection', str]] = None,
         runtime: bool = False,
         *,
         fallback_value=ParameterNoValueError,
         **kwargs,
     ):
         if (
-            component is not None
-            and not isinstance(component, str)
+            projection is not None
+            and not isinstance(projection, str)
             and not self._is_enabled(context.execution_id)
         ):
             return False
