@@ -714,7 +714,7 @@ import numpy as np
 from packaging import version
 from pathlib import Path, PosixPath
 from collections import deque
-from typing import TYPE_CHECKING, Any, Dict, Hashable, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Hashable, List, Set, Tuple, Union
 
 try:
     import torch
@@ -1794,7 +1794,9 @@ class AutodiffComposition(Composition):
 
         return loss_mech_specs, target_mechs
 
-    def _instantiate_default_targets(self, pathways:list, context, base_context)->tuple[list,list]:
+    def _instantiate_default_targets(
+        self, pathways: List, context, base_context
+    ) -> Tuple[List, List]:
         """Construct default TARGET Nodes (since none were specified in **targets** arg of constructor
         Current default is to treat all OUTPUT Nodes as samples, and assign them TARGET Nodes
         IMPLEMENTATION NOTE:
@@ -1862,7 +1864,9 @@ class AutodiffComposition(Composition):
         self.add_nodes(target_mechs, required_roles=[NodeRole.TARGET, NodeRole.INPUT], context=context)
         return loss_mech_specs, target_mechs
 
-    def _validate_loss_mech_specs(self, loss_mech_specs:list, context)->tuple[list, list]:
+    def _validate_loss_mech_specs(
+        self, loss_mech_specs: List, context
+    ) -> Tuple[List, List]:
         """Validate specifications used to construct LossMechanism in _instantiate_loss_components"""
         if not loss_mech_specs:
             if context.execution_id:
