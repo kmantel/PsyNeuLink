@@ -1707,6 +1707,7 @@ class AutodiffComposition(Composition):
         # result in them having old values. Stateful Parameter get may
         # not have a value before call to super().learn
 
+        context.composition = self
         execution_phase_at_entry = context.execution_phase
         context.execution_phase = ContextFlags.PREPARING
 

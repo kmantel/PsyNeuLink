@@ -3467,7 +3467,10 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         self.parameters.variable._set(variable, context=context)
 
-        if self.initialization_status & ~(ContextFlags.VALIDATING | ContextFlags.INITIALIZING):
+        if (
+            self.initialization_status & ~(ContextFlags.VALIDATING | ContextFlags.INITIALIZING)
+            and context.source != ContextFlags.CONSTRUCTOR
+        ):
             self._increment_execution_count()
 
             # Functions don't have Logs or maintain time
