@@ -1125,10 +1125,9 @@ class GRUComposition(AutodiffComposition):
                 pnl_bias.parameter_ports['matrix'].parameters.value._set(torch_bias, context)
 
     @handle_external_context()
-    def infer_backpropagation_learning_pathways(self, execution_mode, context=None, base_context=None)->list:
+    def infer_backpropagation_learning_pathways(self, execution_mode, context=None, base_context=None) -> list:
         """Override to construct only TARGET Node and LossMechanism for GRUComposition.
         Return a list containing TARGET Nodes, that needs to be referenced in inputs argument of learn()"""
-
         if execution_mode is not pnlvm.ExecutionMode.PyTorch:
             raise GRUCompositionError(f"Learning in {self.componentCategory} "
                                       f"is not supported for {execution_mode.name}.")
@@ -1140,11 +1139,11 @@ class GRUComposition(AutodiffComposition):
 
         # Add target Node to GRUComposition to support learning in standalone or solo nested composition
         self.add_node(target_mech, required_roles=[NodeRole.TARGET, NodeRole.LEARNING],
-                      context=Context(source=ContextFlags.METHOD, string='FROM GRU'))
+                      context=Context(source=ContextFlags.METHOD, string='FROM GRU', execution_id=context.execution_id))
         self.exclude_node_roles(target_mech, NodeRole.OUTPUT, context)
 
         for output_port in target_mech.output_ports:
-            output_port.parameters.require_projection_in_composition.set(False, override=True)
+            output_port.parameters.require_projection_in_composition._set(False, context, override=True)
         self.sample_port_to_target_port_map = {self.gru_mech.output_port: target_mech.output_port}
         return [target_mech]
 

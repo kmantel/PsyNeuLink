@@ -622,8 +622,9 @@ class LearningProjection(ModulatoryProjection_Base):
         learned_projection = self.receiver.owner
 
         # Set learning_enabled to value of its LearningMechanism sender if it was not specified in the constructor
-        if self.learning_enabled is None:
-            self.learning_enabled = self.parameters.learning_enabled.default_value = learning_mechanism.learning_enabled
+        if self.parameters.learning_enabled._get(context) is None:
+            mech_le = learning_mechanism.parameters.learning_enabled._get(context)
+            self.parameters.learning_enabled._set(mech_le, context)
 
         learned_projection.learning_mechanism = learning_mechanism
         learned_projection.has_learning_projection = self

@@ -1858,6 +1858,7 @@ class EMComposition(AutodiffComposition):
                                              enable_learning,
                                              softmax_choice)
 
+        context = Context(source=ContextFlags.COMMAND_LINE, string='FROM EM')
         self._construct_pathways(self.memory_template,
                                  self.memory_capacity,
                                  self.field_weights,
@@ -1872,12 +1873,13 @@ class EMComposition(AutodiffComposition):
                                  self.learn_field_weights,
                                  self.enable_learning,
                                  self._use_gating_for_weighting,
-                                 context=Context(source=ContextFlags.COMMAND_LINE, string='FROM EM'))
+                                 context=context,
+                                 )
 
         # Final Configuration and Clean-up ---------------------------------------------------------------------------
 
         # Assign learning-related attributes
-        self._set_learning_attributes()
+        self._set_learning_attributes(context)
 
         if self._use_storage_node:
             # Ensure that storage_node runs last
@@ -2674,7 +2676,7 @@ class EMComposition(AutodiffComposition):
         """Override to defer population of learning_rates_dict until call to _set_learning_attributes below."""
         pass
 
-    def _set_learning_attributes(self):
+    def _set_learning_attributes(self, context: Context):
         """Set learning-related attributes for Node and Projections
         Make exclude_fron_gradient_calc assignments to relevant Nodes
         Convert any learning_rate specifications into standard AutodiffComposition learning_rate dict format
@@ -2701,9 +2703,10 @@ class EMComposition(AutodiffComposition):
         """
 
         # BREADCRUMB: 8/21/25 MOVE THIS TO SOMEWHERE ELSE? OR REPLACE WITH ASSIGNMENT TO exclude_from_gradient_calc
-        self.execute_in_additional_optimizations = {}
+        execute_in_additional_optimizations = {}
         if self._use_storage_node:
-            self.execute_in_additional_optimizations[self.storage_node] = LAST
+            execute_in_additional_optimizations[self.storage_node] = LAST
+        self.parameters.execute_in_additional_optimizations._set(execute_in_additional_optimizations, context)
 
         # Get field_weight projections and set all others to be non-learnable
         field_weight_projections = []
@@ -2712,7 +2715,7 @@ class EMComposition(AutodiffComposition):
                 field_weight_projections.append(projection)
             else:
                 projection.learnable = False
-                projection.learning_rate = False
+                projection.parameters.learning_rate._set(False, context)
 
         constructor_learning_rate = self._optimizer_constructor_params
         learn_field_weights = self.parameters.learn_field_weights.spec
@@ -2728,7 +2731,7 @@ class EMComposition(AutodiffComposition):
             lr_dict = {}
             for projection in field_weight_projections:
                 projection.learnable = False
-                projection.learning_rate = False
+                projection.parameters.learning_rate._set(False, context)
                 lr_dict[projection] = False
             self._enable_learning_warning_flag = True
 
@@ -2754,7 +2757,7 @@ class EMComposition(AutodiffComposition):
                         raise EMCompositionError(f"PROGRAM ERROR: learning_rate for {field.name} "
                                                  f"({learn_field_weights[i]}) is not a valid value.")
 
-        self.parameters.learning_rates_dict.set(lr_dict, context=None)
+        self.parameters.learning_rates_dict._set(lr_dict, context)
         self._optimizer_constructor_params = lr_dict
 
     def _validate_options_with_learning(self,
@@ -2966,8 +2969,9 @@ class EMComposition(AutodiffComposition):
                           f"because the learning_rate for the corresponding field_weight is set to False.")
         return result
 
-    def infer_backpropagation_learning_pathways(self, execution_mode, context=None, base_context=None)->list:
-        if self.concatenate_queries:
+    @handle_external_context()
+    def infer_backpropagation_learning_pathways(self, execution_mode, context=None) -> list:
+        if self.parameters.concatenate_queries._get(context):
             raise EMCompositionError(f"EMComposition does not support learning with 'concatenate_queries'='True'.")
         return super().infer_backpropagation_learning_pathways(execution_mode, context=context)
 

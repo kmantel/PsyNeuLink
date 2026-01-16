@@ -18,6 +18,7 @@ except (ImportError, ModuleNotFoundError):
 from typing import Optional
 from collections import defaultdict
 
+from psyneulink.core.globals.context import Context
 from psyneulink.library.compositions.pytorchwrappers import (
     PytorchCompositionWrapper, PytorchMechanismWrapper, PytorchLossMechanismWrapper)
 from psyneulink.library.components.mechanisms.processing.objective.lossmechanism import LossMechanism
@@ -36,8 +37,8 @@ class PytorchEMCompositionWrapper(PytorchCompositionWrapper):
                             EMStorageMechanism: PytorchEMMechanismWrapper}
                            )[mech.__class__]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, context: Context, **kwargs):
+        super().__init__(*args, context=context, **kwargs)
 
         # Assign storage_node (EMComposition's EMStorageMechanism) (assumes there is only one)
         self.storage_node = self.nodes_map[self.composition.storage_node]
@@ -74,8 +75,8 @@ class PytorchEMCompositionWrapper(PytorchCompositionWrapper):
         #    access must be provided via EMComposition's pytorch_representation, rather than directly assigning
         #    PytorchEMCompositionWrapper as an attribute on the subcomponents, since doing the latter introduces a
         #    recursion when torch.nn.module.state_dict() is called on any wrapper in the hiearchay.
-        if self.composition.pytorch_representation is None:
-            self.composition.pytorch_representation = self
+        if self.composition.parameters.pytorch_representation._get(context) is None:
+            self.composition.parameters.pytorch_representation._set(self, context)
 
     @property
     def memory(self)->Optional[torch.Tensor]:
@@ -137,7 +138,7 @@ class PytorchEMMechanismWrapper(PytorchMechanismWrapper):
 
         :return: List[2d tensor] updated memories
         """
-        pytorch_rep = self.composition.pytorch_representation
+        pytorch_rep = self.composition.parameters.pytorch_representation._get(context)
 
         memory = pytorch_rep.memory
         assert memory is not None, f"PROGRAM ERROR: '{pytorch_rep.name}'.memory is None"

@@ -619,12 +619,16 @@ class ModulatorySignal(OutputPort):
         # If owner is specified but modulation has not been specified, assign to owner's value
 
         super()._instantiate_attributes_after_function(context=context)
-        if self.owner and self.modulation is None:
-            self.modulation = self.owner.modulation
-        if self.modulation is not None:
-            if self.modulation not in modulation_type_keywords:
+        # NOTE: consider if this can/should be replaced by a SharedParameter with owner or function or both
+        modulation = self.parameters.modulation._get(context)
+        if self.owner and modulation is None:
+            modulation = self.owner.parameters.modulation._get(context)
+            self.parameters.modulation._set(modulation, context)
+
+        if modulation is not None:
+            if modulation not in modulation_type_keywords:
                 try:
-                    getattr(self.function.parameters, self.modulation)
+                    getattr(self.function.parameters, modulation)
                 except:
                     raise ModulatorySignalError(f"The {MODULATION} arg for {self.name} of {self.owner.name} must be "
                                                 f"the name of a modulable parameter of its function "
