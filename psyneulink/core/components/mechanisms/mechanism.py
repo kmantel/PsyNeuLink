@@ -3871,7 +3871,7 @@ class Mechanism_Base(Mechanism):
         # not transferring execution_id here because later function calls
         # need execution_id=None to succeed.
         # TODO: remove context passing for init methods if they don't need it
-        context = Context(source=ContextFlags.METHOD, execution_id=None)
+        context = Context(source=ContextFlags.METHOD, execution_id=None, composition=context.composition)
 
         # Put in list to standardize treatment below
         if not isinstance(ports, list):
