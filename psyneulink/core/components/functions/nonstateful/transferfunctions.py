@@ -4507,12 +4507,12 @@ class TransferWithCosts(TransferFunction):
             # Default cost params
             if self.owner:
                 if self.owner.context.initialization_status != ContextFlags.DEFERRED_INIT:
-                    self.intensity_cost = self.intensity_cost_fct(self.owner.defaults.variable)
+                    intensity_cost = self.intensity_cost_fct(self.owner.defaults.variable)
                 else:
-                    self.intensity_cost = self.intensity_cost_fct(self.owner.class_defaults.variable)
+                    intensity_cost = self.intensity_cost_fct(self.owner.class_defaults.variable)
             else:
-                self.intensity_cost = self.intensity_cost_fct(self.defaults.variable)
-                self.defaults.intensity_cost = self.intensity_cost
+                intensity_cost = self.intensity_cost_fct(self.defaults.variable)
+            self.parameters.intensity_cost._set(intensity_cost, context)
 
     def _function(self,
                   variable=None,

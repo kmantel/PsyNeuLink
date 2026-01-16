@@ -328,9 +328,10 @@ class PytorchCompositionWrapper(torch.nn.Module):
 
         self._execute_in_additional_optimizations = (
             self._validate_and_parse_additional_optimizations(
-                self.composition.execute_in_additional_optimizations,
-                self.composition.optimizations_per_minibatch,
+                self.composition.parameters.execute_in_additional_optimizations._get(context),
+                self.composition.parameters.optimizations_per_minibatch._get(context),
                 source=CONSTRUCTOR,
+                context=context,
             )
         )
 
@@ -1168,7 +1169,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
                 f"{self.get_source_str(source)} for '{self.composition.name}' is not valid; "
                 f"it must be an int, float, bool or None.")
 
-        if proj_composition.enable_learning is False or projection.learnable is False:
+        if proj_composition.parameters.enable_learning._get(context) is False or projection.learnable is False:
             # If learning is not enabled for the Projection or Composition, set learning_rate to False
             specified_learning_rate = False
             projection.parameters.learning_rate._set(False, context)
@@ -1405,7 +1406,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
             self.register_parameter(proj_wrapper.name, proj_wrapper.matrix)
 
     def _validate_and_parse_additional_optimizations(
-        self, user_specs: dict, num_optimizations, source: str
+        self, user_specs: dict, num_optimizations, source: str, context: Context,
     ) -> dict:
         """Validate entries of dict specified for execute_in_additional_optimizations in Composition or learn()
         Keys should be nodes in self or a Composition nested within it, and values a list of tuples containing Parameter
@@ -1422,7 +1423,7 @@ class PytorchCompositionWrapper(torch.nn.Module):
         bad_opt_specs = []
 
         for nested_comp in self.composition._get_nested_compositions():
-            user_specs.update(nested_comp.execute_in_additional_optimizations)
+            user_specs.update(nested_comp.parameters.execute_in_additional_optimizations._get(context))
 
         for node, opt_spec in user_specs.items():
             if node not in self.composition._get_all_nodes() + self.composition._get_nested_compositions():
@@ -2645,7 +2646,7 @@ class PytorchProjectionWrapper():
                     i += 1
 
         # Create a Pytorch Parameter for the matrix
-        matrix = projection.parameters.matrix.get(context=context)
+        matrix = projection.parameters.matrix._get(context)
         self.matrix = torch.nn.Parameter(torch.tensor(matrix.copy(),
                                          device=device,
                                          dtype=torch.double))

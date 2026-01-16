@@ -1594,12 +1594,13 @@ class LinearCombination(
         if weights is not None:
             weights = torch.tensor(weights, device=device).double()
         # Note: the first dimension of x is batch, aggregate over the second dimension
-        if self.operation == SUM:
+        operation = self.parameters.operation._get(context)
+        if operation == SUM:
             if weights is not None:
                 return lambda x: torch.sum(x * weights, 2)
             else:
                 return lambda x: torch.sum(x, 2)
-        elif self.operation == PRODUCT:
+        elif operation == PRODUCT:
             if weights is not None:
                 return lambda x: torch.prod(x * weights, 2)
             else:

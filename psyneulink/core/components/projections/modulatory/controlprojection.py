@@ -231,6 +231,7 @@ class ControlProjection(ModulatoryProjection_Base):
             user=False,
             pnl_internal=True
         )
+        learning_rate = None
 
 
     projection_sender = ControlMechanism

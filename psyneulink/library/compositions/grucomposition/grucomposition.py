@@ -1120,7 +1120,7 @@ class GRUComposition(AutodiffComposition):
                 pnl_bias.parameter_ports['matrix'].parameters.value._set(torch_bias, context)
 
     @handle_external_context()
-    def infer_backpropagation_learning_pathways(self, execution_mode, context=None)->list:
+    def infer_backpropagation_learning_pathways(self, execution_mode, context=None) -> list:
         if execution_mode is not pnlvm.ExecutionMode.PyTorch:
             raise GRUCompositionError(f"Learning in {self.componentCategory} "
                                       f"is not supported for {execution_mode.name}.")
@@ -1132,14 +1132,13 @@ class GRUComposition(AutodiffComposition):
 
         # Add target Node to GRUComposition
         self.add_node(target_mech, required_roles=[NodeRole.TARGET, NodeRole.LEARNING],
-                      context=Context(source=ContextFlags.METHOD, string='FROM GRU'))
+                      context=Context(source=ContextFlags.METHOD, string='FROM GRU', execution_id=context.execution_id))
         self.exclude_node_roles(target_mech, NodeRole.OUTPUT, context)
 
         for output_port in target_mech.output_ports:
-            output_port.parameters.require_projection_in_composition.set(False, override=True)
+            output_port.parameters.require_projection_in_composition._set(False, context, override=True)
         self.targets_from_outputs_map = {target_mech: self.gru_mech}
         self.outputs_to_targets_map = {self.gru_mech: target_mech}
-
         return [target_mech]
 
     def _get_pytorch_backprop_pathway(self, input_node, context)->list:

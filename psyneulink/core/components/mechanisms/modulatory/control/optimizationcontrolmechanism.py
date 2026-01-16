@@ -2978,10 +2978,12 @@ class OptimizationControlMechanism(ControlMechanism):
             #               (i.e., DOES IT [make sense to HAVE A random_variables ATTRIBUTE?)
             # Get Components with variables to be randomized across estimates
             #   and construct ControlSignal to modify their seeds over estimates
-            if self.random_variables is ALL:
-                self.random_variables = self.agent_rep.random_variables
+            random_variables = self.parameters.random_variables._get(context)
+            if random_variables is ALL:
+                random_variables = self.agent_rep.random_variables
+                self.parameters.random_variables._set(random_variables, context)
 
-            if not self.random_variables:
+            if not random_variables:
                 warnings.warn(f"'{self.name}' has '{NUM_ESTIMATES} = {num_estimates}' specified, "
                               f"but its '{AGENT_REP}' ('{self.agent_rep.name}') has no random variables: "
                               f"'{RANDOMIZATION_CONTROL_SIGNAL}' will not be created, and num_estimates set to None.")
@@ -2990,7 +2992,7 @@ class OptimizationControlMechanism(ControlMechanism):
 
             randomization_control_signal = ControlSignal(name=RANDOMIZATION_CONTROL_SIGNAL,
                                                          modulates=[param.parameters.seed.port
-                                                                    for param in self.random_variables],
+                                                                    for param in random_variables],
                                                          allocation_samples=randomization_seed_mod_values,
                                                          modulation=OVERRIDE,
                                                          cost_options=CostFunctions.NONE,

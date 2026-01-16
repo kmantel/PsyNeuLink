@@ -726,6 +726,7 @@ class AutodiffComposition(Composition):
         torch_losses = Parameter([], getter=_get_torch_losses)
         trial_losses = Parameter([]) # FIX <- related to early_stopper, but not getting assigned anywhere
         device = None
+        execute_in_additional_optimizations = {}
 
         # def _validate_memory_template(self, device):
         #     if isinstance(device, str) and device not in [CPU, CUDA, MPS]:
@@ -908,7 +909,7 @@ class AutodiffComposition(Composition):
             self._show_graph = ShowGraph(self, **show_graph_attributes)
 
     @handle_external_context()
-    def infer_backpropagation_learning_pathways(self, execution_mode, context=None)->list:
+    def infer_backpropagation_learning_pathways(self, execution_mode, context=None) -> list:
         """Create backpropagation learning pathways for every Input Node --> Output Node pathway
         Flattens nested compositions:
           - only includes the Projections in outer Composition to/from the CIMs of the nested Composition
@@ -957,13 +958,13 @@ class AutodiffComposition(Composition):
                                                           loss_spec=self.loss_spec)
 
         self.outputs_to_targets_map = {output: target for target, output in self.targets_from_outputs_map.items()}
-        self._analyze_graph()
+        self._analyze_graph(context)
         return self.learning_components
 
     @handle_external_context()
     def _get_pytorch_backprop_pathways(self, context)->list:
 
-        self._analyze_graph()
+        self._analyze_graph(context)
         return [pathway
                     for node in (self.get_nodes_by_role(NodeRole.INPUT) + self.get_nodes_by_role(NodeRole.BIAS))
                     if node not in self.get_nodes_by_role(NodeRole.TARGET)
@@ -1189,7 +1190,7 @@ class AutodiffComposition(Composition):
         if self.parameters.pytorch_representation._get(context=context) is None or new:
             # Instantiate pytorch_representation
             self.pytorch_composition_wrapper_type(composition=self,
-                                                  device=self.device,
+                                                  device=self.parameters.device._get(context),
                                                   context=context,
                                                   base_context=base_context)
         elif context.flags & ContextFlags.COMMAND_LINE:
@@ -1311,9 +1312,10 @@ class AutodiffComposition(Composition):
         pytorch_rep._update_optimizer_params(optimizer, optimizer_params, context)
         return optimizer
 
-    def get_target_nodes(self, execution_mode=pnlvm.ExecutionMode.PyTorch):
+    @handle_external_context()
+    def get_target_nodes(self, execution_mode=pnlvm.ExecutionMode.PyTorch, context=None, base_context=Context(None)):
         """Return `TARGET` `Nodes <Composition_Nodes>` of the AutodiffComposition."""
-        self.infer_backpropagation_learning_pathways(execution_mode=execution_mode)
+        self.infer_backpropagation_learning_pathways(execution_mode=execution_mode, context=context, base_context=base_context)
         return super(AutodiffComposition, self).get_target_nodes()
 
     def autodiff_forward(self,
@@ -1336,9 +1338,10 @@ class AutodiffComposition(Composition):
 
         # Get value of INPUT nodes for current trial
         curr_tensors_for_inputs = {}
+        device = self.parameters.device._get(context)
         for component in inputs.keys():
             if not isinstance(inputs[component], torch.Tensor):
-                curr_tensors_for_inputs[component] = torch.tensor(inputs[component], device=self.device).double()
+                curr_tensors_for_inputs[component] = torch.tensor(inputs[component], device=device).double()
             else:
                 curr_tensors_for_inputs[component] = inputs[component]
 
@@ -1478,13 +1481,13 @@ class AutodiffComposition(Composition):
         pytorch_rep.retain_for_psyneulink({LOSSES: minibatch_loss}, retain_in_pnl_options, context)
 
         # Reset minibatch_loss for next round of optimization
-        pytorch_rep.minibatch_loss = torch.zeros(1, device=self.device).double()
+        pytorch_rep.minibatch_loss = torch.zeros(1, device=self.parameters.device._get(context)).double()
         pytorch_rep.minibatch_loss_count = 0
 
     def autodiff_backward(self, minibatch_loss, context):
         """Calculate gradients and apply to PyTorch model parameters (weights)"""
 
-        if not self.enable_learning:
+        if not self.parameters.enable_learning._get(context):
             return
 
         pytorch_rep = self.parameters.pytorch_representation._get(context=context)
@@ -2067,7 +2070,7 @@ class AutodiffComposition(Composition):
             self._build_pytorch_representation(optimizer_params=kwargs.get('optimizer_params', None),
                                                learning_rate=self.parameters.learning_rate.get(context),
                                                context=context,
-                                               base_context=Context(execution_id=None))
+                                               base_context=base_context)
 
         # Run AutodiffComposition
         results = super(AutodiffComposition, self).run(*args, execution_mode=execution_mode, context=context, base_context=base_context, **kwargs)

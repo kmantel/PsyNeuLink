@@ -6027,7 +6027,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                         #       see example in test_output_ports/TestOutputPorts
                         matrix=IDENTITY_MATRIX,
                         learnable=False,
-                        name=proj_name
+                        name=proj_name,
+                        context=Context(execution_id=None)
                     )
 
                     # activate the projection
@@ -7178,7 +7179,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                     # LearningProjections not listed in self.projections but executed during EXECUTION_PHASE are OK
                     #     (e.g., EMComposition.storage_node)
                     if (isinstance(proj, LearningProjection)
-                            and proj.sender.owner.learning_timing is LearningTiming.EXECUTION_PHASE
+                            and proj.sender.owner.parameters.learning_timing._get(context) is LearningTiming.EXECUTION_PHASE
                             and proj.receiver.owner in self.projections):
                         continue
                     proj_deferred = proj._initialization_status & ContextFlags.DEFERRED_INIT
@@ -11564,9 +11565,6 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
             if not skip_analyze_graph:
                 self._analyze_graph(context=context)
 
-        if self._need_check_for_unused_projections:
-            self._check_for_unused_projections(context=context)
-
         if scheduler is None:
             scheduler = self.scheduler
 
@@ -11634,6 +11632,10 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if (not skip_initialization
             and (context is None or ContextFlags.SIMULATION_MODE not in context.runmode)):
             self._initialize_from_context(context, base_context, override=False)
+
+        # moved to after _initialize_from_context because contains checks for stateful parameter values
+        if self._need_check_for_unused_projections:
+            self._check_for_unused_projections(context=context)
 
         context.composition = self
 
@@ -13478,7 +13480,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
     def _is_learning(self, context):
         """Returns ``True`` if the Composition can learn in the given context"""
-        return (ContextFlags.LEARNING_MODE in context.runmode) and (self.enable_learning)
+        return (ContextFlags.LEARNING_MODE in context.runmode) and (self.parameters.enable_learning._get(context))
 
     def _build_variable_for_input_CIM(self, inputs):
         """
