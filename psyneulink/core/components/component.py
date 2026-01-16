@@ -739,8 +739,15 @@ def make_parameter_property(param):
                 f' for example, <object>.{param.name}.base = {value}',
                 FutureWarning,
             )
+        if p.stateful:
+            context = self.most_recent_context
+        else:
+            # we can skip creating a Context object and just pass None,
+            # because when a Parameter is not stateful, it doesn't try
+            # to get the context's execution_id
+            context = None
         try:
-            getattr(self.parameters, p.name).set(value, self.most_recent_context)
+            p.set(value, context)
         except ParameterError as e:
             if 'Pass override=True to force set.' in str(e):
                 raise ParameterError(
