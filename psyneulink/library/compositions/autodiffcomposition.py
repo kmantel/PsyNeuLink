@@ -770,7 +770,7 @@ from psyneulink.core.globals.keywords import (
 from psyneulink.core.globals.utilities import (is_identity_matrix, is_matrix_keyword, is_numeric, is_numeric_scalar,
                                                convert_to_list, convert_to_np_array, deprecation_warning)
 from psyneulink.core.scheduling.scheduler import Scheduler
-from psyneulink.core.globals.parameters import Parameter, check_user_specified
+from psyneulink.core.globals.parameters import Parameter, ParameterNoValueError, check_user_specified
 from psyneulink.core.scheduling.time import TimeScale
 from psyneulink.core import llvm as pnlvm
 
@@ -2741,6 +2741,7 @@ class AutodiffComposition(Composition):
 
         synch_with_pnl_options, retain_in_pnl_options = self.parse_synch_and_retain_args(
             context,
+            base_context,
             synch_projection_matrices_with_torch=synch_projection_matrices_with_torch,
             synch_node_variables_with_torch=synch_node_variables_with_torch,
             synch_node_values_with_torch=synch_node_values_with_torch,
@@ -2767,6 +2768,7 @@ class AutodiffComposition(Composition):
     def parse_synch_and_retain_args(
         self,
         context: Context,
+        base_context: Context,
         synch_projection_matrices_with_torch: SynchRetainArg = NotImplemented,
         synch_node_variables_with_torch: SynchRetainArg = NotImplemented,
         synch_node_values_with_torch: SynchRetainArg = NotImplemented,
@@ -2777,6 +2779,7 @@ class AutodiffComposition(Composition):
     ) -> Tuple[Dict, Dict]:
         return self._parse_synch_and_retain_args(
             context,
+            base_context,
             synch_projection_matrices_with_torch=synch_projection_matrices_with_torch,
             synch_node_variables_with_torch=synch_node_variables_with_torch,
             synch_node_values_with_torch=synch_node_values_with_torch,
@@ -2787,7 +2790,7 @@ class AutodiffComposition(Composition):
         )
 
     def _parse_synch_and_retain_args(
-        self, context: Context, **kwargs
+        self, context: Context, base_context: Context, **kwargs
     ) -> Tuple[Dict, Dict]:
         # Package options for synching and tracking into dictionaries as arguments to learning and exec methods
         def _get_option_val(arg):
@@ -2800,6 +2803,8 @@ class AutodiffComposition(Composition):
                 pass
             if val is NotImplemented:
                 val = arg_param._get(context, fallback_value=NotImplemented)
+            if val is NotImplemented:
+                val = arg_param._get(base_context, fallback_value=NotImplemented)
             if val is NotImplemented:
                 val = arg_param.default_value
             return val
@@ -2821,7 +2826,13 @@ class AutodiffComposition(Composition):
         for result_name, arg in retain_in_pnl_options.items():
             retain_in_pnl_options[result_name] = _get_option_val(arg)
 
-        if self.minibatch_size > 1:
+        try:
+            minibatch_size = self.parameters.minibatch_size._get(context)
+        except ParameterNoValueError:
+            # context may not be initialized yet
+            minibatch_size = self.parameters.minibatch_size._get(base_context)
+
+        if minibatch_size > 1:
             args_str = []
             if retain_in_pnl_options[SAMPLE_VALUES] in {LearningScale.OPTIMIZATION_STEP, LearningScale.TRIAL}:
                 args_str.append('retain_torch_sample_values')
@@ -2834,7 +2845,7 @@ class AutodiffComposition(Composition):
                 is_are = 'is' if len(args_str) == 1 else 'are'
                 raise AutodiffCompositionError(f"The {' ,'.join(args_str)} {arg_args} in the learn() method for "
                                                f"'{self.name}' {is_are} specifed as 'OPTIMIZATION' or 'TRIAL', but "
-                                               f"'minibatch_size` ({self.minibatch_size}) != 1, so "
+                                               f"'minibatch_size` ({minibatch_size}) != 1, so "
                                                f"{', '.join([arg.split('_')[-1] for arg in args_str])} "
                                                f"will be updated only at the end of a minibatch; "
                                                f"use 'MINIBATCH' for the {arg_args} to avoid this warning.")
@@ -3002,6 +3013,7 @@ class AutodiffComposition(Composition):
                 synch_results_with_torch = LearningScale.MINIBATCH
             synch_with_pnl_options, retain_in_pnl_options = self.parse_synch_and_retain_args(
                 context,
+                base_context,
                 synch_projection_matrices_with_torch=synch_projection_matrices_with_torch,
                 synch_node_variables_with_torch=synch_node_variables_with_torch,
                 synch_node_values_with_torch=synch_node_values_with_torch,
@@ -3038,7 +3050,7 @@ class AutodiffComposition(Composition):
                                                base_context=Context(execution_id=None))
 
         # Run AutodiffComposition
-        results = super(AutodiffComposition, self).run(*args, execution_mode=execution_mode, context=context, **kwargs)
+        results = super(AutodiffComposition, self).run(*args, execution_mode=execution_mode, context=context, base_context=base_context, **kwargs)
 
         if execution_mode == pnlvm.ExecutionMode.PyTorch:
             # Synchronize specified outcomes at end of run
