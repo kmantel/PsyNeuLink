@@ -2949,7 +2949,8 @@ class AutodiffComposition(Composition):
 
                 scheduler.get_clock(context)._increment_time(TimeScale.TRIAL)
 
-                self.most_recent_context = context
+                # need to propagate because autodiff_forward does not call execute methods as normal
+                self._propagate_most_recent_context(context)
                 return output_values
 
 
