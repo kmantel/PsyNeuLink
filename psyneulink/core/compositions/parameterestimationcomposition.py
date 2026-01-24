@@ -886,7 +886,7 @@ class ParameterEstimationComposition(Composition):
 
         return ocm
 
-    @handle_external_context()
+    @handle_external_context(fallback_default=True)
     def run(self, *args, context=None, **kwargs):
         # Clear any old results from the composition
         if self.parameters.results._get(context, fallback_value=None) is not None:
