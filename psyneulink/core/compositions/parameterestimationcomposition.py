@@ -397,7 +397,7 @@ class ParameterEstimationComposition(Composition):
         of that Parameter (see `same_seed_for_all_allocations
         <OptimizationControlMechanism.same_seed_for_all_allocations>` for additional details).
 
-    optimized_parameter_values : list
+    optimized_parameter_values : dict
         contains the values of the `parameters <ParameterEstimationComposition.parameters>` of the `model
         <ParameterEstimationComposition.model>` that best fit the `data <ParameterEstimationComposition.data>` when
         the ParameterEstimationComposition is used for `ParameterEstimationComposition_Data_Fitting`,
@@ -455,6 +455,8 @@ class ParameterEstimationComposition(Composition):
         # FIX: 11/32/21 CORRECT INITIAlIZATIONS?
         initial_seed = SharedParameter(attribute_name='controller')
         same_seed_for_all_parameter_combinations = SharedParameter(attribute_name='controller')
+        optimized_parameter_values = {}
+        optimal_value = SharedParameter(attribute_name='controller', shared_parameter_name='optimal_net_outcome')
 
     @handle_external_context()
     @check_user_specified
@@ -531,8 +533,6 @@ class ParameterEstimationComposition(Composition):
         self.cond_levels = None
         self.cond_mask = None
         self.cond_data = None
-
-        self.optimized_parameter_values = []
 
         self.pec_control_mechs = {}
         for (pname, mech), values in parameters.items():
@@ -964,13 +964,16 @@ class ParameterEstimationComposition(Composition):
         results = super(ParameterEstimationComposition, self).run(*args, context=context, **kwargs)
 
         # IMPLEMENTATION NOTE: has not executed OCM after first call
-        if hasattr(self.controller, "optimal_control_allocation"):
+        optimal_control_allocation = self.controller.parameters.optimal_control_allocation._get(context)
+        if optimal_control_allocation is not None:
             # Assign optimized_parameter_values and optimal_value    (remove randomization dimension)
-            self.optimized_parameter_values = dict(zip(
-                self.controller.function.fit_param_names,
-                self.controller.optimal_control_allocation[:-1]
-            ))
-            self.optimal_value = self.controller.optimal_net_outcome
+            optimized_parameter_values = dict(
+                zip(
+                    self.controller.function.fit_param_names,
+                    optimal_control_allocation[:-1],
+                )
+            )
+            self.parameters.optimized_parameter_values._set(optimized_parameter_values, context)
 
         return results
 
@@ -1286,64 +1289,7 @@ class PEC_OCM(OptimizationControlMechanism):
                         inputs[control_mech][mask] = parameters[j]
                         j += 1
 
-    def _execute(self, variable=None, context=None, runtime_params=None)->np.ndarray:
-        """Return control_allocation that optimizes net_outcome of agent_rep.evaluate().
-        """
-
-        if self.is_initializing:
-            return [defaultControlAllocation]
-
-        # Assign default control_allocation if it is not yet specified (presumably first trial)
-        control_allocation = self.parameters.control_allocation._get(context)
-        if control_allocation is None:
-            control_allocation = [c.defaults.variable for c in self.control_signals]
-
-        # Give the agent_rep a chance to adapt based on last trial's state_feature_values and control_allocation
-        if hasattr(self.agent_rep, "adapt"):
-            # KAM 4/11/19 switched from a try/except to hasattr because in the case where we don't
-            # have an adapt method, we also don't need to call the net_outcome getter
-            net_outcome = self.parameters.net_outcome._get(context)
-
-            self.agent_rep.adapt(self.parameters.state_feature_values._get(context),
-                                 control_allocation,
-                                 net_outcome,
-                                 context=context)
-
-        # freeze the values of current context, because they can be changed in between simulations,
-        # and the simulations must start from the exact spot
-        frozen_context = self._get_frozen_context(context)
-
-        alt_controller = None
-        if self.agent_rep.controller is None:
-            try:
-                alt_controller = context.composition.controller
-            except AttributeError:
-                alt_controller = None
-
-        self.agent_rep._initialize_as_agent_rep(
-            frozen_context, base_context=context, alt_controller=alt_controller
-        )
-
-        # Get control_allocation that optimizes net_outcome using OptimizationControlMechanism's function
-        # IMPLEMENTATION NOTE: skip ControlMechanism._execute since it is a stub method that returns input_values
-        optimal_control_allocation, optimal_net_outcome, saved_samples, saved_values = \
-                                                super(ControlMechanism,self)._execute(
-                                                    variable=control_allocation,
-                                                    num_estimates=self.parameters.num_estimates._get(context),
-                                                    context=context,
-                                                    runtime_params=runtime_params
-                                                )
-
-        # clean up frozen values after execution
-        self.agent_rep._clean_up_as_agent_rep(frozen_context, alt_controller=alt_controller)
-
-        if self.function.save_samples:
-            self.saved_samples = saved_samples
-        if self.function.save_values:
-            self.saved_values = saved_values
-
-        self.optimal_control_allocation = optimal_control_allocation
-        self.optimal_net_outcome = optimal_net_outcome
-
-        # Return optimal control_allocation formatted as 2d array
-        return [defaultControlAllocation]
+    def _format_optimal_control_allocation_return_value(self, optimal_control_allocation):  # noqa: U100
+        # NOTE: this replicates the return value in PEC_OCM._execute, which was its main diversion from OptimizationControlMechanism._execute.
+        # test_parameter_estimation_ddm_mle also depends on this
+        return np.asarray([defaultControlAllocation])

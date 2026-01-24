@@ -1776,6 +1776,9 @@ class OptimizationControlMechanism(ControlMechanism):
         saved_samples = None
         saved_values = None
 
+        optimal_control_allocation = None
+        optimal_net_outcome = None
+
         def _validate_state_feature_default_spec(self, state_feature_default):
             if not (isinstance(state_feature_default, (InputPort, OutputPort, Mechanism))
                     or state_feature_default in {SHADOW_INPUTS}
@@ -3084,6 +3087,9 @@ class OptimizationControlMechanism(ControlMechanism):
         if self.agent_rep_type == COMPOSITION_FUNCTION_APPROXIMATOR:
             self._initialize_composition_function_approximator(context)
 
+    def _format_optimal_control_allocation_return_value(self, optimal_control_allocation):
+        return np.array(optimal_control_allocation).reshape((len(self.defaults.value), 1))
+
     def _execute(self, variable=None, context=None, runtime_params=None)->np.ndarray:
         """Return control_allocation that optimizes net_outcome of agent_rep.evaluate().
         """
@@ -3135,14 +3141,14 @@ class OptimizationControlMechanism(ControlMechanism):
         # clean up frozen values after execution
         self.agent_rep._clean_up_as_agent_rep(frozen_context, alt_controller=alt_controller)
 
-        if self.function.save_samples:
-            self.saved_samples = saved_samples
-        if self.function.save_values:
-            self.saved_values = saved_values
+        if self.function.parameters.save_samples._get(context):
+            self.parameters.saved_samples._set(saved_samples, context)
+        if self.function.parameters.save_values._get(context):
+            self.parameters.saved_values._set(saved_values, context)
 
-        self.optimal_control_allocation = optimal_control_allocation
-        self.optimal_net_outcome = optimal_net_outcome
-        optimal_control_allocation = np.array(optimal_control_allocation).reshape((len(self.defaults.value), 1))
+        self.parameters.optimal_control_allocation._set(np.asarray(optimal_control_allocation), context)
+        self.parameters.optimal_net_outcome._set(np.asarray(optimal_net_outcome), context)
+        optimal_control_allocation = self._format_optimal_control_allocation_return_value(optimal_control_allocation)
 
         # Return optimal control_allocation formatted as 2d array
         return optimal_control_allocation

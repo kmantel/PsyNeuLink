@@ -1573,6 +1573,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                      "search_termination_function", "state_feature_function",
                      "search_function", "weight", "exponent", "gating_signal_params",
                      "retain_old_simulation_data",
+                     "optimal_control_allocation", "optimal_net_outcome", "optimized_parameter_values",
                      # "input_size", "hidden_size", "output_size", "bias", "gru_mech",
                      # not used in compiled learning
                      "learning_results", "learning_signal", "learning_signals",
