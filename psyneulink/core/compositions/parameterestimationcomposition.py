@@ -975,6 +975,7 @@ class ParameterEstimationComposition(Composition):
             context.remove_flag(ContextFlags.PROCESSING)
 
             results = self.parameters.results._get(context)
+            self._propagate_most_recent_context(context)
 
         # IMPLEMENTATION NOTE: has not executed OCM after first call
         optimal_control_allocation = self.controller.parameters.optimal_control_allocation._get(context)
