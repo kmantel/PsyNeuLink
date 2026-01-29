@@ -2424,7 +2424,7 @@ class TestControlMechanisms:
         (pnl.CostFunctions.INTENSITY, 3, [0.2817181715409549, -3.3890560989306495, -15.085536923187664, -48.59815003314423, -141.41315910257657]),
         (pnl.CostFunctions.ADJUSTMENT, 3, [3, 3, 3, 3, 3] ),
         (pnl.CostFunctions.INTENSITY | pnl.CostFunctions.ADJUSTMENT, 3, [0.2817181715409549, -4.389056098930649, -17.085536923187664, -51.59815003314423, -145.41315910257657]),
-        (pnl.CostFunctions.DURATION, 3, [-7, -8, -9, -10, -11]),
+        (pnl.CostFunctions.DURATION, 3, [-3, -4, -5, -6, -7]),
         (pnl.CostFunctions.DURATION | pnl.CostFunctions.ADJUSTMENT, None ,None),
         (pnl.CostFunctions.ALL, None, None),
         pytest.param(pnl.CostFunctions.DEFAULTS, 7, [3, 4, 5, 6, 7], id="CostFunctions.DEFAULT")],

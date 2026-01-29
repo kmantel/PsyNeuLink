@@ -3338,6 +3338,13 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     def _instantiate_value(self, context=None):
         #  - call self.execute to get value, since the value of a Component is defined as what is returned by its
         #    execute method, not its function
+
+        # set to initializing because _instantiate_value is only done as
+        # an "initialization" or non-execution step, and it calls _execute.
+        # this avoids incrementing state and execution_time
+        orig_init_status = self.initialization_status
+        self.initialization_status = ContextFlags.INITIALIZING
+
         default_variable = copy.deepcopy(self.defaults.variable)
         try:
             value = self.execute(variable=default_variable, context=context)
@@ -3363,6 +3370,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         except AttributeError:
             # Immutable, so just assign value
             self.defaults.value = value
+
+        self.initialization_status = orig_init_status
 
     def _update_default_variable(self, new_default_variable, context):
         from psyneulink.core.components.shellclasses import Function
