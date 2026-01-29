@@ -1125,7 +1125,7 @@ class GRUComposition(AutodiffComposition):
                 pnl_bias.parameter_ports['matrix'].parameters.value._set(torch_bias, context)
 
     @handle_external_context()
-    def infer_backpropagation_learning_pathways(self, execution_mode, context=None, base_context=None) -> list:
+    def infer_backpropagation_learning_pathways(self, execution_mode, context=None, base_context: Context = Context(None)) -> list:
         """Override to construct only TARGET Node and LossMechanism for GRUComposition.
         Return a list containing TARGET Nodes, that needs to be referenced in inputs argument of learn()"""
         if execution_mode is not pnlvm.ExecutionMode.PyTorch:
