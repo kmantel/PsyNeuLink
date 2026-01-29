@@ -908,8 +908,9 @@ class AutodiffComposition(Composition):
             from psyneulink.core.compositions.showgraph import ShowGraph
             self._show_graph = ShowGraph(self, **show_graph_attributes)
 
+    # NOTE: base_context is not used right now; it will be used here when loss functions are added. you can remove this comment then.
     @handle_external_context()
-    def infer_backpropagation_learning_pathways(self, execution_mode, context=None) -> list:
+    def infer_backpropagation_learning_pathways(self, execution_mode, context=None, base_context=Context(None)) -> list:
         """Create backpropagation learning pathways for every Input Node --> Output Node pathway
         Flattens nested compositions:
           - only includes the Projections in outer Composition to/from the CIMs of the nested Composition

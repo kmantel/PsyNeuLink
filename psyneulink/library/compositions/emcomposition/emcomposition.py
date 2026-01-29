@@ -2956,10 +2956,10 @@ class EMComposition(AutodiffComposition):
         return target_nodes
 
     @handle_external_context()
-    def infer_backpropagation_learning_pathways(self, execution_mode, context=None) -> list:
+    def infer_backpropagation_learning_pathways(self, execution_mode, context=None, base_context: Context = Context(None)) -> list:
         if self.parameters.concatenate_queries._get(context):
             raise EMCompositionError(f"EMComposition does not support learning with 'concatenate_queries'='True'.")
-        return super().infer_backpropagation_learning_pathways(execution_mode, context=context)
+        return super().infer_backpropagation_learning_pathways(execution_mode, context=context, base_context=base_context)
 
     def do_gradient_optimization(self, retain_in_pnl_options, context, optimization_num=None):
         # 7/10/24 - MAKE THIS CONTEXT DEPENDENT:  CALL super() IF BEING EXECUTED ON ITS OWN?
