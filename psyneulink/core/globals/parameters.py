@@ -1869,7 +1869,7 @@ class Parameter(ParameterBase, metaclass=_ParameterMeta):
                 self._deliver_value(value, context)
 
         value_updated = False
-        if not compilation_sync:
+        if self._tracking_compiled_struct and not compilation_sync:
             try:
                 update_array_in_place(self.values[execution_id], value)
             except (KeyError, TypeError, ValueError):
