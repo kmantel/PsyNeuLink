@@ -3186,7 +3186,7 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
-from psyneulink._typing import Callable, Literal, List, Mapping, Optional, Set, Type, Union
+from psyneulink._typing import Callable, Literal, List, Mapping, Optional, Set, Tuple, Type, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.compositions.noderoles import NodeRole, NodeRolesManager
@@ -4653,7 +4653,8 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                           root_composition=NotImplemented,
                           visited_compositions=NotImplemented,
                           include_cims=NotImplemented,
-                          include_controller=NotImplemented)->list[tuple]:
+                          include_controller=NotImplemented
+                          ) -> List[Tuple]:
         """Recursively search and return all nodes of all nested Compositions
            in a tuple with Composition in which they are nested.
         :return
@@ -4770,7 +4771,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         if content_addressable:
             all_nodes = ContentAddressableList(Component, # to accomodate both Mechanisms and Compositions
                                                key='name',
-                                               list=all_nodes, 
+                                               list=all_nodes,
                                                name=f"'_get_all_nodes()' for {self.name}")
         return all_nodes
 
@@ -8687,7 +8688,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
             return covariates_sources
 
-        def _get_acts_in_out_cov(input_source_output_port, output_source_output_port, learned_projection)->list[list]:
+        def _get_acts_in_out_cov(input_source_output_port, output_source_output_port, learned_projection) -> List[List]:
             """Get shapes of activation_input and activation_output used by LearningMechanism and BackPropagation Fct"""
             # activation_input has more than one value if activation function has more than one argument
             activation_input = [input_source_output_port.value]
@@ -9837,7 +9838,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         # Preserve orginal dict passed to **inputs** in case it is used elsewhere, or in another call to learn()
         inputs = inputs.copy()
 
-        # Remove TARGETS subdict from inputs if present; 
+        # Remove TARGETS subdict from inputs if present;
         input_targets_dict = inputs.pop(TARGETS, {})
 
         # Get all TARGET Nodes and OUTPUT Nodes from input dicts (they are allowed as target specifications), excluding
@@ -9899,7 +9900,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
     # BREADCRUMB: REFACTOR INVENTORY AROUND SAMPLES INSTEAD OF TARGETS?
     # BREADCRUMB: NEED TO OVERIDE THIS IN Autodiff TO PASS IN DICT OF SPECIFICATIONS FROM CONSTRUCTOR (self.targets)
     #             OR USE self._constructor_has_target_specs HERE TO INCLUDE THAT (OR MAYBE IN _parse_specs?)
-    def _aggregate_and_filter_sample_target_specs(self, targets_dicts:Optional[dict[str:dict]]=None)->list:
+    def _aggregate_and_filter_sample_target_specs(self, targets_dicts: Optional[Dict[str, Dict]] = None) -> List:
         """Consolidate all sample and target specifciations in learn() and possibly a sublcass constructor
         In learn() specifications can be in **inputs** or **targets** args, or TARGETS subdict of **inputs**
         For subclass, can be in **targets** arg of constructor
@@ -10249,7 +10250,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         Return canonicalized_target_specs and sample_ports_to_learn_specs dicts
         """
-        
+
         # BREADCRUMB: ASSERT THAT ALL SPECS ARE IN sample_target_pairs AND ISSUE PROGRAM ERROR IF NOT:
         #             [BAD SPECS SHOULD ALREADY HAVE BEEN FILTERED OUT IN _aggregate_and_filter_sample_target_specs()
 
