@@ -77,6 +77,14 @@ _register_auto_name_prefix = _PNL_INHERENT_PREFIX
 def _get_auto_name_prefix():
     return _register_auto_name_prefix
 
+
+class Registry:
+    def __init__(self):
+        pass
+
+
+
+
 def register_category(entry,
                       base_class,
                       name=None,
@@ -432,3 +440,16 @@ def process_registry_object_instances(registry, func):
     for category in registry:
         for (name, obj) in registry[category].instanceDict.items():
             func(name, obj)
+
+
+def get_from_registry(obj_name: str, registry: dict):
+    for reg in registry.values():
+        try:
+            return reg.instanceDict[obj_name]
+        except KeyError:
+            # sometimes the name attr is different than the instanceDict key
+            for o in reg.instanceDict.values():
+                if o.name == obj_name:
+                    return o
+
+    return None

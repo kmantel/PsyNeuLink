@@ -328,6 +328,7 @@ from psyneulink.core.globals.context import Context, ContextError, ContextFlags,
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.keywords import DEFAULT, SHARED_COMPONENT_TYPES
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
+from psyneulink.core.globals.registry import get_from_registry
 from psyneulink.core.globals.utilities import (
     _get_cached_function_signature,
     call_with_pruned_args,
@@ -335,7 +336,6 @@ from psyneulink.core.globals.utilities import (
     convert_all_elements_to_np_array,
     create_union_set,
     get_deepcopy_with_shared,
-    get_from_registry,
     get_function_sig_default_value,
     is_numeric,
     safe_equals,

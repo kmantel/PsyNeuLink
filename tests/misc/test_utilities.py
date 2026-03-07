@@ -5,6 +5,7 @@ from contextlib import nullcontext
 import numpy as np
 import pytest
 
+from psyneulink.core.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.core.globals.utilities import (
     PNLStrEnum, convert_all_elements_to_np_array, extended_array_equal, prune_unused_args, update_array_in_place
 )
@@ -220,3 +221,27 @@ class TestPNLStrEnum:
 
         with raises_context:
             assert value not in self.NewPNLStrEnum
+
+
+class TestContentAddressableList:
+    SAME_VALUE = 'SAME_VALUE'
+
+    def test_append(self, item):
+        pass
+
+    def test_append_wrong_type(self, item):
+        pass
+
+    _test_get_parametrizations = [
+        (ProcessingMechanism, SAME_VALUE)
+    ]
+
+    @pytest.mark.parametrize('key, value', _test_get_parametrizations)
+    def test_get(self, key, value):
+        pass
+
+    def test_set(self, key, value):
+        pass
+
+    def test_set_wrong_type(self, key, value):
+        pass
