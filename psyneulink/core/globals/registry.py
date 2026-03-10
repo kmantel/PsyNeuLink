@@ -9,10 +9,11 @@
 # ***********************************************  Registry ************************************************************
 
 import inspect
+import itertools
 import re
 
 from collections import defaultdict, namedtuple
-from typing import Dict
+from typing import Any, Dict, Optional, Set, Tuple, Union
 import weakref
 
 from psyneulink.core.globals.keywords import \
@@ -80,27 +81,59 @@ def _get_auto_name_prefix():
     return _register_auto_name_prefix
 
 
-
-class RegistryCategory:
-    def __init__(self, typ: type, base_class: type):
-        self.typ = typ
-        self.base_class = base_class
-
-        # per-type entries are uniquely named (ex: TransferMechanism)
-        self.typ_entries = weakref.WeakValueDictionary()
-        # per-base_class-type entries may share names (ex: Mechanism)
-        self.base_entries: Dict[str, weakref.WeakSet] = {}
-
-
-# stores multiple registries as previously defined (dict for certain Component types)
+# future intent:
+#   - store multiple registries/categories as previously defined (dict for certain Component types)
+#   - integrate below register_* methods
 class Registry:
     def __init__(self):
-        self._categories = {}
+        self._instances: Dict[str, weakref.WeakSet] = {}
 
-    def register_category():
-        pass
+    # future: consider if should replicate exact signature of register_instance
+    def register_instance(self, entry, name: str):
+        if name not in self._instances:
+            self._instances[name] = weakref.WeakSet()
 
+        self._instances[name].add(entry)
 
+    def rename_instance_in_registry(self, new_name: str, old_name_or_entry: Union[str, Any]):
+        try:
+            targets = self._instances[old_name_or_entry]
+        except (KeyError, TypeError):
+            # name isn't present, so nothing to rename.
+            # check that entry.name are correctly stored in registry?
+            if isinstance(old_name_or_entry, str):
+                return
+        else:
+            try:
+                self._instances[new_name].update(targets)
+            except KeyError:
+                self._instances[new_name] = targets
+
+            del self._instances[old_name_or_entry]
+            return
+
+        for objs in self._instances.values():
+            if old_name_or_entry in objs:
+                objs.discard(old_name_or_entry)
+                if new_name not in self._instances:
+                    self._instances[new_name] = weakref.WeakSet()
+                self._instances[new_name].add(old_name_or_entry)
+
+    def get(self, key: Optional[str] = None, types: Optional[Union[type, Tuple[type]]] = None) -> Union[Any, Set[Any]]:
+        res = None
+        try:
+            res = self._instances[key]
+        except KeyError:
+            if types is not None:
+                res = itertools.flatten(self._instances.values())
+
+        if types is not None:
+            res = set(filter(lambda x: isinstance(x, types), res))
+
+        if res is not None and len(res) == 1:
+            res = next(iter(res))
+
+        return res
 
 
 def register_category(entry,
