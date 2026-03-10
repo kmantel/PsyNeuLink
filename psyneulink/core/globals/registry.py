@@ -119,7 +119,11 @@ class Registry:
                     self._instances[new_name] = weakref.WeakSet()
                 self._instances[new_name].add(old_name_or_entry)
 
-    def get(self, key: Optional[str] = None, types: Optional[Union[type, Tuple[type]]] = None) -> Union[Any, Set[Any]]:
+    def get(
+        self,
+        key: Optional[str] = None,
+        types: Optional[Union[type, Tuple[type]]] = None,
+    ) -> Union[Any, Set[Any]]:
         res = None
         try:
             res = self._instances[key]
@@ -134,6 +138,10 @@ class Registry:
             res = next(iter(res))
 
         return res
+
+
+_global_registry = Registry()
+registry = _global_registry
 
 
 def register_category(entry,
@@ -354,6 +362,9 @@ def register_instance(entry, name, base_class, registry, sub_dict):
         else:
             renamed_instance_counts[match.groups()[0]] += 1
 
+    _global_registry.register_instance(entry, entry.name)
+
+
 def rename_instance_in_registry(registry, category, new_name, old_name=None, component=None):
     """Rename instance in category registry
 
@@ -410,7 +421,11 @@ def rename_instance_in_registry(registry, category, new_name, old_name=None, com
                                        instance_count,
                                        registry_entry.renamed_instance_counts,
                                        registry_entry.default)
+
+    _global_registry.rename_instance_in_registry(new_name, old_name)
+
     return new_name
+
 
 def remove_instance_from_registry(registry, category, name=None, component=None):
     """Remove instance from registry category entry
