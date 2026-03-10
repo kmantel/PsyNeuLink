@@ -98,11 +98,13 @@ class Registry:
     def rename_instance_in_registry(self, new_name: str, old_name_or_entry: Union[str, Any]):
         try:
             targets = self._instances[old_name_or_entry]
-        except (KeyError, TypeError):
+        except KeyError:
             # name isn't present, so nothing to rename.
             # check that entry.name are correctly stored in registry?
             if isinstance(old_name_or_entry, str):
                 return
+        except TypeError:
+            return
         else:
             try:
                 self._instances[new_name].update(targets)
@@ -112,6 +114,7 @@ class Registry:
             del self._instances[old_name_or_entry]
             return
 
+        # at this point, old_name_or_entry should not be a str
         for objs in self._instances.values():
             if old_name_or_entry in objs:
                 objs.discard(old_name_or_entry)
@@ -119,29 +122,72 @@ class Registry:
                     self._instances[new_name] = weakref.WeakSet()
                 self._instances[new_name].add(old_name_or_entry)
 
+    def remove_instance_from_registry(
+        self,
+        name_or_entry: Union[str, Any],
+        types: Optional[Union[type, Tuple[type]]] = None,
+    ):
+        try:
+            targets = self._instances[name_or_entry]
+        except KeyError:
+            # name isn't present, so nothing to remove.
+            # check that entry.name are correctly stored in registry?
+            if isinstance(name_or_entry, str):
+                return
+        except TypeError:
+            return
+        else:
+            to_del = set()
+            for obj in targets:
+                if types is None or isinstance(obj, types):
+                    to_del.add(obj)
+
+            for obj in to_del:
+                self._instances[name_or_entry].discard(obj)
+            return
+
+        # at this point, name_or_entry should not be a str
+        for objs in self._instances.values():
+            if name_or_entry in objs:
+                objs.discard(name_or_entry)
+                return
+
     def get(
         self,
-        key: Optional[str] = None,
+        name_or_types: Optional[Union[str, type, Tuple[type]]],
         types: Optional[Union[type, Tuple[type]]] = None,
     ) -> Union[Any, Set[Any]]:
+        if not isinstance(name_or_types, str):
+            # docstring: note override of types if both specified
+            types = name_or_types
+            name_or_types = None
+
         res = None
         try:
-            res = self._instances[key]
+            res = self._instances[name_or_types]
         except KeyError:
             if types is not None:
-                res = itertools.flatten(self._instances.values())
+                res = set(itertools.chain(*self._instances.values()))
+        else:
+            assert name_or_types is not None
 
         if types is not None:
-            res = set(filter(lambda x: isinstance(x, types), res))
+            try:
+                res = set(filter(lambda x: isinstance(x, types), res))
+            except TypeError:
+                # only expected to be incompatible arg 2 of isinstance
+                res = None
 
-        if res is not None and len(res) == 1:
-            res = next(iter(res))
+        if res is not None:
+            if len(res) == 0:
+                return None
+            if len(res) == 1:
+                res = next(iter(res))
 
         return res
 
 
-_global_registry = Registry()
-registry = _global_registry
+global_registry = Registry()
 
 
 def register_category(entry,
@@ -301,6 +347,9 @@ def register_category(entry,
     else:
         raise RegistryError("Requested entry {0} not of type {1}".format(entry, base_class))
 
+    # currently, some instances are registered using this function (ex: Mechanism_Base)
+    global_registry.register_instance(entry, entry.name)
+
 
 def register_instance(entry, name, base_class, registry, sub_dict):
 
@@ -362,7 +411,7 @@ def register_instance(entry, name, base_class, registry, sub_dict):
         else:
             renamed_instance_counts[match.groups()[0]] += 1
 
-    _global_registry.register_instance(entry, entry.name)
+    global_registry.register_instance(entry, entry.name)
 
 
 def rename_instance_in_registry(registry, category, new_name, old_name=None, component=None):
@@ -422,7 +471,7 @@ def rename_instance_in_registry(registry, category, new_name, old_name=None, com
                                        registry_entry.renamed_instance_counts,
                                        registry_entry.default)
 
-    _global_registry.rename_instance_in_registry(new_name, old_name)
+    global_registry.rename_instance_in_registry(new_name, old_name)
 
     return new_name
 
@@ -478,6 +527,9 @@ def remove_instance_from_registry(registry, category, name=None, component=None)
                                        instance_count,
                                        registry_entry.renamed_instance_counts,
                                        registry_entry.default)
+
+    global_registry.remove_instance_from_registry(name, category)
+
 
 def clear_registry(registry=None):
     """Clear specified registry of all entries, but leave any categories created within it intact.
