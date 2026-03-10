@@ -1247,7 +1247,7 @@ class TestContentAddressableMemory:
                                          distance_function=Distance(metric=COSINE),
                                          seed=module_seed)
 
-        clear_registry(FunctionRegistry)
+        (FunctionRegistry)
         with pytest.raises(ParameterError) as error_text:
             ContentAddressableMemory(retrieval_prob=32)
 

@@ -12,6 +12,8 @@ import inspect
 import re
 
 from collections import defaultdict, namedtuple
+from typing import Dict
+import weakref
 
 from psyneulink.core.globals.keywords import \
     CONTROL_PROJECTION, DDM_MECHANISM, GATING_SIGNAL, INPUT_PORT, MAPPING_PROJECTION, OUTPUT_PORT, \
@@ -78,8 +80,24 @@ def _get_auto_name_prefix():
     return _register_auto_name_prefix
 
 
+
+class RegistryCategory:
+    def __init__(self, typ: type, base_class: type):
+        self.typ = typ
+        self.base_class = base_class
+
+        # per-type entries are uniquely named (ex: TransferMechanism)
+        self.typ_entries = weakref.WeakValueDictionary()
+        # per-base_class-type entries may share names (ex: Mechanism)
+        self.base_entries: Dict[str, weakref.WeakSet] = {}
+
+
+# stores multiple registries as previously defined (dict for certain Component types)
 class Registry:
     def __init__(self):
+        self._categories = {}
+
+    def register_category():
         pass
 
 
