@@ -167,6 +167,9 @@ class Registry:
         try:
             res = self._instances[name_or_types]
         except KeyError:
+            if isinstance(name_or_types, str):
+                return
+
             if types is not None:
                 res = set(itertools.chain(*self._instances.values()))
         else:
@@ -529,7 +532,7 @@ def remove_instance_from_registry(registry, category, name=None, component=None)
                                        registry_entry.renamed_instance_counts,
                                        registry_entry.default)
 
-    global_registry.remove_instance_from_registry(name, category)
+    global_registry.remove_instance_from_registry(name, registry_entry.subclass)
 
 
 def clear_registry(registry=None):
