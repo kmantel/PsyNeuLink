@@ -25,7 +25,8 @@ from psyneulink.core.globals.keywords import \
 __all__ = [
     'RegistryError',
     'clear_registry',
-    'process_registry_object_instances'
+    'process_registry_object_instances',
+    'global_registry',
 ]
 
 # IMPLEMENTATION NOTE:
@@ -558,16 +559,3 @@ def process_registry_object_instances(registry, func):
     for category in registry:
         for (name, obj) in registry[category].instanceDict.items():
             func(name, obj)
-
-
-def get_from_registry(obj_name: str, registry: dict):
-    for reg in registry.values():
-        try:
-            return reg.instanceDict[obj_name]
-        except KeyError:
-            # sometimes the name attr is different than the instanceDict key
-            for o in reg.instanceDict.values():
-                if o.name == obj_name:
-                    return o
-
-    return None

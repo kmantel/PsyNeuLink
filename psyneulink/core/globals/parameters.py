@@ -328,7 +328,7 @@ from psyneulink.core.globals.context import Context, ContextError, ContextFlags,
 from psyneulink.core.globals.context import time as time_object
 from psyneulink.core.globals.keywords import DEFAULT, SHARED_COMPONENT_TYPES
 from psyneulink.core.globals.log import LogCondition, LogEntry, LogError
-from psyneulink.core.globals.registry import get_from_registry
+from psyneulink.core.globals.registry import global_registry
 from psyneulink.core.globals.utilities import (
     _get_cached_function_signature,
     call_with_pruned_args,
@@ -2649,11 +2649,9 @@ class OptimizationParameter(Parameter):
             return NotImplemented
 
         if isinstance(projection, str):
-            import psyneulink as pnl
-
             # TODO: replace this with maybe storing only projections in
             # OptParam, then allowing get by name as well
-            reg_projection = get_from_registry(projection, pnl.ProjectionRegistry)
+            reg_projection = global_registry.get(projection)
             if reg_projection:
                 projection = reg_projection
 

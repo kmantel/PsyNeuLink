@@ -221,3 +221,7 @@ class TestPNLStrEnum:
 
         with raises_context:
             assert value not in self.NewPNLStrEnum
+
+
+class TestRegistry:
+    pass
