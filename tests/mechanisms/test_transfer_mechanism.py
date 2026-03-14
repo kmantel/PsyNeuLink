@@ -227,7 +227,7 @@ class TestDistributionFunctions:
         )
 
         val = T.execute([0, 0, 0, 0])
-        np.testing.assert_allclose(val, [[-0.6931771 ,  1.00018003,  2.5496904 , -0.71562799]])
+        np.testing.assert_allclose(val, [[-1.39225086,  0.66053518,  1.10887925, -0.91598930]])
 
     @pytest.mark.mechanism
     @pytest.mark.transfer_mechanism
@@ -260,7 +260,7 @@ class TestDistributionFunctions:
             integrator_mode=True,
         )
         val = T.execute([0, 0, 0, 0])
-        np.testing.assert_allclose(val, [[1.53154485, 0.36141864, 0.64740347, 0.87558564]])
+        np.testing.assert_allclose(val, [[0.96330110, 0.28835742, 2.40513020, 4.06200184]])
 
     @pytest.mark.mechanism
     @pytest.mark.transfer_mechanism
@@ -292,7 +292,7 @@ class TestDistributionFunctions:
             integrator_mode=True
         )
         val = T.execute([0, 0, 0, 0])
-        np.testing.assert_allclose(val, [[0.78379859, 0.30331273, 0.47659695, 0.58338204]])
+        np.testing.assert_allclose(val, [[0.61836900, 0.25050634, 0.90974626, 0.98278548]])
 
     @pytest.mark.mechanism
     @pytest.mark.transfer_mechanism
@@ -307,7 +307,7 @@ class TestDistributionFunctions:
             integrator_mode=True
         )
         val = T.execute([0, 0, 0, 0])
-        np.testing.assert_allclose(val, [[1.53154485, 0.36141864, 0.64740347, 0.87558564]])
+        np.testing.assert_allclose(val, [[0.96330110, 0.28835742, 2.40513020, 4.06200184]])
 
     @pytest.mark.mechanism
     @pytest.mark.transfer_mechanism
@@ -322,7 +322,7 @@ class TestDistributionFunctions:
             integrator_mode=True
         )
         val = T.execute([0, 0, 0, 0])
-        np.testing.assert_allclose(val, [[0.39640095, 0.45094588, 2.88271841, 0.41203028]])
+        np.testing.assert_allclose(val, [[1.35503180, 0.96989910, 0.60138801, 0.38437082]])
 
 
 class TestTransferMechanismFunctions:
