@@ -829,7 +829,7 @@ from psyneulink._typing import Optional, Union, Literal
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.functions.nonstateful.transformfunctions import LinearCombination, SUM
-from psyneulink.core.components.functions.nonstateful.distributionfunctions import DistributionFunction, WaldDist
+from psyneulink.core.components.functions.nonstateful.distributionfunctions import DistributionFunction
 from psyneulink.core.components.functions.function import Function, is_function_type
 from psyneulink.core.components.functions.nonstateful.objectivefunctions import Distance
 from psyneulink.core.components.functions.nonstateful.selectionfunctions import SelectionFunction
@@ -1766,15 +1766,7 @@ class TransferMechanism(ProcessingMechanism_Base):
 
     def _parse_function_variable(self, variable, context=None):
         if self.is_initializing:
-            for _ in range(variable.size):
-                if isinstance(self.integrator_function.noise, WaldDist):
-                    self.integrator_function.noise.random_state.wald(1, 1)
-                else:
-                    try:
-                        self.integrator_function.noise.random_state.exponential()
-                    except AttributeError:
-                        # numeric noise specification
-                        pass
+            self._try_execute_param(self.parameters.noise._get(context), variable, context)
             return super(TransferMechanism, self)._parse_function_variable(variable=variable, context=context)
 
         integrator_mode = self.parameters.integrator_mode._get(context)
