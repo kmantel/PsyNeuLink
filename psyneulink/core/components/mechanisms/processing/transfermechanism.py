@@ -1770,7 +1770,11 @@ class TransferMechanism(ProcessingMechanism_Base):
                 if isinstance(self.integrator_function.noise, WaldDist):
                     self.integrator_function.noise.random_state.wald(1, 1)
                 else:
-                    self.integrator_function.noise.random_state.exponential()
+                    try:
+                        self.integrator_function.noise.random_state.exponential()
+                    except AttributeError:
+                        # numeric noise specification
+                        pass
             return super(TransferMechanism, self)._parse_function_variable(variable=variable, context=context)
 
         integrator_mode = self.parameters.integrator_mode._get(context)
