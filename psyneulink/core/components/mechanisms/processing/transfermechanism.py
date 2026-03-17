@@ -1771,7 +1771,7 @@ class TransferMechanism(ProcessingMechanism_Base):
                     self.integrator_function.noise.random_state.wald(1, 1)
                 else:
                     self.integrator_function.noise.random_state.exponential()
-            return np.zeros_like(self.integrator_function.defaults.value)
+            return super(TransferMechanism, self)._parse_function_variable(variable=variable, context=context)
 
         integrator_mode = self.parameters.integrator_mode._get(context)
         noise = self._get_current_parameter_value(self.parameters.noise, context)
