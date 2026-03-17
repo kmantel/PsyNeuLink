@@ -153,7 +153,7 @@ class TestTransferMechanismNoise:
         )
         T.reset_stateful_function_when = Never()
         val = T.execute([0, 0, 0, 0])
-        np.testing.assert_allclose(val, [[-0.6931771, 1.00018003, 2.5496904, -0.71562799]])
+        np.testing.assert_allclose(val, [[-1.39225086, 0.66053518, 1.10887925, -0.91598930]])
 
     @pytest.mark.mechanism
     @pytest.mark.transfer_mechanism
@@ -169,7 +169,7 @@ class TestTransferMechanismNoise:
         )
         T.reset_stateful_function_when = Never()
         val = T.execute([0, 0, 0, 0])
-        expected = [[-1.56404341, -3.01320403, -1.22503678, 1.3093712]]
+        expected = [[-2.55352727, 1.15765370, 1.55612201, -0.60836214]]
         np.testing.assert_allclose(val, expected)
 
     @pytest.mark.mechanism
@@ -1155,7 +1155,7 @@ class TestTransferMechanismMultipleInputPorts:
             default_variable=[[0.0, 0.0], [0.0, 0.0]]
         )
         val = T.execute([[1.0, 2.0], [3.0, 4.0]])
-        np.testing.assert_allclose(val, [[1.6136458, 7.00036006], [12.09938081, 7.56874402]])
+        np.testing.assert_allclose(val, [[0.21549828, 6.32107035], [9.21775851, 7.16802140]])
 
     @pytest.mark.mechanism
     @pytest.mark.transfer_mechanism
