@@ -1105,7 +1105,7 @@ class PytorchMechanismWrapper():
                 # (batch, input_port, ... variable dimensions ) or
                 # (batch, input_port, projection, ... variable dimensions ...) if execute_input_ports is invoked
                 # after collect_afferents.
-                if len(v.shape) == 2:
+                if len(v.shape) == len(self.input_ports[i]._pnl_function.defaults.variable.shape) + 1:
                     v = v[:, None, ...]
 
             res.append(self.input_ports[i].function(v))
