@@ -3186,7 +3186,7 @@ import toposort
 from PIL import Image
 from beartype import beartype
 
-from psyneulink._typing import Callable, Literal, List, Mapping, Optional, Set, Tuple, Type, Union
+from psyneulink._typing import Callable, Dict, Literal, List, Mapping, Optional, Set, Tuple, Type, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.compositions.noderoles import NodeRole, NodeRolesManager
