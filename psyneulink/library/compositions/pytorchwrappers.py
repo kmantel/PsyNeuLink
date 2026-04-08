@@ -1358,7 +1358,7 @@ class PytorchMechanismWrapper(torch.nn.Module):
                 res = function(variable)
             # TransformFunction can reduce output to single item from
             # multi-item input
-            if isinstance(function._pnl_function, TransformFunction):
+            if res.ndim == 1 and isinstance(function._pnl_function, TransformFunction):
                 res = res.unsqueeze(1)
             return res
 
