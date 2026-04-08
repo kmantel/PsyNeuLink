@@ -262,7 +262,7 @@ def _recurrent_transfer_mechanism_matrix_getter(owning_component=None, context=N
 
 def _get_auto_hetero_from_matrix(matrix):
     matrix = matrix.copy()
-    auto = np.diag(matrix).copy()
+    auto = np.diagonal(matrix, axis1=-1, axis2=-2).copy()
 
     np.fill_diagonal(matrix, 0)
     hetero = matrix
@@ -731,7 +731,7 @@ class RecurrentTransferMechanism(TransferMechanism):
                 matrix = matrix_param.matrix
 
             elif isinstance(matrix_param, str):
-                matrix = get_matrix(matrix_param, rows=self.recurrent_size, cols=self.recurrent_size)
+                matrix = get_matrix(matrix_param, inp=self.recurrent_size, out=self.recurrent_size)
 
             elif isinstance(matrix_param, (np.matrix, list)):
                 matrix = np.array(matrix_param)
@@ -817,7 +817,7 @@ class RecurrentTransferMechanism(TransferMechanism):
 
         param_keys = self._parameter_ports.key_values
 
-        matrix = get_matrix(copy_parameter_value(self.defaults.matrix), rows=self.recurrent_size, cols=self.recurrent_size)
+        matrix = get_matrix(copy_parameter_value(self.defaults.matrix), inp=self.recurrent_size, out=self.recurrent_size)
 
         # below implements the rules provided by KAM:
         # - If auto and hetero but not matrix are specified, the diagonal terms of the matrix are determined by auto and the off-diagonal terms are determined by hetero.
@@ -976,6 +976,7 @@ class RecurrentTransferMechanism(TransferMechanism):
             self.recurrent_projection = self._instantiate_recurrent_projection(self,
                                                                                matrix=matrix,
                                                                                context=context)
+            self.recurrent_projection._activate_for_all_compositions()
 
             # creating a recurrent_projection changes the default variable shape
             # so we have to reshape any Paramter Functions

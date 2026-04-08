@@ -44,7 +44,7 @@ except ImportError:
     torch = None
 from beartype import beartype
 
-from psyneulink._typing import Optional, Union, Literal
+from psyneulink._typing import Optional, Union, Literal, Tuple
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.functions import function
@@ -57,11 +57,19 @@ from psyneulink.core.globals.keywords import (
      HAS_INITIALIZERS, HOLLOW_MATRIX, IDENTITY_MATRIX, LINEAR_COMBINATION_FUNCTION, L0,
      MATRIX, MATRIX_KEYWORD_NAMES, MATRIX_TRANSFORM_FUNCTION,  MULTIPLICATIVE_PARAM, NORMALIZE,
      OFFSET, OPERATION, PREDICTION_ERROR_DELTA_FUNCTION, PRODUCT,
-     REARRANGE_FUNCTION, RECEIVER, REDUCE_FUNCTION, SCALE, SUM, WEIGHTS, PREFERENCE_SET_NAME)
+    DEFAULT,
+    PREFERENCE_SET_NAME,
+    REARRANGE_FUNCTION,
+    RECEIVER,
+    REDUCE_FUNCTION,
+    SCALE,
+    SUM,
+    WEIGHTS,
+)
 from psyneulink.core.globals.utilities import (
-    convert_all_elements_to_np_array, convert_to_np_array, is_numeric, is_matrix_keyword, is_numeric_scalar,
+    _validate_np_tensordot_args, convert_all_elements_to_np_array, convert_to_np_array, is_numeric, is_matrix_keyword, is_numeric_scalar,
     np_array_less_than_2d, ValidParamSpecType)
-from psyneulink.core.globals.context import ContextFlags, handle_external_context
+from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
 from psyneulink.core.globals.parameters import Parameter, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.basepreferenceset import \
     REPORT_OUTPUT_PREF, ValidPrefSet, PreferenceEntry, PreferenceLevel
@@ -1861,6 +1869,7 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
         matrix = Parameter(None, modulable=True, mdf_name='B')
         operation = Parameter(DOT_PRODUCT, stateful=False)
         normalize = Parameter(False)
+        axes: Union[int, Tuple[int, int], DEFAULT] = DEFAULT
 
     @check_user_specified
     @beartype
@@ -1887,7 +1896,7 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
         )
 
         self.parameters.matrix.set(
-            self.instantiate_matrix(self.parameters.matrix.get()),
+            self.instantiate_matrix(self.parameters.matrix.get(), Context(None)),
             skip_log=True,
         )
 
@@ -1910,7 +1919,7 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
         # proxy for checking whether the owner is a projection
         if hasattr(self.owner, 'receiver'):
             sender = self.defaults.variable
-            sender_len = np.size(np.atleast_2d(self.defaults.variable), 1)
+            sender_len = np.size(np.atleast_2d(self.defaults.variable), -1)
 
             # Check for and validate receiver first, since it may be needed to validate and/or construct the matrix
             # First try to get receiver from specification in params
@@ -1969,23 +1978,21 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
                                                                         self.name,
                                                                         self.owner_name))
 
-                        if weight_matrix.ndim != 2:
-                            raise FunctionError("The matrix provided for the {} function of {} must be 2d (it is {}d".
-                                                format(weight_matrix.ndim, self.name, self.owner_name))
+                        if weight_matrix.ndim > 2:
+                            axes = self._get_axes(sender, weight_matrix, context)
+                            _validate_np_tensordot_args(sender, weight_matrix, axes)
+                        else:
+                            matrix_rows = weight_matrix.shape[0]
+                            matrix_cols = weight_matrix.shape[1]
 
-                        matrix_rows = weight_matrix.shape[0]
-                        matrix_cols = weight_matrix.shape[1]
-
-                        # Check that number of rows equals length of sender vector (variable)
-                        if matrix_rows != sender_len:
-                            raise FunctionError("The number of rows ({}) of the "
-                                                "matrix provided for {} function "
-                                                "of {} does not equal the length "
-                                                "({}) of the sender vector "
-                                                "(variable)".format(matrix_rows,
-                                                                    self.name,
-                                                                    self.owner_name,
-                                                                    sender_len))
+                            # Check that number of rows equals length of sender vector (variable)
+                            if matrix_rows != sender_len:
+                                raise FunctionError(
+                                    'The number of rows ({}) of the matrix provided for {} function of {}'
+                                    ' does not equal the length ({}) of the sender vector (variable)'.format(
+                                        matrix_rows, self.name, self.owner_name, sender_len,
+                                    )
+                                )
 
                     # Auto, full or random connectivity matrix requested (using keyword):
                     # Note:  assume that these will be properly processed by caller
@@ -2101,7 +2108,8 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
         if matrix is None and not hasattr(self.owner, "receiver"):
             variable_length = np.size(np.atleast_2d(self.defaults.variable), 1)
             matrix = np.identity(variable_length)
-        self.parameters.matrix._set(self.instantiate_matrix(matrix), context)
+        matrix = self.instantiate_matrix(matrix, context)
+        self.parameters.matrix._set(matrix, context)
 
     def instantiate_matrix(self, specification, context=None):
         """Implements matrix indicated by specification
@@ -2132,15 +2140,17 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
                 # receiver = sender
             receiver_len = receiver.shape[0]
 
-            matrix = get_matrix(specification, rows=sender_len, cols=receiver_len, context=context)
+            matrix = get_matrix(specification, inp=sender, out=receiver, context=context)
 
             # This should never happen (should have been picked up in validate_param or above)
             if matrix is None:
                 raise FunctionError("MATRIX param ({}) for the {} function of {} must be a matrix, a function "
                                     "that returns one, a matrix specification keyword ({}), or a number (filler)".
                                     format(specification, self.name, self.owner_name, MATRIX_KEYWORD_NAMES))
-            else:
-                return matrix
+            elif matrix.ndim > 2:
+                axes = self._get_axes(sender, matrix, context)
+                _validate_np_tensordot_args(sender, matrix, axes)
+            return matrix
         else:
             return np.array(specification)
 
@@ -2255,7 +2265,9 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
                     #      Replace columns (if norming axis 0) or rows (if norming axis 1) of zeros with 1's
                     # matrix = matrix / np.linalg.norm(matrix,axis=-1,keepdims=True)
                     matrix = matrix / np.linalg.norm(matrix, axis=0, keepdims=True)
-            result = np.dot(vector, matrix)
+
+            axes = self._get_axes(vector, matrix, context)
+            result = np.tensordot(vector, matrix, axes=axes)
 
         elif operation == L0:
             if normalize:
@@ -2268,21 +2280,7 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
 
     @staticmethod
     def keyword(obj, keyword):
-
-        from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
-        rows = None
-        cols = None
-        # use of variable attribute here should be ok because it's using it as a format/type
-        if isinstance(obj, MappingProjection):
-            if isinstance(obj.sender.defaults.value, numbers.Number):
-                rows = 1
-            else:
-                rows = len(obj.sender.defaults.value)
-            if isinstance(obj.receiver.defaults.variable, numbers.Number):
-                cols = 1
-            else:
-                cols = obj.receiver.socket_width
-        matrix = get_matrix(keyword, rows, cols)
+        matrix = get_matrix(keyword, obj.sender.socket_shape, obj.receiver.socket_shape)
 
         if matrix is None:
             raise FunctionError("Unrecognized keyword ({}) specified for the {} function of {}".
@@ -2317,6 +2315,16 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
             return np.array_equal(matrix, identity_matrix)
         except TypeError:
             return matrix == identity_matrix
+
+    # not implemented as a parameter getter in order to not cause confusion with the real value
+    def _get_axes(self, variable, matrix, context):
+        axes = self.parameters.axes._get(context)
+        if axes == DEFAULT:
+            if matrix.ndim <= 2:
+                axes = 1
+            else:
+                axes = variable.ndim
+        return axes
 
 # def is_matrix_spec(m):
 #     if m is None:

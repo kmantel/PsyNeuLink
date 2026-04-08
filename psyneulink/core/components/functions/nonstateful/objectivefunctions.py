@@ -350,14 +350,6 @@ class Stability(ObjectiveFunction):
         from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
         from psyneulink.core.components.ports.parameterport import ParameterPort
 
-        # this mirrors the transformation in _function
-        # it is a hack, and a general solution should be found
-        squeezed = np.array(self.defaults.variable)
-        if squeezed.ndim > 1:
-            squeezed = np.squeeze(squeezed)
-
-        size = safe_len(squeezed)
-
         matrix = self.parameters.matrix._get(context)
 
         if isinstance(matrix, MappingProjection):
@@ -365,11 +357,11 @@ class Stability(ObjectiveFunction):
         # elif isinstance(matrix, ParameterPort):
         #     pass
         else:
-            matrix = get_matrix(matrix, size, size)
+            matrix = get_matrix(matrix, self.defaults.variable, self.defaults.variable)
 
         self.parameters.matrix._set(matrix, context)
 
-        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, size, size)
+        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, self.defaults.variable, self.defaults.variable)
 
         default_variable = [self.defaults.variable,
                             self.defaults.variable]
@@ -394,8 +386,7 @@ class Stability(ObjectiveFunction):
 
         # this mirrors the transformation in _function
         # it is a hack, and a general solution should be found
-        new_default_variable = convert_all_elements_to_np_array(new_default_variable)
-        size = safe_len(np.squeeze(new_default_variable))
+        new_default_variable = self.parameters._parse_variable(new_default_variable)
         matrix = self.parameters.matrix._get(context)
 
         if isinstance(matrix, MappingProjection):
@@ -403,11 +394,11 @@ class Stability(ObjectiveFunction):
         elif isinstance(matrix, ParameterPort):
             pass
         else:
-            matrix = get_matrix(copy_parameter_value(self.defaults.matrix), size, size)
+            matrix = get_matrix(copy_parameter_value(self.defaults.matrix), new_default_variable, new_default_variable)
 
         self.parameters.matrix._set(matrix, context)
 
-        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, size, size)
+        self._hollow_matrix = get_matrix(HOLLOW_MATRIX, new_default_variable, new_default_variable)
 
         super()._update_default_variable(new_default_variable, context)
 
