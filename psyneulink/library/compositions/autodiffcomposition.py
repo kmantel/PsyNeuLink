@@ -1569,7 +1569,16 @@ class AutodiffComposition(Composition):
         target_values = {}
         def get_target_value(target):
             if target in self.get_nodes_by_role(NodeRole.INPUT):
-                return input_dict[target]
+                # Mechanism inputs have dimensions:
+                #   0: batch
+                #   1: input_ports
+                #   2: input_port input (incoming projections)
+                #   3...: input_port value shape
+                # Remove dim 2 here because this is reduced by the input ports
+                # and isn't passed to the mechanism function. Not doing this
+                # causes subtle loss calculation errors in autodiff_forward
+                return input_dict[target].squeeze(dim=2)
+
             if len(target.path_afferents) > 1:
                 raise AutodiffCompositionError(f"TARGET Node '{target.name}' (for '{self.name}')"
                                                f"cannot have more than one afferent projection.")
