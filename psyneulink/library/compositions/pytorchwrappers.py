@@ -2268,13 +2268,13 @@ class PytorchMechanismWrapper(torch.nn.Module):
                 # We should be able to stack now, since the ragged structure is only on input ports
                 v = torch.stack([torch.stack(b) for b in v])
 
-            if isinstance(self.input_ports[i]._pnl_function, TransformFunction):
-                # Add input port dimension back to account for input port dimension reduction, we should have shape
-                # (batch, sequence, input_port, ... variable dimensions ) or
-                # (batch, sequence, input_port, projection, ... variable dimensions ...) if execute_input_ports is invoked
-                # after collect_afferents.
-                if len(v.shape) == 3:
-                    v = v[:, :, None, ...]
+            # if isinstance(self.input_ports[i]._pnl_function, TransformFunction):
+            #     # Add input port dimension back to account for input port dimension reduction, we should have shape
+            #     # (batch, sequence, input_port, ... variable dimensions ) or
+            #     # (batch, sequence, input_port, projection, ... variable dimensions ...) if execute_input_ports is invoked
+            #     # after collect_afferents.
+            #     if len(v.shape) == 3:
+            #         v = v[:, :, None, ...]
 
             res.append(self.input_ports[i].function(v))
 

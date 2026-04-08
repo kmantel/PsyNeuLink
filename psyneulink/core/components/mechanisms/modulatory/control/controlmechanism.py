@@ -933,7 +933,7 @@ class ControlMechanism(ModulatoryMechanism_Base):
         then the ControlSignal's parameters.allocation.default_value is used. See documentation for
         **default_allocation** argument of ControlSignal constructor for additional details.
 
-    control_allocation : 2d array
+    control_allocation : np.ndarray
         each item is the value assigned as the `allocation <ControlSignal.allocation>` for the corresponding
         ControlSignal listed in the `control_signals <ControlMechanism.control_signals>` attribute (that is,
         it is a list of the values of the `variable <OutputPort.variable>` attributes of the ControlMechanism's

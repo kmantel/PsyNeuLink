@@ -397,7 +397,7 @@ class RegressionCFA(CompositionFunctionApproximator):
         Arguments
         ---------
 
-        feature_values : 2d array
+        feature_values : np.ndarray
             arrays of state_features to assign as the `PV.F` term of `terms <PredictionVector.terms>`.
 
         control_signals : List[ControlSignal]

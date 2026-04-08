@@ -552,8 +552,9 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
 
     .. technical_note::
        Both `memory <ContentAddressableMemory.memory>` and all entries are stored as np.ndarrays, the dimensionality of
-       which is determined by the shape of the fields of an entry.  If all fields have the same length (regular), then
-       they are 2d arrays and `memory <ContentAddressableMemory.memory>` is a 3d array.  However, if fields vary in
+       which is determined by the shape of the fields of an entry. If all fields are 2d arrays of
+       the same length (regular), then `memory <ContentAddressableMemory.memory>` is a 3d array.
+       However, if fields vary in
        length (`ragged <https://en.wikipedia.org/wiki/Jagged_array>`_) then, although each field is 1d, an entry is
        also 1d (with dtype='object'), and `memory <ContentAddressableMemory.memory>` is 2d (with dtype='object').
 
@@ -832,10 +833,9 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
     Arguments
     ---------
 
-    default_variable : list or 2d array : default class_defaults.variable
+    default_variable : list or np.ndarray : default class_defaults.variable
         specifies a template for an entry in the dictionary;  the list or array can have any number of items,
-        each of which must be a list or array of any length;  however, at present entries are constrained to be
-        at most 2d.
+        each of which must be a list or array of any length.
 
     retrieval_prob : float in interval [0,1] : default 1.0
         specifies probability of retrieving an entry from `memory <ContentAddressableMemory.memory>`.
@@ -848,16 +848,16 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         specifies a value used to multiply `variable <ContentAddressableMemory.variable>` before storing in
         `memory <ContentAddressableMemory.memory>` (see `rate <ContentAddressableMemory.rate>` for details).
 
-    noise : float, list, 2d array, or Function : default 0.0
+    noise : float, list, array, or Function : default 0.0
         specifies random value(s) added to `variable <ContentAddressableMemory.variable>` before storing in
-        `memory <ContentAddressableMemory.memory>`;  if a list or 2d array, it must be the same shape as `variable
+        `memory <ContentAddressableMemory.memory>`;  if a list or array, it must be the same shape as `variable
         ContentAddressableMemory.variable>` (see `noise <ContentAddressableMemory.noise>` for details).
 
-    initializer : 3d array or list : default None
+    initializer : array or list : default None
         specifies an initial set of entries for `memory <ContentAddressableMemory.memory>` (see
         `initializer <ContentAddressableMemory.initializer>` for additional details).
 
-    distance_field_weights : 1d array : default None
+    distance_field_weights : np.ndarray : default None
         specifies the weight to use in computing the distance between each item of `variable
         <ContentAddressableMemory.variable>` and the corresponding `memory_field
         <EpisodicMemoryMechanism_Memory_Fields>` of each item in `memory <ContentAddressableMemory.memory>` (see
@@ -906,7 +906,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
     Attributes
     ----------
 
-    variable : 2d array
+    variable : np.ndarray
         used to retrieve an entry from `memory <ContentAddressableMemory.memory>`, and then stored there.
 
     retrieval_prob : float in interval [0,1]
@@ -924,20 +924,20 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         value applied multiplicatively to `variable <ContentAddressableMemory.variable>`) before storing
         in`memory <ContentAddressableMemory.memory>` (see `rate <Stateful_Rate>` for additional details).
 
-    noise : float, 2d array or Function
+    noise : float, array or Function
         value added to `variable <ContentAddressableMemory.variable>`) before storing in
         `memory <ContentAddressableMemory.memory>` (see `noise <Stateful_Noise>` for additional details).
-        If a 2d array (or `Function` that returns one), its shape must be the same as `variable
+        If a >=2d array (or `Function` that returns one), its shape must be the same as `variable
         <ContentAddressableMemory.variable>`; that is, each array in the outer dimension (axis 0) must have the
         same length as the corresponding one in `variable <ContentAddressableMemory.variable>`, so that it
         can be added Hadamard style to `variable <ContentAddressableMemory.variable>` before storing it in
         `memory <ContentAddressableMemory.memory>`.
 
     initializer : ndarray
-        initial set of entries for `memory <ContentAddressableMemory.memory>`.  It should be either a 3d regular
-        array or a 2d ragged array (if the fields of an entry have different lengths), but it can be specified
+        initial set of entries for `memory <ContentAddressableMemory.memory>`.  It should be either a >=3d regular
+        array or a >=2d ragged array (if the fields of an entry have different lengths), but it can be specified
         in the **initializer** argument of the constructor using some simpler forms for convenience.  Specifically,
-        scalars, 1d and regular 2d arrays are allowed, which are interpreted as a single entry that is converted to
+        scalars, 1d and regular >=2d arrays are allowed, which are interpreted as a single entry that is converted to
         a 3d array to initialize `memory <ContentAddressableMemory.memory>`.
 
     memory : list
@@ -1046,7 +1046,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
     Returns
     -------
 
-    entry from `memory <ContentAddressableMemory.memory>` that best matches `variable <ContentAddressableMemory.variable>` : 2d array
+    entry from `memory <ContentAddressableMemory.memory>` that best matches `variable <ContentAddressableMemory.variable>` : np.ndarray
         if no retrieval occurs, an appropriately shaped zero-valued array is returned.
 
     """
@@ -1462,7 +1462,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         Arguments
         ---------
 
-        variable : list or 2d array : default class_defaults.variable
+        variable : list or np.ndarray : default class_defaults.variable
            used to retrieve an entry from `memory <ContentAddressableMemory.memory>`, and then stored there.
 
         params : Dict[param keyword: param value] : default None
@@ -1528,12 +1528,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         if not entry.ndim:
             # IMPLEMENTATION NOTE:  Remove this if/when >2d arrays are supported more generally in PsyNeuLink
             raise FunctionError(f"Attempt to store and/or retrieve an entry in {self.__class__.__name__} that has "
-                                f"has dimensions ({entry}); must be a list or 1d or 2d array.")
-
-        if entry.ndim >2:
-            # IMPLEMENTATION NOTE:  Remove this if/when >2d arrays are supported more generally in PsyNeuLink
-            raise FunctionError(f"Attempt to store and/or retrieve an entry in {self.__class__.__name__} ({entry}) "
-                                f"that has more than 2 dimensions ({entry.ndim});  try flattening innermost ones.")
+                                f"has dimensions ({entry}); must be a list or array.")
 
         if not len(entry) == num_fields:
             raise FunctionError(f"Attempt to store and/or retrieve entry in {self.__class__.__name__} ({entry}) "
@@ -1543,7 +1538,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         for i, field in enumerate(entry):
             field = np.array(field)
             # IMPLEMENTATION NOTE:  Remove requirement field.ndim==1  if/when >2d arrays are supported more generally
-            if field.ndim != 1 or field.shape != field_shapes[i]:
+            if field.shape != field_shapes[i]:
                 raise FunctionError(f"Field {i} of entry ({entry}) has incorrect shape ({field.shape}) "
                                     f"for memory of '{self.name}{owner_name}';  should be: {field_shapes[i]}.")
 
@@ -1562,12 +1557,12 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
 
         Arguments
         ---------
-        cue : list or 2d array
+        cue : list or np.ndarray
           must have same number and shapes of fields as existing entries in `memory <ContentAddressableMemory.memory>`.
 
         Returns
         -------
-        entry retrieved : 2d array
+        entry retrieved : np.ndarray
           if no retrieval occurs, returns appropriately shaped zero-valued array.
 
         """
@@ -1641,9 +1636,9 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
 
         Arguments
         ---------
-        entry : list or 2d array
-            should be a list or 2d array containing 1d arrays (fields) each of which should be list or at least a 1d
-            array; scalars, 1d and simple 2d arrays are allowed, and are interpreted as a single entry with a single
+        entry : list or np.ndarray
+            should be a list or array containing arrays (fields) each of which should be list or at least a 1d
+            array; scalars, 1d and simple >=2d arrays are allowed, and are interpreted as a single entry with a single
             field, which is converted to a 3d array. If any entries already exist in `memory
             <ContentAddressableMemory.memory>`, then both the number of fields and their shapes must match existing
             entries (contained in the `memory_num_fields <ContentAddressableMemory.memory_num_fields>` and
@@ -1652,8 +1647,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
 
             .. technical_note::
                this method supports adding entries with items in each field that are greater than 1d for potential
-               future use (see format_for_storage() below); however they are currently rejected in _validate_entry
-               as currently they may produce unexpected results (by returning entries that are greater than 2d).
+               future use (see format_for_storage() below)
         """
 
         self._validate_entry(entry, context)
@@ -1680,7 +1674,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
             - if entry is a regular array (all fields [axis 0 items] have the same shape),
                 returns object with ndim = entry.ndim + 1 (see `technical_note <ContentAddressableMemory_Shapes>` above)
             - if the entry is a ragged array (fields [axis 0 items] have differing shapes),
-                returns 2d object with dtype=object.
+                returns array with dtype=object.
             """
             # Ragged array (i.e., fields of different shapes)
             if entry.ndim == 1 and entry.dtype==object:
@@ -1856,7 +1850,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         ---------
 
         memories : list or array
-            a single entry (list or 2d array) or list or array of entries,
+            a single entry (list or array) or list or array of entries,
             each of which must be a valid entry (i.e. same number of fields and shapes of each
             as entries already in `memory <ContentAddressableMemory.memory>`.
 
@@ -1887,7 +1881,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         if not 1 <= memories.ndim <= 3:
             was_str = f'(was {memories.ndim}d)' if memories.ndim else '(was scalar)'
             raise FunctionError(f"The 'memories' arg for {method} method of "
-                                f"must be a list or array containing 1d or 2d arrays {was_str}.")
+                                f"must be a list or array containing arrays {was_str}.")
 
         # if (memories.ndim == 2 and memories.dtype != object) or (memories.ndim == 1 and memories.dtype == object):
         if (memories.ndim == 2 and memories.dtype != object) or (memories.ndim == 1):
@@ -2018,7 +2012,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
     Arguments
     ---------
 
-    default_variable : list or 2d array : default class_defaults.variable
+    default_variable : list or np.ndarray : default class_defaults.variable
         specifies a template for the key and value entries of the dictionary;  list must have two entries, each
         of which is a list or array;  first item is used as key, and second as value entry of dictionary.
 
@@ -2080,7 +2074,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
     Attributes
     ----------
 
-    variable : 2d array
+    variable : np.ndarray
         1st item (variable[0] is the key used to retrieve an enrtry from `memory <DictionaryMemory.memory>`,
         and 2nd item (variable[1]) is the value of the entry, paired with key and added to the `memory
         <DictionaryMemory.memory>`.
@@ -2161,7 +2155,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
     Returns
     -------
 
-    value and key of entry that best matches first item of `variable <DictionaryMemory.variable>`  : 2d array
+    value and key of entry that best matches first item of `variable <DictionaryMemory.variable>`  : np.ndarray
         if no retrieval occures, an appropriately shaped zero-valued array is returned.
 
     """
@@ -2676,7 +2670,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
         Arguments
         ---------
 
-        variable : list or 2d array : default class_defaults.variable
+        variable : list or np.ndarray : default class_defaults.variable
            first item (variable[0]) is treated as the key for retrieval; second item (variable[1]), paired
            with key, is added to `memory <DictionaryMemory.memory>`.
 
@@ -2772,7 +2766,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
 
         Returns
         -------
-        value and key for item retrieved : 2d array as list
+        value and key for item retrieved : np.ndarray as list
             if no retrieval occurs, returns appropriately shaped zero-valued array.
 
         """
@@ -2827,7 +2821,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
 
         Arguments
         ---------
-        memory : list or 2d array
+        memory : list or np.ndarray
             must be two items, a key and a vaue, each of which must a list of numbers or 1d array;
             the key must be the same length as key(s) of any existing entries in `dict <DictionaryMemory.dict>`.
         """
