@@ -13828,8 +13828,9 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
         inp: Union[List, np.ndarray],
         composition=ConnectionInfo.ALL,
         sequence: bool = False,
+        as_tensor: bool = False,
     ):
-        return self.input_CIM.parse_input_array(inp, composition, sequence)
+        return self.input_CIM.parse_input_array(inp, composition, sequence, as_tensor)
 
     def default_external_input(self, composition=NotImplemented):
         if composition is NotImplemented:

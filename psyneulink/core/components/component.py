@@ -588,6 +588,7 @@ from psyneulink.core.globals.utilities import (
     contains_type,
     convert_all_elements_to_np_array,
     convert_to_np_array,
+    convert_to_tensor,
     get_all_explicit_arguments,
     get_deepcopy_with_shared,
     is_instance_or_subclass,
@@ -604,6 +605,21 @@ from psyneulink.core.globals.utilities import (
 )
 from psyneulink.core.scheduling.condition import Never
 from psyneulink.core.scheduling.time import Time, TimeScale
+
+
+if typing.TYPE_CHECKING:
+    from torch import Tensor
+
+
+try:
+    import torch
+except (ImportError, RuntimeError) as e:
+    if 'torch' not in str(e):
+        raise
+    torch_available = False
+else:
+    torch_available = True
+
 
 __all__ = [
     'Component', 'COMPONENT_BASE_CLASS', 'component_keywords', 'ComponentError', 'ComponentLog',
@@ -4418,7 +4434,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         inp: Union[List, np.ndarray] = None,
         composition=ConnectionInfo.ALL,
         as_sequence: bool = False,
-    ) -> np.ndarray:
+        as_tensor: bool = False,
+    ) -> Union[np.ndarray, 'Tensor']:
         """
         Attempts to produce valid input to this Component from the given
         **inp**, to allow more flexible input. This may involve
@@ -4537,7 +4554,21 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             # can't use np.expand_dims because of ragged arrays
             res = [res]
 
-        return convert_all_elements_to_np_array(res)
+        if as_tensor:
+            if not torch_available:
+                raise RuntimeError('as_tensor=True requires torch module')
+
+            try:
+                res = convert_to_tensor(res)
+            except TypeError:
+                # ragged, return list of tensors as needed.
+                # this should only be the outermost 2 dimensions in our usage
+                # (sequence/batch dimension, and then input port dimension)
+                res = [convert_to_tensor(x) for x in res]
+        else:
+            res = convert_all_elements_to_np_array(res)
+
+        return res
 
     def default_external_input(self, composition=ConnectionInfo.ALL) -> Union[np.ndarray, None]:
         """
