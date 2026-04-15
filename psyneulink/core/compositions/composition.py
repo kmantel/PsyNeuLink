@@ -12118,7 +12118,7 @@ _
             # else:
             elif input_nodes:
                 # If there are any INPUT Nodes (otherwise, skip executing input_CIM)
-                assert build_CIM_input != NotImplemented, f"{self} not in nested mode and no inputs available"
+                assert build_CIM_input is not NotImplemented, f"{self} not in nested mode and no inputs available"
                 self.input_CIM.execute(build_CIM_input, context=context)
 
                 # Update nested compositions
@@ -13076,7 +13076,7 @@ _
 
             build_CIM_input.append(value)
 
-        return build_CIM_input
+        return self.input_CIM.parse_input_array(build_CIM_input, composition=self)
 
     def _assign_execution_ids(self, context=None):
         """
