@@ -79,14 +79,9 @@ class CompositionRunner():
 
         array_inputs = {}
         for k, v in inputs.items():
-            if type(v) is list:
-                if execution_mode is ExecutionMode.PyTorch:
-                    array_inputs[k] = self.convert_to_torch(v)
-                else:
-                    array_inputs[k] = np.array(v)
-            else:
-                array_inputs[k] = v
-
+            array_inputs[k] = k.parse_input_array(
+                v, self._composition, as_sequence=True, as_tensor=execution_mode is ExecutionMode.PyTorch
+            )
         return array_inputs
 
     def _batch_inputs(self,
