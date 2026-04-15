@@ -2755,3 +2755,14 @@ def apply_as_batch_array(func, arr, result=None, nonbatch_dims=2):
         result[indices] = func(arr[indices])
 
     return result
+
+
+def convert_to_tensor(obj):
+    if isinstance(obj, list) and len(obj) > 0 and isinstance(obj, np.ndarray):
+        return torch.from_numpy(np.asarray(obj))
+
+    try:
+        return torch.tensor(obj)
+    except (TypeError, ValueError):
+        # We probably have a ragged array, so we need to convert to a list of tensors
+        return [torch.tensor(x) for x in obj]
