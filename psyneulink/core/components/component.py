@@ -587,6 +587,7 @@ from psyneulink.core.globals.utilities import (
     contains_type,
     convert_all_elements_to_np_array,
     convert_to_np_array,
+    convert_to_tensor,
     get_all_explicit_arguments,
     get_deepcopy_with_shared,
     is_instance_or_subclass,
@@ -603,6 +604,21 @@ from psyneulink.core.globals.utilities import (
 )
 from psyneulink.core.scheduling.condition import Never
 from psyneulink.core.scheduling.time import Time, TimeScale
+
+
+if typing.TYPE_CHECKING:
+    from torch import Tensor
+
+
+try:
+    import torch
+except (ImportError, RuntimeError) as e:
+    if 'torch' not in str(e):
+        raise
+    torch_available = False
+else:
+    torch_available = True
+
 
 __all__ = [
     'Component', 'COMPONENT_BASE_CLASS', 'component_keywords', 'ComponentError', 'ComponentLog',
