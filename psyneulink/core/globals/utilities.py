@@ -2684,14 +2684,21 @@ def ragged_np_clip(a, a_min, a_max, **kwargs):
 
 
 def convert_to_tensor(obj):
-    if isinstance(obj, list) and len(obj) > 0 and isinstance(obj, np.ndarray):
+    if isinstance(obj, list) and len(obj) > 0 and isinstance(obj[0], np.ndarray):
         return torch.from_numpy(np.asarray(obj))
 
     try:
         return torch.tensor(obj)
-    except (TypeError, ValueError):
-        # We probably have a ragged array, so we need to convert to a list of tensors
-        return [torch.tensor(x) for x in obj]
+    except (RuntimeError, TypeError):
+        # likely ragged
+        pass
+    except ValueError:
+        try:
+            return torch.stack(obj)
+        except (RuntimeError, TypeError):
+            # likely ragged
+            pass
+    return [torch.tensor(x) for x in obj]
 
 
 # based heavily on contents of numpy.tensordot v2.1.0
