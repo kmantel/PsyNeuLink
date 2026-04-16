@@ -1282,14 +1282,15 @@ class AutodiffComposition(Composition):
                 # Remove dim 2 here because this is reduced by the input ports
                 # and isn't passed to the mechanism function. Not doing this
                 # causes subtle loss calculation errors in autodiff_forward
+                res = input_dict[target]
                 try:
-                    return input_dict[target].squeeze(dim=2)
+                    return res.squeeze(dim=2)
                 except AttributeError:
                     # input_dict[target] should be a list due to target having a
                     # ragged shape. this should also mean that the individual
                     # input port items are already correctly shaped and so a
                     # squeeze/reduction shouldn't be necessary
-                    pass
+                    return res
 
             if len(target.path_afferents) > 1:
                 raise AutodiffCompositionError(f"TARGET Node '{target.name}' (for '{self.name}')"
