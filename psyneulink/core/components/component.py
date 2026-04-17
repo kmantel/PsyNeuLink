@@ -521,7 +521,6 @@ from enum import Enum, IntEnum
 import dill
 import graph_scheduler
 import numpy as np
-from sphinx import TYPE_CHECKING
 
 from psyneulink._typing import Iterable, List, Union
 from psyneulink.core import llvm as pnlvm
@@ -555,7 +554,7 @@ from psyneulink.core.scheduling.condition import Never
 from psyneulink.core.scheduling.time import Time, TimeScale
 
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from torch import Tensor
 
 
