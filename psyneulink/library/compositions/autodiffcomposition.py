@@ -911,6 +911,17 @@ class AutodiffComposition(Composition):
             from psyneulink.core.compositions.showgraph import ShowGraph
             self._show_graph = ShowGraph(self, **show_graph_attributes)
 
+    def _parse_input_dict(self, inputs, context=None):
+        _inputs, num_inputs_sets = super()._parse_input_dict(inputs, context)
+
+        if self.full_sequence_mode:
+            if type(inp) is torch.Tensor:
+                    inputs_to_run = {k: v[:, seq_index:seq_index + 1, ...] for k, v in inputs.items()}
+            elif type(inp) is list:
+                inputs_to_run = {k: [v[seq_index:seq_index + 1] for v in b_v] for k, b_v in inputs.items()}
+
+        return _inputs, num_inputs_sets
+
     @handle_external_context()
     def infer_backpropagation_learning_pathways(self, execution_mode, context=None)->list:
         """Create backpropagation learning pathways for every Input Node --> Output Node pathway
