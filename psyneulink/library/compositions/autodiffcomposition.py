@@ -2712,7 +2712,7 @@ class AutodiffComposition(Composition):
                 curr_tensors_for_targets[component] = [target[:, :, i, ...] for i in range(target.shape[1])]
             else:
                 # It's a list, of lists, of torch tensors because it is ragged
-                num_outputs = len(target[0][0])
+                num_outputs = len(component.output_ports)
                 curr_tensors_for_targets[component] = [torch.stack([torch.stack([s[i] for s in b]) for b in target]) for i in range(num_outputs)]
 
         # Map value of TARGET_MECHANISMs to trained OUTPUT nodes
