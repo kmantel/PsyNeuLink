@@ -2748,12 +2748,15 @@ def apply_as_batch_array(func, arr, result=None, nonbatch_dims=2):
     return result
 
 
-def convert_to_tensor(obj):
+def convert_to_tensor(obj, dtype=None):
     if isinstance(obj, list) and len(obj) > 0 and isinstance(obj, np.ndarray):
-        return torch.from_numpy(np.asarray(obj))
+        res = torch.from_numpy(np.asarray(obj))
+        if dtype is not None:
+            res = res.to(dtype)
+        return res
 
     try:
-        return torch.tensor(obj)
+        return torch.tensor(obj, dtype=dtype)
     except (TypeError, ValueError):
         # We probably have a ragged array, so we need to convert to a list of tensors
-        return [convert_to_tensor(x) for x in obj]
+        return [convert_to_tensor(x, dtype) for x in obj]
