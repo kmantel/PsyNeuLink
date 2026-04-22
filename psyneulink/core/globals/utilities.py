@@ -2765,4 +2765,4 @@ def convert_to_tensor(obj):
         return torch.tensor(obj)
     except (TypeError, ValueError):
         # We probably have a ragged array, so we need to convert to a list of tensors
-        return [torch.tensor(x) for x in obj]
+        return [convert_to_tensor(x) for x in obj]
