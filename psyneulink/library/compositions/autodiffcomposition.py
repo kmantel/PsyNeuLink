@@ -1366,7 +1366,7 @@ class AutodiffComposition(Composition):
                 curr_tensors_for_targets[component] = [target[:, :, i, ...] for i in range(target.shape[1])]
             else:
                 # It's  a list, of lists, of torch tensors because it is ragged
-                num_outputs = len(target[0][0])
+                num_outputs = len(component.output_ports)
                 curr_tensors_for_targets[component] = [torch.stack([torch.stack([s[i] for s in b]) for b in target]) for i in range(num_outputs)]
 
         # Map value of TARGET nodes to trained OUTPUT nodes
@@ -1590,13 +1590,13 @@ class AutodiffComposition(Composition):
                 # causes subtle loss calculation errors in autodiff_forward
                 res = input_dict[target]
                 try:
-                    return res.squeeze(dim=2)
+                    return res.squeeze(dim=3)
                 except AttributeError:
                     # input_dict[target] should be a list due to target having a
                     # ragged shape. this should also mean that the individual
                     # input port items are already correctly shaped and so a
                     # squeeze/reduction shouldn't be necessary
-                    return res
+                    return [[[x.squeeze(dim=0) for x in seq] for seq in batch] for batch in res]
 
             if len(target.path_afferents) > 1:
                 raise AutodiffCompositionError(f"TARGET Node '{target.name}' (for '{self.name}')"
