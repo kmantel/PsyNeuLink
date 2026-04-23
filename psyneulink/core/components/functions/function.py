@@ -1600,13 +1600,13 @@ def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
         return np.random.rand(*matrix_shape)
 
     if specification == KAIMING_MATRIX:
-        return KaimingMatrix()(rows, cols)
+        return KaimingMatrix()(input_shape[-1], output_shape[-1])
 
     if specification == XAVIER_MATRIX:
-        return XavierMatrix()(rows, cols)
+        return XavierMatrix()(input_shape[-1], output_shape[-1])
 
     if specification == ORTHOGONAL_MATRIX:
-        return OrthogonalMatrix()(rows, cols)
+        return OrthogonalMatrix()(input_shape[-1], output_shape[-1])
 
 
     # Function is specified, so assume it uses random.rand() and call with sender_len and receiver_len
