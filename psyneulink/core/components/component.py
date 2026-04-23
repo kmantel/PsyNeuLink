@@ -4500,7 +4500,10 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         Returns:
             `numpy.ndarray`
         """
-        inp = convert_all_elements_to_np_array(inp)
+        if not as_tensor:
+            inp = convert_all_elements_to_np_array(inp)
+        else:
+            inp = convert_to_tensor(inp)
         inp_squeezed = np.squeeze(inp)
         inp_is_sequence = False
 
