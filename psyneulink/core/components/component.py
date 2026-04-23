@@ -4502,9 +4502,13 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         """
         if not as_tensor:
             inp = convert_all_elements_to_np_array(inp)
+            inp_squeezed = np.squeeze(inp)
         else:
             inp = convert_to_tensor(inp)
-        inp_squeezed = np.squeeze(inp)
+            try:
+                inp_squeezed = inp.squeeze()
+            except AttributeError:
+                inp_squeezed = inp
         inp_is_sequence = False
 
         external_input = self.default_external_input(composition)
