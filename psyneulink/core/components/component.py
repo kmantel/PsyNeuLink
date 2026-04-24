@@ -4514,8 +4514,13 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         external_input = self.default_external_input(composition)
         res = None
 
+        # is ragged tensor
+        if isinstance(inp, list):
+            res = self._reshape_irregular_input_array(
+                inp, external_input, match_itemwise=False
+            )
         # no argument, default
-        if inp.ndim == 0 and inp.item() is None:
+        elif inp.ndim == 0 and inp.item() is None:
             res = copy_parameter_value(external_input)
         elif array_shapes_equal(inp, external_input):
             res = inp
@@ -4563,8 +4568,13 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     inp_is_sequence = True
 
         if res is None:
-            def _shape_type_strs(shape, ragged_shape):
-                if shape == ragged_shape:
+            def _shape_type_strs(arr, ragged_shape):
+                try:
+                    is_np_shape = arr.shape == ragged_shape
+                except AttributeError:
+                    is_np_shape = False
+
+                if is_np_shape:
                     return 'numpy shape', 'np.zeros'
                 else:
                     return 'pnl.ragged_np_shape', 'pnl.ragged_np_zeros'
@@ -4577,9 +4587,9 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             inp_ragged_shape = ragged_np_shape(inp)
             external_input_ragged_shape = ragged_np_shape(external_input)
 
-            inp_shape_type, _ = _shape_type_strs(inp.shape, inp_ragged_shape)
+            inp_shape_type, _ = _shape_type_strs(inp, inp_ragged_shape)
             expected_shape_type, expected_zeros_fct_name = _shape_type_strs(
-                external_input.shape, external_input_ragged_shape
+                external_input, external_input_ragged_shape
             )
 
             if external_input.shape == external_input_ragged_shape:
