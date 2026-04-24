@@ -2610,7 +2610,7 @@ def ragged_np_shape(obj: typing.Union[np.ndarray, collections.abc.Iterable]) -> 
     def _ragged_np_shape(obj):
         try:
             if obj.dtype != object:
-                return obj.shape
+                return tuple(obj.shape)
         except AttributeError:
             pass
 
@@ -2629,15 +2629,21 @@ def ragged_np_shape(obj: typing.Union[np.ndarray, collections.abc.Iterable]) -> 
     try:
         # handle non-ragged numpy.ndarray
         if obj.dtype != object:
-            return obj.shape
+            return tuple(obj.shape)
     except AttributeError:
         pass
 
-    return _ragged_np_shape(convert_all_elements_to_np_array(obj))
+    try:
+        obj = convert_all_elements_to_np_array(obj)
+    except TypeError:
+        pass
+    return tuple(_ragged_np_shape(obj))
 
 
 def array_shapes_equal(a: np.ndarray, b: np.ndarray) -> bool:
-    if (a.dtype == object or b.dtype == object):
+    a_dtype = getattr(a, 'dtype', object)
+    b_dtype = getattr(b, 'dtype', object)
+    if a_dtype == object or b_dtype == object:
         return ragged_np_shape(a) == ragged_np_shape(b)
     else:
         return a.shape == b.shape
