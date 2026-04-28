@@ -4500,21 +4500,25 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         Returns:
             `numpy.ndarray`
         """
-        if not as_tensor:
-            inp = convert_all_elements_to_np_array(inp)
-            inp_squeezed = np.squeeze(inp)
-        else:
+
+        if as_tensor:
             inp = convert_to_tensor(inp)
-            try:
-                inp_squeezed = inp.squeeze()
-            except AttributeError:
-                inp_squeezed = inp
+            squeeze = torch.squeeze
+        else:
+            inp = convert_all_elements_to_np_array(inp)
+            squeeze = np.squeeze
+
+        try:
+            inp_squeezed = squeeze(inp)
+        except TypeError:
+            inp_squeezed = inp
+
         inp_is_sequence = False
 
         external_input = self.default_external_input(composition)
         res = None
 
-        # is ragged tensor
+        # is ragged tensor(?) (failed to be converted above)
         if isinstance(inp, list):
             res = self._reshape_irregular_input_array(
                 inp, external_input, match_itemwise=False
