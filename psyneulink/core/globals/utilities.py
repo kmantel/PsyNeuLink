@@ -164,6 +164,7 @@ __all__ = [
     'contains_type', 'is_numeric_scalar', 'try_extract_0d_array_item', 'fill_array', 'update_array_in_place', 'array_from_matrix_string', 'get_module_file_prefix', 'get_stacklevel_skip_file_prefixes',
     'PNLStrEnum',
     'ragged_np_shape', 'ragged_np_full', 'ragged_np_zeros', 'ragged_np_ones', 'ragged_np_clip',
+    'convert_to_tensor',
 ]
 
 logger = logging.getLogger(__name__)
