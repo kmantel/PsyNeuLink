@@ -4519,7 +4519,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         external_input = self.default_external_input(composition)
         res = None
 
-        # is ragged tensor(?) (failed to be converted above)
+        # expected to be a ragged tensor (failed to be squeezed above)
         if isinstance(inp, list):
             res = self._reshape_irregular_input_array(
                 inp, external_input, match_itemwise=False
