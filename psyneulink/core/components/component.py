@@ -4501,6 +4501,8 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             `numpy.ndarray`
         """
         if as_tensor:
+            if not torch_available:
+                raise RuntimeError('as_tensor=True requires torch module')
             inp = convert_to_tensor(inp)
             squeeze = torch.squeeze
         else:
