@@ -4615,16 +4615,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             res = [res]
 
         if as_tensor:
-            if not torch_available:
-                raise RuntimeError('as_tensor=True requires torch module')
-
-            try:
-                res = convert_to_tensor(res)
-            except TypeError:
-                # ragged, return list of tensors as needed.
-                # this should only be the outermost 2 dimensions in our usage
-                # (sequence/batch dimension, and then input port dimension)
-                res = [convert_to_tensor(x) for x in res]
+            res = convert_to_tensor(res)
         else:
             res = convert_all_elements_to_np_array(res)
 
