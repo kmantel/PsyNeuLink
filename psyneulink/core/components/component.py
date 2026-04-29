@@ -4500,7 +4500,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         Returns:
             `numpy.ndarray`
         """
-
         if as_tensor:
             inp = convert_to_tensor(inp)
             squeeze = torch.squeeze
