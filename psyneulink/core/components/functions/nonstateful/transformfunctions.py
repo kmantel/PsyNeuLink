@@ -1537,12 +1537,12 @@ class LinearCombination(
         self._gen_llvm_combine(builder, ctx=ctx, vi=arg_in, vo=arg_out, params=params)
         return builder
 
-    def _llvm_combine_body(self, builder, ctx, vi, vo, val_f, pow_f, comb_op, params, indices):
+    def _gen_llvm_combine_body(self, builder, ctx, vi, vo, val_f, pow_f, comb_op, params, indices):
         ptro = builder.gep(vo, [ctx.int32_ty(0), *indices])
 
         if isinstance(ptro.type.pointee, pnlvm.ir.ArrayType):
             with pnlvm.helpers.array_ptr_loop(builder, ptro, f"combine_axis{len(indices)}") as (b, idx):
-                self._llvm_combine_body(b, ctx, vi, vo, val_f, pow_f, comb_op, params, [*indices, idx])
+                self._gen_llvm_combine_body(b, ctx, vi, vo, val_f, pow_f, comb_op, params, [*indices, idx])
         else:
             val_p = builder.alloca(val_f.type, name="combined_result")
             builder.store(val_f, val_p)
@@ -1624,7 +1624,7 @@ class LinearCombination(
             assert False, "Unknown operation: {}".format(operation)
 
         pow_f = ctx.get_builtin("pow", [ctx.float_ty])
-        self._llvm_combine_body(builder, ctx, vi, vo, val, pow_f, comb_op, params, [])
+        self._gen_llvm_combine_body(builder, ctx, vi, vo, val, pow_f, comb_op, params, [])
 
     def _gen_pytorch_fct(self, device, context=None):
         weights = self._get_pytorch_fct_param_value('weights', device, context)
