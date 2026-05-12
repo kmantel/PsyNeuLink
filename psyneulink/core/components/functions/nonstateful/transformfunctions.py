@@ -111,9 +111,7 @@ class TransformFunction(Function_Base):
             if len(param_type) == 1 and not isinstance(param_type.element, pnlvm.ir.ArrayType):
                 index = [ctx.int32_ty(0)]
 
-            if not isinstance(index, list):
-                index = [index]
-
+            assert isinstance(index, list)
             param_ptr = builder.gep(param_ptr, [ctx.int32_ty(0), *index])
 
         return builder.load(param_ptr)
@@ -1563,7 +1561,7 @@ class LinearCombination(
                 # lower-dim array specification (ex: exponents [a, b]
                 # and var [[[1, 1]], [[2, 2]]], applying a to [[1, 1]]
                 # and b to [[2, 2]])
-                exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, idx, 1.0)
+                exponent = self._gen_llvm_load_param(ctx, b, params, EXPONENTS, [idx], 1.0)
                 if (
                     isinstance(exponent.type, pnlvm.ir.ArrayType)
                     and len(exponent.type) == 1
@@ -1580,7 +1578,7 @@ class LinearCombination(
                     in_val = b.call(pow_f, [in_val, exponent])
 
                 # lower-dim array specification (see exponent above)
-                weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, idx, 1.0)
+                weight = self._gen_llvm_load_param(ctx, b, params, WEIGHTS, [idx], 1.0)
                 if (
                     isinstance(weight.type, pnlvm.ir.ArrayType)
                     and len(weight.type) == 1
