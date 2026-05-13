@@ -1529,7 +1529,7 @@ class LinearCombination(
 
     def _gen_llvm_function_body(self, ctx, builder, params, _, arg_in, arg_out, *, tags: frozenset):
         # Sometimes we arg_out to 2d array
-        if self.defaults.variable.ndim == self.defaults.value.ndim:
+        if arg_in.type == arg_out.type:
             arg_out = pnlvm.helpers.unwrap_2d_array(builder, arg_out)
 
         self._gen_llvm_combine(builder, ctx=ctx, vi=arg_in, vo=arg_out, params=params)
