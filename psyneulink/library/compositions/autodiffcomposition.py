@@ -2474,6 +2474,7 @@ class AutodiffComposition(Composition):
             self.infer_backpropagation_learning_pathways(execution_mode=ExecutionMode.PyTorch,
                                                          context=context,
                                                          base_context=base_context)
+            self._initialize_from_context(context, base_context, override=False)
         else:
             # No learnable pathways
             if self.targets:
