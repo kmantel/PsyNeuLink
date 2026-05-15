@@ -1598,6 +1598,12 @@ class AutodiffComposition(Composition):
                  f"of LEARNING_OBJECTIVE Mechanisms ({len(self.get_nodes_by_role(NodeRole.LEARNING_OBJECTIVE))}).")
 
             self._analyze_graph()
+
+            for cim in [self.input_CIM, self.output_CIM]:
+                for p in ['variable', 'value']:
+                    param = getattr(cim.parameters, p)
+                    param._initialize_from_context(context, Context(None))
+
             if execution_mode is pnlvm.ExecutionMode.Python:
                 self._update_python_backprop_pathways = False
             else:
