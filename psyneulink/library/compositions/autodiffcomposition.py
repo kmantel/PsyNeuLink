@@ -2470,7 +2470,7 @@ class AutodiffComposition(Composition):
         # Construct a new pytorch_representation if none exists or new is specified
 
         from psyneulink.core.llvm import ExecutionMode
-        if self._has_learnable_pathways:
+        if self._has_learnable_pathways and self._is_learning(context):
             self.infer_backpropagation_learning_pathways(execution_mode=ExecutionMode.PyTorch,
                                                          context=context,
                                                          base_context=base_context)
