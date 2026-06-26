@@ -93,7 +93,7 @@ class LearningFunction(Function_Base):
     ----------
 
     variable : list or array
-        most LearningFunctions take a list or 2d array that must contain three items:
+        most LearningFunctions take a list or array that must contain three items:
 
         * the input to the parameter being modified (variable[LEARNING_ACTIVATION_INPUT]);
         * the output of the parameter being modified (variable[LEARNING_ACTIVATION_OUTPUT]);
@@ -408,11 +408,11 @@ class EMStorage(LearningFunction):
         Arguments
         ---------
 
-        variable : List or 1d array
+        variable : List or np.ndarray
            array containing `entry <EMStorage.entry>` to be added to `memory_matrix <EMStorage.memory_matrix>`
            along `axis <EMStorage.axis>`.
 
-        memory_matrix : List, 2d array, ParameterPort, or MappingProjection
+        memory_matrix : List, np.ndarray, ParameterPort, or MappingProjection
             matrix to which `variable <EMStorage.variable>` is stored.
 
             .. technical_note::
