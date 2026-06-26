@@ -3682,7 +3682,7 @@ class SoftMax(TransferFunction):
 
         Returns
         -------
-        derivative of values returned by SoftMax :  1d or 2d array (depending on *OUTPUT_TYPE* of SoftMax)
+        derivative of values returned by SoftMax :  np.ndarray (depending on *OUTPUT_TYPE* of SoftMax)
         """
 
         if output is None:

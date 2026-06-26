@@ -67,7 +67,7 @@ An KohonenLearningMechanism is identical to a `LearningMechanism` in all respect
     (a weight change matrix assigned to the Mechanism's *LEARNING_SIGNAL* OutputPort), but not an `error_signal
     <LearningMechanism.error_signal>`.
 
-  * its `learning_rate <KohonenLearningMechanism.learning_rate>` can be specified as a 1d or 2d array (or
+  * its `learning_rate <KohonenLearningMechanism.learning_rate>` can be specified as an array (or
     matrix) to scale the contribution made, respectively, by individual elements or connections among them,
     to the weight change matrix;  as with a standard `LearningMechanism`, a scalar can also be specified to scale
     the entire weight change matrix (see `learning_rate <KohonenLearningMechanism.learning_rate>` for

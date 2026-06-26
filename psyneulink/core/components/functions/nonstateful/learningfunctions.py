@@ -1308,7 +1308,7 @@ class Hebbian(LearningFunction):  # --------------------------------------------
         activations in `variable <Hebbian.variable>`.
     COMMENT
 
-    learning_rate : scalar or list, 1d or 2d array of numeric values: default .05
+    learning_rate : scalar or list, np.ndarray of numeric values: default .05
         specifies the learning rate used by the `function <Hebbian.function>`; (see `learning_rate
         <Hebbian.learning_rate>` for details).
 
@@ -1338,7 +1338,7 @@ class Hebbian(LearningFunction):  # --------------------------------------------
         in `variable <Hebbian.variable>`.
     COMMENT
 
-    learning_rate : float, 1d or 2d array
+    learning_rate : float, np.ndarray
         used by the `function <Hebbian.function>` to scale the weight change matrix returned by the `function
         <Hebbian.function>`.  If it is a scalar, it is multiplied by the weight change matrix;  if it is a 1d array,
         it is multiplied Hadamard (elementwise) by the `variable` <Hebbian.variable>` before calculating the weight
