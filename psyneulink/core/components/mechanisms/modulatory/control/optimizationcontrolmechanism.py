@@ -1395,7 +1395,7 @@ class OptimizationControlMechanism(ControlMechanism):
         `agent_rep <OptimizationControlMechanism.agent_rep>`\\'s `evaluate <Composition.evaluate>` method is executed
         (see `state_features <OptimizationControlMechanism_State_Features_Arg>` for additional details).
 
-    state_feature_values : 2d array
+    state_feature_values : np.ndarray
         a dict containing the current values assigned as the input to the InputPorts of the `INPUT <NodeRole.INPUT>`
         `Nodes <Composition_Nodes>` of the `agent_rep <OptimizationControlMechanism.agent_rep>` when its `evaluate
         <Composition.evaluate>` method is executed.  For each such InputPort, if a `state_feature

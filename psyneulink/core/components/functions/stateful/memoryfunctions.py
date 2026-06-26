@@ -906,7 +906,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
     Attributes
     ----------
 
-    variable : 2d array
+    variable : np.ndarray
         used to retrieve an entry from `memory <ContentAddressableMemory.memory>`, and then stored there.
 
     retrieval_prob : float in interval [0,1]
@@ -1046,7 +1046,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
     Returns
     -------
 
-    entry from `memory <ContentAddressableMemory.memory>` that best matches `variable <ContentAddressableMemory.variable>` : 2d array
+    entry from `memory <ContentAddressableMemory.memory>` that best matches `variable <ContentAddressableMemory.variable>` : np.ndarray
         if no retrieval occurs, an appropriately shaped zero-valued array is returned.
 
     """
@@ -1567,7 +1567,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
 
         Returns
         -------
-        entry retrieved : 2d array
+        entry retrieved : np.ndarray
           if no retrieval occurs, returns appropriately shaped zero-valued array.
 
         """
@@ -2080,7 +2080,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
     Attributes
     ----------
 
-    variable : 2d array
+    variable : np.ndarray
         1st item (variable[0] is the key used to retrieve an enrtry from `memory <DictionaryMemory.memory>`,
         and 2nd item (variable[1]) is the value of the entry, paired with key and added to the `memory
         <DictionaryMemory.memory>`.
@@ -2161,7 +2161,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
     Returns
     -------
 
-    value and key of entry that best matches first item of `variable <DictionaryMemory.variable>`  : 2d array
+    value and key of entry that best matches first item of `variable <DictionaryMemory.variable>`  : np.ndarray
         if no retrieval occures, an appropriately shaped zero-valued array is returned.
 
     """
@@ -2772,7 +2772,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
 
         Returns
         -------
-        value and key for item retrieved : 2d array as list
+        value and key for item retrieved : np.ndarray as list
             if no retrieval occurs, returns appropriately shaped zero-valued array.
 
         """

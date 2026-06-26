@@ -720,7 +720,7 @@ class Distance(ObjectiveFunction):
     Arguments
     ---------
 
-    variable : 2d array with two items : Default class_defaults.variable
+    variable : np.ndarray with two items : Default class_defaults.variable
         the arrays between which the distance is calculated.
 
     metric : keyword in DistancesMetrics : Default EUCLIDEAN
@@ -747,7 +747,7 @@ class Distance(ObjectiveFunction):
     Attributes
     ----------
 
-    variable : 2d array with two items
+    variable : np.ndarray with two items
         contains the arrays between which the distance is calculated.
 
     metric : keyword in DistanceMetrics
@@ -1262,7 +1262,7 @@ class LossFunction(ObjectiveFunction):
     Arguments
     ---------
 
-    default_variable : 2d array with two items : Default class_defaults.variable
+    default_variable : np.ndarray with two items : Default class_defaults.variable
         specifies the shape and default value for the `sample <LossFunction.sample>` and `target <LossFunction.target>`
         arrays; these are, respectively, the first and second items of the <variable <LossFunction.variable>` attribute
         (variable[0] and variable[1]) used to compute the loss.
@@ -1292,7 +1292,7 @@ class LossFunction(ObjectiveFunction):
     Attributes
     ----------
 
-    variable : 2d array with two items
+    variable : np.ndarray with two items
         contains the `sample <LossFunction.sample>` array (first item) for which the `loss <LossFunction.loss>` is
         computed with respect to `target <LossFunction.target>` array (second item).
 

@@ -1803,7 +1803,7 @@ class MatrixTransform(TransformFunction):  # -----------------------------------
     variable : 1d array
         contains value to be transformed.
 
-    matrix : 2d array
+    matrix : np.ndarray
         matrix used to transform `variable <MatrixTransform.variable>`.
         Can be specified as any of the following:
             * number - used as the filler value for all elements of the :keyword:`matrix` (call to np.fill);
