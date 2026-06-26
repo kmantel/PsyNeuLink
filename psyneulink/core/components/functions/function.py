@@ -96,6 +96,7 @@ FunctionOutputTypeConversion, then the type of value returned by its `function <
     * FunctionOutputType.NP_0D_ARRAY: return 0d np.array
     * FunctionOutputType.NP_1D_ARRAY: return 1d np.array
     * FunctionOutputType.NP_2D_ARRAY: return 2d np.array.
+    * FunctionOutputType.DEFAULT: (no conversion, value may be n-dimensional).
 
 To implement FunctionOutputTypeConversion, the Function's FUNCTION_OUTPUT_TYPE_CONVERSION parameter must set to True,
 and function type conversion must be implemented by its `function <Function_Base.function>` method
@@ -486,6 +487,7 @@ class Function_Base(Function):
                 FunctionOutputType.NP_0D_ARRAY, return value is "exposed" as a number
                 FunctionOutputType.NP_1D_ARRAY, return value is 1d np.array
                 FunctionOutputType.NP_2D_ARRAY, return value is 2d np.array
+                FunctionOutputType.DEFAULT, return value is not converted and is an n-dimensional np.ndarray
             - it must be enabled for a subclass by setting params[FUNCTION_OUTPUT_TYPE_CONVERSION] = True
             - it must be implemented in the execute method of the subclass
             - see Linear for an example
@@ -1506,7 +1508,13 @@ def _parse_as_shape(obj) -> Tuple[int]:
         return (obj,)
 
 
-def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
+def get_matrix(
+    specification,
+    inp: Union[int, Tuple[int]] = 1,
+    out: Union[int, Tuple[int]] = 1,
+    context=None,
+    axes: Union[int, Tuple[int, int], DEFAULT] = DEFAULT,
+) -> Union[None, np.ndarray]:
     """Returns matrix conforming to specification with dimensions = rows x cols or None
 
      Specification can be a matrix keyword, filler value or np.ndarray
@@ -1515,16 +1523,26 @@ def get_matrix(specification, inp=1, out=1, context=None, axes=DEFAULT):
         + single number (used to fill self.matrix)
         + matrix keyword:
             + AUTO_ASSIGN_MATRIX: IDENTITY_MATRIX if it is square, otherwise FULL_CONNECTIVITY_MATRIX
-            + IDENTITY_MATRIX: 1's on diagonal, 0's elsewhere (must be square matrix), otherwise generates error
-            + HOLLOW_MATRIX: 0's on diagonal, 1's elsewhere (must be square matrix), otherwise generates error
-            + INVERSE_HOLLOW_MATRIX: 0's on diagonal, -1's elsewhere (must be square matrix), otherwise generates error
+            + IDENTITY_MATRIX: 1's on diagonal, 0's elsewhere (must be square matrix), otherwise generates error; (2D only)
+            + HOLLOW_MATRIX: 0's on diagonal, 1's elsewhere (must be square matrix), otherwise generates error; (2D only)
+            + INVERSE_HOLLOW_MATRIX: 0's on diagonal, -1's elsewhere (must be square matrix), otherwise generates error; (2D only)
             + FULL_CONNECTIVITY_MATRIX: all 1's
             + ZERO_MATRIX: all 0's
             + RANDOM_CONNECTIVITY_MATRIX (random floats uniformly distributed between 0 and 1)
             + RandomMatrix (random floats uniformly distributed around a specified center value with a specified range)
         + 2D list or np.ndarray of numbers
 
-     Returns 2D array with length=rows in dim 0 and length=cols in dim 1, or none if specification is not recognized
+     inp (Union[int, Tuple[int]]): shape of the input vector/matrix
+     out (Union[int, Tuple[int]]): shape of the output vector/matrix
+     axes (Union[int, Tuple[int, int], DEFAULT]): the axes to sum over,
+        used as the axes argument for `numpy.tensordot`
+        DEFAULT is the number of dimensions of the input vector/matrix
+
+     Returns:
+        - 2D array with length=(**inp** or the last dimension of **inp**) in dim 0
+          and length=(**out** or the last dimension of **out**) in dim 1
+        - nD array with shape appropriate for `numpy.tensordot(**inp**, **out**, **axes**)`
+        - None if specification is not recognized
     """
     input_shape = _parse_as_shape(inp)
     output_shape = _parse_as_shape(out)
