@@ -832,7 +832,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
     Arguments
     ---------
 
-    default_variable : list or 2d array : default class_defaults.variable
+    default_variable : list or np.ndarray : default class_defaults.variable
         specifies a template for an entry in the dictionary;  the list or array can have any number of items,
         each of which must be a list or array of any length;  however, at present entries are constrained to be
         at most 2d.
@@ -1462,7 +1462,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
         Arguments
         ---------
 
-        variable : list or 2d array : default class_defaults.variable
+        variable : list or np.ndarray : default class_defaults.variable
            used to retrieve an entry from `memory <ContentAddressableMemory.memory>`, and then stored there.
 
         params : Dict[param keyword: param value] : default None
@@ -1562,7 +1562,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
 
         Arguments
         ---------
-        cue : list or 2d array
+        cue : list or np.ndarray
           must have same number and shapes of fields as existing entries in `memory <ContentAddressableMemory.memory>`.
 
         Returns
@@ -1641,7 +1641,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
 
         Arguments
         ---------
-        entry : list or 2d array
+        entry : list or np.ndarray
             should be a list or 2d array containing 1d arrays (fields) each of which should be list or at least a 1d
             array; scalars, 1d and simple 2d arrays are allowed, and are interpreted as a single entry with a single
             field, which is converted to a 3d array. If any entries already exist in `memory
@@ -2018,7 +2018,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
     Arguments
     ---------
 
-    default_variable : list or 2d array : default class_defaults.variable
+    default_variable : list or np.ndarray : default class_defaults.variable
         specifies a template for the key and value entries of the dictionary;  list must have two entries, each
         of which is a list or array;  first item is used as key, and second as value entry of dictionary.
 
@@ -2676,7 +2676,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
         Arguments
         ---------
 
-        variable : list or 2d array : default class_defaults.variable
+        variable : list or np.ndarray : default class_defaults.variable
            first item (variable[0]) is treated as the key for retrieval; second item (variable[1]), paired
            with key, is added to `memory <DictionaryMemory.memory>`.
 
@@ -2827,7 +2827,7 @@ class DictionaryMemory(MemoryFunction):  # -------------------------------------
 
         Arguments
         ---------
-        memory : list or 2d array
+        memory : list or np.ndarray
             must be two items, a key and a vaue, each of which must a list of numbers or 1d array;
             the key must be the same length as key(s) of any existing entries in `dict <DictionaryMemory.dict>`.
         """

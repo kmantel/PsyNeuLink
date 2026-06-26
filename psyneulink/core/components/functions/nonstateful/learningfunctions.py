@@ -1769,7 +1769,7 @@ class Reinforcement(LearningFunction):  # --------------------------------------
     Arguments
     ---------
 
-    default_variable : List or 2d array : default class_defaults.variable
+    default_variable : List or np.ndarray : default class_defaults.variable
        template for the three items provided as the variable in the call to the `function <Reinforcement.function>`
        (in order):
 
@@ -2129,7 +2129,7 @@ class BackPropagation(LearningFunction):
     Arguments
     ---------
 
-    variable : List or 2d array [length 3 in axis 0] : default class_defaults.variable
+    variable : List or np.ndarray [length 3 in axis 0] : default class_defaults.variable
        specifies a template for the three items provided as the variable in the call to the
        `function <BackPropagation.function>` (in order):
        `activation_input <BackPropagation.activation_input>` (1d array),
@@ -2457,7 +2457,7 @@ class BackPropagation(LearningFunction):
         Arguments
         ---------
 
-        variable : List or 2d array [length 3 in axis 0]
+        variable : List or np.ndarray [length 3 in axis 0]
            must have three items that are the values for (in order):
            `activation_input <BackPropagation.activation_input>` (1d array),
            `activation_output <BackPropagation.activation_output>` (1d array),
