@@ -166,17 +166,12 @@ class LearningFunction(Function_Base):
                                     format(LEARNING_RATE, self.name, len(learning_rate),
                                            len(self.defaults.variable)))
 
-            if learning_rate_dim == 2:
+            if learning_rate_dim >= 2:
                 shape = learning_rate.shape
-                if shape[0] != shape[1] or shape[0] != len(self.defaults.variable):
+                if len(set(shape)) > 1 or shape[0] != len(self.defaults.variable):
                     raise FunctionError("Shape of {} arg for {} ({}) must be square and "
                                         "of the same width as the length of its variable ({})".
                                         format(LEARNING_RATE, self.name, shape, len(self.defaults.variable)))
-
-            if learning_rate_dim > 2:
-                raise FunctionError("{} arg for {} ({}) must be a single value of a 1d or 2d array".
-                                    format(LEARNING_RATE, self.name, learning_rate))
-
         else:
             if learning_rate_dim:
                 raise FunctionError("{} arg for {} ({}) must be a single value".
