@@ -560,8 +560,8 @@ class BayesGLM(LearningFunction):
     Arguments
     ---------
 
-    default_variable : 3d array : default None
-        first item of axis 0 must be a 2d array with one or more 1d arrays to use as predictor vectors, one for
+    default_variable : np.ndarray : default None
+        first item of axis 0 must be an array with one or more sub-arrays to use as predictor vectors, one for
         each sample to be fit;  second item must be a 2d array of equal length to the first item, with a 1d array
         containing a scalar that is the dependent (to-be-predicted) value for the corresponding sample in the first
         item.  If `None` is specified, but either **mu_0** or **sigma_0 is specified, then the they are used to
@@ -570,7 +570,7 @@ class BayesGLM(LearningFunction):
         <BayesGLM.function>`, as are `mu_prior <BayesGLM.mu_prior>`, `sigma_prior <BayesGLM.mu_prior>`,
         `gamma_shape_prior <BayesGLM.gamma_shape_prior>` and `gamma_size_prior <BayesGLM.gamma_size_prior>`.
 
-    mu_0 : int, float or 1d array : default 0
+    mu_0 : int, float or np.ndarray : default 0
         specifies initial value of `mu_prior <BayesGLM.mu_prior>` (the prior for the mean of the distribution for
         the prediction weights returned by the function).  If a scalar is specified, the same value will be used
         for all elements of `mu_prior <BayesGLM.mu_prior>`;  if it is an array, it must be the same length as
@@ -578,7 +578,7 @@ class BayesGLM(LearningFunction):
         specification for **mu_0** is used to determine the shape of `variable <BayesGLM.variable>` and
         `sigma_prior <BayesGLM.sigma_prior>`.
 
-    sigma_0 : int, float or 1d array : default 0
+    sigma_0 : int, float or np.ndarray : default 0
         specifies initial value of `sigma_prior <BayesGLM.Lambda_prior>` (the prior for the variance of the distribution
         for the prediction weights returned by the function).  If a scalar is specified, the same value will be used for
         all elements of `Lambda_prior <BayesGLM.Lambda_prior>`;  if it is an array, it must be the same length as the
@@ -610,12 +610,12 @@ class BayesGLM(LearningFunction):
     Attributes
     ----------
 
-    variable : 3d array
+    variable : np.ndarray
         samples used to update parameters of prediction weight distributions.
-        variable[0] is a 2d array of predictor vectors, all of the same length;
+        variable[0] is an array of predictor vectors, all of the same length;
         variable[1] is a 2d array of scalar dependent variables, one for each predictor vector.
 
-    mu_0 : int, float or 2d array
+    mu_0 : int, float or np.ndarray
         determines the initial prior(s) for the means of the distributions of the prediction weights;
         if it is a scalar, that value is assigned as the priors for all means.
 
@@ -625,14 +625,14 @@ class BayesGLM(LearningFunction):
     mu_n : np.ndarray
         current means for the distributions of the prediction weights.
 
-    sigma_0 : int, float or 2d array
+    sigma_0 : int, float or np.ndarray
         value used to determine the initial prior(s) for the variances of the distributions of the prediction
         weights; if it is a scalar, that value is assigned as the priors for all variances.
 
-    Lambda_prior :  2d array
+    Lambda_prior :  np.ndarray
         current priors for the variances of the distributions of the predictions weights.
 
-    Lambda_n :  2d array
+    Lambda_n :  np.ndarray
         current variances for the distributions of the prediction weights.
 
     gamma_shape_0 : int or float
@@ -658,7 +658,7 @@ class BayesGLM(LearningFunction):
     random_state : numpy.RandomState
       private pseudorandom number generator
 
-    weights_sample : 1d array
+    weights_sample : np.ndarray
         last sample of prediction weights drawn in call to `sample_weights <BayesGLM.sample_weights>` and returned by
         `function <BayesGLM.function>`.
 
@@ -1038,10 +1038,10 @@ class Kohonen(LearningFunction):  # --------------------------------------------
     Arguments
     ---------
 
-    variable: List[array(float64), array(float64), 2d array[[float64]]] : default class_defaults.variable
+    variable: List[array(float64), array(float64), array[[float64]]] : default class_defaults.variable
         input pattern, array of activation values, and matrix used to calculate the weights changes.
 
-    learning_rate : scalar or list, 1d or 2d array of numeric values: default .05
+    learning_rate : scalar or list, np.ndarray of numeric values: default .05
         specifies the learning rate used by the `function <Kohonen.function>` (see `learning_rate
         <Kohonen.learning_rate>` for details).
 
@@ -1066,15 +1066,15 @@ class Kohonen(LearningFunction):  # --------------------------------------------
     Attributes
     ----------
 
-    variable: List[array(float64), array(float64), 2d array[[float64]]]
+    variable: List[array(float64), array(float64), array[[float64]]]
         input pattern, array of activation values, and weight matrix  used to generate the weight change matrix
         returned by `function <Kohonen.function>`.
 
-    learning_rate : float, 1d or 2d array
+    learning_rate : float, np.ndarray
         used by the `function <Kohonen.function>` to scale the weight change matrix returned by the `function
         <Kohonen.function>`.  If it is a scalar, it is multiplied by the weight change matrix;  if it is a 1d array,
         it is multiplied Hadamard (elementwise) by the `variable` <Kohonen.variable>` before calculating the weight
-        change matrix;  if it is a 2d array, it is multiplied Hadamard (elementwise) by the weight change matrix. If
+        change matrix;  if it is an array, it is multiplied Hadamard (elementwise) by the weight change matrix. If
         learning_rate is not specified explicitly in the constructor for the function or otherwise (see `learning_rate
         <LearningMechanism.learning_rate>`) then the function's default learning_rate is used.
 
