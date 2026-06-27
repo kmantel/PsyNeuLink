@@ -1294,7 +1294,7 @@ def get_value_from_array(array):
 def random_matrix(num_rows, num_cols, offset=0.0, scale=1.0):
     """Generate a random matrix
 
-    Calls np.random.rand to generate a 2d np.array with random values and shape (num_rows, num_cols):
+    Calls np.random.rand to generate a np.ndarray with random values and shape (num_rows, num_cols):
 
         :math:`matrix = (random[0.0:1.0] + offset) * scale
 
@@ -1319,7 +1319,7 @@ def random_matrix(num_rows, num_cols, offset=0.0, scale=1.0):
 
     Returns
     -------
-    2d np.array
+    np.ndarray
     """
     if isinstance(offset,str):
         if offset.upper() == 'ZERO_CENTER':
@@ -2937,7 +2937,7 @@ def full_like(
             subok :
                 see `numpy.full_like`. ignored, not implemented
             shape :
-                see `numpy.full_like`. ignored, in favor of `shape(**a**)`
+                see `numpy.full_like`. ignored, in favor of shape of **a**
             device (Optional[str]):
                 see `numpy.full_like`
                 requires version `numpy>=2`

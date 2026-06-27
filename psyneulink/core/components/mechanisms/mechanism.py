@@ -1130,7 +1130,8 @@ from psyneulink.core.globals.utilities import (
     is_numeric,
     iscompatible,
     kwCompatibilityNumeric,
-    parse_valid_identifier, shape, safe_len,
+    parse_valid_identifier,
+    safe_len,
     shape,
 )
 from psyneulink.core.scheduling.condition import Condition
