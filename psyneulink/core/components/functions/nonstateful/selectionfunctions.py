@@ -387,7 +387,7 @@ class OneHot(SelectionFunction):
     def _validate_params(self, request_set, target_set=None, context=None):
         prob_modes = {PROB, PROB_INDICATOR}
         if request_set[MODE] in prob_modes:
-            if not self.defaults.variable.ndim < 2:
+            if self.defaults.variable.ndim < 2:
                 raise FunctionError(
                     'If {} for {} {} is one of {}, variable must be an array of at least two dimensions'.format(
                         MODE, self.__class__.__name__, Function.__name__, prob_modes
