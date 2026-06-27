@@ -598,9 +598,9 @@ from psyneulink.core.globals.utilities import (
     iscompatible,
     kwCompatibilityLength,
     parse_valid_identifier,
-    ragged_np_shape,
     safe_equals,
     safe_len,
+    shape,
     try_extract_0d_array_item,
 )
 from psyneulink.core.scheduling.condition import Never
@@ -923,7 +923,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     Attributes
     ----------
 
-    variable : 2d np.array
+    variable : np.ndarray
         see `variable <Component_Variable>`
 
     input_shapes : Union[int, Iterable[Union[int, tuple]]]
@@ -932,7 +932,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     function : Function, function or method
         see `function <Component_Function>`
 
-    value : 2d np.array
+    value : np.ndarray
         see `value <Component_Value>`
 
     log : Log
@@ -4636,17 +4636,17 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     is_np_shape = False
 
                 if is_np_shape:
-                    return 'numpy shape', 'np.zeros'
+                    return 'np.shape', 'np.zeros'
                 else:
-                    return 'pnl.ragged_np_shape', 'pnl.ragged_np_zeros'
+                    return 'pnl.shape', 'pnl.zeros'
 
             obj_str = str(self)
             if getattr(self, 'owner', None) is not None:
                 obj_str = f'{obj_str} of {self.owner}'
 
             # shape is equivalent to np.shape if not ragged
-            inp_ragged_shape = ragged_np_shape(inp)
-            external_input_ragged_shape = ragged_np_shape(external_input)
+            inp_ragged_shape = shape(inp)
+            external_input_ragged_shape = shape(external_input)
 
             inp_shape_type, _ = _shape_type_strs(inp, inp_ragged_shape)
             expected_shape_type, expected_zeros_fct_name = _shape_type_strs(
@@ -4699,11 +4699,12 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         self, composition: Union['Composition', ConnectionInfo] = ConnectionInfo.ALL
     ) -> Union[ArrayShape, None]:
         """
-        Returns a numpy shape-like tuple (see `ragged_np_shape`) (or None)
-        corresponding to this `Component`\\ 's `default_external_input`. This
-        can serve as a template for passing correctly shaped input into this
-        Component. This could be created, for example, by
-        `pnl.ragged_np_zeros(my_component.external_input_shape(my_composition))`.
+        Returns a numpy shape-like tuple (see `shape <psyneulink.core.globals.utilities.shape>`)
+        (or None) corresponding to this `Component`\\ 's
+        `default_external_input`. This can serve as a template for passing
+        correctly shaped input into this Component. This could be created, for
+        example, by
+        `pnl.zeros(my_component.external_input_shape(my_composition))`.
 
         Args:
             composition (`Composition`, optional): The `Composition`
@@ -4717,7 +4718,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         if inp is None:
             return None
         else:
-            return ragged_np_shape(inp)
+            return shape(inp)
 
     @property
     def logged_items(self):
