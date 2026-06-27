@@ -1700,8 +1700,8 @@ class ContrastiveHebbian(LearningFunction):  # ---------------------------------
         # Zero diagonals (i.e., don't allow correlation of a unit with itself to be included)
         weight_change_matrix = weight_change_matrix * (1 - np.identity(len(variable)))
 
-        # If learning_rate is scalar or 2d, multiply it by the weight change matrix
-        if learning_rate_dim in {0, 2}:
+        # If learning_rate is scalar or n-d, multiply it by the weight change matrix
+        if learning_rate_dim != 1:
             weight_change_matrix = weight_change_matrix * learning_rate
 
         return self.convert_output_type(weight_change_matrix)
