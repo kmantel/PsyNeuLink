@@ -178,7 +178,7 @@ __all__ = [
     'contains_type', 'is_numeric_scalar', 'try_extract_0d_array_item', 'fill_array', 'update_array_in_place',
     'array_from_matrix_string', 'get_module_file_prefix', 'get_stacklevel_skip_file_prefixes',
     'PNLStrEnum',
-    'ragged_np_clip', 'ragged_np_full_like', 'ragged_np_full', 'ragged_np_ones_like', 'ragged_np_ones', 'ragged_np_shape', 'ragged_np_zeros_like', 'ragged_np_zeros',
+    'clip', 'full_like', 'full', 'ones_like', 'ones', 'shape', 'zeros_like', 'zeros',
 ]
 
 
@@ -2682,7 +2682,7 @@ def get_stacklevel_skip_file_prefixes(
 #endregion
 
 
-def ragged_np_shape(obj: ArrayLike) -> ArrayShape:
+def shape(obj: ArrayLike) -> ArrayShape:
     """
     Produces a shape tuple of **obj** that handles optionally-nested
     Iterables, including standard, ragged, or object-dtype
@@ -2702,12 +2702,12 @@ def ragged_np_shape(obj: ArrayLike) -> ArrayShape:
         `A = np.array([[0], [0, 0]], dtype=object)`
         `B = np.array([[0], [0, 0, 0]], dtype=object)`
 
-        | array | np.shape | ragged_np_shape |
+        | array | np.shape | pnl.shape       |
         |-------|----------|-----------------|
         | A     | (2, )    | ((1,), (2,))    |
         | B     | (2, )    | ((1,), (3,))    |
     """
-    def _ragged_np_shape(obj):
+    def _shape(obj):
         try:
             if obj.dtype != object:
                 return tuple(obj.shape)
@@ -2717,7 +2717,7 @@ def ragged_np_shape(obj: ArrayLike) -> ArrayShape:
         shape = []
         try:
             for item in obj:
-                shape.append(_ragged_np_shape(item))
+                shape.append(_shape(item))
         except TypeError:
             return tuple()
 
@@ -2737,12 +2737,12 @@ def ragged_np_shape(obj: ArrayLike) -> ArrayShape:
         obj = convert_all_elements_to_np_array(obj)
     except TypeError:
         pass
-    return tuple(_ragged_np_shape(obj))
+    return tuple(_shape(obj))
 
 
 def array_shapes_equal(a: ArrayLike, b: ArrayLike) -> bool:
     """
-    Determines if the `shape <psyneulink.core.globals.utilities.ragged_np_shape>`\\ s
+    Determines if the `shape <psyneulink.core.globals.utilities.shape>`\\ s
     of **a** and **b** are the same. In contrast to numpy, identifies ragged
     arrays containing inner items of different shape as not equivalently shaped.
 
@@ -2757,7 +2757,7 @@ def array_shapes_equal(a: ArrayLike, b: ArrayLike) -> bool:
     a_dtype = getattr(a, 'dtype', object)
     b_dtype = getattr(b, 'dtype', object)
     if a_dtype == object or b_dtype == object:
-        return ragged_np_shape(a) == ragged_np_shape(b)
+        return shape(a) == shape(b)
     else:
         return a.shape == b.shape
 
@@ -2788,17 +2788,17 @@ def _numpy_compat_kwargs(**kwargs) -> Dict:
     return kwargs
 
 
-def ragged_np_full(shape: ArrayShape, fill_value, dtype: Optional[DTypeLike] = None, order: Literal['C', 'F'] = 'C', *, device=None, like=None) -> np.ndarray:  # noqa F821
+def full(shape: ArrayShape, fill_value, dtype: Optional[DTypeLike] = None, order: Literal['C', 'F'] = 'C', *, device=None, like=None) -> np.ndarray:  # noqa F821
     """
         Returns an array of values **fill_value** of numpy-array- or
-        `ragged_np_shape`-shape **shape**. Other arguments generally mirror
+        `shape`-shape **shape**. Other arguments generally mirror
         those of `numpy.full`. Intended to support reproduction of an original
         possibly-nested ragged array. Uses unmodified `numpy.full` when not
         ragged.
 
         Arguments:
             shape (Union[int, Tuple[Union[int, Tuple]]]):
-                shape of the result array, as `numpy.shape` or `ragged_np_shape`
+                shape of the result array, as `numpy.shape` or `shape`
             fill_value :
                 values of the result array
             dtype (Optional[DTypeLike]):
@@ -2817,16 +2817,16 @@ def ragged_np_full(shape: ArrayShape, fill_value, dtype: Optional[DTypeLike] = N
     # 'like' argument exists in >=1.20.0, which is below our minimum version
     kwargs = _numpy_compat_kwargs(device=device)
 
-    def _ragged_np_full(s):
+    def _full(s):
         try:
             return np.full(s, fill_value=fill_value, dtype=dtype, order=order, like=like, **kwargs)
         except TypeError as e:
             if "'tuple' object cannot be interpreted as an integer" in str(e):
-                return [_ragged_np_full(x) for x in s]
+                return [_full(x) for x in s]
             else:
                 raise
 
-    res = _ragged_np_full(shape)
+    res = _full(shape)
     if like is not None:
         res = like.__array_wrap__(res)
     else:
@@ -2834,18 +2834,18 @@ def ragged_np_full(shape: ArrayShape, fill_value, dtype: Optional[DTypeLike] = N
     return res
 
 
-def ragged_np_zeros(shape: ArrayShape, dtype: DTypeLike = float, order: Literal['C', 'F'] = 'C', *, device: Optional[str] = None, like=None) -> np.ndarray:  # noqa: F821
-    return ragged_np_full(shape, 0, dtype=dtype, order=order, device=device, like=like)
+def zeros(shape: ArrayShape, dtype: DTypeLike = float, order: Literal['C', 'F'] = 'C', *, device: Optional[str] = None, like=None) -> np.ndarray:  # noqa: F821
+    return full(shape, 0, dtype=dtype, order=order, device=device, like=like)
 
 
-def ragged_np_ones(shape: ArrayShape, dtype: DTypeLike = float, order: Literal['C', 'F'] = 'C', *, device: Optional[str] = None, like=None) -> np.ndarray:  # noqa: F821
-    return ragged_np_full(shape, 1, dtype=dtype, order=order, device=device, like=like)
+def ones(shape: ArrayShape, dtype: DTypeLike = float, order: Literal['C', 'F'] = 'C', *, device: Optional[str] = None, like=None) -> np.ndarray:  # noqa: F821
+    return full(shape, 1, dtype=dtype, order=order, device=device, like=like)
 
 
-def ragged_np_full_like(a: Union[np.ndarray, Iterable], fill_value, dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
+def full_like(a: Union[np.ndarray, Iterable], fill_value, dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
     """
         Returns an array of values **fill_value** of numpy-array- or
-        `ragged_np_shape`-shape **shape**. Other arguments generally mirror
+        `shape`-shape **shape**. Other arguments generally mirror
         those of `numpy.full_like`. Intended to support reproduction of an
         original possibly-nested ragged array.
 
@@ -2861,7 +2861,7 @@ def ragged_np_full_like(a: Union[np.ndarray, Iterable], fill_value, dtype: DType
             subok :
                 see `numpy.full_like`. ignored, not implemented
             shape :
-                see `numpy.full_like`. ignored, in favor of `ragged_np_shape(**a**)`
+                see `numpy.full_like`. ignored, in favor of `shape(**a**)`
             device (Optional[str]):
                 see `numpy.full_like`
                 requires version `numpy>=2`
@@ -2873,19 +2873,19 @@ def ragged_np_full_like(a: Union[np.ndarray, Iterable], fill_value, dtype: DType
         warnings.warn('shape argument is ignored in favor of `a.shape`')
     if subok is not NotImplemented:
         warnings.warn('subok argument is not implemented')
-    shape = ragged_np_shape(a)
-    return ragged_np_full(shape, fill_value, dtype, order, device=device)
+    shape = shape(a)
+    return full(shape, fill_value, dtype, order, device=device)
 
 
-def ragged_np_zeros_like(a: Union[np.ndarray, Iterable], dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
-    return ragged_np_full_like(a, 0, dtype, order, subok, shape, device=device)
+def zeros_like(a: Union[np.ndarray, Iterable], dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
+    return full_like(a, 0, dtype, order, subok, shape, device=device)
 
 
-def ragged_np_ones_like(a: Union[np.ndarray, Iterable], dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
-    return ragged_np_full_like(a, 1, dtype, order, subok, shape, device=device)
+def ones_like(a: Union[np.ndarray, Iterable], dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
+    return full_like(a, 1, dtype, order, subok, shape, device=device)
 
 
-def ragged_np_clip(a, a_min, a_max, **kwargs) -> np.ndarray:
+def clip(a, a_min, a_max, **kwargs) -> np.ndarray:
     """
     Clips the values of **a** to the range `[**a_min**, **a_max**]`.
 
@@ -2899,12 +2899,12 @@ def ragged_np_clip(a, a_min, a_max, **kwargs) -> np.ndarray:
     Returns:
         np.ndarray: result array clipped to `[**a_min, **a_max**]`
     """
-    def _ragged_np_clip(x):
+    def _clip(x):
         try:
             return np.clip(x, a_min, a_max, **kwargs)
         except ValueError as e:
             if 'The truth value of an array with more than one element is ambiguous' in str(e):
-                return [_ragged_np_clip(x_i) for x_i in x]
+                return [_clip(x_i) for x_i in x]
             else:
                 raise
-    return convert_all_elements_to_np_array(_ragged_np_clip(convert_all_elements_to_np_array(a)))
+    return convert_all_elements_to_np_array(_clip(convert_all_elements_to_np_array(a)))

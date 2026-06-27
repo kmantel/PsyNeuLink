@@ -11,9 +11,9 @@ from psyneulink.core.globals.utilities import (
     PNLStrEnum, convert_all_elements_to_np_array,
     extended_array_equal,
     prune_unused_args,
-    ragged_np_full,
-    ragged_np_shape,
-    ragged_np_zeros,
+    full,
+    shape,
+    zeros,
     update_array_in_place,
 )
 
@@ -230,7 +230,7 @@ class TestPNLStrEnum:
             assert value not in self.NewPNLStrEnum
 
 
-ragged_np_shape_parametrization = [
+shape_parametrization = [
     (np.array([0, 0, 0]), (3,)),
     (np.array([[[0, 0, 0], [0, 0, 0]]]), (1, 2, 3)),
     (np.array([[[0, 0, 0], [0, 0, 0]]], dtype=object), (1, 2, 3)),
@@ -246,35 +246,35 @@ ragged_np_shape_parametrization = [
 if packaging.version.parse(np.version.version) < packaging.version.parse('1.24'):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
-        ragged_np_shape_parametrization.extend([
+        shape_parametrization.extend([
             (np.array([[0], [0, 0]]), ((1,), (2,))),
             (np.array([[0], [0, 0], [[[[0]]]], 0]), ((1,), (2, ), (1, 1, 1, 1), tuple())),
         ])
 
 
-@pytest.mark.parametrize('arr, expected_shape', ragged_np_shape_parametrization)
-def test_ragged_np_shape(arr, expected_shape):
-    assert ragged_np_shape(arr) == expected_shape
+@pytest.mark.parametrize('arr, expected_shape', shape_parametrization)
+def test_shape(arr, expected_shape):
+    assert shape(arr) == expected_shape
 
 
-@pytest.mark.parametrize('arr, shape', ragged_np_shape_parametrization)
+@pytest.mark.parametrize('arr, shape', shape_parametrization)
 def test_ragged_methods_shape_invertibility(arr, shape):
     try:
         dtype = arr.dtype
     except AttributeError:
         dtype = None
-    assert shape == ragged_np_shape(ragged_np_zeros(shape, dtype=dtype))
+    assert shape == shape(zeros(shape, dtype=dtype))
 
 
-# test assumes arrays in ragged_np_shape_parametrization are filled with
+# test assumes arrays in shape_parametrization are filled with
 # zeros and non-array items are 0-dim-like
-@pytest.mark.parametrize('arr', [x[0] for x in ragged_np_shape_parametrization])
+@pytest.mark.parametrize('arr', [x[0] for x in shape_parametrization])
 def test_ragged_methods_array_invertibility(arr):
     try:
         dtype = arr.dtype
     except AttributeError:
-        new_arr = ragged_np_full(ragged_np_shape(arr), arr)
+        new_arr = full(shape(arr), arr)
     else:
-        new_arr = ragged_np_zeros(ragged_np_shape(arr), dtype=dtype)
+        new_arr = zeros(shape(arr), dtype=dtype)
 
     assert extended_array_equal(arr, new_arr)
