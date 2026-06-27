@@ -857,12 +857,12 @@ from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.utilities import (
     all_within_range,
     append_type_to_name,
+    clip,
     convert_all_elements_to_np_array,
     convert_to_np_array,
     is_numeric_scalar,
     iscompatible,
     parse_valid_identifier,
-    ragged_np_clip,
     safe_equals,
     safe_len,
     try_extract_0d_array_item,
@@ -1598,9 +1598,9 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         return current_input
 
-    def _clip_result(self, clip, current_input):
-        if clip is not None:
-            current_input = ragged_np_clip(current_input, clip[0], clip[1])
+    def _clip_result(self, bounds, current_input):
+        if bounds is not None:
+            current_input = clip(current_input, bounds[0], bounds[1])
         return current_input
 
     def _gen_llvm_is_finished_cond(self, ctx, builder, m_base_params, m_state, m_in):
