@@ -2786,7 +2786,15 @@ def _numpy_compat_kwargs(**kwargs) -> Dict:
     return kwargs
 
 
-def full(shape: ArrayShape, fill_value, dtype: Optional[DTypeLike] = None, order: Literal['C', 'F'] = 'C', *, device=None, like=None) -> np.ndarray:  # noqa F821
+def full(
+    shape: ArrayShape,
+    fill_value,
+    dtype: Optional[DTypeLike] = None,
+    order: Literal['C', 'F'] = 'C',  # noqa: F821
+    *,
+    device=None,
+    like=None,
+) -> np.ndarray:
     """
         Returns an array of values **fill_value** of `numpy.shape` or
         `shape <psyneulink.core.globals.utilities.shape>`_ **shape**.
@@ -2832,7 +2840,14 @@ def full(shape: ArrayShape, fill_value, dtype: Optional[DTypeLike] = None, order
     return res
 
 
-def zeros(shape: ArrayShape, dtype: DTypeLike = float, order: Literal['C', 'F'] = 'C', *, device: Optional[str] = None, like=None) -> np.ndarray:  # noqa: F821
+def zeros(
+    shape: ArrayShape,
+    dtype: DTypeLike = float,
+    order: Literal['C', 'F'] = 'C',  # noqa: F821
+    *,
+    device: Optional[str] = None,
+    like=None,
+) -> np.ndarray:
     """
         Returns an array of zeros of `numpy.shape` or
         `shape <psyneulink.core.globals.utilities.shape>`_ **shape**. Other
@@ -2859,7 +2874,14 @@ def zeros(shape: ArrayShape, dtype: DTypeLike = float, order: Literal['C', 'F'] 
     return full(shape, 0, dtype=dtype, order=order, device=device, like=like)
 
 
-def ones(shape: ArrayShape, dtype: DTypeLike = float, order: Literal['C', 'F'] = 'C', *, device: Optional[str] = None, like=None) -> np.ndarray:  # noqa: F821
+def ones(
+    shape: ArrayShape,
+    dtype: DTypeLike = float,
+    order: Literal['C', 'F'] = 'C',  # noqa: F821
+    *,
+    device: Optional[str] = None,
+    like=None,
+) -> np.ndarray:
     """
         Returns an array of ones of `numpy.shape` or
         `shape <psyneulink.core.globals.utilities.shape>`_ **shape**. Other
@@ -2886,7 +2908,16 @@ def ones(shape: ArrayShape, dtype: DTypeLike = float, order: Literal['C', 'F'] =
     return full(shape, 1, dtype=dtype, order=order, device=device, like=like)
 
 
-def full_like(a: Union[np.ndarray, Iterable], fill_value, dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
+def full_like(
+    a: Union[np.ndarray, Iterable],
+    fill_value,
+    dtype: DTypeLike = None,
+    order: Literal['C', 'F'] = 'C',  # noqa: F821
+    subok=NotImplemented,
+    shape=NotImplemented,
+    *,
+    device: Optional[str] = None,
+) -> np.ndarray:
     """
         Returns an array of values **fill_value** of `numpy.shape` or
         `shape <psyneulink.core.globals.utilities.shape>`_ matching the shape
@@ -2922,7 +2953,15 @@ def full_like(a: Union[np.ndarray, Iterable], fill_value, dtype: DTypeLike = Non
     return full(shape, fill_value, dtype, order, device=device)
 
 
-def zeros_like(a: Union[np.ndarray, Iterable], dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
+def zeros_like(
+    a: Union[np.ndarray, Iterable],
+    dtype: DTypeLike = None,
+    order: Literal['C', 'F'] = 'C',  # noqa: F821
+    subok=NotImplemented,
+    shape=NotImplemented,
+    *,
+    device: Optional[str] = None,
+) -> np.ndarray:
     """
         Returns an array of zeros of `numpy.shape` or
         `shape <psyneulink.core.globals.utilities.shape>`_ matching the shape
@@ -2951,7 +2990,15 @@ def zeros_like(a: Union[np.ndarray, Iterable], dtype: DTypeLike = None, order: L
     return full_like(a, 0, dtype, order, subok, shape, device=device)
 
 
-def ones_like(a: Union[np.ndarray, Iterable], dtype: DTypeLike = None, order: Literal['C', 'F'] = 'C', subok=NotImplemented, shape=NotImplemented, *, device: Optional[str] = None) -> np.ndarray:  # noqa: F821
+def ones_like(
+    a: Union[np.ndarray, Iterable],
+    dtype: DTypeLike = None,
+    order: Literal['C', 'F'] = 'C',  # noqa: F821
+    subok=NotImplemented,
+    shape=NotImplemented,
+    *,
+    device: Optional[str] = None,
+) -> np.ndarray:
     """
         Returns an array of ones of `numpy.shape` or
         `shape <psyneulink.core.globals.utilities.shape>`_ matching the shape
