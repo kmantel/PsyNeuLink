@@ -1527,7 +1527,7 @@ class ContrastiveHebbian(LearningFunction):  # ---------------------------------
         activations in `variable <ContrastiveHebbian.variable>`.
     COMMENT
 
-    learning_rate : scalar or list, 1d or 2d array of numeric values: default .05
+    learning_rate : scalar or list, array of numeric values: default .05
         specifies the learning rate used by the `function <ContrastiveHebbian.function>`. (see `learning_rate
         <ContrastiveHebbian.learning_rate>` for details).
 
@@ -1948,14 +1948,14 @@ class Reinforcement(LearningFunction):  # --------------------------------------
         Arguments
         ---------
 
-        variable : List or 2d np.array [length 3 in axis 0] : default class_defaults.variable
+        variable : List or np.ndarray [length 3 in axis 0] : default class_defaults.variable
            must have three items that are (in order):
 
                * `activation_input <Reinforcement.activation_input>` (not used);
 
-               * `activation_output <Reinforcement.activation_output>` (1d array with only one non-zero value);
+               * `activation_output <Reinforcement.activation_output>` (array with only one non-zero value);
 
-               * `error_signal <Reinforcement.error_signal>` (1d array with a single scalar element);
+               * `error_signal <Reinforcement.error_signal>` (array with a single scalar element);
 
            (see `note <Reinforcement_Note>` above).
 
@@ -1967,8 +1967,8 @@ class Reinforcement(LearningFunction):  # --------------------------------------
         Returns
         -------
 
-        error array : List[1d array, 1d array]
-            Both 1d arrays are the same, with a single non-zero error term (see `note <Reinforcement_Note>` above).
+        error array : np.ndarray[np.ndarray, np.ndarray]
+            Both arrays are the same, with a single non-zero error term (see `note <Reinforcement_Note>` above).
 
         """
 
@@ -2153,7 +2153,7 @@ class BackPropagation(LearningFunction):
     COMMENT
 
     COMMENT:
-    error_matrix : List, 2d array, ParameterPort, or MappingProjection
+    error_matrix : List, np.ndarray, ParameterPort, or MappingProjection
         matrix, the output of which is used to calculate the `error_signal <BackPropagation.error_signal>`.
         If it is specified as a ParameterPort it must be one for the `matrix <MappingProjection.matrix>`
         parameter of a `MappingProjection`;  if it is a MappingProjection, it must be one with a
@@ -2396,7 +2396,7 @@ class BackPropagation(LearningFunction):
             from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection
             if not isinstance(error_matrix, (list, np.ndarray, np.matrix, ParameterPort, MappingProjection)):
                 raise FunctionError(f"The '{ERROR_MATRIX}' arg for {self.__class__.__name__} ({error_matrix}) "
-                                    f"must be a list, 2d np.array, ParamaterPort or MappingProjection.")
+                                    f"must be a list, array, ParameterPort or MappingProjection.")
 
             if isinstance(error_matrix, MappingProjection):
                 try:
@@ -2405,7 +2405,7 @@ class BackPropagation(LearningFunction):
                 except KeyError:
                     raise FunctionError(f"The MappingProjection specified for the '{ERROR_MATRIX}' arg of "
                                         f"of {self.__class__.__name__} ({error_matrix.shape}) must have a "
-                                        f"{MATRIX} ParamaterPort that has been assigned a 2d array or matrix.")
+                                        f"{MATRIX} ParamaterPort that has been assigned an array or matrix.")
 
             elif isinstance(error_matrix, ParameterPort):
                 try:
@@ -2426,7 +2426,7 @@ class BackPropagation(LearningFunction):
 
             if error_matrix.ndim != 2:
                 raise FunctionError(f"The value of the {param_type_string} specified for the '{ERROR_MATRIX}' arg "
-                                    f"of '{self.name}' ({error_matrix}) must be a 2d array or matrix.")
+                                    f"of '{self.name}' ({error_matrix}) must be an array or matrix.")
 
             # The length of the sender outputPort.value (the error signal) must be the
             #     same as the width (# columns) of the MappingProjection's weight matrix (# of receivers)
@@ -2468,7 +2468,7 @@ class BackPropagation(LearningFunction):
             other than activation_input and activation_output, to compute the derivative of the activation function
             with respect to `activation_output <BackPropagation.activation_output>`.
 
-        error_matrix : List, 2d array, ParameterPort, or MappingProjection
+        error_matrix : List, array, ParameterPort, or MappingProjection
             matrix of weights that were used to generate the `error_signal <BackPropagation.error_signal>` (3rd item
             of `variable <BackPropagation.variable>` from `activation_output <BackPropagation.activation_output>`;
             its dimensions must be the length of `activation_output <BackPropagation.activation_output>` (rows) x
