@@ -2377,7 +2377,7 @@ class CombineMeans(TransformFunction):  # --------------------------------------
             Notes:
             * WEIGHTS and EXPONENTS can be:
                 - 1D: each array in variable is scaled by the corresponding element of WEIGHTS or EXPONENTS
-                - 2D: each array in variable is scaled by (Hadamard-wise) corresponding array of WEIGHTS or EXPONENTS
+                - >=2D: each array in variable is scaled by (Hadamard-wise) corresponding array of WEIGHTS or EXPONENTS
         Initialization arguments:
          - variable (value, np.ndarray or list): values to be combined;
              can be a list of lists, or an array;  a scalar is always returned
@@ -2916,7 +2916,7 @@ class PredictionErrorDeltaFunction(TransformFunction):
         Arguments
         ----------
         variable : np.ndarray : default class_defaults.variable
-            a 2d array representing the sample and target values to be used to
+            an array representing the sample and target values to be used to
             calculate the temporal difference delta values. Both arrays must
             have the same length
 
