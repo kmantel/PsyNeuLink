@@ -85,7 +85,7 @@ its `matrix <MappingProjection.matrix>` parameter.  This is used by the MappingP
 following ways:
 
   * **List or array**  -- if it is a list, each item must be a list or 1d np.array of numbers;  otherwise,
-    it must be a 2d np.array.  In each case, the outer dimension (outer list items, array axis 0,
+    it must be a np.ndarray.  In each case, the outer dimension (outer list items, array axis 0,
     or matrix rows) corresponds to the elements of the `sender <MappingProjection.sender>`, and the inner dimension
     (inner list items, array axis 1, or matrix columns) corresponds to the weighting of the contribution that a
     given `sender <MappingProjection.sender>` makes to the `receiver <MappingProjection.receiver>` (the number of which
@@ -390,7 +390,7 @@ class MappingProjection(PathwayProjection_Base):
     receiver: InputPort
         the `InputPort` of the `Mechanism <Mechanism>` that is the destination of the Projection's output.
 
-    matrix : 2d np.array
+    matrix : np.ndarray
         the matrix used by `function <Projection_Base.function>` to transform the input from the MappingProjection's
         `sender <MappingProjection.sender>` into the value provided to its `receiver <MappingProjection.receiver>`.
 

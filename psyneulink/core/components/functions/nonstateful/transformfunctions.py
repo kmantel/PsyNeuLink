@@ -334,7 +334,7 @@ class Concatenate(TransformFunction):  # ---------------------------------------
         input : number
             value of the input to the function at which derivative is to be taken.
 
-        covariates : 2d np.array : default class_defaults.variable[1:]
+        covariates : np.ndarray : default class_defaults.variable[1:]
             the input(s) to the Concatenate function other than the one for which the derivative is being
             computed;  these are ignored and are accepted for consistency with other functions.
 
@@ -609,7 +609,7 @@ class Rearrange(TransformFunction):  # -----------------------------------------
         -------
 
         Rearranged items of outer dimension (axis 0) of **variable** : array
-            in a 2d array.
+            in an array.
         """
         variable = np.atleast_2d(variable)
 
@@ -670,17 +670,17 @@ class Reduce(TransformFunction):  # --------------------------------------------
     default_variable : list or np.array : default class_defaults.variable
         specifies a template for the value to be transformed and its default value;  all entries must be numeric.
 
-    weights : 1d or 2d np.array : default None
+    weights : np.ndarray : default None
         specifies values used to multiply the elements of each array in `variable  <LinearCombination.variable>`.
         If it is 1d, its length must equal the number of items in `variable <LinearCombination.variable>`;
-        if it is 2d, the length of each item must be the same as those in `variable <LinearCombination.variable>`,
+        if it is >=2d, the length of each item must be the same as those in `variable <LinearCombination.variable>`,
         and there must be the same number of items as there are in `variable <LinearCombination.variable>`
         (see `weights <LinearCombination.weights>` for details)
 
-    exponents : 1d or 2d np.array : default None
+    exponents : np.ndarray : default None
         specifies values used to exponentiate the elements of each array in `variable  <LinearCombination.variable>`.
         If it is 1d, its length must equal the number of items in `variable <LinearCombination.variable>`;
-        if it is 2d, the length of each item must be the same as those in `variable <LinearCombination.variable>`,
+        if it is >=2d, the length of each item must be the same as those in `variable <LinearCombination.variable>`,
         and there must be the same number of items as there are in `variable <LinearCombination.variable>`
         (see `exponents <LinearCombination.exponents>` for details)
 
@@ -1058,18 +1058,18 @@ class LinearCombination(
             * If there is more than one array in variable, they must all be of the same length
             * WEIGHTS and EXPONENTS can be:
                 - 1D: each array in variable is scaled by the corresponding element of WEIGHTS or EXPONENTS
-                - 2D: each array in variable is scaled by (Hadamard-wise) corresponding array of WEIGHTS or EXPONENTS
+                - >=2D: each array in variable is scaled by (Hadamard-wise) corresponding array of WEIGHTS or EXPONENTS
         Initialization arguments:
          - variable (value, np.ndarray or list): values to be combined;
-             can be a list of lists, or a 1D or 2D np.array;  a 1D np.array is always returned
+             can be a list of lists, or an array; an array with one fewer dimension is always returned
              if it is a list, it must be a list of numbers, lists, or np.arrays
-             all items in the list or 2D np.array must be of equal length
-             + WEIGHTS (list of numbers or 1D np.array): multiplies each item of variable before combining them
+             all items in the list or array must be of equal length
+             + WEIGHTS (list of numbers or array): multiplies each item of variable before combining them
                   (default: [1,1])
-             + EXPONENTS (list of numbers or 1D np.array): exponentiates each item of variable before combining them
+             + EXPONENTS (list of numbers or array): exponentiates each item of variable before combining them
                   (default: [1,1])
          - params (dict) can include:
-             + WEIGHTS (list of numbers or 1D np.array): multiplies each variable before combining them (default: [1,1])
+             + WEIGHTS (list of numbers or array): multiplies each variable before combining them (default: [1,1])
              + OFFSET (value): added to the result (after the arithmetic operation is applied; default is 0)
              + SCALE (value): multiples the result (after combining elements; default: 1)
              + OPERATION (Operation Enum) - method used to combine terms (default: SUM)
@@ -1085,20 +1085,20 @@ class LinearCombination(
     Arguments
     ---------
 
-    variable : 1d or 2d np.array : default class_defaults.variable
-        specifies a template for the arrays to be combined.  If it is 2d, all items must have the same length.
+    variable : np.ndarray : default class_defaults.variable
+        specifies a template for the arrays to be combined.  If it is >=2d, all items must have the same length.
 
-    weights : scalar or 1d or 2d np.array : default None
+    weights : scalar or np.ndarray : default None
         specifies values used to multiply the elements of each array in **variable**.
         If it is 1d, its length must equal the number of items in `variable <LinearCombination.variable>`;
-        if it is 2d, the length of each item must be the same as those in `variable <LinearCombination.variable>`,
+        if it is >=2d, the length of each item must be the same as those in `variable <LinearCombination.variable>`,
         and there must be the same number of items as there are in `variable <LinearCombination.variable>`
         (see `weights <LinearCombination.weights>` for details of how weights are applied).
 
-    exponents : scalar or 1d or 2d np.array : default None
+    exponents : scalar or np.ndarray : default None
         specifies values used to exponentiate the elements of each array in `variable  <LinearCombination.variable>`.
         If it is 1d, its length must equal the number of items in `variable <LinearCombination.variable>`;
-        if it is 2d, the length of each item must be the same as those in `variable <LinearCombination.variable>`,
+        if it is >=2d, the length of each item must be the same as those in `variable <LinearCombination.variable>`,
         and there must be the same number of items as there are in `variable <LinearCombination.variable>`
         (see `exponents <LinearCombination.exponents>` for details of how exponents are applied).
 
@@ -1131,21 +1131,21 @@ class LinearCombination(
     Attributes
     ----------
 
-    variable : 1d or 2d np.array
+    variable : np.ndarray
         contains the arrays to be combined by `function <LinearCombination>`.  If it is 1d, the array is simply
         linearly transformed by and `scale <LinearCombination.scale>` and `offset <LinearCombination.scale>`.
-        If it is 2d, the arrays (all of which must be of equal length) are weighted and/or exponentiated as
+        If it is >=2d, the arrays (all of which must be of equal length) are weighted and/or exponentiated as
         specified by `weights <LinearCombination.weights>` and/or `exponents <LinearCombination.exponents>`
         and then combined as specified by `operation <LinearCombination.operation>`.
 
-    weights : scalar or 1d or 2d np.array
+    weights : scalar or np.ndarray
         if it is a scalar, the value is used to multiply all elements of all arrays in `variable
         <LinearCombination.variable>`; if it is a 1d array, each element is used to multiply all elements in the
         corresponding array of `variable <LinearCombination.variable>`;  if it is a 2d array, then each array is
         multiplied elementwise (i.e., the Hadamard Product is taken) with the corresponding array of `variable
         <LinearCombinations.variable>`. All `weights` are applied before any exponentiation (if it is specified).
 
-    exponents : scalar or 1d or 2d np.array
+    exponents : scalar or np.ndarray
         if it is a scalar, the value is used to exponentiate all elements of all arrays in `variable
         <LinearCombination.variable>`; if it is a 1d array, each element is used to exponentiate the elements of the
         corresponding array of `variable <LinearCombinations.variable>`;  if it is a 2d array, the element of each
@@ -1391,8 +1391,8 @@ class LinearCombination(
         Arguments
         ---------
 
-        variable : 1d or 2d np.array : default class_defaults.variable
-           a single numeric array, or multiple arrays to be combined; if it is 2d, all arrays must have the same length.
+        variable : np.ndarray : default class_defaults.variable
+           a single numeric array, or multiple arrays to be combined; if it is >=2d, all arrays must have the same length.
 
         params : Dict[param keyword: param value] : default None
             a `parameter dictionary <ParameterPort_Specification>` that specifies the parameters for the
@@ -1513,7 +1513,7 @@ class LinearCombination(
            .. technical_note::
               output arg is used for consistency with other derivatives used by BackPropagation, and is ignored.
 
-        covariates : 2d np.array : default class_defaults.variable[1:]
+        covariates : np.ndarray : default class_defaults.variable[1:]
             the input(s) to the LinearCombination function other than the one for which the derivative is being
             computed;  these are used to calculate the Jacobian of the LinearCombination function.
 
@@ -2380,14 +2380,14 @@ class CombineMeans(TransformFunction):  # --------------------------------------
                 - 2D: each array in variable is scaled by (Hadamard-wise) corresponding array of WEIGHTS or EXPONENTS
         Initialization arguments:
          - variable (value, np.ndarray or list): values to be combined;
-             can be a list of lists, or a 1D or 2D np.array;  a scalar is always returned
+             can be a list of lists, or an array;  a scalar is always returned
              if it is a list, it must be a list of numbers, lists, or np.arrays
              if WEIGHTS or EXPONENTS are specified, their length along the outermost dimension (axis 0)
                  must equal the number of items in the variable
          - params (dict) can include:
-             + WEIGHTS (list of numbers or 1D np.array): multiplies each item of variable before combining them
+             + WEIGHTS (list of numbers or array): multiplies each item of variable before combining them
                   (default: [1,1])
-             + EXPONENTS (list of numbers or 1D np.array): exponentiates each item of variable before combining them
+             + EXPONENTS (list of numbers or array): exponentiates each item of variable before combining them
                   (default: [1,1])
              + OFFSET (value): added to the result (after the arithmetic operation is applied; default is 0)
              + SCALE (value): multiples the result (after combining elements; default: 1)
@@ -2401,20 +2401,20 @@ class CombineMeans(TransformFunction):  # --------------------------------------
     Arguments
     ---------
 
-    variable : 1d or 2d np.array : default class_defaults.variable
-        specifies a template for the arrays to be combined.  If it is 2d, all items must have the same length.
+    variable : np.ndarray : default class_defaults.variable
+        specifies a template for the arrays to be combined.  If it is >=2d, all items must have the same length.
 
-    weights : 1d or 2d np.array : default None
+    weights : np.ndarray : default None
         specifies values used to multiply the elements of each array in `variable  <CombineMeans.variable>`.
         If it is 1d, its length must equal the number of items in `variable <CombineMeans.variable>`;
-        if it is 2d, the length of each item must be the same as those in `variable <CombineMeans.variable>`,
+        if it is >=2d, the length of each item must be the same as those in `variable <CombineMeans.variable>`,
         and there must be the same number of items as there are in `variable <CombineMeans.variable>`
         (see `weights <CombineMeans.weights>` for details)
 
-    exponents : 1d or 2d np.array : default None
+    exponents : np.ndarray : default None
         specifies values used to exponentiate the elements of each array in `variable  <CombineMeans.variable>`.
         If it is 1d, its length must equal the number of items in `variable <CombineMeans.variable>`;
-        if it is 2d, the length of each item must be the same as those in `variable <CombineMeans.variable>`,
+        if it is >=2d, the length of each item must be the same as those in `variable <CombineMeans.variable>`,
         and there must be the same number of items as there are in `variable <CombineMeans.variable>`
         (see `exponents <CombineMeans.exponents>` for details)
 
@@ -2447,22 +2447,22 @@ class CombineMeans(TransformFunction):  # --------------------------------------
     Attributes
     ----------
 
-    variable : 1d or 2d np.array
+    variable : np.ndarray
         contains the arrays to be combined by `function <CombineMeans>`.  If it is 1d, the array is simply
         linearly transformed by and `scale <CombineMeans.scale>` and `offset <CombineMeans.scale>`.
-        If it is 2d, the arrays (all of which must be of equal length) are weighted and/or exponentiated as
+        If it is >=2d, the arrays (all of which must be of equal length) are weighted and/or exponentiated as
         specified by `weights <CombineMeans.weights>` and/or `exponents <CombineMeans.exponents>`
         and then combined as specified by `operation <CombineMeans.operation>`.
 
-    weights : 1d or 2d np.array : default NOne
+    weights : np.ndarray : default None
         if it is 1d, each element is used to multiply all elements in the corresponding array of
-        `variable <CombineMeans.variable>`;    if it is 2d, then each array is multiplied elementwise
+        `variable <CombineMeans.variable>`;    if it is >=2d, then each array is multiplied elementwise
         (i.e., the Hadamard Product is taken) with the corresponding array of `variable <CombineMeanss.variable>`.
         All :keyword:`weights` are applied before any exponentiation (if it is specified).
 
-    exponents : 1d or 2d np.array : default None
+    exponents : np.ndarray : default None
         if it is 1d, each element is used to exponentiate the elements of the corresponding array of
-        `variable <CombineMeans.variable>`;  if it is 2d, the element of each array is used to exponentiate
+        `variable <CombineMeans.variable>`;  if it is >=2d, the element of each array is used to exponentiate
         the corresponding element of the corresponding array of `variable <CombineMeans.variable>`.
         In either case, exponentiating is applied after application of the `weights <CombineMeans.weights>`
         (if any are specified).
@@ -2682,8 +2682,8 @@ class CombineMeans(TransformFunction):  # --------------------------------------
         Arguments
         ---------
 
-        variable : 1d or 2d np.array : default class_defaults.variable
-           a single numeric array, or multiple arrays to be combined; if it is 2d, all arrays must have the same length.
+        variable : np.ndarray : default class_defaults.variable
+           a single numeric array, or multiple arrays to be combined; if it is >=2d, all arrays must have the same length.
 
         params : Dict[param keyword: param value] : default None
             a `parameter dictionary <ParameterPort_Specification>` that specifies the parameters for the
@@ -2915,7 +2915,7 @@ class PredictionErrorDeltaFunction(TransformFunction):
 
         Arguments
         ----------
-        variable : 2d np.array : default class_defaults.variable
+        variable : np.ndarray : default class_defaults.variable
             a 2d array representing the sample and target values to be used to
             calculate the temporal difference delta values. Both arrays must
             have the same length

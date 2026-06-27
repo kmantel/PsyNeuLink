@@ -427,7 +427,7 @@ class RecurrentTransferMechanism(TransferMechanism):
         if it is not (the default), then learning cannot be enabled until it is configured for learning by calling
         the Mechanism's `configure_learning <RecurrentTransferMechanism.configure_learning>` method.
 
-    learning_rate : scalar, or list, 1d or 2d np.array of numeric values: default False
+    learning_rate : scalar, or list, np.ndarray of numeric values: default False
         specifies the learning rate used by its `learning function <RecurrentTransferMechanism.learning_function>`.
         If it is `None`, the `default learning_rate for a LearningMechanism <LearningMechanism_Learning_Rate>` is
         used; if it is assigned a value, that is used as the learning_rate (see `learning_rate
@@ -455,7 +455,7 @@ class RecurrentTransferMechanism(TransferMechanism):
     Attributes
     ----------
 
-    matrix : 2d np.array
+    matrix : np.ndarray
         the `matrix <AutoAssociativeProjection.matrix>` parameter of the `recurrent_projection
         <RecurrentTransferMechanism.recurrent_projection>` for the Mechanism.
 
@@ -489,7 +489,7 @@ class RecurrentTransferMechanism(TransferMechanism):
         created automatically if `learning is specified <RecurrentTransferMechanism_Learning>`, and used to train the
         `recurrent_projection <RecurrentTransferMechanism.recurrent_projection>`.
 
-    learning_rate : float, 1d or 2d np.array of numeric values : default None
+    learning_rate : float, np.ndarray of numeric values : default None
         determines the learning rate used by the `learning_function <RecurrentTransferMechanism.learning_function>`
         of the `learning_mechanism <RecurrentTransferMechanism.learning_mechanism>` (see `learning_rate
         <AutoAssociativeLearningMechanism.learning_rate>` for details concerning specification and default value

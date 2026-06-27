@@ -155,7 +155,7 @@ class KohonenLearningMechanism(LearningMechanism):
     Arguments
     ---------
 
-    variable : List[1d array, 1d array] or 2d np.array : default None
+    variable : List[1d array, 1d array] or np.ndarray : default None
         it must have a two items that corresponds to the value required by the KohonenLearningMechanism's
         `function <KohonenLearningMechanism.function>`;  it must each be compatible (in number and type)
         with the `value <InputPort.value>` of the Mechanism's `InputPort <LearningMechanism_InputPorts>` (see
@@ -174,7 +174,7 @@ class KohonenLearningMechanism(LearningMechanism):
         specifies the function used to calculate the KohonenLearningMechanism's `learning_signal
         <KohonenLearningMechanism.learning_signal>` attribute.  It must take as its **variable** argument a
         list of three items (two 1d arrays and one 2d array, all of
-        numeric values) and return a list, 2d np.array that is a square
+        numeric values) and return a list, np.ndarray that is a square
         matrix with the same dimensions as the third item of the
         **variable** arugment).
 
@@ -210,10 +210,10 @@ class KohonenLearningMechanism(LearningMechanism):
         the function used to calculate the `learning_signal <KohonenLearningMechanism.learning_signal>`
         (assigned to the KohonenLearningMechanism's `LearningSignal(s) <LearningMechanism_LearningSignal>`).
         its `variable <Function_Base.variable>` must be a list of three items (two 1d arrays and one 2d array, all of
-        numeric values);  returns a list, 2d np.array that is a square matrix with the same dimensions
+        numeric values);  returns a list, np.ndarray that is a square matrix with the same dimensions
         as the third item of its `variable <Kohonen.variable>`).
 
-    learning_rate : float, 1d or 2d np.array of numeric values : default None
+    learning_rate : float, np.ndarray of numeric values : default None
         determines the learning rate used by the KohonenLearningMechanism's `function
         <KohonenLearningMechanism.function>` to scale the weight change matrix it returns. If it is a scalar, it is
         used to multiply the weight change matrix;  if it is a 2d array or matrix,
@@ -257,7 +257,7 @@ class KohonenLearningMechanism(LearningMechanism):
         `learning_signals <KohonenLearningMechanism.learning_signals>`, and followed by any additional
         (user-specified) `OutputPorts <OutputPort>`.
 
-    output_values : 2d np.array
+    output_values : np.ndarray
         the first item is the `value <OutputPort.value>` of the LearningMechanism's `learning_signal
         <KohonenLearningMechanism.learning_signal>`.
 
@@ -365,7 +365,7 @@ class KohonenLearningMechanism(LearningMechanism):
 
         if np.array(variable).ndim != 2 or not is_numeric(variable):
             raise KohonenLearningMechanismError("Variable for {} ({}) must be a list with two items "
-                                                "or a 2d np.array, all of which may contain only numbers".
+                                                "or a np.ndarray, all of which may contain only numbers".
                                                         format(self.name, variable))
         return variable
 

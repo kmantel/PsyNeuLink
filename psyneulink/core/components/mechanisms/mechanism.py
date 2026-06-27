@@ -412,7 +412,7 @@ input. All of the Mechanism's InputPorts (including its primary InputPort <Input
 .. _Mechanism_Variable_and_InputPorts:
 
 The `value <InputPort.value>` of each InputPort for a Mechanism is assigned to a different item of the Mechanism's
-`variable <Mechanism_Base.variable>` attribute (a 2d np.array), as well as to a corresponding item of its `input_values
+`variable <Mechanism_Base.variable>` attribute (a np.ndarray), as well as to a corresponding item of its `input_values
 <Mechanism_Base.input_values>` attribute (a list).  The `variable <Mechanism_Base.variable>` provides the input to the
 Mechanism's `function <Mechanism_Base.function>`, while its `input_values <Mechanism_Base.input_values>` provides a
 convenient way of accessing the value of its individual items.  Because there is a one-to-one correspondence between
@@ -1121,9 +1121,19 @@ from psyneulink.core.globals.parameters import (
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import register_category, remove_instance_from_registry
 from psyneulink.core.globals.socket import ConnectionInfo
-from psyneulink.core.globals.utilities import \
-    ContentAddressableList, append_type_to_name, convert_all_elements_to_np_array, convert_to_np_array, \
-    iscompatible, kwCompatibilityNumeric, convert_to_list, is_numeric, parse_valid_identifier, ragged_np_shape, safe_len
+from psyneulink.core.globals.utilities import (
+    ContentAddressableList,
+    append_type_to_name,
+    convert_all_elements_to_np_array,
+    convert_to_list,
+    convert_to_np_array,
+    is_numeric,
+    iscompatible,
+    kwCompatibilityNumeric,
+    parse_valid_identifier,
+    safe_len,
+    shape,
+)
 from psyneulink.core.scheduling.condition import Condition
 from psyneulink.core.scheduling.time import TimeScale
 
@@ -1275,7 +1285,7 @@ class Mechanism_Base(Mechanism):
     ----------
 
     variable : at least 2d array
-        used as input to the Mechanism's `function <Mechanism_Base.function>`.  It is always at least a 2d np.array,
+        used as input to the Mechanism's `function <Mechanism_Base.function>`.  It is always at least a np.ndarray,
         with each item of axis 0 corresponding to a `value <InputPort.value>` of one of the Mechanism's `InputPorts
         <InputPort>` (in the order they are listed in its `input_ports <Mechanism_Base.input_ports>` attribute), and
         the first item (i.e., item 0) corresponding to the `value <InputPort.value>` of the `primary InputPort
@@ -1297,7 +1307,7 @@ class Mechanism_Base(Mechanism):
         each item in the list corresponds to the `value <InputPort.value>` of one of the Mechanism's `InputPorts
         <Mechanism_InputPorts>` listed in its `input_ports <Mechanism_Base.input_ports>` attribute.  The value of
         each item is the same as the corresponding item in the Mechanism's `variable <Mechanism_Base.variable>`
-        attribute.  The latter is a 2d np.array; the `input_values <Mechanism_Base.input_values>` attribute provides
+        attribute.  The latter is a np.ndarray; the `input_values <Mechanism_Base.input_values>` attribute provides
         this information in a simpler list format.
 
     input_labels_dict : dict
@@ -1350,10 +1360,10 @@ class Mechanism_Base(Mechanism):
         contains the parameters for the Mechanism's `function <Mechanism_Base.function>`.  The key of each entry is the
         name of a parameter of the function, and its value is the parameter's value.
 
-    value : 2d np.array [array(float64)]
+    value : np.ndarray [array(float64)]
         result of the Mechanism's `execute` method, which is usually (but not always) the `value <Function_Base.value>`
         of it `function <Mechanism_Base.function>` (it is not if the Mechanism implements any auxiliary function(s)
-        after calling its primary function). It is always at least a 2d np.array, with the items of axis 0 corresponding
+        after calling its primary function). It is always at least a np.ndarray, with the items of axis 0 corresponding
         to the values referenced by the corresponding `index <OutputPort.index>` attribute of the Mechanism's
         `OutputPorts <OutputPort>`.  The first item is generally referenced by the Mechanism's `primary OutputPort
         <OutputPort_Primary>` (i.e., the one in the its `output_port <Mechanism_Base.output_port>` attribute), as well
@@ -2405,19 +2415,19 @@ class Mechanism_Base(Mechanism):
     def _parse_execute_output(self, variable, value):
         value = convert_all_elements_to_np_array(value)
 
-        # comparisons below of .shape and ragged_np_shape are to avoid
+        # comparisons below of .shape and shape are to avoid
         # dimension increases for ragged arrays. We treat 1d ragged
         # arrays as 2d, because we assume subarrays are ndim >= 1
 
         # Intended specifically to handle case of matching a combination
         # function's output dimension to input dimension. Consider
         # adding an option to allow user to bypass this step.
-        if variable.ndim == value.ndim + 1 and value.shape == ragged_np_shape(value):
+        if variable.ndim == value.ndim + 1 and value.shape == shape(value):
             value = np.expand_dims(value, 0)
 
         if (
             value.ndim == 0
-            or (value.ndim == 1 and value.shape == ragged_np_shape(value))
+            or (value.ndim == 1 and value.shape == shape(value))
         ):
             value = convert_to_np_array(value, dimension=2)
 

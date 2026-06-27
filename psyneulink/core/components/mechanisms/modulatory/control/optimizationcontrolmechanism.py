@@ -1592,7 +1592,7 @@ class OptimizationControlMechanism(ControlMechanism):
         `control_allocation <ControlMechanism.control_allocation>` will not be executed as independent simulations;
         rather, all will be run in the same (original) execution context.
 
-    value : 2d np.array
+    value : np.ndarray
         the `optimal_control_allocation <OptimizationControlMechanism.optimal_control_allocation>` returned by the
         `OptimizationFunction <OptimizationControlMechanism.function>` assigned as the OptimizationControlMechanism's
         `function <OptimizationControlMechanism.function>`, which is the `net_outcome

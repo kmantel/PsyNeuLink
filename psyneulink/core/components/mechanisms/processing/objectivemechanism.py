@@ -477,7 +477,7 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
     output_ports : ContentAddressableList[OutputPort]
         by default, contains only the *OUTCOME* (`primary <OutputPort_Primary>`) OutputPort of the ObjectiveMechanism.
 
-    output_values : 2d np.array
+    output_values : np.ndarray
         contains one item that is the value of the *OUTCOME* `OutputPort <ObjectiveMechanism_Output>`.
 
     standard_output_ports : list[str]

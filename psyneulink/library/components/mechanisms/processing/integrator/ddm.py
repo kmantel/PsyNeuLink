@@ -502,7 +502,7 @@ class DDM(ProcessingMechanism):
                is carried out.
         COMMENT
 
-    value : 2d np.array[array(float64),array(float64),array(float64),array(float64)]
+    value : np.ndarray[array(float64),array(float64),array(float64),array(float64)]
         result of executing DDM `function <DDM.function>`;  has six items, that are assigned based on the `function
         <DDM.function>` attribute.  The first two items are always assigned the values of `DECISION_VARIABLE
         <DDM_DECISION_VARIABLE>` and `RESPONSE_TIME <DDM_RESPONSE_TIME>` (though their interpretation depends on the

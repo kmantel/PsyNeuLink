@@ -283,7 +283,7 @@ class ComparatorMechanism(ObjectiveMechanism):
     ----------
 
     COMMENT:
-    default_variable : Optional[List[array] or 2d np.array]
+    default_variable : Optional[List[array] or np.ndarray]
     COMMENT
 
     sample : OutputPort
@@ -310,7 +310,7 @@ class ComparatorMechanism(ObjectiveMechanism):
     output_ports : ContentAddressableList[OutputPort]
         contains, by default, only the *OUTCOME* (primary) OutputPort of the ComparatorMechanism.
 
-    output_values : 2d np.array
+    output_values : np.ndarray
         contains one item that is the value of the *OUTCOME* OutputPort.
 
     standard_output_ports : list[str]
