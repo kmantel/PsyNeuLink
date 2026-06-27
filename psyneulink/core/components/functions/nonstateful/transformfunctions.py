@@ -377,12 +377,12 @@ class Rearrange(TransformFunction):  # -----------------------------------------
     concatenating subsets of them into single 1d arrays.  The specification must be an integer, a tuple of integers,
     or a list containing either or both.  Each integer must be an index of an item in the outer dimension (axis 0) of
     `variable <Rearrange.variable>`.  Items referenced in a tuple are concatenated in the order specified into a single
-    1d array, and that 1d array is included in the resulting 2d array in the order it appears in **arrangement**.
+    inner array, and that inner array is included in the resulting outer array in the order it appears in **arrangement**.
     If **arrangement** is specified, then only the items of `variable <Rearrange.variable>` referenced in the
     specification are included in the result; if **arrangement** is not specified, all of the items of `variable
     <Rearrange.variable>` are concatenated into a single 1d array (i.e., it functions identically to `Concatenate`).
 
-    `function <Rearrange.function>` returns a 2d array with the items of `variable` rearranged
+    `function <Rearrange.function>` returns an array with the items of `variable` rearranged
     (and possibly concatenated) as specified by **arrangement**.
 
     Examples
@@ -1141,14 +1141,14 @@ class LinearCombination(
     weights : scalar or np.ndarray
         if it is a scalar, the value is used to multiply all elements of all arrays in `variable
         <LinearCombination.variable>`; if it is a 1d array, each element is used to multiply all elements in the
-        corresponding array of `variable <LinearCombination.variable>`;  if it is a 2d array, then each array is
+        corresponding array of `variable <LinearCombination.variable>`;  if it is a >=2d array, then each array is
         multiplied elementwise (i.e., the Hadamard Product is taken) with the corresponding array of `variable
         <LinearCombinations.variable>`. All `weights` are applied before any exponentiation (if it is specified).
 
     exponents : scalar or np.ndarray
         if it is a scalar, the value is used to exponentiate all elements of all arrays in `variable
         <LinearCombination.variable>`; if it is a 1d array, each element is used to exponentiate the elements of the
-        corresponding array of `variable <LinearCombinations.variable>`;  if it is a 2d array, the element of each
+        corresponding array of `variable <LinearCombinations.variable>`;  if it is a >=2d array, the element of each
         array is used to exponentiate the corresponding element of the corresponding array of `variable
         <LinearCombination.variable>`. In either case, all exponents are applied after application of the `weights
         <LinearCombination.weights>` (if any are specified).

@@ -1530,11 +1530,6 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
             raise FunctionError(f"Attempt to store and/or retrieve an entry in {self.__class__.__name__} that has "
                                 f"has dimensions ({entry}); must be a list or 1d or 2d array.")
 
-        if entry.ndim >2:
-            # IMPLEMENTATION NOTE:  Remove this if/when >2d arrays are supported more generally in PsyNeuLink
-            raise FunctionError(f"Attempt to store and/or retrieve an entry in {self.__class__.__name__} ({entry}) "
-                                f"that has more than 2 dimensions ({entry.ndim});  try flattening innermost ones.")
-
         if not len(entry) == num_fields:
             raise FunctionError(f"Attempt to store and/or retrieve entry in {self.__class__.__name__} ({entry}) "
                                 f"that has an incorrect number of fields ({len(entry)}; should be {num_fields}).")
@@ -1680,7 +1675,7 @@ class ContentAddressableMemory(MemoryFunction): # ------------------------------
             - if entry is a regular array (all fields [axis 0 items] have the same shape),
                 returns object with ndim = entry.ndim + 1 (see `technical_note <ContentAddressableMemory_Shapes>` above)
             - if the entry is a ragged array (fields [axis 0 items] have differing shapes),
-                returns 2d object with dtype=object.
+                returns array with dtype=object.
             """
             # Ragged array (i.e., fields of different shapes)
             if entry.ndim == 1 and entry.dtype==object:
