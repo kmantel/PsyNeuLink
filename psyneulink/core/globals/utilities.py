@@ -2741,6 +2741,9 @@ def shape(obj: ArrayLike) -> ArrayShape:
     return tuple(_shape(obj))
 
 
+_pnl_shape = shape
+
+
 def array_shapes_equal(a: ArrayLike, b: ArrayLike) -> bool:
     """
     Determines if the `shape <psyneulink.core.globals.utilities.shape>_`\\ s
@@ -2915,7 +2918,7 @@ def full_like(a: Union[np.ndarray, Iterable], fill_value, dtype: DTypeLike = Non
         warnings.warn('shape argument is ignored in favor of `a.shape`')
     if subok is not NotImplemented:
         warnings.warn('subok argument is not implemented')
-    shape = shape(a)
+    shape = _pnl_shape(a)
     return full(shape, fill_value, dtype, order, device=device)
 
 
