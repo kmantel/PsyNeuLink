@@ -87,7 +87,7 @@ class TestInputPortSpec:
                 default_variable=[[0], [0]],
                 input_ports=['HELLO']
             )
-        assert mismatches_specified_default_variable_error_text in str(error_text.value)
+        assert mismatches_fewer_input_ports_than_default_variable_error_text in str(error_text.value)
 
     # ------------------------------------------------------------------------------------------------
     # TEST 2b
