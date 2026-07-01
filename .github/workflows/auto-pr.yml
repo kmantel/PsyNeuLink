@@ -1,0 +1,17 @@
+name: Create PR from devel to master
+
+on:
+    schedule:
+        - cron: "0 0 1 * *"
+    workflow_dispatch:
+
+jobs:
+    create-pr:
+        name: Create PR
+        runs-on: ubuntu-latest
+
+        steps:
+            -
+                run: gh pr create -B master -H devel --title "Devel $(date +'%Y-%m-%d')" --body 'Automatically created by github-actions[bot]'
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
