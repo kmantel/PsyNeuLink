@@ -13,7 +13,7 @@ from psyneulink.core.globals.utilities import (
     extended_array_equal,
     full,
     prune_unused_args,
-    shape,
+    shape as pnl_shape,
     update_array_in_place,
     zeros,
 )
@@ -255,7 +255,7 @@ if packaging.version.parse(np.version.version) < packaging.version.parse('1.24')
 
 @pytest.mark.parametrize('arr, expected_shape', shape_parametrization)
 def test_shape(arr, expected_shape):
-    assert shape(arr) == expected_shape
+    assert pnl_shape(arr) == expected_shape
 
 
 @pytest.mark.parametrize('arr, shape', shape_parametrization)
@@ -264,7 +264,7 @@ def test_ragged_methods_shape_invertibility(arr, shape):
         dtype = arr.dtype
     except AttributeError:
         dtype = None
-    assert shape == shape(zeros(shape, dtype=dtype))
+    assert shape == pnl_shape(zeros(shape, dtype=dtype))
 
 
 # test assumes arrays in shape_parametrization are filled with
@@ -274,8 +274,8 @@ def test_ragged_methods_array_invertibility(arr):
     try:
         dtype = arr.dtype
     except AttributeError:
-        new_arr = full(shape(arr), arr)
+        new_arr = full(pnl_shape(arr), arr)
     else:
-        new_arr = zeros(shape(arr), dtype=dtype)
+        new_arr = zeros(pnl_shape(arr), dtype=dtype)
 
     assert extended_array_equal(arr, new_arr)
