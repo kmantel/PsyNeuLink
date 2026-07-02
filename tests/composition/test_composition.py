@@ -4489,7 +4489,7 @@ class TestRun:
             ]
         )
         def test_singleton(self, shape):
-            var = pnl.ragged_np_zeros(shape)
+            var = pnl.zeros(shape)
             A = pnl.ProcessingMechanism(default_variable=var)
             comp = pnl.Composition([A])
             comp.run(inputs={A: var})
@@ -4504,7 +4504,7 @@ class TestRun:
             ]
         )
         def test_branching_identical_shapes(self, shape):
-            var = pnl.ragged_np_ones(shape)
+            var = pnl.ones(shape)
             A = pnl.ProcessingMechanism(default_variable=var)
             B = pnl.ProcessingMechanism(default_variable=var)
             C = pnl.ProcessingMechanism(default_variable=var)
@@ -4512,7 +4512,7 @@ class TestRun:
 
             comp = pnl.Composition([[A, B, D], [A, C, D]])
             comp.run(inputs={A: var})
-            np.testing.assert_allclose(comp.results, [pnl.ragged_np_full(shape, 2)])
+            np.testing.assert_allclose(comp.results, [pnl.full(shape, 2)])
 
         @pytest.mark.xfail(
             reason=(
@@ -4532,8 +4532,8 @@ class TestRun:
             ]
         )
         def test_dim_reduce(self, shape):
-            var = pnl.ragged_np_zeros(shape)
-            reduced = pnl.ragged_np_zeros(shape[1:])
+            var = pnl.zeros(shape)
+            reduced = pnl.zeros(shape[1:])
 
             A = pnl.ProcessingMechanism(default_variable=[var], function=pnl.LinearCombination)
             B = pnl.ProcessingMechanism(default_variable=[reduced])
@@ -4576,8 +4576,8 @@ class TestRun:
             )
 
         def test_incompatible_matrices(self):
-            a_var = pnl.ragged_np_zeros((3, 4, 2))
-            b_var = pnl.ragged_np_zeros((5, 3, 1))
+            a_var = pnl.zeros((3, 4, 2))
+            b_var = pnl.zeros((5, 3, 1))
 
             A = pnl.ProcessingMechanism(default_variable=[a_var])
             B = pnl.ProcessingMechanism(default_variable=[b_var])
@@ -4585,7 +4585,7 @@ class TestRun:
             error_re = r'shape-mismatch for sum: axes pairs.* a.shape[-3] != b.shape[0] (3 != 4); a.shape[-2] != b.shape[1] (4 != 6)'
             error_re = re.sub(r'([\(\)\[\{])', r'\\\1', error_re)
             with pytest.raises(ValueError, match=error_re):
-                pnl.Composition([A, pnl.ragged_np_zeros((4, 6, 2, 4)), B])
+                pnl.Composition([A, pnl.zeros((4, 6, 2, 4)), B])
 
 
 class TestCallBeforeAfterTimescale:

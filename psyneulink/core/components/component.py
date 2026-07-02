@@ -4634,15 +4634,15 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                 if is_np_shape:
                     return 'np.shape', 'np.zeros'
                 else:
-                    return 'pnl.ragged_np_shape', 'pnl.ragged_np_zeros'
+                    return 'pnl.shape', 'pnl.zeros'
 
             obj_str = str(self)
             if getattr(self, 'owner', None) is not None:
                 obj_str = f'{obj_str} of {self.owner}'
 
             # shape is equivalent to np.shape if not ragged
-            inp_ragged_shape = ragged_np_shape(inp)
-            external_input_ragged_shape = ragged_np_shape(external_input)
+            inp_ragged_shape = shape(inp)
+            external_input_ragged_shape = shape(external_input)
 
             inp_shape_type, _ = _shape_type_strs(inp, inp_ragged_shape)
             expected_shape_type, expected_zeros_fct_name = _shape_type_strs(
@@ -4714,7 +4714,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         if inp is None:
             return None
         else:
-            return ragged_np_shape(inp)
+            return shape(inp)
 
     @property
     def logged_items(self):
