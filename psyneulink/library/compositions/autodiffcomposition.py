@@ -972,7 +972,7 @@ from psyneulink.core.globals.keywords import (
     WARNING
 )
 from psyneulink.core.globals.utilities import (is_identity_matrix, is_matrix_keyword, is_numeric,
-                                               convert_to_list, deprecation_warning, ragged_np_zeros_like)
+                                               convert_to_list, deprecation_warning, zeros_like)
 from psyneulink.core.scheduling.scheduler import Scheduler
 from psyneulink.core.globals.parameters import Parameter, check_user_specified
 from psyneulink.core.scheduling.time import TimeScale
@@ -2172,7 +2172,7 @@ class AutodiffComposition(Composition):
                 else:
                     sample = output_port_for_learning
                     sample_name = sample.full_name if len(sample.owner.output_ports)>1 else sample.owner.name
-                    target_mech_var = ragged_np_zeros_like([output_port_for_learning.defaults.value])
+                    target_mech_var = zeros_like([output_port_for_learning.defaults.value])
                     target_mech = ProcessingMechanism(default_variable=target_mech_var,
                                                       name= f"{TARGET} for " + sample_name)
                     target_mech._initialize_from_context(context, base_context, override=False)
