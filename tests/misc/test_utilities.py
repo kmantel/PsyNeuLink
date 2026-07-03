@@ -8,13 +8,14 @@ import packaging
 import pytest
 
 from psyneulink.core.globals.utilities import (
-    PNLStrEnum, convert_all_elements_to_np_array,
+    PNLStrEnum,
+    convert_all_elements_to_np_array,
     extended_array_equal,
-    prune_unused_args,
     full,
+    prune_unused_args,
     shape,
-    zeros,
     update_array_in_place,
+    zeros,
 )
 
 
