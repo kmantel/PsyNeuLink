@@ -2861,7 +2861,7 @@ def full_like(a: Union[np.ndarray, Iterable], fill_value, dtype: DTypeLike = Non
             subok :
                 see `numpy.full_like`. ignored, not implemented
             shape :
-                see `numpy.full_like`. ignored, in favor of `shape(**a**)`
+                see `numpy.full_like`. ignored, in favor of shape of **a**
             device (Optional[str]):
                 see `numpy.full_like`
                 requires version `numpy>=2`
