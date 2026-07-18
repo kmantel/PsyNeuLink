@@ -1075,7 +1075,6 @@ class RecurrentTransferMechanism(TransferMechanism):
         # IMPLEMENTATION NOTE: THIS SHOULD BE MOVED TO COMPOSITION WHEN THAT IS IMPLEMENTED
         if self.has_recurrent_input_port:
             # # FIX: 7/12/18 MAKE THIS A METHOD THAT CAN BE OVERRIDDEN BY CONTRASTIVEHEBBIAN
-            print('self.input_port.defaults.variable', self.input_port.defaults.variable)
             new_input_port = InputPort(owner=self, name=RECURRENT, variable=self.input_port.defaults.variable,
                                         internal_only=True)
             assert (len(new_input_port.all_afferents) == 0)  # just a sanity check
