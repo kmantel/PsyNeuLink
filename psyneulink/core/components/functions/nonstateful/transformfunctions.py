@@ -51,8 +51,15 @@ from psyneulink._typing import List, Literal, Optional, Tuple, Union
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.functions import function
 from psyneulink.core.components.functions.function import (
-    Function_Base, FunctionError, FunctionOutputType, function_keywords,
-    get_matrix, _random_state_getter, _seed_setter, DEFAULT_SEED)
+    DEFAULT_SEED,
+    Function_Base,
+    FunctionError,
+    FunctionOutputType,
+    _random_state_getter,
+    _seed_setter,
+    function_keywords,
+    get_matrix,
+)
 from psyneulink.core.components.shellclasses import Projection
 from psyneulink.core.globals.keywords import (
     ADDITIVE_PARAM, ARRANGEMENT, AUTO, COMBINATION_FUNCTION_TYPE, COMBINE_MEANS_FUNCTION, CONCATENATE_FUNCTION,
@@ -61,7 +68,14 @@ from psyneulink.core.globals.keywords import (
      MATRIX, MATRIX_KEYWORD_NAMES, MATRIX_MEMORY_FUNCTION, MATRIX_TRANSFORM_FUNCTION,  MULTIPLICATIVE_PARAM, NORMALIZE,
      OFFSET, OPERATION, PREDICTION_ERROR_DELTA_FUNCTION, PRODUCT,
     DEFAULT,
-    PREFERENCE_SET_NAME, REARRANGE_FUNCTION, RECEIVER, REDUCE_FUNCTION, RETRIEVE, SCALE, STORE, SUM,
+    PREFERENCE_SET_NAME,
+    REARRANGE_FUNCTION,
+    RECEIVER,
+    REDUCE_FUNCTION,
+    RETRIEVE,
+    SCALE,
+    STORE,
+    SUM,
     WEIGHTS,
 )
 from psyneulink.core.globals.utilities import (
