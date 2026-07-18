@@ -46,7 +46,7 @@ except ImportError:
     torch = None
 from beartype import beartype
 
-from psyneulink._typing import Optional, Union, List, Literal, Tuple
+from psyneulink._typing import List, Literal, Optional, Tuple, Union
 
 from psyneulink.core import llvm as pnlvm
 from psyneulink.core.components.functions import function
