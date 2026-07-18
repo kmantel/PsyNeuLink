@@ -79,8 +79,8 @@ from psyneulink.core.globals.keywords import (
     WEIGHTS,
 )
 from psyneulink.core.globals.utilities import (
-    _validate_np_tensordot_args, all_within_range, convert_all_elements_to_np_array, convert_to_np_array, is_numeric, is_matrix_keyword, is_numeric_scalar,
-    np_array_less_than_2d, ValidParamSpecType)
+    _validate_np_tensordot_args, all_within_range, convert_all_elements_to_np_array, convert_to_np_array,
+    is_numeric, is_matrix_keyword, is_numeric_scalar, np_array_less_than_2d, ValidParamSpecType)
 from psyneulink.core.globals.context import Context, ContextFlags, handle_external_context
 from psyneulink.core.globals.parameters import FunctionParameter, Parameter, check_user_specified, copy_parameter_value
 from psyneulink.core.globals.preferences.basepreferenceset import \
