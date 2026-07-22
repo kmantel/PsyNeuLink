@@ -132,6 +132,7 @@ class ExternalMemoryMechanism(EpisodicMemoryMechanism):
                                           function_parameter_name='scores_metric',
                                           primary=True,
                                           stateful=False)
+        memory = FunctionParameter(None, aliases='field_memory')
         normalize_memories = Parameter(True, stateful=True, loggable=True)
         # normalize_memories = FunctionParameter(True,
         #                                        BREADCRUMB:  THESE getter/setter MIGHT BE THE PROBLEM:
@@ -197,17 +198,6 @@ class ExternalMemoryMechanism(EpisodicMemoryMechanism):
             np.zeros(1),
         ], dtype=object)
 
-        function = MatrixMemory(default_variable=default_variable,
-                                memory=field_memory,
-                                normalize_memories=normalize_memories,
-                                scores_metric=scores_metric,
-                                decay_rate=decay_rate,
-                                storage_prob=storage_prob,
-                                params=params,
-                                owner=self,
-                                prefs=prefs
-                                )
-
         # EM2 BREADCRUMB: MOVE THESE BACK INTO _instantiate_<input/output>_ports():
         input_ports = [{NAME: QUERY, VARIABLE: np.zeros(field_shape)},
                        {NAME: COMBINED_SCORES, VARIABLE: np.zeros(self.memory_capacity)},
@@ -224,9 +214,12 @@ class ExternalMemoryMechanism(EpisodicMemoryMechanism):
             input_ports=input_ports,
             output_ports=output_ports,
             # EM2 BREADCRUMB END
-            function=function,
             # distance_function=distance_function,
-            memory=field_memory,
+            decay_rate=decay_rate,
+            storage_prob=storage_prob,
+            normalize_memories=normalize_memories,
+            scores_metric=scores_metric,
+            field_memory=field_memory,
             params=params,
             name=name,
             prefs=prefs,
