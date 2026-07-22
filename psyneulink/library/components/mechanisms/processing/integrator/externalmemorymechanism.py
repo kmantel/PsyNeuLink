@@ -132,7 +132,7 @@ class ExternalMemoryMechanism(EpisodicMemoryMechanism):
                                           function_parameter_name='scores_metric',
                                           primary=True,
                                           stateful=False)
-        normalize_memories = Parameter(True, stateful=True, loggable=True)
+        normalize_memories = FunctionParameter(True, stateful=True, loggable=True)
         # normalize_memories = FunctionParameter(True,
         #                                        BREADCRUMB:  THESE getter/setter MIGHT BE THE PROBLEM:
         #                                        # getter = _normalize_memories_getter,
