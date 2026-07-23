@@ -37,9 +37,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.14']
+        python-version: ['3.8', '3.14']
         extra-args: ['']
-        os: ['macos']
+        os: ['ubuntu', 'macos', 'windows']
         version-restrict: ['']
         torch: ['']
         include:
