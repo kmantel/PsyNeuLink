@@ -4,6 +4,13 @@ import pytest
 import psyneulink as pnl
 
 
+def _get_fp_rand(*args) -> np.ndarray:
+    res = np.random.rand(*args)
+    if pytest.helpers.llvm_current_fp_precision() == 'fp32':
+        res = res.astype(np.float32)
+    return res
+
+
 class TestRearrange:
 
     @pytest.mark.function
@@ -179,15 +186,15 @@ RAND3_S = np.random.rand()
 
 
 # higher dimension arrays
-test_varh1 = np.random.rand(1, 1, SIZE)
-test_varh2 = np.random.rand(2, 3, SIZE, SIZE)
-test_varh3 = np.random.rand(5, 4, SIZE, SIZE, SIZE)
+test_varh1 = _get_fp_rand(1, 1, SIZE)
+test_varh2 = _get_fp_rand(2, 3, SIZE, SIZE)
+test_varh3 = _get_fp_rand(5, 4, SIZE, SIZE, SIZE)
 
 RANDh_A = {
     k: {
-        test_varh1.shape: np.random.rand(*test_varh1.shape),
-        test_varh2.shape: np.random.rand(*test_varh2.shape),
-        test_varh3.shape: np.random.rand(*test_varh3.shape),
+        test_varh1.shape: _get_fp_rand(*test_varh1.shape),
+        test_varh2.shape: _get_fp_rand(*test_varh2.shape),
+        test_varh3.shape: _get_fp_rand(*test_varh3.shape),
     }
     for k in ['exponents', 'weights', 'scale', 'offset']
 }
