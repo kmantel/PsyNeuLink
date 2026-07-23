@@ -1544,15 +1544,15 @@ class LinearCombination(
         self._gen_llvm_combine(builder, ctx=ctx, vi=arg_in, vo=arg_out, params=params)
         return builder
 
-    def _gen_llvm_combine_body(self, builder, ctx, vi, vo, val_f, pow_f, comb_op, params, indices):
+    def _gen_llvm_combine_body(self, builder, ctx, vi, vo, val, pow_f, comb_op, params, indices):
         ptro = builder.gep(vo, [ctx.int32_ty(0), *indices])
 
         if isinstance(ptro.type.pointee, pnlvm.ir.ArrayType):
             with pnlvm.helpers.array_ptr_loop(builder, ptro, f"combine_axis{len(indices)}") as (b, idx):
-                self._gen_llvm_combine_body(b, ctx, vi, vo, val_f, pow_f, comb_op, params, [*indices, idx])
+                self._gen_llvm_combine_body(b, ctx, vi, vo, val, pow_f, comb_op, params, [*indices, idx])
         else:
-            val_p = builder.alloca(val_f.type, name="combined_result")
-            builder.store(val_f, val_p)
+            val_p = builder.alloca(val.type, name="combined_result")
+            builder.store(val, val_p)
 
             assert isinstance(vi.type.pointee, pnlvm.ir.ArrayType)
             with pnlvm.helpers.array_ptr_loop(builder, vi, "combine") as (b, idx):
