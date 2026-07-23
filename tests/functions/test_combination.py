@@ -338,7 +338,7 @@ def test_linear_combination_function_higher_dim(variable, operation, exponents, 
         assert False, "Unknown operation"
 
     # wider tolerances needed for fp32
-    if pytest.helpers.llvm_current_fp_precision() == 'fp32':
+    if pytest.helpers.llvm_current_fp_precision() == 'fp32' and False:
         tolerances = {'rtol': 3e-5, 'atol': 2e-7}
     else:
         tolerances = {'rtol': 1e-5, 'atol': 1e-8}
