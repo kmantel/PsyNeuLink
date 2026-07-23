@@ -308,6 +308,8 @@ def test_linear_combination_function_higher_dim(variable, operation, exponents, 
     if weights == 'A':
         # random 1/-1
         weights = 2 * (np.round(RANDh_A['weights'][variable.shape]) - .5)
+        if pytest.helpers.llvm_current_fp_precision() == 'fp32':
+            weights = weights.astype(np.float32)
     if exponents == 'A':
         exponents = RANDh_A['exponents'][variable.shape]
 
