@@ -325,8 +325,10 @@ def test_linear_combination_function_higher_dim(variable, operation, exponents, 
     tmp = (variable ** exponent) * weights
     if operation == pnl.SUM:
         expected = np.sum(tmp, axis=0) * scale + offset
-    if operation == pnl.PRODUCT:
+    elif operation == pnl.PRODUCT:
         expected = np.prod(tmp, axis=0) * scale + offset
+    else:
+        assert False, "Unknown operation"
 
     np.testing.assert_allclose(res, expected, rtol=1e-5, atol=1e-8)
 
