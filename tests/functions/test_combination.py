@@ -164,27 +164,27 @@ def _rand(*args) -> np.ndarray:
 SIZE=5
 np.random.seed(0)
 #This gives us the correct 2d array
-test_varr1 = np.random.rand(1, SIZE)
-test_varr2 = np.random.rand(2, SIZE)
-test_varr3 = np.random.rand(3, SIZE)
+test_varr1 = _rand(1, SIZE)
+test_varr2 = _rand(2, SIZE)
+test_varr3 = _rand(3, SIZE)
 
 #This gives us the correct 2d column array
-test_varc1 = np.random.rand(SIZE, 1)
-test_varc2 = np.random.rand(SIZE, 1)
-test_varc3 = np.random.rand(SIZE, 1)
+test_varc1 = _rand(SIZE, 1)
+test_varc2 = _rand(SIZE, 1)
+test_varc3 = _rand(SIZE, 1)
 
 #This gives us the correct 2d matrix array
-test_varm1 = np.random.rand(SIZE, 3)
-test_varm2 = np.random.rand(SIZE, 3)
-test_varm3 = np.random.rand(SIZE, 3)
+test_varm1 = _rand(SIZE, 3)
+test_varm2 = _rand(SIZE, 3)
+test_varm3 = _rand(SIZE, 3)
 
 RAND1_V = _rand(SIZE)
 RAND2_V = _rand(SIZE)
-RAND3_V = np.random.rand(SIZE)
+RAND3_V = _rand(SIZE)
 
 RAND1_S = _rand()
 RAND2_S = _rand()
-RAND3_S = np.random.rand()
+RAND3_S = _rand()
 
 
 # higher dimension arrays
