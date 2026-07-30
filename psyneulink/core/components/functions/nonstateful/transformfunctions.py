@@ -2508,7 +2508,7 @@ class MatrixMemory(TransformFunction): #
         else:
             raise FunctionError(operation_err_msg)
 
-        return entry, scores, norms
+        return convert_all_elements_to_np_array([entry, scores, norms])
 
     def _compute_scores(self, query, context):
 
