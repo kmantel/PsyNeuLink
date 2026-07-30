@@ -1125,6 +1125,7 @@ from psyneulink.core.globals.utilities import (
     convert_all_elements_to_np_array,
     convert_to_list,
     convert_to_np_array,
+    extended_array_equal,
     is_numeric,
     iscompatible,
     kwCompatibilityNumeric,
@@ -2599,7 +2600,46 @@ class Mechanism_Base(Mechanism):
                                       runtime_params=runtime_params,
                                       context=context)
 
-                value = self._parse_execute_output(variable, value)
+                old_value = value
+
+                peo_value = self._parse_execute_output(variable, value)
+
+                # IMPLEMENTATION NOTE:  THIS IS HERE BECAUSE IF return_value IS A LIST, AND THE LENGTH OF ALL OF ITS
+                #                       ELEMENTS ALONG ALL DIMENSIONS ARE EQUAL (E.G., A 2X2 MATRIX PAIRED WITH AN
+                #                       ARRAY OF LENGTH 2), np.array (AS WELL AS np.atleast_2d) GENERATES A ValueError
+                if (isinstance(value, list) and
+                    (all(isinstance(item, np.ndarray) for item in value) and
+                        all(
+                                all(item.shape[i]==value[0].shape[0]
+                                    for i in range(len(item.shape)))
+                                for item in value))):
+                    value = peo_value
+                else:
+                    converted_to_2d = convert_to_np_array(value, dimension=2)
+                    # If return_value is a list of heterogenous elements, return as is
+                    #     (satisfies requirement that return_value be an array of possibly multidimensional values)
+                    if converted_to_2d.dtype == object:
+                        # value = peo_value
+                        pass
+                    # Otherwise, return value converted to 2d np.array
+                    else:
+                        # return converted_to_2d
+                        value = peo_value
+
+
+                try:
+                    equal = extended_array_equal(value, peo_value)
+                except Exception as e:
+                    raise
+                    equal = False
+
+                if not equal:
+                    print(self, 'old_value', old_value, sep='\t')
+                    print(self, 'variable', variable, sep='\t')
+                    print(self, 'value', value, sep='\t')
+                    print(self, 'self._parse_execute_output(variable, value)', peo_value, sep='\t')
+
+                # value = peo_value
 
                 self.parameters.value._set(value, context=context)
 
