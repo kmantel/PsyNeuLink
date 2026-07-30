@@ -1119,10 +1119,19 @@ from psyneulink.core.globals.parameters import (
 )
 from psyneulink.core.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.core.globals.registry import register_category, remove_instance_from_registry
-from psyneulink.core.globals.utilities import \
-    ContentAddressableList, append_type_to_name, convert_all_elements_to_np_array, convert_to_np_array, \
-    iscompatible, kwCompatibilityNumeric, convert_to_list, is_numeric, parse_valid_identifier,
-    safe_len
+from psyneulink.core.globals.utilities import (
+    ContentAddressableList,
+    append_type_to_name,
+    convert_all_elements_to_np_array,
+    convert_to_list,
+    convert_to_np_array,
+    is_numeric,
+    iscompatible,
+    kwCompatibilityNumeric,
+    parse_valid_identifier,
+    safe_len,
+    shape,
+)
 from psyneulink.core.scheduling.condition import Condition
 from psyneulink.core.scheduling.time import TimeScale
 
