@@ -153,13 +153,12 @@ class TestReduce:
 
 
 def _rand(*args) -> np.ndarray:
-    res = np.random.rand(*args)
     if pytest.helpers.llvm_current_fp_precision() == 'fp32':
-        try:
-            res = res.astype(np.float32)
-        except AttributeError:
-            res = np.float32(res)
-    return res
+        dtype = np.float32
+    else:
+        dtype = np.float64
+
+    return np.random.default_rng().random(size=args, dtype=dtype)
 
 
 SIZE=5
