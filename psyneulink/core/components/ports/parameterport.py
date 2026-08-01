@@ -1371,6 +1371,9 @@ def _is_legal_param_value(owner, value):
         return False
 
 
+    return False
+
+
 def _get_parameter_port(sender_owner, sender_type, param_name, component):
     """Return ParameterPort for named parameter of a Mechanism requested by owner
     """
