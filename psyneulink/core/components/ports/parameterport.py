@@ -375,13 +375,14 @@ from beartype import beartype
 from psyneulink._typing import Optional
 
 from psyneulink.core.components.component import Component, ComponentsMeta, parameter_keywords
+from psyneulink.core.components.component import AUTOASSIGN_PLACEHOLDER_VALUE
 from psyneulink.core.components.functions.function import FunctionError, get_param_value_for_keyword
 from psyneulink.core.components.ports.modulatorysignals.modulatorysignal import ModulatorySignal
 from psyneulink.core.components.ports.port import PortError, Port_Base, _instantiate_port, port_type_keywords
 from psyneulink.core.components.shellclasses import Mechanism, Projection, Function
 from psyneulink.core.globals.context import ContextFlags
 from psyneulink.core.globals.keywords import \
-    CONTEXT, CONTROL_PROJECTION, CONTROL_SIGNAL, CONTROL_SIGNALS, FUNCTION, FUNCTION_PARAMS, \
+    AUTO, CONTEXT, CONTROL_PROJECTION, CONTROL_SIGNAL, CONTROL_SIGNALS, FUNCTION, FUNCTION_PARAMS, \
     LEARNING_SIGNAL, LEARNING_SIGNALS, MECHANISM, NAME, PARAMETER_PORT, PARAMETER_PORT_PARAMS, PATHWAY_PROJECTION, \
     PROJECTION, PROJECTIONS, PROJECTION_TYPE, REFERENCE_VALUE, SENDER, VALUE
 from psyneulink.core.globals.parameters import (
@@ -1299,6 +1300,9 @@ def _instantiate_parameter_port(
                 param_value
             )
 
+    if _is_autoassign_value(param_value):
+        param_value = AUTOASSIGN_PLACEHOLDER_VALUE
+
     # # FIX: 10/3/17 - ??MOVE THIS TO _parse_port_specific_specs ----------------
     # # Use param_value as constraint
     # # IMPLEMENTATION NOTE:  need to copy, since _instantiate_port() calls _parse_port_value()
@@ -1338,6 +1342,15 @@ def _instantiate_parameter_port(
     return port
 
 
+def _is_autoassign_value(value):
+    try:
+        return bool(value == AUTO)  # enforce bool to be able to catch numpy err here
+    except ValueError:
+        # value may be a numpy array, which insists on any/all check
+        # consider making AUTO some kind of enum or other special value
+        return False
+
+
 def _is_legal_param_value(owner, value):
 
     from psyneulink.core.components.mechanisms.modulatory.control.controlmechanism import _is_control_spec
@@ -1370,6 +1383,8 @@ def _is_legal_param_value(owner, value):
     if isinstance(value, (types.FunctionType, types.MethodType, Component)):
         return False
 
+    if _is_autoassign_value(value):
+        return True
 
     return False
 

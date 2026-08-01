@@ -508,6 +508,7 @@ import functools
 import inspect
 import itertools
 import logging
+import math
 import numbers
 import re
 import types
@@ -611,6 +612,12 @@ logger = logging.getLogger(__name__)
 component_keywords = {NAME, VARIABLE, VALUE, FUNCTION, FUNCTION_PARAMS, PARAMS, PREFS_ARG, CONTEXT}
 
 DeferredInitRegistry = {}
+
+
+# indicator for a parameter port value that is not determined before the port is
+# created (Parameter specified as `AUTO`). numeric to allow port to be created regardless.
+# consider replacing with a special enum or other unique value
+AUTOASSIGN_PLACEHOLDER_VALUE = np.nan
 
 
 class ResetMode(Enum):
@@ -3372,11 +3379,33 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         self._parse_param_port_sources()
 
     def _instantiate_attributes_after_function(self, context=None):
+        from psyneulink.core.components.ports.parameterport import _is_legal_param_value
+
         if hasattr(self, "_parameter_ports"):
             shared_params = [p for p in self.parameters if isinstance(p, (ParameterAlias, SharedParameter))]
             sources = [p.source for p in shared_params]
 
             for param_port in self._parameter_ports:
+                # instantiate values that were specified as AUTO at construction
+                # placeholder is a single value np.nan
+                try:
+                    cur_port_val = param_port.defaults.variable.item()
+                except ValueError:
+                    is_auto_assign = False
+                else:
+                    is_auto_assign = cur_port_val == AUTOASSIGN_PLACEHOLDER_VALUE
+
+                if is_auto_assign:
+                    cur_param_val = param_port.source._get(context)
+
+                    if not _is_legal_param_value(self, cur_param_val):
+                        raise ComponentError(
+                            f'{param_port} was assigned `AUTO` at construction but did not resolve'
+                            f' to a numeric value ({cur_param_val})', self
+                        )
+
+                    param_port._update_default_variable(cur_param_val, context)
+
                 property_names = {param_port.name}
                 try:
                     alias_index = sources.index(param_port.source)
