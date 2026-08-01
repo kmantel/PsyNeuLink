@@ -148,7 +148,9 @@ class ExternalMemoryMechanism(EpisodicMemoryMechanism):
                                        function_parameter_name='decay_rate',
                                        primary=True,
                                        modulable=True,
-                                       stateful=True)
+                                       stateful=True,
+                                       dependencies=memory,
+                                       )
         storage_prob = FunctionParameter(1.0,
                                          function_name='function',
                                          function_parameter_name='storage_prob',
@@ -163,6 +165,13 @@ class ExternalMemoryMechanism(EpisodicMemoryMechanism):
                 return None
             if not is_numeric_scalar(decay_rate) or not 0 <= decay_rate <= 1:
                 return "must be a float in the interval [0, 1]."
+
+        def _parse_decay_rate(self, decay_rate):
+            if decay_rate == AUTO:
+                if self._owner.defaults.memory is not None:
+                    # not catching div0 error on purpose (unexpected input)
+                    return 1 / len(self._owner.defaults.memory)
+            return decay_rate
 
     @check_user_specified
     def __init__(
