@@ -364,6 +364,7 @@ Class Reference
 
 import collections
 import inspect
+import math
 import operator
 import types
 import warnings
@@ -381,7 +382,7 @@ from psyneulink.core.components.ports.port import PortError, Port_Base, _instant
 from psyneulink.core.components.shellclasses import Mechanism, Projection, Function
 from psyneulink.core.globals.context import ContextFlags
 from psyneulink.core.globals.keywords import \
-    CONTEXT, CONTROL_PROJECTION, CONTROL_SIGNAL, CONTROL_SIGNALS, FUNCTION, FUNCTION_PARAMS, \
+    AUTO, CONTEXT, CONTROL_PROJECTION, CONTROL_SIGNAL, CONTROL_SIGNALS, FUNCTION, FUNCTION_PARAMS, \
     LEARNING_SIGNAL, LEARNING_SIGNALS, MECHANISM, NAME, PARAMETER_PORT, PARAMETER_PORT_PARAMS, PATHWAY_PROJECTION, \
     PROJECTION, PROJECTIONS, PROJECTION_TYPE, REFERENCE_VALUE, SENDER, VALUE
 from psyneulink.core.globals.parameters import (
@@ -1299,6 +1300,9 @@ def _instantiate_parameter_port(
                 param_value
             )
 
+    if param_value == AUTO:
+        param_value = -math.inf
+
     # # FIX: 10/3/17 - ??MOVE THIS TO _parse_port_specific_specs ----------------
     # # Use param_value as constraint
     # # IMPLEMENTATION NOTE:  need to copy, since _instantiate_port() calls _parse_port_value()
@@ -1370,6 +1374,8 @@ def _is_legal_param_value(owner, value):
     if isinstance(value, (types.FunctionType, types.MethodType, Component)):
         return False
 
+    if value == AUTO:
+        return True
 
     return False
 
