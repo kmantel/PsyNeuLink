@@ -1017,12 +1017,16 @@ def _instantiate_parameter_ports(owner, function=None, context=None):
     # cases a Parameter will be specified on both, and the function's
     # values/defaults should take precedence
     def skip_parameter_port(parameter):
-        return (
+        res = (
             isinstance(parameter, (ParameterAlias, SharedParameter))
             or parameter.name in owner.exclude_from_parameter_ports
             or not parameter.modulable
             or parameter in owner.parameter_ports
         )
+        if not res and getattr(owner, '_param_port_after_function', False):
+            import sys
+            print('NEW PARAMETER PORT AFTER FUNCTION (skip_parameter_port):', owner, parameter.name, file=sys.stderr)
+        return res
 
     def _enumerate_parameter_ports(obj, prev_objs, port_collection):
         """
@@ -1335,6 +1339,11 @@ def _instantiate_parameter_port(
         # if the source parameter is not added here, we can't reference
         # a ParameterPort by Parameter
         owner.parameter_ports.parameter_mapping[source] = port
+
+        if getattr(owner, '_param_port_after_function', False):
+            import sys
+            print('NEW PARAMETER PORT (_instantiate_parameter_port):', owner, source.name, file=sys.stderr)
+
 
     return port
 
