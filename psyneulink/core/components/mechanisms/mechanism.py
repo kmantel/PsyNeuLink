@@ -2235,6 +2235,8 @@ class Mechanism_Base(Mechanism):
         except AttributeError:
             pass
 
+        self._instantiate_parameter_ports(context=context)
+
         super()._instantiate_attributes_after_function(context=context)
 
     def _instantiate_input_ports(self, input_ports=None, reference_value=None, context=None):
