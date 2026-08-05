@@ -3387,7 +3387,10 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
                     setattr(self.__class__, "mod_" + property_name, make_property_mod(property_name, param_port.name))
                     setattr(self.__class__, "get_mod_" + property_name, make_stateful_getter_mod(property_name, param_port.name))
 
+            # TODO: REMOVE THESE, unneeded
+            self._param_port_after_function = True
             self._parse_param_port_sources()
+            self._param_port_after_function = False
 
     def _instantiate_value(self, context=None):
         #  - call self.execute to get value, since the value of a Component is defined as what is returned by its
