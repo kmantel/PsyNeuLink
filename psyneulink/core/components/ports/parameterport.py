@@ -1002,12 +1002,12 @@ def _instantiate_parameter_ports(owner, function=None, context=None):
     """
 
     # TBI / IMPLEMENT: use specs to implement ParameterPorts below
-
-    owner._parameter_ports = ParameterPortList(
-        component_type=ParameterPort,
-        name=owner.name + '.parameter_ports',
-        owner=owner,
-    )
+    if getattr(owner, '_parameter_ports', None) is None:
+        owner._parameter_ports = ParameterPortList(
+            component_type=ParameterPort,
+            name=owner.name + '.parameter_ports',
+            owner=owner,
+        )
 
     # Check that all ParameterPorts for owner have not been explicitly suppressed
     try:
@@ -1022,11 +1022,13 @@ def _instantiate_parameter_ports(owner, function=None, context=None):
     # cases a Parameter will be specified on both, and the function's
     # values/defaults should take precedence
     def skip_parameter_port(parameter):
-        return (
+        res = (
             isinstance(parameter, (ParameterAlias, SharedParameter))
             or parameter.name in owner.exclude_from_parameter_ports
             or not parameter.modulable
+            or parameter in owner.parameter_ports
         )
+        return res
 
     def _enumerate_parameter_ports(obj, prev_objs, port_collection):
         """
@@ -1339,6 +1341,8 @@ def _instantiate_parameter_port(
         # if the source parameter is not added here, we can't reference
         # a ParameterPort by Parameter
         owner.parameter_ports.parameter_mapping[source] = port
+
+
 
     return port
 
