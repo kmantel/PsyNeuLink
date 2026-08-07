@@ -6976,6 +6976,7 @@ class TestInputs:
             (1, {'A': 0}, {'A': np.zeros((1, 1, 1, 1))}, 1),
             (1, {'A': [0]}, {'A': np.zeros((1, 1, 1, 1))}, 1),
             (1, {'A': [[0]]}, {'A': np.zeros((1, 1, 1, 1))}, 1),
+            (1, {'A': [[[0]]]}, {'A': np.zeros((1, 1, 1, 1))}, 1),
 
             # (1, {'A': [[[0]]]}, {'A': np.zeros((1, 1, 1))}, 1),   # works on devel but i think we can give this up
 
