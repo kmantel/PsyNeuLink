@@ -116,6 +116,7 @@ import types
 from beartype import beartype
 
 from numbers import Number
+from typing import TYPE_CHECKING
 from psyneulink._typing import (
     Any,
     Callable,
@@ -155,7 +156,7 @@ from psyneulink.core.globals.keywords import (comparison_operators, DISTANCE_MET
                                               MATRIX_KEYWORD_VALUES, MPS, NAME, SINUSOID, VALUE)
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from torch import Tensor
 
 
