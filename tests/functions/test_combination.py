@@ -203,10 +203,6 @@ RANDh_A = {
 }
 
 
-# set by _rand. expecting to be here during collection and not during test runs
-pnl.LLVMBuilderContext.clear_global()
-
-
 @pytest.mark.benchmark(group="ReduceFunction")
 @pytest.mark.function
 @pytest.mark.combination_function
