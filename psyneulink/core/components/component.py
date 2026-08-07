@@ -516,6 +516,7 @@ import weakref
 from abc import ABCMeta
 from collections.abc import Iterable
 from enum import Enum, IntEnum
+from typing import TYPE_CHECKING
 
 import dill
 import graph_scheduler
@@ -607,7 +608,7 @@ from psyneulink.core.scheduling.condition import Never
 from psyneulink.core.scheduling.time import Time, TimeScale
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from torch import Tensor
     from psyneulink.core.compositions.composition import Composition
 
