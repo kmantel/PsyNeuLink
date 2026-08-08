@@ -2235,7 +2235,9 @@ class Mechanism_Base(Mechanism):
         except AttributeError:
             pass
 
+        self._param_port_after_function = True
         self._instantiate_parameter_ports(context=context)
+        self._param_port_after_function = False
 
         super()._instantiate_attributes_after_function(context=context)
 
