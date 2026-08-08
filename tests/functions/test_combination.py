@@ -156,6 +156,8 @@ class TestReduce:
 def _rand(*args) -> np.ndarray:
     res = np.random.rand(*args)
     # workaround get_current issue with checking pytest.helpers.llvm_current_fp_precision() == 'fp32'
+    import sys
+    print('_rand', pnlvm.LLVMBuilderContext.default_float_ty, pytest.helpers.llvm_current_fp_precision(), sep='\n', file=sys.stderr)
     if pnlvm.LLVMBuilderContext.default_float_ty == pnlvm.ir.FloatType():
         try:
             res = res.astype(np.float32)
