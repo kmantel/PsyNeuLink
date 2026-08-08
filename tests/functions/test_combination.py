@@ -156,13 +156,8 @@ class TestReduce:
 def _rand(*args) -> np.ndarray:
     res = np.random.rand(*args)
     # workaround get_current issue with checking pytest.helpers.llvm_current_fp_precision() == 'fp32'
-    import sys
-    print('_rand', pnlvm.LLVMBuilderContext.default_float_ty, pytest.helpers.llvm_current_fp_precision(), sep='\n', file=sys.stderr)
     if pnlvm.LLVMBuilderContext.default_float_ty == pnlvm.ir.FloatType():
-        try:
-            res = res.astype(np.float32)
-        except AttributeError:
-            res = np.float32(res)
+        res = np.asarray(res, dtype=np.float32)
     return res
 
 
@@ -316,6 +311,11 @@ def test_linear_combination_function_higher_dim(variable, operation, exponents, 
         weights = 2 * (np.round(RANDh_A['weights'][variable.shape]) - .5)
     if exponents == 'A':
         exponents = RANDh_A['exponents'][variable.shape]
+
+    # for scalars
+    if pytest.helpers.llvm_current_fp_precision() == 'fp32':
+        exponents = np.asarray(exponents, dtype=np.float32)
+        weights = np.asarray(weights, dtype=np.float32)
 
     # arrays in shape of output
     if scale == 'A':
