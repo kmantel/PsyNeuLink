@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 import psyneulink as pnl
+from psyneulink.core import llvm as pnlvm
 
 
 class TestRearrange:
@@ -154,7 +155,8 @@ class TestReduce:
 
 def _rand(*args) -> np.ndarray:
     res = np.random.rand(*args)
-    if pytest.helpers.llvm_current_fp_precision() == 'fp32':
+    # workaround get_current issue with checking pytest.helpers.llvm_current_fp_precision() == 'fp32'
+    if pnlvm.LLVMBuilderContext.default_float_ty == pnlvm.ir.FloatType():
         try:
             res = res.astype(np.float32)
         except AttributeError:
