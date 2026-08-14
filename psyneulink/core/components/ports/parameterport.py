@@ -456,7 +456,12 @@ class ParameterPortList(ContentAddressableList):
 
         try:
             return super().__getitem__(key)
-        except TypeError as e:
+        except (KeyError, TypeError) as e:
+            # this possibly should be caught earlier (unlikely that None should be a valid key).
+            # this situation happens when collecting parameter ports in _gen_llvm_param_ports_for_obj
+            if key is None:
+                raise e from None
+
             # ContentAddressableList throws TypeError when key/index lookup fails
             names = self._get_possible_port_names(key)
             possible_ports = set()
@@ -464,7 +469,7 @@ class ParameterPortList(ContentAddressableList):
                 try:
                     r = super().__getitem__(name)
                     possible_ports.add(r)
-                except TypeError:
+                except (KeyError, TypeError):
                     pass
             if len(possible_ports) == 0:
                 raise e from None
