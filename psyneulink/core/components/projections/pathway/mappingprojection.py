@@ -546,11 +546,6 @@ class MappingProjection(PathwayProjection_Base):
                          prefs=prefs,
                          **kwargs)
 
-        try:
-            self._parameter_ports[MATRIX].function.reset(context=context)
-        except AttributeError:
-            pass
-
     def _instantiate_parameter_ports(self, function=None, context=None):
 
         super()._instantiate_parameter_ports(function=function, context=context)
