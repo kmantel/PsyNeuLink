@@ -4770,7 +4770,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
             if len(gt2d_bad_params):
                 pstr = ', '.join([p.name for p in gt2d_bad_params])
-                warnings.warn(
+                assert False, (
                     f'{self} was created with {pstr} of more than two dimensions.'
                     f' This is not currently supported for {type(self).__name__}.'
                     'It is likely that there will be unexpected behavior or errors.'
