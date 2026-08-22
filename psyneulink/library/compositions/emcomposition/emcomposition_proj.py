@@ -993,6 +993,7 @@ Class Reference
 import numpy as np
 import warnings
 
+from psyneulink.core.components.component import NDimUnsupportedStatus
 import psyneulink.core.scheduling.condition as conditions
 
 from psyneulink._typing import Optional, Union
@@ -1572,6 +1573,7 @@ class EMComposition_Proj(AutodiffComposition):
         pytorch_composition_wrapper_type = PytorchEMCompositionProjWrapper
         pytorch_mechanism_wrapper_type = PytorchEMMechanismProjWrapper
 
+    _gt2d_unsupported = NDimUnsupportedStatus.ALL
 
     class Parameters(AutodiffComposition.Parameters):
         """

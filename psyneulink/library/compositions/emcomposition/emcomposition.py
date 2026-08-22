@@ -1207,6 +1207,7 @@ try:
 except ImportError:
     pass
 
+from psyneulink.core.components.component import NDimUnsupportedStatus
 import psyneulink.core.scheduling.condition as conditions
 
 from psyneulink._typing import Optional, Union
@@ -1884,6 +1885,8 @@ class EMComposition(AutodiffComposition):
         )
         pytorch_composition_wrapper_type = PytorchEMCompositionWrapper
         pytorch_mechanism_wrapper_type = PytorchExternalMemoryMechanismWrapper
+
+    _gt2d_unsupported = NDimUnsupportedStatus.ALL
 
     class Parameters(AutodiffComposition.Parameters):
         """

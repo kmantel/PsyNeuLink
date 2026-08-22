@@ -736,6 +736,8 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
     """
     componentType = CONTRASTIVE_HEBBIAN_MECHANISM
 
+    _gt2d_unsupported = NDimUnsupportedStatus.ALL
+
     class Parameters(RecurrentTransferMechanism.Parameters):
         """
             Attributes
