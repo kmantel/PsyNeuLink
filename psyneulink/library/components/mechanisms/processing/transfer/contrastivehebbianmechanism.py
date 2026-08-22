@@ -338,6 +338,7 @@ from beartype import beartype
 from psyneulink._typing import Optional, Union, Callable, Literal
 
 
+from psyneulink.core.components.component import NDimUnsupportedStatus
 from psyneulink.core.components.functions.function import get_matrix
 from psyneulink.core.components.functions.nonstateful.learningfunctions import ContrastiveHebbian, Hebbian
 from psyneulink.core.components.functions.nonstateful.objectivefunctions import Distance
