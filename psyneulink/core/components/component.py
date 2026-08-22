@@ -515,7 +515,7 @@ import warnings
 import weakref
 from abc import ABCMeta
 from collections.abc import Iterable
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, auto
 from typing import TYPE_CHECKING
 
 import dill
@@ -694,6 +694,16 @@ class DefaultsFlexibility(Enum):
     FLEXIBLE = 0
     RIGID = 1
     INCREASE_DIMENSION = 2
+
+
+class NDimSupportStatus(Enum):
+    """
+    Used to indicate how much support there is for a Component using >2d values.
+    See `Component._gt2d_support` and warning in `Component.__init__`
+    """
+    ALL = auto()
+    NOT_MATRIX = auto()
+    NONE = auto()
 
 
 parameter_keywords = set()
@@ -1014,6 +1024,12 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
     deprecated_constructor_args = {
         'size': 'input_shapes',
     }
+
+    _gt2d_support = NDimSupportStatus.ALL
+    """
+        indicator that input/output greater than two dimensions is currently not working.
+        this and the warning in __init__ can be removed if/when support is added for all.
+    """
 
     # helper attributes for MDF model spec
     _model_spec_id_parameters = 'parameters'
@@ -1371,6 +1387,27 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
         # Delete the _user_specified_args attribute, we don't need it anymore
         del self._user_specified_args
+
+        if self._gt2d_support is not NDimSupportStatus.ALL:
+            if self._gt2d_support is NDimSupportStatus.NONE:
+                gt2d_check_params = [p for p in self.parameters if p not in {'results'}]
+            elif self._gt2d_support is NDimSupportStatus.NOT_MATRIX:
+                gt2d_check_params = [self.parameters.matrix]
+            else:
+                assert False, 'unexpected _gt2d_support value'
+
+            gt2d_bad_params = []
+            for param in gt2d_check_params:
+                if is_array_like(param.default_value) and param.default_value.ndim > 2:
+                    gt2d_bad_params.append(param)
+
+            if len(gt2d_bad_params):
+                pstr = ', '.join([p.name for p in gt2d_bad_params])
+                warnings.warn(
+                    f'{self} was created with {pstr} of more than two dimensions.'
+                    f' This is not currently supported for {type(self).__name__}.'
+                    'It is likely that there will be unexpected behavior or errors.'
+                )
 
         _debugger.step(
             _debugger.BreakpointCategory.END_OF_INIT,
