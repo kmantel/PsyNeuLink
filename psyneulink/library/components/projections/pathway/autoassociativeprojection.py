@@ -104,7 +104,7 @@ from beartype import beartype
 
 from psyneulink._typing import Optional
 
-from psyneulink.core.components.component import parameter_keywords
+from psyneulink.core.components.component import NDimUnsupportedStatus, parameter_keywords
 from psyneulink.core.components.functions.nonstateful.transformfunctions import MatrixTransform
 from psyneulink.core.components.functions.function import get_matrix
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingError, MappingProjection
@@ -190,6 +190,8 @@ class AutoAssociativeProjection(MaskedMappingProjection):
     componentType = AUTO_ASSOCIATIVE_PROJECTION
     className = componentType
     suffix = " " + className
+
+    _gt2d_unsupported = NDimUnsupportedStatus.MATRIX
 
     class Parameters(MappingProjection.Parameters):
         """

@@ -696,14 +696,24 @@ class DefaultsFlexibility(Enum):
     INCREASE_DIMENSION = 2
 
 
-class NDimSupportStatus(Enum):
+class NDimUnsupportedStatus(Enum):
     """
     Used to indicate how much support there is for a Component using >2d values.
-    See `Component._gt2d_support` and warning in `Component.__init__`
+    See `Component._gt2d_unsupported` and warning in `Component.__init__`
+
+    Attributes:
+        NONE
+            no known issues with any Parameter
+
+        MATRIX
+            depends on 2D matrices
+
+        ALL
+            core functionality depends on at least some Parameters being <=2D
     """
-    ALL = auto()
-    NOT_MATRIX = auto()
     NONE = auto()
+    MATRIX = auto()
+    ALL = auto()
 
 
 parameter_keywords = set()
@@ -1025,10 +1035,12 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         'size': 'input_shapes',
     }
 
-    _gt2d_support = NDimSupportStatus.ALL
+    _gt2d_unsupported: Union[NDimUnsupportedStatus, Iterable[str]] = NDimUnsupportedStatus.NONE
     """
-        indicator that input/output greater than two dimensions is currently not working.
-        this and the warning in __init__ can be removed if/when support is added for all.
+        indicator of known problems with using values of more than two dimensions.
+        An iterable of strings contains the names of specific Parameters that
+        still must be at most two dimensions.
+        This and the warning in __init__ can be removed if/when support is added for all.
     """
 
     # helper attributes for MDF model spec
@@ -1388,26 +1400,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         # Delete the _user_specified_args attribute, we don't need it anymore
         del self._user_specified_args
 
-        if self._gt2d_support is not NDimSupportStatus.ALL:
-            if self._gt2d_support is NDimSupportStatus.NONE:
-                gt2d_check_params = [p for p in self.parameters if p not in {'results'}]
-            elif self._gt2d_support is NDimSupportStatus.NOT_MATRIX:
-                gt2d_check_params = [self.parameters.matrix]
-            else:
-                assert False, 'unexpected _gt2d_support value'
-
-            gt2d_bad_params = []
-            for param in gt2d_check_params:
-                if is_array_like(param.default_value) and param.default_value.ndim > 2:
-                    gt2d_bad_params.append(param)
-
-            if len(gt2d_bad_params):
-                pstr = ', '.join([p.name for p in gt2d_bad_params])
-                warnings.warn(
-                    f'{self} was created with {pstr} of more than two dimensions.'
-                    f' This is not currently supported for {type(self).__name__}.'
-                    'It is likely that there will be unexpected behavior or errors.'
-                )
+        self._check_dimension_compatibility()
 
         _debugger.step(
             _debugger.BreakpointCategory.END_OF_INIT,
@@ -4760,6 +4753,28 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
             return None
         else:
             return shape(inp)
+
+    def _check_dimension_compatibility(self):
+        if self._gt2d_unsupported is not NDimUnsupportedStatus.NONE:
+            if self._gt2d_unsupported is NDimUnsupportedStatus.ALL:
+                gt2d_check_params = [p for p in self.parameters if p not in {'results'}]
+            elif self._gt2d_unsupported is NDimUnsupportedStatus.MATRIX:
+                gt2d_check_params = [self.parameters.matrix]
+            else:
+                gt2d_check_params = [getattr(self.parameters, name) for name in self._gt2d_unsupported]
+
+            gt2d_bad_params = []
+            for param in gt2d_check_params:
+                if is_array_like(param.default_value) and param.default_value.ndim > 2:
+                    gt2d_bad_params.append(param)
+
+            if len(gt2d_bad_params):
+                pstr = ', '.join([p.name for p in gt2d_bad_params])
+                warnings.warn(
+                    f'{self} was created with {pstr} of more than two dimensions.'
+                    f' This is not currently supported for {type(self).__name__}.'
+                    'It is likely that there will be unexpected behavior or errors.'
+                )
 
     @property
     def logged_items(self):
