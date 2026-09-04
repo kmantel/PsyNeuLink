@@ -1028,9 +1028,6 @@ def _instantiate_parameter_ports(owner, function=None, context=None):
             or not parameter.modulable
             or parameter in owner.parameter_ports
         )
-        if not res and getattr(owner, '_param_port_after_function', False):
-            import sys
-            print('NEW PARAMETER PORT AFTER FUNCTION (skip_parameter_port):', owner, parameter.name, file=sys.stderr)
         return res
 
     def _enumerate_parameter_ports(obj, prev_objs, port_collection):
@@ -1345,9 +1342,6 @@ def _instantiate_parameter_port(
         # a ParameterPort by Parameter
         owner.parameter_ports.parameter_mapping[source] = port
 
-        if getattr(owner, '_param_port_after_function', False):
-            import sys
-            print('NEW PARAMETER PORT (_instantiate_parameter_port):', owner, source.name, file=sys.stderr)
 
 
     return port
