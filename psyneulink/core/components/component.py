@@ -3366,8 +3366,6 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
         if self.function.parameters.has_initializers._get(context):
             self.parameters.has_initializers._set(True, context)
 
-        self._parse_param_port_sources()
-
     def _instantiate_attributes_after_function(self, context=None):
         if hasattr(self, "_parameter_ports"):
             shared_params = [p for p in self.parameters if isinstance(p, (ParameterAlias, SharedParameter))]
@@ -4509,6 +4507,7 @@ class Component(MDFSerializable, metaclass=ComponentsMeta):
 
     @handle_external_context()
     def _update_parameter_components(self, context=None):
+        self._parse_param_port_sources()
         # store all Components in Parameters to be used in
         # _dependent_components for _initialize_from_context
         for p in self.parameters:
