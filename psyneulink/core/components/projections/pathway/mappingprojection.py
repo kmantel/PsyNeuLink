@@ -571,7 +571,7 @@ class MappingProjection(PathwayProjection_Base):
             function=AccumulatorIntegrator(
                 owner=self._parameter_ports[MATRIX],
                 default_variable=new_variable,
-                initializer=new_variable,
+                initializer=copy.deepcopy(self._parameter_ports[MATRIX].function.defaults.initializer),
                 # rate=initial_rate
             ),
             context=context
