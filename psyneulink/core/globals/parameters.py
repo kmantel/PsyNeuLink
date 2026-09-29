@@ -318,6 +318,7 @@ import inspect
 import itertools
 import logging
 import types
+import typing
 import weakref
 
 import numpy as np
@@ -2604,7 +2605,7 @@ class OptimizationParameter(Parameter):
             return False
 
     def _has_specific_value_for(
-        self, obj, execution_id: typing.Hashable, entry_value
+        self, obj, execution_id: Hashable, entry_value
     ) -> bool:
         res = self.__has_specific_value_for(obj, execution_id, entry_value)
         if not res:
@@ -2615,7 +2616,7 @@ class OptimizationParameter(Parameter):
                 )
         return res
 
-    def _is_enabled(self, execution_id: typing.Hashable) -> bool:
+    def _is_enabled(self, execution_id: Hashable) -> bool:
         pass
 
     @handle_external_context()
@@ -2626,7 +2627,7 @@ class OptimizationParameter(Parameter):
     @handle_external_context()
     def get(
         self,
-        context: Union[Context, typing.Hashable] = None,
+        context: Union[Context, Hashable] = None,
         projection: Optional[Union['Projection', str]] = None,
         *,
         fallback_value=ParameterNoValueError,
