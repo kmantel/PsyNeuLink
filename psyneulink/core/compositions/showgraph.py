@@ -2686,7 +2686,8 @@ class ShowGraph():
         projections = self._get_projections(composition, context)
 
         node_attrs = {*G.node_attr, 'label'}
-        node_attr_pat = re.compile(r'^["\']?(.*?)["\']?\s*\[({0})='.format('|'.join(node_attrs)))
+        # use DOTALL because some node names have a line break between words
+        node_attr_pat = re.compile(r'^["\']?(.*?)["\']?\s*\[({0})='.format('|'.join(node_attrs)), re.DOTALL)
 
         # Sort nodes for display
         def get_index_of_node_in_G_body(node, node_type: Literal['MECHANISM', 'Projection', 'Composition']):
