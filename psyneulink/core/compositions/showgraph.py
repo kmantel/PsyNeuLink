@@ -2688,7 +2688,9 @@ class ShowGraph():
 
         node_attrs = {*G.node_attr, 'label'}
         # use DOTALL because some node names have a line break between words
-        node_attr_pat = re.compile(r'^["\']?(.*?)["\']?\s*\[({0})='.format('|'.join(node_attrs)), re.DOTALL)
+        node_name_pat = re.compile(r'^["\']?(.*?)["\']?\s*\[({0})='.format('|'.join(node_attrs)), re.DOTALL)
+        subgraph_name_pat = re.compile(r'^subgraph ["\']?{0}(.*?)["\']?\s*{{'.format(self._NESTED_PREFIX), re.DOTALL)
+        graph_name_pat = re.compile(r'^graph \[label="(.*?)"', re.DOTALL)
 
         # Sort nodes for display
         def get_index_of_node_in_G_body(node, node_type: Literal['MECHANISM', 'Projection', 'Composition']):
@@ -2716,8 +2718,31 @@ class ShowGraph():
             if i is None:
                 return None
             item = G.body[i].strip()
+
+            # if 'NESTED' in node.name:
+            #     import ipdb
+            #     ipdb.set_trace()
+            # if 'subgraph' in item:
+            #     import ipdb
+            #     ipdb.set_trace()
+
+            # mod to:
+            for pat in [subgraph_name_pat, graph_name_pat]:  # , node_name_pat]:
+                try:
+                    return pat.match(item).group(1)
+                except AttributeError:
+                    pass
+
+
+            # try:
+            #     return re.match(subgraph_name_pat, item).group(1)
+            # except AttributeError:
+            #     # checking for possible nested Compositions/subgraphs
+            #     pass
+
+
             try:
-                node_id = re.match(node_attr_pat, item).group(1)
+                node_id = re.match(node_name_pat, item).group(1)
             except AttributeError:
                 import ipdb
                 ipdb.set_trace()
