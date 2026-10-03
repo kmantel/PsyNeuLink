@@ -216,6 +216,7 @@ Class Reference
 """
 
 import pathlib
+import re
 import site
 import warnings
 
@@ -2710,10 +2711,25 @@ class ShowGraph():
             if i is None:
                 return None
             item = G.body[i].strip()
+            try:
+                node_id = re.match(r'^["\']?(.*?)["\']?\s*\[label=', item).group(1)
+            except AttributeError:
+                import ipdb
+                ipdb.set_trace()
+                raise
+
+            return node_id
+
+
             quoted_items = item.split('"')[1::2]
+            import ipdb
+            ipdb.set_trace()
             if quoted_items:
-                return quoted_items[0]
-            return item.split(' [', 1)[0]
+                res = quoted_items[0]
+            else:
+                res = item.split(' [', 1)[0]
+            print(f"DEBUG get_node_id {node.name!r} -> {res!r} (idx {i})", flush=True)
+            return res
 
         def add_role_rank_constraints():
             """Constrain role-specific display layers at the bottom and top of the graph."""
