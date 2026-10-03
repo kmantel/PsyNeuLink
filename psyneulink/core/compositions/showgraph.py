@@ -2685,6 +2685,9 @@ class ShowGraph():
         nodes = self._get_nodes(composition, context)
         projections = self._get_projections(composition, context)
 
+        node_attrs = {*G.node_attr, 'label'}
+        node_attr_pat = re.compile(r'^["\']?(.*?)["\']?\s*\[({0})='.format('|'.join(node_attrs)))
+
         # Sort nodes for display
         def get_index_of_node_in_G_body(node, node_type: Literal['MECHANISM', 'Projection', 'Composition']):
             """Get index of node in G.body"""
@@ -2712,7 +2715,7 @@ class ShowGraph():
                 return None
             item = G.body[i].strip()
             try:
-                node_id = re.match(r'^["\']?(.*?)["\']?\s*\[label=', item).group(1)
+                node_id = re.match(node_attr_pat, item).group(1)
             except AttributeError:
                 import ipdb
                 ipdb.set_trace()
