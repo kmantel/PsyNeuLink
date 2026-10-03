@@ -2719,27 +2719,11 @@ class ShowGraph():
                 return None
             item = G.body[i].strip()
 
-            # if 'NESTED' in node.name:
-            #     import ipdb
-            #     ipdb.set_trace()
-            # if 'subgraph' in item:
-            #     import ipdb
-            #     ipdb.set_trace()
-
-            # mod to:
-            for pat in [subgraph_name_pat, graph_name_pat]:  # , node_name_pat]:
+            for pat in [subgraph_name_pat, graph_name_pat, node_name_pat]:
                 try:
                     return pat.match(item).group(1)
                 except AttributeError:
                     pass
-
-
-            # try:
-            #     return re.match(subgraph_name_pat, item).group(1)
-            # except AttributeError:
-            #     # checking for possible nested Compositions/subgraphs
-            #     pass
-
 
             try:
                 node_id = re.match(node_name_pat, item).group(1)
@@ -2750,16 +2734,7 @@ class ShowGraph():
 
             return node_id
 
-
-            quoted_items = item.split('"')[1::2]
-            import ipdb
-            ipdb.set_trace()
-            if quoted_items:
-                res = quoted_items[0]
-            else:
-                res = item.split(' [', 1)[0]
-            print(f"DEBUG get_node_id {node.name!r} -> {res!r} (idx {i})", flush=True)
-            return res
+            assert False, f'Failed to identify node id: {item}'
 
         def add_role_rank_constraints():
             """Constrain role-specific display layers at the bottom and top of the graph."""
