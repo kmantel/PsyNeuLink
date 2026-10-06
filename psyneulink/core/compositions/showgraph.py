@@ -548,6 +548,7 @@ class ShowGraph():
                    show_projections_not_in_composition: bool = False,
                    active_items=None,
                    output_fmt: Optional[Literal['pdf', 'gv', 'jupyter', 'gif', 'source']] = 'pdf',
+                   view: bool = True,
                    context=None,
                    *args,
                    **kwargs):
@@ -567,6 +568,7 @@ class ShowGraph():
            show_projections_not_in_composition=False \
            active_items=None,                        \
            output_fmt='pdf',                         \
+           view=True,                                \
            context=None)
 
         Show graphical display of Components in a Composition's graph.  See `show_graph <ShowGraph_show_graph_Method>`
@@ -700,6 +702,12 @@ class ShowGraph():
             'gif': return gif used for animation
             'source': return the source code for the graphviz object
             None : return None
+
+        view : bool : default True
+            used with **output_fmt**='pdf'. Corresponds to the `view` argument
+            of `graphviz.Graph.render`. If True, the system also opens the
+            output file of the rendered graph when it is generated. Otherwise,
+            the file is created but not opened.
 
         Returns
         -------
@@ -972,6 +980,7 @@ class ShowGraph():
                                      active_items,
                                      show_controller,
                                      output_fmt,
+                                     view,
                                      context)
 
     def __call__(self, **args):
@@ -2674,6 +2683,7 @@ class ShowGraph():
                          active_items,
                          show_controller,
                          output_fmt,
+                         view,
                          context
                          ):
 
@@ -2952,7 +2962,7 @@ class ShowGraph():
         if output_fmt == 'pdf':
             # G.format = 'svg'
             try:
-                G.view(composition.name.replace(" ", "-"), cleanup=True, directory=get_default_showgraph_dir().joinpath('PDFS'))
+                G.render(composition.name.replace(" ", "-"), cleanup=True, directory=get_default_showgraph_dir().joinpath('PDFS'), view=view)
             except ExecutableNotFound as e:
                 raise ShowGraphError(_gv_executable_not_found_error_msg) from e
             except Exception as e:
@@ -2961,7 +2971,7 @@ class ShowGraph():
         # Generate images for animation
         elif output_fmt == 'gif':
             if composition.active_item_rendered or INITIAL_FRAME in active_items:
-                self._generate_gifs(G, active_items, context)
+                self._generate_gifs(G, active_items, view, context)
 
         # Return graph to show in jupyter
         elif output_fmt == 'jupyter':
@@ -3169,7 +3179,7 @@ class ShowGraph():
                                context=context,
                                )
 
-    def _generate_gifs(self, G, active_items, context):
+    def _generate_gifs(self, G, active_items, view, context):
         # graphviz is currently only imported within methods
         from graphviz.backend.execute import ExecutableNotFound
 
@@ -3228,7 +3238,7 @@ class ShowGraph():
                 filename=image_filename,
                 directory=composition._animation_directory,
                 cleanup=True,
-                # view=True
+                view=view,
             )
         except ExecutableNotFound as e:
             raise ShowGraphError(_gv_executable_not_found_error_msg) from e
