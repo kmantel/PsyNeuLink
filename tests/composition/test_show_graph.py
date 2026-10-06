@@ -38,6 +38,13 @@ graphviz_executables = {
 """These test various elaborate forms of Composition configuration and nesting, in addition to show_graph itself"""
 
 
+@pytest.fixture()
+def render_show_graph(tmp_path):
+    def _render(comp, **kwargs):
+        comp.show_graph(**kwargs, directory=tmp_path, view=False)
+    return _render
+
+
 class TestSimpleCompositions:
     def test_process(self):
         a = TransferMechanism(name="a", default_variable=[0, 0, 0])
@@ -87,7 +94,7 @@ class TestSimpleCompositions:
 
 class TestNested:
 
-    def test_outer_nodes_projecting_to_and_from_nested_composition_are_rank_constrained(self):
+    def test_outer_nodes_projecting_to_and_from_nested_composition_are_rank_constrained(self, render_show_graph):
         outer_input = ProcessingMechanism(name='OUTER INPUT')
         inner = ProcessingMechanism(name='INNER')
         outer_output = ProcessingMechanism(name='OUTER OUTPUT')
@@ -102,6 +109,8 @@ class TestNested:
                 '[arrowhead=none constraint=true style=invis weight=100]') in gv
         assert ('"NESTED COMP" -> "OUTER OUTPUT" '
                 '[arrowhead=none constraint=true style=invis weight=100]') in gv
+
+        render_show_graph(comp, show_nested=NESTED)
 
     expected_solo_python = 'digraph "AUTODIFF COMP" {\n\tgraph [label="AUTODIFF COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"AUTODIFF COMP INPUT_CIM" -> "SOLO NODE" [label="" arrowhead=normal color=black penwidth=1]\n\tsubgraph "cluster_NESTED COMP" {\n\t\tgraph [label="NESTED COMP" overlap=False rankdir=BT]\n\t\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\t\tedge [fontname=arial fontsize=10]\n\t\t"SOLO NODE" [color=brown penwidth=3 rank=same shape=oval]\n\t\tcolor=brown\n\t\tlabel="NESTED COMP"\n\t}\n}\n'
     expected_solo_pytorch = 'digraph "AUTODIFF COMP" {\n\tgraph [label="AUTODIFF COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"SOLO NODE" [color=brown penwidth=3 rank=same shape=oval]\n}\n'
@@ -120,7 +129,7 @@ class TestNested:
     @pytest.mark.parametrize("position, expected_python, expected_pytorch",
                              solo_nested_data, ids=[f"{x[0]}-{x[1]}" for x in solo_nested_data])
     @pytest.mark.pytorch
-    def test_solo_nested(self, position, expected_python, expected_pytorch):
+    def test_solo_nested(self, position, expected_python, expected_pytorch, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         input_mech = ProcessingMechanism(name='INPUT NODE')
         solo_mech = ProcessingMechanism(name='SOLO NODE')
@@ -145,7 +154,10 @@ class TestNested:
         assert gv_python == expected_python
         assert gv_pytorch == expected_pytorch
 
-    def test_multiple_projections_to_node_of_nested_composition(self):
+        render_show_graph(autodiff_comp)
+        render_show_graph(autodiff_comp, show_pytorch=True)
+
+    def test_multiple_projections_to_node_of_nested_composition(self, render_show_graph):
         '''This is based on the nback script'''
 
         stim = TransferMechanism(name='STIM', input_shapes=5)
@@ -183,6 +195,7 @@ class TestNested:
         gv = comp.show_graph(output_fmt='source')
         assert gv.strip() == \
 'digraph "Composition-0" {\n\tgraph [label="Composition-0" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\tCONTEXT [color=green penwidth=3 rank=source shape=oval]\n\tSTIM [color=green penwidth=3 rank=source shape=oval]\n\tEM -> "STIM INPUT LAYER" [label="" arrowhead=normal color=black penwidth=1]\n\tSTIM -> "STIM INPUT LAYER" [label="" arrowhead=normal color=black penwidth=1]\n\tCONTEXT -> "CONTEXT INPUT LAYER" [label="" arrowhead=normal color=black penwidth=1]\n\tEM -> "CONTEXT INPUT LAYER" [label="" arrowhead=normal color=black penwidth=1]\n\tEM [color=black penwidth=1 rank=same shape=oval]\n\tCONTEXT -> EM [label="" arrowhead=normal color=black penwidth=1]\n\t"ControlMechanism-0" -> EM [label="" arrowhead=box color=blue penwidth=1]\n\tSTIM -> EM [label="" arrowhead=normal color=black penwidth=1]\n\t"MATCH LAYER" -> DECISION [label="" arrowhead=normal color=black penwidth=1]\n\tDECISION -> "ControlMechanism-0" [label="" arrowhead=normal color=black penwidth=1]\n\tDECISION [color=red penwidth=3 rank=max shape=oval]\n\t"ControlMechanism-0" [color=blue penwidth=3 rank=max shape=octagon]\n\t{\n\t\trank=source\n\t\tSTIM\n\t\tCONTEXT\n\t}\n\t{\n\t\trank=sink\n\t\tDECISION\n\t}\n\tSTIM -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\tSTIM -> "ControlMechanism-0" [arrowhead=none constraint=true style=invis weight=100]\n\tSTIM -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\tCONTEXT -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\tEM -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\t"ControlMechanism-0" -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\t"STIM INPUT LAYER" -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\t"MATCH LAYER" -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\t"CONTEXT INPUT LAYER" -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\t{\n\t\trank=same\n\t\tCONTEXT\n\t\tEM\n\t\tSTIM\n\t}\n\t{\n\t\trank=same\n\t\tDECISION\n\t}\n\tCONTEXT -> EM [arrowhead=none constraint=false style=invis weight=100]\n\tEM -> STIM [arrowhead=none constraint=false style=invis weight=100]\n\tCONTEXT -> "STIM INPUT LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tCONTEXT -> "MATCH LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tCONTEXT -> "CONTEXT INPUT LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tEM -> "STIM INPUT LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tEM -> "MATCH LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tEM -> "CONTEXT INPUT LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tSTIM -> "STIM INPUT LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tSTIM -> "MATCH LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tSTIM -> "CONTEXT INPUT LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\t"STIM INPUT LAYER" -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\t"MATCH LAYER" -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\t"CONTEXT INPUT LAYER" -> DECISION [arrowhead=none constraint=true style=invis weight=100]\n\tsubgraph cluster_FFN {\n\t\tgraph [label=FFN overlap=False rankdir=BT]\n\t\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\t\tedge [fontname=arial fontsize=10]\n\t\t"CONTEXT INPUT LAYER" [color=green penwidth=3 rank=source shape=oval]\n\t\t"STIM INPUT LAYER" [color=green penwidth=3 rank=source shape=oval]\n\t\t"CONTEXT INPUT LAYER" -> "MATCH LAYER" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"STIM INPUT LAYER" -> "MATCH LAYER" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"MATCH LAYER" [color=red penwidth=3 rank=max shape=oval]\n\t\t{\n\t\t\trank=source\n\t\t\t"STIM INPUT LAYER"\n\t\t\t"CONTEXT INPUT LAYER"\n\t\t}\n\t\t{\n\t\t\trank=sink\n\t\t\t"MATCH LAYER"\n\t\t}\n\t\t"STIM INPUT LAYER" -> "MATCH LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"STIM INPUT LAYER" -> "MATCH LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"CONTEXT INPUT LAYER" -> "MATCH LAYER" [arrowhead=none constraint=true style=invis weight=100]\n\t\tlabel=FFN\n\t}\n}'
+        render_show_graph(comp)
 
         # # FIX: ORDERING PROBLEM WITH SLOPE AND INTERCEPT ENTRIES
         # gv = comp.show_graph(show_cim=True, show_node_structure=ALL, output_fmt='source')
@@ -194,7 +207,7 @@ class TestNested:
     expected_output_for_nested_autodiff = \
 'digraph "Outer Comp" {\n\tgraph [label="Outer Comp" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"TARGET for Outer Mech 2" [color=orange penwidth=3 rank=source shape=oval]\n\t"Outer Mech 1" [color=green penwidth=3 rank=source shape=oval]\n\t"Inner Mech 1" [color=black penwidth=1 rank=same shape=oval]\n\t"Outer Mech 1" -> "Inner Mech 1" [label="" arrowhead=normal color=orange penwidth=1]\n\t"Inner Mech 2" [color=black penwidth=1 rank=same shape=oval]\n\t"Inner Mech 1" -> "Inner Mech 2" [label="" arrowhead=normal color=orange penwidth=1]\n\t"LOSS for Outer Mech 2" [color=orange penwidth=1 rank=same shape=oval]\n\t"Outer Mech 2" -> "LOSS for Outer Mech 2" [label="" arrowhead=normal color=black penwidth=1]\n\t"TARGET for Outer Mech 2" -> "LOSS for Outer Mech 2" [label="" arrowhead=normal color=black penwidth=1]\n\t"Inner Mech 2" -> "Outer Mech 2" [label="" arrowhead=normal color=orange penwidth=1]\n\t"LOSS for Outer Mech 2" -> "Outer Mech 2" [color=brown penwidth=1 style=dotted]\n\t"Outer Mech 2" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"Outer Mech 1"\n\t\t"TARGET for Outer Mech 2"\n\t}\n\t{\n\t\trank=same\n\t\t"Outer Mech 2"\n\t}\n\t{\n\t\trank=sink\n\t\t"LOSS for Outer Mech 2"\n\t}\n\t"Outer Mech 1" -> "Inner Mech 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"Outer Mech 1" -> "Inner Mech 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"Outer Mech 1" -> "LOSS for Outer Mech 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"Outer Mech 1" -> "Outer Mech 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"Inner Mech 1" -> "Outer Mech 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"Inner Mech 2" -> "Outer Mech 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"Outer Mech 1" -> "Outer Mech 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for Outer Mech 2" -> "Outer Mech 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"Outer Mech 2" -> "LOSS for Outer Mech 2" [arrowhead=none constraint=true style=invis weight=100]\n}\n'
     @pytest.mark.pytorch
-    def test_nested_autodiff_pytorch_rep(self):
+    def test_nested_autodiff_pytorch_rep(self, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         inner_mech_1 = ProcessingMechanism(name='Inner Mech 1', input_shapes=3)
         inner_mech_2 = ProcessingMechanism(name='Inner Mech 2', input_shapes=3)
@@ -204,11 +217,12 @@ class TestNested:
         outer_comp = AutodiffComposition(name='Outer Comp', pathways=[outer_mech_1,inner_comp,outer_mech_2])
         gv = outer_comp.show_graph(show_pytorch=True, output_fmt='source')
         assert gv == self.expected_output_for_nested_autodiff
+        render_show_graph(outer_comp, show_pytorch=True)
 
     expected_output_for_nested_autodiff_with_input_node = \
 'digraph "autodiff COMP" {\n\tgraph [label="autodiff COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"autodiff INPUT" [color=green penwidth=3 rank=source shape=oval]\n\t"autodiff HIDDEN 1" [color=green penwidth=3 rank=source shape=oval]\n\t"TARGET for autodiff OUTPUT" [color=orange penwidth=3 rank=source shape=oval]\n\t"LOSS for autodiff OUTPUT" [color=orange penwidth=1 rank=same shape=oval]\n\t"TARGET for autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [label="" arrowhead=normal color=black penwidth=1]\n\t"autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [label="" arrowhead=normal color=black penwidth=1]\n\t"autodiff HIDDEN 2" [color=black penwidth=1 rank=same shape=oval]\n\t"autodiff INPUT" -> "autodiff HIDDEN 2" [label="" arrowhead=normal color=orange penwidth=1]\n\t"autodiff HIDDEN 1" -> "autodiff OUTPUT" [label="" arrowhead=normal color=orange penwidth=1]\n\t"autodiff HIDDEN 2" -> "autodiff OUTPUT" [label="" arrowhead=normal color=orange penwidth=1]\n\t"LOSS for autodiff OUTPUT" -> "autodiff OUTPUT" [color=brown penwidth=1 style=dotted]\n\t"autodiff OUTPUT" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"TARGET for autodiff OUTPUT"\n\t\t"autodiff HIDDEN 1"\n\t\t"autodiff INPUT"\n\t}\n\t{\n\t\trank=same\n\t\t"autodiff OUTPUT"\n\t}\n\t{\n\t\trank=sink\n\t\t"LOSS for autodiff OUTPUT"\n\t}\n\t"TARGET for autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff OUTPUT" -> "autodiff HIDDEN 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff OUTPUT" -> "autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff OUTPUT" -> "autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff HIDDEN 1" -> "autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff HIDDEN 2" -> "autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff INPUT" -> "autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n}\n'
     @pytest.mark.pytorch
-    def test_autodiff_pytorch_rep_with_nested_input_node(self):
+    def test_autodiff_pytorch_rep_with_nested_input_node(self, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         input_node_autodiff = ProcessingMechanism(name='autodiff INPUT', input_shapes=2)
         hidden_node_autodiff_1 = ProcessingMechanism(name='autodiff HIDDEN 1', input_shapes=3)
@@ -222,11 +236,12 @@ class TestNested:
         outer_comp = AutodiffComposition(pathways=[pathway_a, pathway_b], name='autodiff COMP')
         gv = outer_comp.show_graph(show_pytorch=True, output_fmt='source')
         assert gv == self.expected_output_for_nested_autodiff_with_input_node
+        render_show_graph(outer_comp, show_pytorch=True)
 
     expected_output_for_nested_autodiff_with_output_node = \
 'digraph "autodiff COMP" {\n\tgraph [label="autodiff COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"autodiff INPUT" [color=green penwidth=3 rank=source shape=oval]\n\t"TARGET for autodiff OUTPUT" [color=orange penwidth=3 rank=source shape=oval]\n\t"TARGET for autodiff HIDDEN 1" [color=orange penwidth=3 rank=source shape=oval]\n\t"LOSS for autodiff HIDDEN 1" [color=orange penwidth=1 rank=same shape=oval]\n\t"TARGET for autodiff HIDDEN 1" -> "LOSS for autodiff HIDDEN 1" [label="" arrowhead=normal color=black penwidth=1]\n\t"autodiff HIDDEN 1" -> "LOSS for autodiff HIDDEN 1" [label="" arrowhead=normal color=black penwidth=1]\n\t"LOSS for autodiff OUTPUT" [color=orange penwidth=1 rank=same shape=oval]\n\t"TARGET for autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [label="" arrowhead=normal color=black penwidth=1]\n\t"autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [label="" arrowhead=normal color=black penwidth=1]\n\t"autodiff INPUT" -> "autodiff HIDDEN 1" [label="" arrowhead=normal color=orange penwidth=1]\n\t"autodiff HIDDEN 2" [color=black penwidth=1 rank=same shape=oval]\n\t"autodiff INPUT" -> "autodiff HIDDEN 2" [label="" arrowhead=normal color=orange penwidth=1]\n\t"autodiff HIDDEN 2" -> "autodiff OUTPUT" [label="" arrowhead=normal color=orange penwidth=1]\n\t"LOSS for autodiff HIDDEN 1" -> "autodiff HIDDEN 1" [color=brown penwidth=1 style=dotted]\n\t"LOSS for autodiff OUTPUT" -> "autodiff OUTPUT" [color=brown penwidth=1 style=dotted]\n\t"autodiff HIDDEN 1" [color=red penwidth=3 rank=max shape=oval]\n\t"autodiff OUTPUT" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"TARGET for autodiff HIDDEN 1"\n\t\t"TARGET for autodiff OUTPUT"\n\t\t"autodiff INPUT"\n\t}\n\t{\n\t\trank=same\n\t\t"autodiff HIDDEN 1"\n\t\t"autodiff OUTPUT"\n\t}\n\t{\n\t\trank=sink\n\t\t"LOSS for autodiff HIDDEN 1"\n\t\t"LOSS for autodiff OUTPUT"\n\t}\n\t"TARGET for autodiff HIDDEN 1" -> "LOSS for autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff HIDDEN 1" -> "LOSS for autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff HIDDEN 1" -> "autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff HIDDEN 1" -> "autodiff HIDDEN 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff HIDDEN 1" -> "autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff HIDDEN 1" -> "autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff OUTPUT" -> "autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff HIDDEN 2" -> "autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff INPUT" -> "autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff HIDDEN 1" -> "LOSS for autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff OUTPUT" -> "LOSS for autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n}\n'
     @pytest.mark.pytorch
-    def test_autodiff_pytorch_rep_with_nested_output_node(self):
+    def test_autodiff_pytorch_rep_with_nested_output_node(self, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         input_node_autodiff = ProcessingMechanism(name='autodiff INPUT', input_shapes=2)
         hidden_node_autodiff_1 = ProcessingMechanism(name='autodiff HIDDEN 1', input_shapes=3)
@@ -240,11 +255,12 @@ class TestNested:
         outer_comp = AutodiffComposition(pathways=[pathway_a, pathway_b], name='autodiff COMP')
         gv = outer_comp.show_graph(show_pytorch=True, output_fmt='source')
         assert gv == self.expected_output_for_nested_autodiff_with_output_node
+        render_show_graph(outer_comp, show_pytorch=True)
 
     expected_output_for_nested_autodiff_with_singleton_node = \
 'digraph "autodiff COMP" {\n\tgraph [label="autodiff COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"autodiff INPUT" [color=green penwidth=3 rank=source shape=oval]\n\t"TARGET for autodiff OUTPUT" [color=orange penwidth=3 rank=source shape=oval]\n\t"LOSS for autodiff OUTPUT" [color=orange penwidth=1 rank=same shape=oval]\n\t"TARGET for autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [label="" arrowhead=normal color=black penwidth=1]\n\t"autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [label="" arrowhead=normal color=black penwidth=1]\n\t"autodiff HIDDEN 2" [color=black penwidth=1 rank=same shape=oval]\n\t"autodiff INPUT" -> "autodiff HIDDEN 2" [label="" arrowhead=normal color=orange penwidth=1]\n\t"autodiff HIDDEN 2" -> "autodiff OUTPUT" [label="" arrowhead=normal color=orange penwidth=1]\n\t"LOSS for autodiff OUTPUT" -> "autodiff OUTPUT" [color=brown penwidth=1 style=dotted]\n\t"autodiff HIDDEN 1" [color=brown penwidth=3 rank=same shape=oval]\n\t"autodiff OUTPUT" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"TARGET for autodiff OUTPUT"\n\t\t"autodiff INPUT"\n\t}\n\t{\n\t\trank=same\n\t\t"autodiff HIDDEN 1"\n\t\t"autodiff OUTPUT"\n\t}\n\t{\n\t\trank=sink\n\t\t"LOSS for autodiff OUTPUT"\n\t}\n\t"TARGET for autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff OUTPUT" -> "autodiff HIDDEN 2" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff OUTPUT" -> "autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for autodiff OUTPUT" -> "autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff HIDDEN 2" -> "autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff INPUT" -> "autodiff HIDDEN 1" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff HIDDEN 1" -> "LOSS for autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n\t"autodiff OUTPUT" -> "LOSS for autodiff OUTPUT" [arrowhead=none constraint=true style=invis weight=100]\n}\n'
     @pytest.mark.pytorch
-    def test_autodiff_pytorch_rep_with_nested_singleton_node(self):
+    def test_autodiff_pytorch_rep_with_nested_singleton_node(self, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         input_node_autodiff = ProcessingMechanism(name='autodiff INPUT', input_shapes=2)
         hidden_node_autodiff_1 = ProcessingMechanism(name='autodiff HIDDEN 1', input_shapes=3)
@@ -258,6 +274,7 @@ class TestNested:
         outer_comp = AutodiffComposition(pathways=[pathway_a, pathway_b], name='autodiff COMP')
         gv = outer_comp.show_graph(show_pytorch=True, output_fmt='source')
         assert gv == self.expected_output_for_nested_autodiff_with_singleton_node
+        render_show_graph(outer_comp, show_pytorch=True)
 
     expected_output_for_unnested_python_gru = \
 'digraph "GRU COMP" {\n\tgraph [label="GRU COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\tINPUT [color=green penwidth=3 rank=source shape=oval]\n\tNEW [color=black penwidth=1 rank=same shape=doublecircle]\n\t"HIDDEN\nLAYER" -> NEW [label="" arrowhead=normal color=black penwidth=1]\n\tINPUT -> NEW [label="" arrowhead=normal color=black penwidth=1]\n\tRESET -> NEW [label="" arrowhead=box color=blue penwidth=1]\n\t"HIDDEN\nLAYER" -> RESET [label="" arrowhead=normal color=black penwidth=1]\n\tINPUT -> RESET [label="" arrowhead=normal color=black penwidth=1]\n\t"HIDDEN\nLAYER" -> UPDATE [label="" arrowhead=normal color=black penwidth=1]\n\tINPUT -> UPDATE [label="" arrowhead=normal color=black penwidth=1]\n\t"HIDDEN\nLAYER" -> OUTPUT [label="" arrowhead=normal color=black penwidth=1]\n\t"HIDDEN\nLAYER" [color=black penwidth=1 rank=same shape=doublecircle]\n\t"HIDDEN\nLAYER" -> "HIDDEN\nLAYER" [label="" arrowhead=normal color=black penwidth=1]\n\tNEW -> "HIDDEN\nLAYER" [label="" arrowhead=normal color=black penwidth=1]\n\tUPDATE -> "HIDDEN\nLAYER" [label="" arrowhead=box color=blue penwidth=1]\n\tUPDATE -> "HIDDEN\nLAYER" [label="" arrowhead=box color=blue penwidth=1]\n\tRESET [color=blue penwidth=3 rank=max shape=octagon]\n\tUPDATE [color=blue penwidth=3 rank=max shape=octagon]\n\tOUTPUT [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\tINPUT\n\t}\n\t{\n\t\trank=sink\n\t\tOUTPUT\n\t}\n\tINPUT -> NEW [arrowhead=none constraint=true style=invis weight=100]\n\tINPUT -> RESET [arrowhead=none constraint=true style=invis weight=100]\n\tINPUT -> UPDATE [arrowhead=none constraint=true style=invis weight=100]\n\tINPUT -> OUTPUT [arrowhead=none constraint=true style=invis weight=100]\n\tINPUT -> "HIDDEN\nLAYER" [arrowhead=none constraint=true style=invis weight=100]\n\tINPUT -> OUTPUT [arrowhead=none constraint=true style=invis weight=100]\n\tNEW -> OUTPUT [arrowhead=none constraint=true style=invis weight=100]\n\tRESET -> OUTPUT [arrowhead=none constraint=true style=invis weight=100]\n\tUPDATE -> OUTPUT [arrowhead=none constraint=true style=invis weight=100]\n\t"HIDDEN\nLAYER" -> OUTPUT [arrowhead=none constraint=true style=invis weight=100]\n}\n'
@@ -277,7 +294,7 @@ class TestNested:
     ]
     @pytest.mark.parametrize("nesting, mode, expected", test_gru_data, ids=[f"{x[0]}-{x[1]}" for x in test_gru_data])
     @pytest.mark.pytorch
-    def test_show_graph_for_gru_composition(self, nesting, mode, expected):
+    def test_show_graph_for_gru_composition(self, nesting, mode, expected, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         from psyneulink.library.compositions.grucomposition import GRUComposition
         gru_comp = GRUComposition(name='GRU COMP',
@@ -289,9 +306,10 @@ class TestNested:
             output_mech = ProcessingMechanism(name='OUTPUT MECH', input_shapes=5)
             outer_comp = AutodiffComposition(name='OUTER COMP',
                                        pathways=[input_mech, gru_comp, output_mech])
-        gv = outer_comp.show_graph(show_pytorch=True if mode == 'PyTorch' else False, output_fmt='source')
+        show_pytorch = True if mode == 'PyTorch' else False
+        gv = outer_comp.show_graph(show_pytorch=show_pytorch, output_fmt='source')
         assert gv == expected
-
+        render_show_graph(show_pytorch=show_pytorch)
 
     expected_output_for_unnested_python_em = 'digraph "EM COMP" {\n\tgraph [label="EM COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"VALUE [VALUE]" [color=green penwidth=3 rank=source shape=oval]\n\t"KEY [QUERY]" [color=green penwidth=3 rank=source shape=oval]\n\t"KEY [FIELD_MEMORY]" [color=black penwidth=1 rank=same shape=oval]\n\t"COMBINED SCORES" -> "KEY [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t"COMBINED SCORES" -> "KEY [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t"KEY [QUERY]" -> "KEY [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t"VALUE [FIELD_MEMORY]" [color=black penwidth=1 rank=same shape=oval]\n\t"COMBINED SCORES" -> "VALUE [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t"COMBINED SCORES" -> "VALUE [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t"VALUE [VALUE]" -> "VALUE [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t"COMBINED SCORES" [color=black penwidth=1 rank=same shape=octagon]\n\t"KEY [FIELD_MEMORY]" -> "COMBINED SCORES" [label="" arrowhead=normal color=black penwidth=1]\n\t"KEY [FIELD_MEMORY]" -> "COMBINED SCORES" [label="" arrowhead=normal color=black penwidth=1]\n\t"VALUE [FIELD_MEMORY]" -> "COMBINED SCORES" [label="" arrowhead=normal color=black penwidth=1]\n\t"KEY [FIELD_MEMORY]" -> "KEY [RETRIEVED]" [label="" arrowhead=normal color=black penwidth=1]\n\t"VALUE [FIELD_MEMORY]" -> "VALUE [RETRIEVED]" [label="" arrowhead=normal color=black penwidth=1]\n\t"KEY [RETRIEVED]" [color=red penwidth=3 rank=max shape=oval]\n\t"VALUE [RETRIEVED]" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"KEY [QUERY]"\n\t\t"VALUE [VALUE]"\n\t}\n\t{\n\t\trank=sink\n\t\t"KEY [RETRIEVED]"\n\t\t"VALUE [RETRIEVED]"\n\t}\n\t"KEY [QUERY]" -> "KEY [FIELD_MEMORY]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "VALUE [FIELD_MEMORY]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "COMBINED SCORES" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "VALUE [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [FIELD_MEMORY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"VALUE [VALUE]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"VALUE [FIELD_MEMORY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"COMBINED SCORES" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t{\n\t\trank=same\n\t\t"KEY [QUERY]"\n\t\t"VALUE [VALUE]"\n\t}\n\t{\n\t\trank=same\n\t\t"KEY [FIELD_MEMORY]"\n\t\t"VALUE [FIELD_MEMORY]"\n\t}\n\t{\n\t\trank=same\n\t\t"KEY [RETRIEVED]"\n\t\t"VALUE [RETRIEVED]"\n\t}\n\t"KEY [QUERY]" -> "VALUE [VALUE]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [RETRIEVED]" -> "VALUE [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "KEY [FIELD_MEMORY]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [FIELD_MEMORY]" -> "COMBINED SCORES" [arrowhead=none constraint=true style=invis weight=100]\n\t"VALUE [FIELD_MEMORY]" -> "COMBINED SCORES" [arrowhead=none constraint=true style=invis weight=100]\n\t"COMBINED SCORES" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"COMBINED SCORES" -> "VALUE [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n}\n'
     expected_output_for_nested_python_em = 'digraph "OUTER COMP" {\n\tgraph [label="OUTER COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"INPUT MECH" [color=green penwidth=3 rank=source shape=oval]\n\t"INPUT MECH" -> "KEY [QUERY]" [label="" arrowhead=normal color=black penwidth=1]\n\t"INPUT MECH" -> "VALUE [VALUE]" [label="" arrowhead=normal color=black penwidth=1]\n\t"KEY [RETRIEVED]" -> "OUTPUT MECH" [label="" arrowhead=normal color=black penwidth=1]\n\t"VALUE [RETRIEVED]" -> "OUTPUT MECH" [label="" arrowhead=normal color=black penwidth=1]\n\t"OUTPUT MECH" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"INPUT MECH"\n\t}\n\t{\n\t\trank=sink\n\t\t"OUTPUT MECH"\n\t}\n\t"INPUT MECH" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"INPUT MECH" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"EM COMP" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t{\n\t\trank=same\n\t\t"INPUT MECH"\n\t}\n\t{\n\t\trank=same\n\t\t"OUTPUT MECH"\n\t}\n\t"INPUT MECH" -> "EM COMP" [arrowhead=none constraint=true style=invis weight=100]\n\t"EM COMP" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\tsubgraph "cluster_EM COMP" {\n\t\tgraph [label="EM COMP" overlap=False rankdir=BT]\n\t\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\t\tedge [fontname=arial fontsize=10]\n\t\t"VALUE [VALUE]" [color=green penwidth=3 rank=source shape=oval]\n\t\t"KEY [QUERY]" [color=green penwidth=3 rank=source shape=oval]\n\t\t"KEY [FIELD_MEMORY]" [color=black penwidth=1 rank=same shape=oval]\n\t\t"COMBINED SCORES" -> "KEY [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"COMBINED SCORES" -> "KEY [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"KEY [QUERY]" -> "KEY [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"VALUE [FIELD_MEMORY]" [color=black penwidth=1 rank=same shape=oval]\n\t\t"COMBINED SCORES" -> "VALUE [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"COMBINED SCORES" -> "VALUE [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"VALUE [VALUE]" -> "VALUE [FIELD_MEMORY]" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"COMBINED SCORES" [color=black penwidth=1 rank=same shape=octagon]\n\t\t"KEY [FIELD_MEMORY]" -> "COMBINED SCORES" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"KEY [FIELD_MEMORY]" -> "COMBINED SCORES" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"VALUE [FIELD_MEMORY]" -> "COMBINED SCORES" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"KEY [FIELD_MEMORY]" -> "KEY [RETRIEVED]" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"VALUE [FIELD_MEMORY]" -> "VALUE [RETRIEVED]" [label="" arrowhead=normal color=black penwidth=1]\n\t\t"KEY [RETRIEVED]" [color=red penwidth=3 rank=max shape=oval]\n\t\t"VALUE [RETRIEVED]" [color=red penwidth=3 rank=max shape=oval]\n\t\t{\n\t\t\trank=source\n\t\t\t"KEY [QUERY]"\n\t\t\t"VALUE [VALUE]"\n\t\t}\n\t\t{\n\t\t\trank=sink\n\t\t\t"KEY [RETRIEVED]"\n\t\t\t"VALUE [RETRIEVED]"\n\t\t}\n\t\t"KEY [QUERY]" -> "KEY [FIELD_MEMORY]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "VALUE [FIELD_MEMORY]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "COMBINED SCORES" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "VALUE [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [FIELD_MEMORY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"VALUE [VALUE]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"VALUE [FIELD_MEMORY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"COMBINED SCORES" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t{\n\t\t\trank=same\n\t\t\t"KEY [QUERY]"\n\t\t\t"VALUE [VALUE]"\n\t\t}\n\t\t{\n\t\t\trank=same\n\t\t\t"KEY [FIELD_MEMORY]"\n\t\t\t"VALUE [FIELD_MEMORY]"\n\t\t}\n\t\t{\n\t\t\trank=same\n\t\t\t"KEY [RETRIEVED]"\n\t\t\t"VALUE [RETRIEVED]"\n\t\t}\n\t\t"KEY [QUERY]" -> "VALUE [VALUE]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [RETRIEVED]" -> "VALUE [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "KEY [FIELD_MEMORY]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [FIELD_MEMORY]" -> "COMBINED SCORES" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"VALUE [FIELD_MEMORY]" -> "COMBINED SCORES" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"COMBINED SCORES" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"COMBINED SCORES" -> "VALUE [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\tlabel="EM COMP"\n\t}\n}\n'
@@ -311,7 +329,7 @@ class TestNested:
     @pytest.mark.parametrize("nesting, mode, expected", test_em_data,
                              ids=[f"{x[0]}-{x[1]}" for x in test_em_data])
     @pytest.mark.pytorch
-    def test_show_graph_for_em_composition(self, nesting, mode, expected):
+    def test_show_graph_for_em_composition(self, nesting, mode, expected, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         from psyneulink.library.compositions.emcomposition import EMComposition
 
@@ -351,6 +369,7 @@ class TestNested:
         else:
             gv = outer_comp.show_graph(show_pytorch=show_pytorch, show_learning=show_learning, output_fmt='source')
         assert gv == expected
+        render_show_graph(outer_comp, show_pytorch=show_pytorch, show_learning=show_learning)
 
     expected_output_for_unnested_python_em_proj = 'digraph "EM COMP" {\n\tgraph [label="EM COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"VALUE [VALUE]" [color=green penwidth=3 rank=source shape=oval]\n\t"KEY [QUERY]" [color=green penwidth=3 rank=source shape=oval]\n\t"KEY [MATCH to KEYS]" [color=black penwidth=1 rank=same shape=oval]\n\t"KEY [QUERY]" -> "KEY [MATCH to KEYS]" [label="" arrowhead=normal color=black penwidth=1]\n\tRETRIEVE [color=black penwidth=1 rank=same shape=oval]\n\t"KEY [MATCH to KEYS]" -> RETRIEVE [label="" arrowhead=normal color=black penwidth=1]\n\tRETRIEVE -> "KEY [RETRIEVED]" [label="" arrowhead=normal color=black penwidth=1]\n\tRETRIEVE -> "VALUE [RETRIEVED]" [label="" arrowhead=normal color=black penwidth=1]\n\tSTORE [color=black penwidth=1 rank=same shape=oval]\n\t"KEY [QUERY]" -> STORE [label="" arrowhead=normal color=black penwidth=1]\n\t"VALUE [VALUE]" -> STORE [label="" arrowhead=normal color=black penwidth=1]\n\t"KEY [RETRIEVED]" [color=red penwidth=3 rank=max shape=oval]\n\t"VALUE [RETRIEVED]" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"KEY [QUERY]"\n\t\t"VALUE [VALUE]"\n\t}\n\t{\n\t\trank=sink\n\t\t"KEY [RETRIEVED]"\n\t\t"VALUE [RETRIEVED]"\n\t}\n\t"KEY [QUERY]" -> "KEY [MATCH to KEYS]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> RETRIEVE [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "VALUE [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> STORE [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [QUERY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"KEY [MATCH to KEYS]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\tRETRIEVE -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t"VALUE [VALUE]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\tSTORE -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n}\n'
     expected_output_for_nested_python_em_proj = 'digraph "OUTER COMP" {\n\tgraph [label="OUTER COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"INPUT MECH" [color=green penwidth=3 rank=source shape=oval]\n\t"INPUT MECH" -> "KEY [QUERY]" [label="" arrowhead=normal color=black penwidth=1]\n\t"INPUT MECH" -> "VALUE [VALUE]" [label="" arrowhead=normal color=black penwidth=1]\n\t"KEY [RETRIEVED]" -> "OUTPUT MECH" [label="" arrowhead=normal color=black penwidth=1]\n\t"VALUE [RETRIEVED]" -> "OUTPUT MECH" [label="" arrowhead=normal color=black penwidth=1]\n\t"OUTPUT MECH" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"INPUT MECH"\n\t}\n\t{\n\t\trank=sink\n\t\t"OUTPUT MECH"\n\t}\n\t"INPUT MECH" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"INPUT MECH" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"EM COMP" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t{\n\t\trank=same\n\t\t"INPUT MECH"\n\t}\n\t{\n\t\trank=same\n\t\t"OUTPUT MECH"\n\t}\n\t"INPUT MECH" -> "EM COMP" [arrowhead=none constraint=true style=invis weight=100]\n\t"EM COMP" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\tsubgraph "cluster_EM COMP" {\n\t\tgraph [label="EM COMP" overlap=False rankdir=BT]\n\t\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\t\tedge [fontname=arial fontsize=10]\n\t\t"VALUE [VALUE]" [color=green penwidth=3 rank=source shape=oval]\n\t\t"KEY [QUERY]" [color=green penwidth=3 rank=source shape=oval]\n\t\t"KEY [MATCH to KEYS]" [color=black penwidth=1 rank=same shape=oval]\n\t\t"KEY [QUERY]" -> "KEY [MATCH to KEYS]" [label="" arrowhead=normal color=black penwidth=1]\n\t\tRETRIEVE [color=black penwidth=1 rank=same shape=oval]\n\t\t"KEY [MATCH to KEYS]" -> RETRIEVE [label="" arrowhead=normal color=black penwidth=1]\n\t\tRETRIEVE -> "KEY [RETRIEVED]" [label="" arrowhead=normal color=black penwidth=1]\n\t\tRETRIEVE -> "VALUE [RETRIEVED]" [label="" arrowhead=normal color=black penwidth=1]\n\t\tSTORE [color=black penwidth=1 rank=same shape=oval]\n\t\t"KEY [QUERY]" -> STORE [label="" arrowhead=normal color=black penwidth=1]\n\t\t"VALUE [VALUE]" -> STORE [label="" arrowhead=normal color=black penwidth=1]\n\t\t"KEY [RETRIEVED]" [color=red penwidth=3 rank=max shape=oval]\n\t\t"VALUE [RETRIEVED]" [color=red penwidth=3 rank=max shape=oval]\n\t\t{\n\t\t\trank=source\n\t\t\t"KEY [QUERY]"\n\t\t\t"VALUE [VALUE]"\n\t\t}\n\t\t{\n\t\t\trank=sink\n\t\t\t"KEY [RETRIEVED]"\n\t\t\t"VALUE [RETRIEVED]"\n\t\t}\n\t\t"KEY [QUERY]" -> "KEY [MATCH to KEYS]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> RETRIEVE [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "VALUE [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> STORE [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [QUERY]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"KEY [MATCH to KEYS]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\tRETRIEVE -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\t"VALUE [VALUE]" -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\tSTORE -> "KEY [RETRIEVED]" [arrowhead=none constraint=true style=invis weight=100]\n\t\tlabel="EM COMP"\n\t}\n}\n'
@@ -370,7 +389,7 @@ class TestNested:
     @pytest.mark.parametrize("nesting, mode, expected", test_em_proj_data,
                              ids=[f"{x[0]}-{x[1]}" for x in test_em_proj_data])
     @pytest.mark.pytorch
-    def test_show_graph_for_em_composition_proj(self, nesting, mode, expected):
+    def test_show_graph_for_em_composition_proj(self, nesting, mode, expected, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         from psyneulink.library.compositions.emcomposition import EMComposition_Proj
 
@@ -410,6 +429,7 @@ class TestNested:
         else:
             gv = outer_comp.show_graph(show_pytorch=show_pytorch, show_learning=show_learning, output_fmt='source')
         assert gv == expected
+        render_show_graph(outer_comp, show_pytorch=show_pytorch, show_learning=show_learning)
 
     expected_output_for_nested_to_nested_direct = \
 'digraph "OUTER COMP" {\n\tgraph [label="OUTER COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"OUTER COMP INPUT_CIM" -> "INPUT MECH" [label="" arrowhead=normal color=black penwidth=1]\n\t"INPUT MECH" -> "OUTPUT MECH" [label="" arrowhead=normal color=black penwidth=1]\n\tsubgraph "cluster_NESTED COMP 1" {\n\t\tgraph [label="NESTED COMP 1" overlap=False rankdir=BT]\n\t\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\t\tedge [fontname=arial fontsize=10]\n\t\t"INPUT MECH" [color=brown penwidth=3 rank=same shape=oval]\n\t\t{\n\t\t\trank=sink\n\t\t\t"INPUT MECH"\n\t\t}\n\t\tcolor=green\n\t\tlabel="NESTED COMP 1"\n\t}\n\tsubgraph "cluster_NESTED COMP 2" {\n\t\tgraph [label="NESTED COMP 2" overlap=False rankdir=BT]\n\t\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\t\tedge [fontname=arial fontsize=10]\n\t\t"OUTPUT MECH" [color=brown penwidth=3 rank=same shape=oval]\n\t\t{\n\t\t\trank=sink\n\t\t\t"OUTPUT MECH"\n\t\t}\n\t\tcolor=red\n\t\tlabel="NESTED COMP 2"\n\t}\n}\n'
@@ -419,7 +439,7 @@ class TestNested:
     expected_output_for_nested_to_nested_pytorch_with_hidden = 'digraph "OUTER COMP" {\n\tgraph [label="OUTER COMP" overlap=False rankdir=BT]\n\tnode [color=black fontname=arial fontsize=12 penwidth=1 shape=record]\n\tedge [fontname=arial fontsize=10]\n\t"TARGET for OUTPUT MECH" [color=orange penwidth=3 rank=source shape=oval]\n\t"INPUT MECH" [color=green penwidth=3 rank=source shape=oval]\n\t"HIDDEN MECH" [color=black penwidth=1 rank=same shape=oval]\n\t"INPUT MECH" -> "HIDDEN MECH" [label="" arrowhead=normal color=orange penwidth=1]\n\t"LOSS for OUTPUT MECH" [color=orange penwidth=1 rank=same shape=oval]\n\t"OUTPUT MECH" -> "LOSS for OUTPUT MECH" [label="" arrowhead=normal color=black penwidth=1]\n\t"TARGET for OUTPUT MECH" -> "LOSS for OUTPUT MECH" [label="" arrowhead=normal color=black penwidth=1]\n\t"HIDDEN MECH" -> "OUTPUT MECH" [label="" arrowhead=normal color=orange penwidth=1]\n\t"LOSS for OUTPUT MECH" -> "OUTPUT MECH" [color=brown penwidth=1 style=dotted]\n\t"OUTPUT MECH" [color=red penwidth=3 rank=max shape=oval]\n\t{\n\t\trank=source\n\t\t"INPUT MECH"\n\t\t"TARGET for OUTPUT MECH"\n\t}\n\t{\n\t\trank=same\n\t\t"OUTPUT MECH"\n\t}\n\t{\n\t\trank=sink\n\t\t"LOSS for OUTPUT MECH"\n\t}\n\t"INPUT MECH" -> "HIDDEN MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"INPUT MECH" -> "LOSS for OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"INPUT MECH" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"HIDDEN MECH" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"INPUT MECH" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"TARGET for OUTPUT MECH" -> "OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n\t"OUTPUT MECH" -> "LOSS for OUTPUT MECH" [arrowhead=none constraint=true style=invis weight=100]\n}\n'
     @pytest.mark.pytorch
     @pytest.mark.parametrize("hidden", [True, False])
-    def test_projection_from_node_in_one_nested_comp_to_node_in_another(self, hidden):
+    def test_projection_from_node_in_one_nested_comp_to_node_in_another(self, hidden, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
         input_mech = ProcessingMechanism(name='INPUT MECH', input_shapes=3)
         output_mech = ProcessingMechanism(name='OUTPUT MECH', input_shapes=5)
@@ -435,17 +455,18 @@ class TestNested:
             outer_comp.add_projection(sender=input_mech, receiver=output_mech)
 
         gv = outer_comp.show_graph(output_fmt='source')
+        gv_pytorch = outer_comp.show_graph(output_fmt='source', show_pytorch=True)
         if hidden:
             assert gv == self.expected_output_for_nested_to_nested_with_hidden
-            gv = outer_comp.show_graph(output_fmt='source', show_pytorch=True)
-            assert gv == self.expected_output_for_nested_to_nested_pytorch_with_hidden
+            assert gv_pytorch == self.expected_output_for_nested_to_nested_pytorch_with_hidden
         else:
             assert gv == self.expected_output_for_nested_to_nested_direct
-            gv = outer_comp.show_graph(output_fmt='source', show_pytorch=True)
-            assert gv == self.expected_output_for_nested_to_nested_pytorch_direct
+            assert gv_pytorch == self.expected_output_for_nested_to_nested_pytorch_direct
+        render_show_graph(outer_comp)
+        render_show_graph(outer_comp, show_pytorch=True)
 
     @pytest.mark.pytorch
-    def test_filtering_out_of_projections_from_other_compositions(self):
+    def test_filtering_out_of_projections_from_other_compositions(self, render_show_graph):
         from psyneulink.library.compositions.autodiffcomposition import AutodiffComposition
 
         input_mech = ProcessingMechanism(name="INPUT")
@@ -475,6 +496,8 @@ class TestNested:
         gv_pytorch = autodiff_comp.show_graph(show_pytorch=True, output_fmt='source')
         assert gv_python == expected_gv_python
         assert gv_pytorch == expected_gv_pytorch
+        render_show_graph(autodiff_comp)
+        render_show_graph(autodiff_comp, show_pytorch=True)
 
 
 class TestLearning:
@@ -608,6 +631,7 @@ class TestControl:
         comp = Composition(pathways=[[input, response], [response, monitor, control]])
         gv = comp.show_graph(output_fmt='source')
         assert gv == expected_output
+        render_show_graph(comp)
 
 
     _no_nested_and_controler_name_with_space_in_it_data = [
@@ -647,6 +671,7 @@ class TestControl:
         comp = Composition(name='ocomp', pathways=[ia, ib], controller=ocm)
         gv = comp.show_graph(output_fmt='source', **show_graph_kwargs)
         assert gv.strip() == expected_output
+        render_show_graph(comp, **show_graph_kwargs)
 
     _multiple_nesting_levels_with_control_mech_projection_one_level_deep_data = [
         (
@@ -702,6 +727,7 @@ class TestControl:
         ocomp = Composition(name='ocomp', pathways=[oa, mcomp, ob, ctl_mech])
         gv = ocomp.show_graph(output_fmt='source', **show_graph_kwargs)
         assert gv.strip() == expected_output
+        render_show_graph(ocomp, **show_graph_kwargs)
 
     _nested_learning_data = [
         (
@@ -754,6 +780,7 @@ class TestControl:
 
         gv = ocomp.show_graph(output_fmt='source', **show_graph_kwargs)
         assert gv.strip() == expected_output
+        render_show_graph(ocomp, **show_graph_kwargs)
 
     _nested_learning_test_with_user_specified_target_in_outer_composition_data = [
         (
@@ -827,6 +854,7 @@ class TestControl:
 
         gv = ocomp.show_graph(output_fmt='source', **show_graph_kwargs)
         assert gv.strip() == expected_output
+        render_show_graph(ocomp, **show_graph_kwargs)
 
     # def test_nested_learning_test_with_user_specified_target_in_outer_composition_using_pathway_notation(self):
     #     ia = ProcessingMechanism(name='INNER INPUT')
@@ -928,6 +956,7 @@ class TestControl:
 
         gv = ocomp.show_graph(output_fmt='source', **show_graph_kwargs)
         assert gv.strip() == expected_output
+        render_show_graph(ocomp, **show_graph_kwargs)
 
     # each item corresponds to the same item in _nested_show_graph_kwargs above
     _of_show_3_level_nested_show_cim_and_show_node_structure_outputs = [
@@ -955,7 +984,8 @@ class TestControl:
     )
     def test_of_show_3_level_nested_show_cim_and_show_node_structure(self,
                                                                      show_graph_kwargs,
-                                                                     expected_output):
+                                                                     expected_output,
+                                                                     render_show_graph):
         # Inner Composition
         ia = TransferMechanism(name='ia')
         icomp = Composition(name='icomp', pathways=[ia])
@@ -985,6 +1015,7 @@ class TestControl:
         assert all([node in [input_port.shadow_inputs.owner for input_port in ocomp.controller.state_input_ports]
                     for node in {oa, ob}])
         assert gv.strip() == expected_output
+        render_show_graph(ocomp, **show_graph_kwargs)
 
     # each item corresponds to the same item in _nested_show_graph_kwargs above
     _of_show_nested_show_cim_and_show_node_structure_with_singleton_in_outer_comp_added_last_outputs = [
@@ -1014,7 +1045,8 @@ class TestControl:
     )
     def test_of_show_nested_show_cim_and_show_node_structure_with_singleton_in_outer_comp_added_last(self,
                                                                                                      show_graph_kwargs,
-                                                                                                     expected_output):
+                                                                                                     expected_output,
+                                                                                                     render_show_graph):
         # Inner Composition
         ia = TransferMechanism(name='ia')
         icomp = Composition(name='icomp', pathways=[ia])
@@ -1037,6 +1069,7 @@ class TestControl:
         ocomp.add_controller(ocm)
         gv = ocomp.show_graph(output_fmt='source', **show_graph_kwargs)
         assert gv.strip() == expected_output
+        render_show_graph(ocomp, **show_graph_kwargs)
 
 
     # each item corresponds to the same item in _nested_show_graph_kwargs above
@@ -1134,7 +1167,7 @@ class TestControl:
         # ids=[str(x) for x in _nested_show_graph_kwargs]*2
         ids=[str(x) for x in ids]
     )
-    def test_projections_from_nested_comp_to_ocm_or_obj_mech(self, show_graph_kwargs, expected_output, obj_mech):
+    def test_projections_from_nested_comp_to_ocm_or_obj_mech(self, show_graph_kwargs, expected_output, obj_mech, render_show_graph):
         ia = ProcessingMechanism(name='ia')
         ib = ProcessingMechanism(name='ib')
         ic = ProcessingMechanism(name='ic')
@@ -1194,6 +1227,8 @@ class TestControl:
             #     pass
             else:
                 raise AssertionError
+
+        render_show_graph(ocomp, **show_graph_kwargs)
 
     # def test_show_graph_for_nested_composition_as_agent_rep(self):
     #     """Note: this is the same as test_control/test_nested_composition_as_agent_rep but with show_graph()"""
