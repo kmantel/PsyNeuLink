@@ -218,6 +218,7 @@ Class Reference
 import pathlib
 import site
 import warnings
+from os import PathLike
 
 import numpy as np
 from beartype import beartype
@@ -300,7 +301,11 @@ _gv_executable_not_found_error_msg = (
 )
 
 
-def get_default_showgraph_dir():
+def get_showgraph_dir(directory=None):
+    """providing **directory** uses that directory, otherwise uses a default"""
+    if directory is not None:
+        return directory
+
     pnl_module_dir = pathlib.Path(psyneulink.__file__).parent.absolute()
     try:
         site_packages_dirs = site.getsitepackages()
@@ -544,6 +549,7 @@ class ShowGraph:
                    show_projections_not_in_composition: bool = False,
                    active_items=None,
                    output_fmt: Optional[Literal['pdf', 'gv', 'jupyter', 'gif', 'source']] = 'pdf',
+                   directory: Optional[Union[PathLike, str]] = None,
                    view: bool = True,
                    context=None,
                    *args,
@@ -564,6 +570,7 @@ class ShowGraph:
            show_projections_not_in_composition=False \
            active_items=None,                        \
            output_fmt='pdf',                         \
+           directory=None,                           \
            view=True,                                \
            context=None)
 
@@ -698,6 +705,11 @@ class ShowGraph:
             'gif': return gif used for animation
             'source': return the source code for the graphviz object
             None : return None
+
+        directory : Optional[Union[PathLike, str]] : default None
+            if specified, rendered graph files are output in **directory**.
+            Otherwise, a default is used (the current directory; or, the
+            PsyNeuLink repo directory if using an editable install)
 
         view : bool : default True
             used with **output_fmt**='pdf'. Corresponds to the `view` argument
@@ -976,6 +988,7 @@ class ShowGraph:
                                      active_items,
                                      show_controller,
                                      output_fmt,
+                                     directory,
                                      view,
                                      context)
 
@@ -2679,6 +2692,7 @@ class ShowGraph:
                          active_items,
                          show_controller,
                          output_fmt,
+                         directory,
                          view,
                          context
                          ):
@@ -2939,7 +2953,7 @@ class ShowGraph:
         if output_fmt == 'pdf':
             # G.format = 'svg'
             try:
-                G.render(composition.name.replace(" ", "-"), cleanup=True, directory=get_default_showgraph_dir().joinpath('PDFS'), view=view)
+                G.render(composition.name.replace(" ", "-"), cleanup=True, directory=get_showgraph_dir(directory).joinpath('PDFS'), view=view)
             except ExecutableNotFound as e:
                 raise ShowGraphError(_gv_executable_not_found_error_msg) from e
             except Exception as e:
@@ -2948,7 +2962,7 @@ class ShowGraph:
         # Generate images for animation
         elif output_fmt == 'gif':
             if composition.active_item_rendered or INITIAL_FRAME in active_items:
-                self._generate_gifs(G, active_items, view, context)
+                self._generate_gifs(G, active_items, directory, view, context)
 
         # Return graph to show in jupyter
         elif output_fmt == 'jupyter':
@@ -3093,7 +3107,7 @@ class ShowGraph:
 
         if isinstance(composition._animate, dict):
             # Assign directory for animation files
-            default_dir = get_default_showgraph_dir().joinpath('GIFs', composition.name)
+            default_dir = get_showgraph_dir().joinpath('GIFs', composition.name)
             # try:
             #     rmtree(composition._animate_directory)
             # except:
@@ -3163,7 +3177,7 @@ class ShowGraph:
                                context=context,
                                )
 
-    def _generate_gifs(self, G, active_items, view, context):
+    def _generate_gifs(self, G, active_items, directory, view, context):
         # graphviz is currently only imported within methods
         from graphviz.backend.execute import ExecutableNotFound
 
@@ -3209,6 +3223,9 @@ class ShowGraph:
             raise ShowGraphError(
                 f"PROGRAM ERROR:  Unrecognized phase during execution of {composition.name}: {execution_phase.name}")
 
+        if directory is None:
+            directory = composition._animation_directory
+
         label = f'\n{composition.name}\n{phase_string}{time_string}\n'
         G.attr(label=label)
         G.attr(labelloc='b')
@@ -3216,11 +3233,11 @@ class ShowGraph:
         G.attr(fontsize='14')
         index = repr(composition._component_animation_execution_count)
         image_filename = '-'.join([repr(run_num), repr(trial_num), index])
-        image_file = pathlib.Path(composition._animation_directory, image_filename + '.gif')
+        image_file = pathlib.Path(directory, image_filename + '.gif')
         try:
             G.render(
                 filename=image_filename,
-                directory=composition._animation_directory,
+                directory=directory,
                 cleanup=True,
                 view=view,
             )
