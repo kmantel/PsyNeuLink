@@ -2830,7 +2830,6 @@ class ShowGraph:
                 'style': 'invis',
                 'weight': '100',
             }
-            invisible_order_edge_attrs = dict(invisible_edge_attrs, constraint='false')
 
             def add_rank_subgraph(node_ids):
                 if not node_ids:
@@ -2840,9 +2839,16 @@ class ShowGraph:
                     for node_id in node_ids:
                         rank_subgraph.node(node_id)
 
-            def add_ordering_edges(node_ids):
+            def add_invis_edges(*node_ids, **extra_edge_attrs):
+                edge_attrs = {
+                    **invisible_edge_attrs,
+                    **extra_edge_attrs
+                }
                 for i in range(len(node_ids) - 1):
-                    G.edge(node_ids[i], node_ids[i + 1], **invisible_order_edge_attrs)
+                    G.edge(node_ids[i], node_ids[i + 1], **edge_attrs)
+
+            def add_ordering_edges(*node_ids):
+                add_invis_edges(*node_ids, constraint='false')
 
             nested_rank_constraint_specs = []
             sender_band_node_id_groups = []
@@ -2895,23 +2901,23 @@ class ShowGraph:
                     if any(node_id in group and group & output_or_learning_objective_node_id_set
                            for group in receiver_band_node_id_groups):
                         continue
-                    G.edge(node_id, output_anchor, **invisible_edge_attrs)
+                    add_invis_edges(node_id, output_anchor)
             for nested_node_ids, sender_node_ids, receiver_node_ids in nested_rank_constraint_specs:
                 add_rank_subgraph(sender_node_ids)
                 add_rank_subgraph(receiver_node_ids)
-                add_ordering_edges(sender_node_ids)
-                add_ordering_edges(receiver_node_ids)
+                add_ordering_edges(*sender_node_ids)
+                add_ordering_edges(*receiver_node_ids)
                 for sender_node_id in sender_node_ids:
                     for nested_node_id in nested_node_ids:
-                        G.edge(sender_node_id, nested_node_id, **invisible_edge_attrs)
+                        add_invis_edges(sender_node_id, nested_node_id)
                 for receiver_node_id in receiver_node_ids:
                     for nested_node_id in nested_node_ids:
-                        G.edge(nested_node_id, receiver_node_id, **invisible_edge_attrs)
+                        add_invis_edges(nested_node_id, receiver_node_id)
             if learning_objective_node_ids:
                 learning_objective_anchor = learning_objective_node_ids[0]
                 lower_node_ids = output_node_ids or non_learning_objective_node_ids
                 for node_id in lower_node_ids:
-                    G.edge(node_id, learning_objective_anchor, **invisible_edge_attrs)
+                    add_invis_edges(node_id, learning_objective_anchor)
 
         for node in nodes:
             if isinstance(node, Composition):
