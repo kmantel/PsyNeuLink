@@ -558,6 +558,7 @@ class ShowGraph:
                    show_dimensions: bool = False,
                    show_projection_labels: bool = False,
                    show_projections_not_in_composition: bool = False,
+                   show_structural_conditions: bool = False,
                    active_items=None,
                    output_fmt: Optional[Literal['pdf', 'gv', 'jupyter', 'gif', 'source']] = 'pdf',
                    directory: Optional[Union[PathLike, str]] = None,
@@ -778,6 +779,7 @@ class ShowGraph:
             show_learning=ALL
             show_headers=True
             show_projections_not_in_composition=True
+            show_structural_conditions = True
 
         # Assign node_struct_arg based on show_node_structure ~~~~~~~~~~~~~~~~~~~~~~~~~
         # Argument values used to call Mechanism._show_structure()
@@ -975,6 +977,18 @@ class ShowGraph:
                                              show_projection_labels,
                                              show_projections_not_in_composition,
                                              context)
+
+        if show_structural_conditions:
+            all_keys = set(self.composition.processing_graph).union(self.composition.scheduler.dependency_dict)
+            for k in all_keys:
+                pgk = self.composition.processing_graph[k]
+                sgk = self.composition.scheduler.dependency_dict[k]
+                sd = pgk.symmetric_difference(sgk)
+                if len(sd):
+                    print(k)
+                    print(sd)
+            import ipdb
+            ipdb.set_trace()
 
         self._make_additional_assignments(G,
                                           processing_graph,
