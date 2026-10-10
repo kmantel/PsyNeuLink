@@ -552,7 +552,7 @@ class ShowGraph:
                    active_items=None,
                    output_fmt: Optional[Literal['pdf', 'gv', 'jupyter', 'gif', 'source']] = 'pdf',
                    directory: Optional[Union[PathLike, str]] = None,
-                   view: bool = True,
+                   view: bool = False,
                    context=None,
                    *args,
                    **kwargs):
@@ -573,7 +573,7 @@ class ShowGraph:
            active_items=None,                        \
            output_fmt='pdf',                         \
            directory=None,                           \
-           view=True,                                \
+           view=False,                               \
            context=None)
 
         Show graphical display of Components in a Composition's graph.  See `show_graph <ShowGraph_show_graph_Method>`
@@ -713,7 +713,7 @@ class ShowGraph:
             Otherwise, a default is used (the current directory; or, the
             PsyNeuLink repo directory if using an editable install)
 
-        view : bool : default True
+        view : bool : default False
             used with **output_fmt**='pdf'. Corresponds to the `view` argument
             of `graphviz.Graph.render`. If True, the system also opens the
             output file of the rendered graph when it is generated. Otherwise,
