@@ -1169,9 +1169,9 @@ class ShowGraph:
         #    Based on Input, Output, Composition and/or Active
 
         # Get condition if any associated with rcvr
-        if rcvr in composition.scheduler.conditions:
-            condition = composition.scheduler.conditions[rcvr]
-        else:
+        try:
+            condition = composition.scheduler.conditions.conditions_basic[rcvr]
+        except KeyError:
             condition = None
 
         # INPUT and OUTPUT Node
@@ -2989,6 +2989,7 @@ class ShowGraph:
             except ExecutableNotFound as e:
                 raise ShowGraphError(_gv_executable_not_found_error_msg) from e
             except Exception as e:
+                raise
                 raise ShowGraphError(f"Problem displaying graph for {composition.name}: {e}") from e
 
         # Generate images for animation
