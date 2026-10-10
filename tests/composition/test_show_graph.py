@@ -1072,6 +1072,42 @@ class TestControl:
         assert gv.strip() == expected_output
         render_show_graph(ocomp, **show_graph_kwargs)
 
+    _nested_singleton_with_input_nodes_show_graph_kwargs = [
+        {'show_nested': False},
+        {'show_node_structure': True, 'show_nested': False},
+        {'show_node_structure': True, 'show_nested': NESTED},
+    ]
+    _nested_singleton_with_input_nodes_outputs = [
+        '',
+        '',
+        '',
+    ]
+
+    @pytest.mark.parametrize(
+        'show_graph_kwargs, expected_output',
+        list(zip(
+            _nested_singleton_with_input_nodes_show_graph_kwargs,
+            _nested_singleton_with_input_nodes_outputs,
+        )),
+        ids=[str(x) for x in _nested_singleton_with_input_nodes_show_graph_kwargs]
+    )
+    def test_nested_singleton_with_input_nodes(
+        self, show_graph_kwargs, expected_output, render_show_graph
+    ):
+        # Inner Composition
+        ia = TransferMechanism(name='ia')
+        ib = TransferMechanism(name='ib')
+        ic = TransferMechanism(name='ic')
+        icomp = Composition(name='icomp', pathways=[[ia, ib], [ic]])
+
+        # Outer Composition
+        oa = TransferMechanism(name='oa')
+        ob = TransferMechanism(name='ob')
+        oc = TransferMechanism(name='oc')
+        ocomp = Composition(name='ocomp', pathways=[[oa, icomp, oc], [ob]])
+        render_show_graph(ocomp, **show_graph_kwargs, view=True)
+        gv = ocomp.show_graph(output_fmt='source', **show_graph_kwargs)
+        assert gv.strip() == expected_output
 
     # each item corresponds to the same item in _nested_show_graph_kwargs above
     _nested_comp_to_ocm_or_obj_mech = [
