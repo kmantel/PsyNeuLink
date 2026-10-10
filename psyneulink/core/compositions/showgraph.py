@@ -2976,7 +2976,6 @@ class ShowGraph:
             except ExecutableNotFound as e:
                 raise ShowGraphError(_gv_executable_not_found_error_msg) from e
             except Exception as e:
-                raise
                 raise ShowGraphError(f"Problem displaying graph for {composition.name}: {e}") from e
 
         # Generate images for animation

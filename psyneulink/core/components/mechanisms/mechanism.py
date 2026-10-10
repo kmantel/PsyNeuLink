@@ -1075,7 +1075,6 @@ Class Reference
 """
 
 import abc
-from collections.abc import Iterable
 import copy
 import inspect
 import itertools
@@ -3605,7 +3604,7 @@ class Mechanism_Base(Mechanism):
                         show_conditions: bool = False,
                         composition=None,
                         compact_cim: bool = False,
-                        condition: Optional[Union[ConditionBase, Iterable[ConditionBase]]] = None,
+                        condition: Optional[Condition] = None,
                         node_border: str = "1",
                         output_fmt: Literal['pdf', 'struct'] = 'pdf',
                         context=None
@@ -3762,11 +3761,7 @@ class Mechanism_Base(Mechanism):
 
             mech_condition = ''
             if composition and show_conditions and condition:
-                try:
-                    cond_str = '<br/>'.join(str(c) for c in condition)
-                except TypeError:
-                    cond_str = str(condition)
-                mech_condition = f'<br/><i>{cond_str}</i>'
+                mech_condition = f'<br/><i>{str(condition)}</i>'
 
             mech_function = ''
             fct_params = ''
