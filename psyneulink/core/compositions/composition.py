@@ -15074,7 +15074,7 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
                    active_items=None,
                    output_fmt='pdf',
                    directory: Optional[Union[PathLike, str]] = None,
-                   view: bool = True,
+                   view: bool = False,
                    context=None,
                    **kwargs):
         """Patch to ShowGraph method
