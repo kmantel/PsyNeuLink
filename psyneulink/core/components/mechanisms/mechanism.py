@@ -1075,6 +1075,7 @@ Class Reference
 """
 
 import abc
+from collections.abc import Iterable
 import copy
 import inspect
 import itertools
@@ -1134,7 +1135,7 @@ from psyneulink.core.globals.utilities import (
     safe_len,
     shape,
 )
-from psyneulink.core.scheduling.condition import Condition
+from psyneulink.core.scheduling.condition import Condition, ConditionBase
 from psyneulink.core.scheduling.time import TimeScale
 
 if TYPE_CHECKING:
@@ -3604,7 +3605,7 @@ class Mechanism_Base(Mechanism):
                         show_conditions: bool = False,
                         composition=None,
                         compact_cim: bool = False,
-                        condition: Optional[Condition] = None,
+                        condition: Optional[Union[ConditionBase, Iterable[ConditionBase]]] = None,
                         node_border: str = "1",
                         output_fmt: Literal['pdf', 'struct'] = 'pdf',
                         context=None
@@ -3761,7 +3762,11 @@ class Mechanism_Base(Mechanism):
 
             mech_condition = ''
             if composition and show_conditions and condition:
-                mech_condition = f'<br/><i>{str(condition)}</i>'
+                try:
+                    cond_str = '<br/>'.join(str(c) for c in condition)
+                except TypeError:
+                    cond_str = str(condition)
+                mech_condition = f'<br/><i>{cond_str}</i>'
 
             mech_function = ''
             fct_params = ''
