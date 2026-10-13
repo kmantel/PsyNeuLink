@@ -479,6 +479,8 @@ class ShowGraph:
                  default_projection_arrow = 'normal',
                  learning_projection_shape = 'diamond',
                  control_projection_arrow='box',
+                 scheduler_removed_projection_arrow: str = 'empty',
+                 scheduler_added_edge_arrow: str = 'tee',
                  # Colors:
                  default_node_color = 'black',
                  active_color=BOLD,
@@ -492,6 +494,7 @@ class ShowGraph:
                  learning_color='orange',
                  composition_color='pink',
                  inactive_projection_color='red',
+                 scheduler_style: str = 'dashed',
                  # Lines:
                  default_width = 1,
                  active_thicker_by = 2,
@@ -518,6 +521,8 @@ class ShowGraph:
         # Projection shapes
         self.learning_projection_shape = learning_projection_shape
         self.control_projection_arrow =control_projection_arrow
+        self.scheduler_removed_projection_arrow = scheduler_removed_projection_arrow
+        self.scheduler_added_edge_arrow = scheduler_added_edge_arrow
         # Colors:
         self.default_node_color = default_node_color
         self.active_color = active_color
@@ -536,6 +541,7 @@ class ShowGraph:
         self.default_width = default_width
         self.active_thicker_by = active_thicker_by
         self.bold_width = bold_width
+        self.scheduler_style = scheduler_style
         # Order:
         self.input_rank = input_rank
         self.control_rank = control_rank
@@ -918,6 +924,7 @@ class ShowGraph:
                                                show_dimensions,
                                                show_projection_labels,
                                                show_projections_not_in_composition,
+                                               show_structural_conditions,
                                                nested_args,
                                                context)
 
@@ -979,16 +986,12 @@ class ShowGraph:
                                              context)
 
         if show_structural_conditions:
-            all_keys = set(self.composition.processing_graph).union(self.composition.scheduler.dependency_dict)
-            for k in all_keys:
-                pgk = self.composition.processing_graph[k]
-                sgk = self.composition.scheduler.dependency_dict[k]
-                sd = pgk.symmetric_difference(sgk)
-                if len(sd):
-                    print(k)
-                    print(sd)
-            import ipdb
-            ipdb.set_trace()
+            self._assign_scheduler_components(
+                G,
+                show_types,
+                show_dimensions,
+                context,
+            )
 
         self._make_additional_assignments(G,
                                           processing_graph,
@@ -1085,6 +1088,7 @@ class ShowGraph:
                                       show_dimensions,
                                       show_projection_labels,
                                       show_projections_not_in_composition,
+                                      show_structural_conditions,
                                       nested_args,
                                       context):
         """Assign nodes to graph"""
@@ -1319,6 +1323,7 @@ class ShowGraph:
                                     show_node_structure,
                                     show_projection_labels,
                                     show_projections_not_in_composition,
+                                    show_structural_conditions,
                                     enclosing_comp=enclosing_comp,
                                     comp_hierarchy=comp_hierarchy,
                                     nesting_level=nesting_level,
@@ -2393,6 +2398,26 @@ class ShowGraph:
                                            penwidth=learning_proj_width)
         return True
 
+    def _assign_scheduler_components(self, g, show_types, show_dimensions, context):
+        scheduler_edges = self._get_edges_added_by_scheduler()
+        for receiver in scheduler_edges:
+            for sender in scheduler_edges[receiver]:
+                cond = self.composition.scheduler.get_responsible_condition(sender, receiver)
+                sndr_label = self._get_graph_node_label(self.composition, sender, show_types, show_dimensions)
+                rcvr_label = self._get_graph_node_label(
+                    self.composition, receiver, show_types, show_dimensions
+                )
+                self._implement_graph_edge(
+                    g,
+                    None,
+                    context,
+                    sndr_label,
+                    rcvr_label,
+                    label=str(cond),
+                    arrowhead=self.scheduler_added_edge_arrow,
+                    style=self.scheduler_style,
+                )
+
     def _make_additional_assignments(self, *args):
         """Allow override by subclasses to make modifications / additions to graph"""
         pass
@@ -2412,6 +2437,7 @@ class ShowGraph:
                                show_node_structure,
                                show_projection_labels,
                                show_projections_not_in_composition,
+                               show_structural_conditions,
                                proj_color=None,
                                proj_arrow=None,
                                enclosing_comp=None,
@@ -2503,6 +2529,9 @@ class ShowGraph:
                     has_learning = proj.has_learning_projection is not None
                 except AttributeError:
                     has_learning = None
+
+                if show_structural_conditions and self._scheduler_removes_projection(proj):
+                    ...
 
                 edge_label = self._get_graph_node_label(composition, proj, show_types, show_dimensions)
                 is_learning_component = (rcvr in composition.learning_components
@@ -3287,3 +3316,22 @@ class ShowGraph:
             composition._animation = [image]
         else:
             composition._animation.append(image)
+
+    def _scheduler_removes_projection(self, projection):
+        return (
+            projection.sender.owner
+            not in self.composition.scheduler.dependency_dict[projection.receiver.owner]
+        )
+
+    def _get_edges_added_by_scheduler(self):
+        all_keys = set(self.composition.processing_graph).union(self.composition.scheduler.dependency_dict)
+        res = {}
+        for k in all_keys:
+            pgk = self.composition.processing_graph[k]
+            sgk = self.composition.scheduler.dependency_dict[k]
+            new_edges = sgk.difference(pgk)
+            if len(new_edges):
+                print(k)
+                print(new_edges)
+                res[k] = new_edges
+        return res
