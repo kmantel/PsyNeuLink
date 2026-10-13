@@ -990,6 +990,7 @@ class ShowGraph:
                 G,
                 show_types,
                 show_dimensions,
+                show_projection_labels,
                 context,
             )
 
@@ -2398,7 +2399,7 @@ class ShowGraph:
                                            penwidth=learning_proj_width)
         return True
 
-    def _assign_scheduler_components(self, g, show_types, show_dimensions, context):
+    def _assign_scheduler_components(self, g, show_types, show_dimensions, show_projection_labels, context):
         scheduler_edges = self._get_edges_added_by_scheduler()
         for receiver in scheduler_edges:
             for sender in scheduler_edges[receiver]:
@@ -2407,13 +2408,14 @@ class ShowGraph:
                 rcvr_label = self._get_graph_node_label(
                     self.composition, receiver, show_types, show_dimensions
                 )
+                edge_label = str(cond) if show_projection_labels else ''
                 self._implement_graph_edge(
                     g,
                     None,
                     context,
                     sndr_label,
                     rcvr_label,
-                    label=str(cond),
+                    label=edge_label,
                     arrowhead=self.scheduler_added_edge_arrow,
                     style=self.scheduler_style,
                 )
