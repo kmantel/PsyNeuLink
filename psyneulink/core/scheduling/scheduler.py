@@ -19,7 +19,7 @@ from psyneulink._typing import Hashable, Union
 from psyneulink.core.globals.context import Context, handle_external_context
 from psyneulink.core.globals.mdf import MDFSerializable
 from psyneulink.core.globals.utilities import parse_valid_identifier
-from psyneulink.core.scheduling.condition import _create_as_pnl_condition, graph_structure_conditions_available, gsc_unavailable_message
+from psyneulink.core.scheduling.condition import GraphStructureCondition, _create_as_pnl_condition, graph_structure_conditions_available, gsc_unavailable_message
 
 __all__ = [
     'Scheduler', 'SchedulingMode'
@@ -193,6 +193,32 @@ class Scheduler(graph_scheduler.Scheduler, MDFSerializable):
         cond = pnl.RemoveEdgeFrom(sender)
         self.add_condition(receiver, cond)
         return cond
+
+    def get_responsible_condition(self, sender: Hashable, receiver: Hashable, add: bool = True) -> Union[GraphStructureCondition, None]:
+        res = None
+
+        for cur in range(len(self._graphs) - 1, 0, -1):
+            prev = cur - 1
+            cur_g = self._graphs[cur]
+            prev_g = self._graphs[prev]
+
+            try:
+                prev_has_edge = sender in self._graphs[prev][receiver]
+            except KeyError:
+                prev_has_edge = False
+
+            try:
+                cur_has_edge = sender in self._graphs[cur][receiver]
+            except KeyError:
+                cur_has_edge = False
+
+            # _graphs has base graph + one per structural condition
+            if add and cur_has_edge and not prev_has_edge:
+                return self.conditions.structural_condition_order[cur - 1]
+            elif not cur_has_edge and prev_has_edge:
+                return self.conditions.structural_condition_order[prev - 1]
+
+        return None
 
 
 _doc_subs = {
