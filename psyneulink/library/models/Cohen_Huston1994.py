@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '--no-plot', action='store_false',
     help='Disable plotting', dest='enable_plot')
+parser.add_argument('--plot-fname', type=str, help='Filename for exported image, if plotting enabled (default: %(default))', default='Cohen_Huston1994.png')
 parser.add_argument(
     '--threshold', type=float,
     help='Termination threshold for response output (default: %(default)f)', default=0.6)
@@ -483,7 +484,8 @@ if args.enable_plot:
     plt.plot(response_all3[0])
     plt.plot(response_all3[1])
     plt.plot(response_all3[2])
-    plt.show(block=not pnl._called_from_pytest)
+    if not pnl._called_from_pytest:
+        plt.show(block=not pnl._called_from_pytest)
 
     # -- Regression --
 
@@ -529,4 +531,6 @@ if args.enable_plot:
     plt.legend(['Color Naming', 'Word Reading'])
     plt.xticks(np.arange(3), ('Control', 'Conflict', 'Congruent'))
     plt.ylabel('Reaction Time (ms)')
-    plt.show(block=not pnl._called_from_pytest)
+    plt.savefig(args.plot_fname)
+    if not pnl._called_from_pytest:
+        plt.show()
