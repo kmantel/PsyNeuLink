@@ -1,5 +1,5 @@
 import argparse
-import pathlib
+from pathlib import Path
 
 import numpy as np
 
@@ -9,9 +9,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--no-plot', action='store_false', help='Disable plotting', dest='enable_plot')
 parser.add_argument(
     '--output-dir',
-    type=pathlib.Path,
+    type=Path,
     help='Directory for exported images, if plotting enabled (default: %(default)s)',
-    default=pathlib.Path.cwd(),
+    default=Path.cwd(),
 )
 parser.add_argument('--threshold', type=float, help='Termination threshold for response output (default: %(default)f)', default=0.55)
 parser.add_argument('--word-runs', type=int, help='Number of runs after word is presented (default: %(default)d)', default=5)
@@ -385,6 +385,6 @@ if args.enable_plot:
     plt.title('stimulus onset asynchrony - horse race model ')
     plt.legend(['congruent', 'incongruent', 'neutral'])
     plt.ylabel('reaction time in ms')
-    plt.savefig(args.output_dir.joinpath(pathlib.Path(__file__).with_suffix('.png')))
+    plt.savefig(args.output_dir.joinpath(Path(__file__).with_suffix('.png')))
     if not pnl._called_from_pytest:
         plt.show()

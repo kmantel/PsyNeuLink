@@ -1,6 +1,6 @@
 # Import all dependencies.
 import argparse
-import pathlib
+from pathlib import Path
 
 import numpy as np
 import psyneulink as pnl
@@ -10,9 +10,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--no-plot', action='store_false', help='Disable plotting', dest='enable_plot')
 parser.add_argument(
     '--output-dir',
-    type=pathlib.Path,
+    type=Path,
     help='Directory for exported images, if plotting enabled (default: %(default)s)',
-    default=pathlib.Path.cwd(),
+    default=Path.cwd(),
 )
 args = parser.parse_args()
 

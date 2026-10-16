@@ -1,5 +1,5 @@
 import argparse
-import pathlib
+from pathlib import Path
 
 import numpy as np
 import psyneulink as pnl
@@ -15,9 +15,9 @@ parser.add_argument(
     help='Disable plotting', dest='enable_plot')
 parser.add_argument(
     '--output-dir',
-    type=pathlib.Path,
+    type=Path,
     help='Directory for exported images, if plotting enabled (default: %(default)s)',
-    default=pathlib.Path.cwd(),
+    default=Path.cwd(),
 )
 parser.add_argument('--plot-fname', type=str, help='Filename for exported image, if plotting enabled (default: %(default))', default='Cohen_Huston1994.png')
 parser.add_argument(

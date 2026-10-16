@@ -4,7 +4,7 @@ conditioning as found in `Montague, Dayan, and Sejnowski (1996) in PsyNeuLink
 <http://www.jneurosci.org/content/jneuro/16/5/1936.full.pdf>`_
 """
 import argparse
-import pathlib
+from pathlib import Path
 
 import numpy as np
 import psyneulink as pnl
@@ -16,9 +16,9 @@ parser.add_argument('--no-plot', action='store_false', help='Disable plotting', 
 parser.add_argument('--figure', nargs='+', help='Figure(s) to plot (default=all)', choices=all_figures, default=all_figures, type=str.lower)
 parser.add_argument(
     '--output-dir',
-    type=pathlib.Path,
+    type=Path,
     help='Directory for exported figures, if plotting enabled (default: %(default)s)',
-    default=pathlib.Path.cwd(),
+    default=Path.cwd(),
 )
 args = parser.parse_args()
 
