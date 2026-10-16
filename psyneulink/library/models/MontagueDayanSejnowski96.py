@@ -4,6 +4,7 @@ conditioning as found in `Montague, Dayan, and Sejnowski (1996) in PsyNeuLink
 <http://www.jneurosci.org/content/jneuro/16/5/1936.full.pdf>`_
 """
 import argparse
+import pathlib
 
 import numpy as np
 import psyneulink as pnl
@@ -12,11 +13,23 @@ all_figures = ['5a', '5b', '5c']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-plot', action='store_false', help='Disable plotting', dest='enable_plot')
-parser.add_argument('--figure', nargs='+', help='Figure(s) to plot (default=all)', choices=all_figures, default=all_figures)
+parser.add_argument('--figure', nargs='+', help='Figure(s) to plot (default=all)', choices=all_figures, default=all_figures, type=str.lower)
+parser.add_argument(
+    '--output-dir',
+    type=pathlib.Path,
+    help='Directory for exported figures, if plotting enabled (default: %(default)s)',
+    default=pathlib.Path.cwd(),
+)
 args = parser.parse_args()
 
 if args.enable_plot:
     import matplotlib.pyplot as plt
+
+
+def _finish_plot(plt, suffix: str):
+    plt.savefig(args.output_dir.joinpath(f'MontagueDayanSejnowski96-{suffix}.png'))
+    if not pnl._called_from_pytest:
+        plt.show()
 
 
 def build_stimulus_dictionary(sample_mechanism, target_mechanism, no_reward_trials):
@@ -123,7 +136,7 @@ def figure_5a():
             plt.legend()
             plt.xlim(xmin=35)
             plt.xticks()
-            plt.show(block=not pnl._called_from_pytest)
+            _finish_plot(plt, '5A')
 
     return comp
 
@@ -189,7 +202,7 @@ def figure_5b():
             ax.set_xlim(0, 120)
             ax.set_zlim(-1, 1)
             ax.set_title("Montague et. al. (1996) -- Figure 5B")
-            plt.show(block=not pnl._called_from_pytest)
+            _finish_plot(plt, '5B')
 
     return comp
 
@@ -253,7 +266,7 @@ def figure_5c():
             ax.set_ylabel("Timestep")
             ax.set_zlabel("∂")
             ax.set_title("Montague et. al. (1996) -- Figure 5C")
-            plt.show(block=not pnl._called_from_pytest)
+            _finish_plot(plt, '5C')
 
     return comp
 

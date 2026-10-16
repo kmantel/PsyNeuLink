@@ -1,5 +1,6 @@
 # Import all dependencies.
 import argparse
+import pathlib
 
 import numpy as np
 import psyneulink as pnl
@@ -7,7 +8,12 @@ import psyneulink as pnl
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-plot', action='store_false', help='Disable plotting', dest='enable_plot')
-parser.add_argument('--plot-fname', type=str, help='Filename for exported image, if plotting enabled (default: %(default))', default='Nieuwenhuis2005.png')
+parser.add_argument(
+    '--output-dir',
+    type=pathlib.Path,
+    help='Directory for exported figures, if plotting enabled (default: %(default)s)',
+    default=pathlib.Path.cwd(),
+)
 args = parser.parse_args()
 
 # --------------------------------- Global Variables ----------------------------------------
@@ -247,6 +253,6 @@ if args.enable_plot:
     plt.title('Nieuwenhuis 2005 PsyNeuLink Lag 2 without noise', fontweight='bold')  # Set title
     ax.set_ylim((-0.2, 1.0))                     # Set left y axis limits
     ax2.set_ylim((0.0, 0.4))                    # Set right y axis limits
-    plt.savefig(args.plot_fname)
+    plt.savefig(args.output_dir.joinpath('Nieuwenhuis2005.png'))
     if not pnl._called_from_pytest:
         plt.show()

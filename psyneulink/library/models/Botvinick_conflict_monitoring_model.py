@@ -1,4 +1,5 @@
 import argparse
+import pathlib
 
 import numpy as np
 import psyneulink as pnl
@@ -29,6 +30,12 @@ import psyneulink as pnl
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-plot', action='store_false', help='Disable plotting', dest='enable_plot')
+parser.add_argument(
+    '--output-dir',
+    type=pathlib.Path,
+    help='Directory for exported images, if plotting enabled (default: %(default)s)',
+    default=pathlib.Path.cwd(),
+)
 parser.add_argument(
     '--settle-trials', type=int,
     help='Number of trials for composition to initialize and settle (default: %(default)d)', default=500)
@@ -396,7 +403,9 @@ if args.enable_plot:
     plt.xlabel('Cycle')  # add x label
     legend = ['Incongruent', 'Neutral', 'Congruent']
     plt.legend(legend)
-    plt.show()
+    plt.savefig(args.output_dir.joinpath('Botvinick_conflict_monitoring.png'))
+    if not pnl._called_from_pytest:
+        plt.show()
 
 # For more closely mimicking the original figure run the simulation as follows ----------------------------------------
 # Note: Also uncomment the noise in the mechanism definitions above
@@ -474,4 +483,6 @@ if args.enable_plot:
 #     plt.xlabel('Cycle')  # add x label
 #     legend = ['congruent', 'incongruent', 'neutral']
 #     plt.legend(legend)
-#     plt.show()
+#     plt.savefig(args.output_dir.joinpath('Botvinick_conflict_monitoring.png'))
+#     if not pnl._called_from_pytest:
+#         plt.show()
