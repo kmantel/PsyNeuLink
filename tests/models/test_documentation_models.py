@@ -84,7 +84,7 @@ def test_documentation_models(
     models_dir = pathlib.Path(pnl.__file__).parent.joinpath('library', 'models')
     model_file = models_dir.joinpath(f'{model_name}.py')
     old_argv = sys.argv
-    sys.argv = [model_file] + additional_args + ['--output-dir', tmp_path]
+    sys.argv = [model_file] + additional_args + ['--output-dir', str(tmp_path)]
     script_globals = runpy.run_path(model_file)
     sys.argv = old_argv
 

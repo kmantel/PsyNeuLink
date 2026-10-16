@@ -1,4 +1,5 @@
 import argparse
+import pathlib
 
 import numpy as np
 import psyneulink as pnl
@@ -12,6 +13,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '--no-plot', action='store_false',
     help='Disable plotting', dest='enable_plot')
+parser.add_argument(
+    '--output-dir',
+    type=pathlib.Path,
+    help='Directory for exported images, if plotting enabled (default: %(default)s)',
+    default=pathlib.Path.cwd(),
+)
 parser.add_argument('--plot-fname', type=str, help='Filename for exported image, if plotting enabled (default: %(default))', default='Cohen_Huston1994.png')
 parser.add_argument(
     '--threshold', type=float,
@@ -531,6 +538,6 @@ if args.enable_plot:
     plt.legend(['Color Naming', 'Word Reading'])
     plt.xticks(np.arange(3), ('Control', 'Conflict', 'Congruent'))
     plt.ylabel('Reaction Time (ms)')
-    plt.savefig(args.plot_fname)
+    plt.savefig(args.output_dir.joinpath('Cohen_Huston1994.png'))
     if not pnl._called_from_pytest:
         plt.show()

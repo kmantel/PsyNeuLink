@@ -1,4 +1,5 @@
 import argparse
+import pathlib
 
 import numpy as np
 import psyneulink as pnl
@@ -560,4 +561,6 @@ if args.enable_plot:
     axes[2, 3].plot(www_incong[settle:, 0], 'b')
     axes[2, 3].plot(www_incong[settle:, 1], 'g')
 
-    plt.show(block=not pnl._called_from_pytest)
+    plt.savefig(args.output_dir.joinpath('Kalanthroff_PCTC_2018.png'))
+    if not pnl._called_from_pytest:
+        plt.show()
