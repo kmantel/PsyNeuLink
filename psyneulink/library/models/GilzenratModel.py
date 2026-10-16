@@ -5,6 +5,7 @@ and electrophysiological data (from LC recordings) in non-human primates.
 
 """
 import argparse
+import pathlib
 import sys
 
 import numpy as np
@@ -12,6 +13,12 @@ import psyneulink as pnl
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-plot', action='store_false', help='Disable plotting', dest='enable_plot')
+parser.add_argument(
+    '--output-dir',
+    type=pathlib.Path,
+    help='Directory for exported images, if plotting enabled (default: %(default)s)',
+    default=pathlib.Path.cwd(),
+)
 parser.add_argument(
     '--noise-stddev',
     type=float,

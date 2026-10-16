@@ -79,11 +79,12 @@ def test_documentation_models(
     composition_name,
     additional_args,
     variant,
+    tmp_path,
 ):
     models_dir = pathlib.Path(pnl.__file__).parent.joinpath('library', 'models')
     model_file = models_dir.joinpath(f'{model_name}.py')
     old_argv = sys.argv
-    sys.argv = [model_file] + additional_args
+    sys.argv = [model_file] + additional_args + ['--output-dir', tmp_path]
     script_globals = runpy.run_path(model_file)
     sys.argv = old_argv
 
@@ -102,3 +103,7 @@ def test_documentation_models(
         pytest.helpers.expand_np_ndarray(expected_results),
         pytest.helpers.expand_np_ndarray(results)
     )
+
+    assert tmp_path.exists()
+    # just test that there's some data, and more than a .png header
+    assert tmp_path.stat().st_size > 50

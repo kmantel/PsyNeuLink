@@ -13,6 +13,12 @@ all_figures = ['5a', '5b', '5c']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-plot', action='store_false', help='Disable plotting', dest='enable_plot')
+parser.add_argument(
+    '--output-dir',
+    type=pathlib.Path,
+    help='Directory for exported images, if plotting enabled (default: %(default)s)',
+    default=pathlib.Path.cwd(),
+)
 parser.add_argument('--figure', nargs='+', help='Figure(s) to plot (default=all)', choices=all_figures, default=all_figures, type=str.lower)
 parser.add_argument(
     '--output-dir',

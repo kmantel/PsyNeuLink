@@ -11,6 +11,12 @@ parser.add_argument('--no-plot', action='store_false', help='Disable plotting', 
 parser.add_argument(
     '--output-dir',
     type=pathlib.Path,
+    help='Directory for exported images, if plotting enabled (default: %(default)s)',
+    default=pathlib.Path.cwd(),
+)
+parser.add_argument(
+    '--output-dir',
+    type=pathlib.Path,
     help='Directory for exported figures, if plotting enabled (default: %(default)s)',
     default=pathlib.Path.cwd(),
 )
