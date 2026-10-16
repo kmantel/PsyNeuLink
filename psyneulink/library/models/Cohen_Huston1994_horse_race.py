@@ -1,4 +1,5 @@
 import argparse
+import pathlib
 
 import numpy as np
 
@@ -384,4 +385,6 @@ if args.enable_plot:
     plt.title('stimulus onset asynchrony - horse race model ')
     plt.legend(['congruent', 'incongruent', 'neutral'])
     plt.ylabel('reaction time in ms')
-    plt.show(block=not pnl._called_from_pytest)
+    plt.savefig(args.output_dir.joinpath(pathlib.Path(__file__).with_suffix('.png')))
+    if not pnl._called_from_pytest:
+        plt.show()

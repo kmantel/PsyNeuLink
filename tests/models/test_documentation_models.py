@@ -104,6 +104,8 @@ def test_documentation_models(
         pytest.helpers.expand_np_ndarray(results)
     )
 
+    # TODO: recreate the figure filenames to actually test them.
+    # use pytest parametrize "indirect arguments" fixture.
     assert tmp_path.exists()
     # just test that there's some data, and more than a .png header
     assert tmp_path.stat().st_size > 50
