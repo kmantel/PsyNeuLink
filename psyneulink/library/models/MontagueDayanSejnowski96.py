@@ -26,9 +26,10 @@ if args.enable_plot:
     import matplotlib.pyplot as plt
 
 
-def _finish_plot(plt, plt_name: str):
+def _finish_plot(plt, plt_name: str = ''):
     pfx = Path(__file__).with_suffix('').name
-    plt.savefig(args.output_dir.joinpath(f'{pfx}-{plt_name}.png'))
+    plt_name = f'-{plt_name}' if plt_name else ''
+    plt.savefig(args.output_dir.joinpath(f'{pfx}{plt_name}.png'))
     if not pnl._called_from_pytest:
         plt.show()
 
