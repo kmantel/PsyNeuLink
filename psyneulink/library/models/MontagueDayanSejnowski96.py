@@ -136,7 +136,7 @@ def figure_5a():
             plt.legend()
             plt.xlim(xmin=35)
             plt.xticks()
-            _finish_plot(plt, '5A')
+            _finish_plot(plt, '5a')
 
     return comp
 
@@ -202,7 +202,7 @@ def figure_5b():
             ax.set_xlim(0, 120)
             ax.set_zlim(-1, 1)
             ax.set_title("Montague et. al. (1996) -- Figure 5B")
-            _finish_plot(plt, '5B')
+            _finish_plot(plt, '5b')
 
     return comp
 
@@ -266,7 +266,7 @@ def figure_5c():
             ax.set_ylabel("Timestep")
             ax.set_zlabel("∂")
             ax.set_title("Montague et. al. (1996) -- Figure 5C")
-            _finish_plot(plt, '5C')
+            _finish_plot(plt, '5c')
 
     return comp
 
