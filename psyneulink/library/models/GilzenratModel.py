@@ -281,6 +281,8 @@ if args.enable_plot:
     plt.xticks(x_values)
     plt.title('GILZENRAT 2002 PsyNeuLink', fontweight='bold')
 
+    plt_fname = Path(__file__).with_suffix('').name
+    plt.savefig(args.output_dir.joinpath(plt_fname).with_suffix('.png'))
     if not pnl._called_from_pytest:
         plt.show()
 

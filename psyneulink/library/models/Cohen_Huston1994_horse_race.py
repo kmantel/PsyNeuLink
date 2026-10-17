@@ -385,6 +385,7 @@ if args.enable_plot:
     plt.title('stimulus onset asynchrony - horse race model ')
     plt.legend(['congruent', 'incongruent', 'neutral'])
     plt.ylabel('reaction time in ms')
-    plt.savefig(args.output_dir.joinpath(Path(__file__).with_suffix('.png')))
+    plt_fname = Path(__file__).with_suffix('').name
+    plt.savefig(args.output_dir.joinpath(plt_fname).with_suffix('.png'))
     if not pnl._called_from_pytest:
         plt.show()
