@@ -26,8 +26,9 @@ if args.enable_plot:
     import matplotlib.pyplot as plt
 
 
-def _finish_plot(plt, suffix: str):
-    plt.savefig(args.output_dir.joinpath(f'MontagueDayanSejnowski96-{suffix}.png'))
+def _finish_plot(plt, plt_name: str):
+    pfx = Path(__file__).with_suffix('').name
+    plt.savefig(args.output_dir.joinpath(f'{pfx}-{plt_name}.png'))
     if not pnl._called_from_pytest:
         plt.show()
 
