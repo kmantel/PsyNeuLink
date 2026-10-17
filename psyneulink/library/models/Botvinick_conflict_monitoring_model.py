@@ -45,6 +45,9 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+if args.enable_plot:
+    import matplotlib.pyplot as plt
+
 # Define Parameters ---------------------------------------------------------------------------------------------------
 RATE = 0.01  # Integration rate
 INHIBITION = -2.0  # lateral inhibition
@@ -391,8 +394,6 @@ energy = r2['DECISION ENERGY']  # save logged DECISION_ENERGY
 
 # Plot ----------------------------------------------------------------------------------------------------------------
 if args.enable_plot:
-    import matplotlib.pyplot as plt
-
     n = SETTLE_TRIALS + STIMULUS_TRIALS
     plt.figure()
     x = np.arange(0, STIMULUS_TRIALS, 1)  # create x-axis length
@@ -470,8 +471,6 @@ if args.enable_plot:
 #             c_3.append(r2)
 #
 # if args.enable_plot:
-#     import matplotlib.pyplot as plt
-#
 #     n = SETTLE_TRIALS + STIMULUS_TRIALS
 #     plt.figure()
 #     x = np.arange(0, n, 1)  # create x-axis length
