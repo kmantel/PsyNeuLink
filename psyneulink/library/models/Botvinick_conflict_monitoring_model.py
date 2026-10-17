@@ -48,6 +48,15 @@ args = parser.parse_args()
 if args.enable_plot:
     import matplotlib.pyplot as plt
 
+
+def _finish_plot(plt, plt_name: str = ''):
+    pfx = Path(__file__).with_suffix('').name
+    plt_name = f'-{plt_name}' if plt_name else ''
+    plt.savefig(args.output_dir.joinpath(f'{pfx}{plt_name}.png'))
+    if not pnl._called_from_pytest:
+        plt.show()
+
+
 # Define Parameters ---------------------------------------------------------------------------------------------------
 RATE = 0.01  # Integration rate
 INHIBITION = -2.0  # lateral inhibition
@@ -404,9 +413,7 @@ if args.enable_plot:
     plt.xlabel('Cycle')  # add x label
     legend = ['Incongruent', 'Neutral', 'Congruent']
     plt.legend(legend)
-    plt.savefig(args.output_dir.joinpath('Botvinick_conflict_monitoring.png'))
-    if not pnl._called_from_pytest:
-        plt.show()
+    _finish_plot(plt)
 
 # For more closely mimicking the original figure run the simulation as follows ----------------------------------------
 # Note: Also uncomment the noise in the mechanism definitions above
@@ -482,6 +489,4 @@ if args.enable_plot:
 #     plt.xlabel('Cycle')  # add x label
 #     legend = ['congruent', 'incongruent', 'neutral']
 #     plt.legend(legend)
-#     plt.savefig(args.output_dir.joinpath('Botvinick_conflict_monitoring.png'))
-#     if not pnl._called_from_pytest:
-#         plt.show()
+#     _finish_plot(plt)

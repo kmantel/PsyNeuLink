@@ -561,6 +561,6 @@ if args.enable_plot:
     axes[2, 3].plot(www_incong[settle:, 0], 'b')
     axes[2, 3].plot(www_incong[settle:, 1], 'g')
 
-    plt.savefig(args.output_dir.joinpath('Kalanthroff_PCTC_2018.png'))
+    plt.savefig(args.output_dir.joinpath(Path(__file__).with_suffix('.png')))
     if not pnl._called_from_pytest:
         plt.show()
