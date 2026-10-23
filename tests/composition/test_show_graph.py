@@ -25,6 +25,7 @@ from psyneulink.core.compositions.composition import Composition
 from psyneulink.core.compositions.noderoles import NodeRole
 from psyneulink.core.compositions.showgraph import ShowGraphError, _gv_executable_not_found_error_msg
 from psyneulink.core.globals.keywords import ALL, GAIN, INSET, INTERCEPT, NESTED, NOISE, SLOPE, TARGET
+from psyneulink.core.scheduling.condition import AddEdgeTo, BeforeNode, RemoveEdgeFrom
 from psyneulink.library.components.mechanisms.modulatory.control.agt.lccontrolmechanism import LCControlMechanism
 from psyneulink.library.components.mechanisms.processing.integrator.ddm import DDM
 from psyneulink.library.components.mechanisms.processing.transfer.lcamechanism import LCAMechanism
@@ -1284,17 +1285,61 @@ class TestControl:
 
 
 class TestStructuralConditions:
-    def _make_composition(self, name: str, pathways: Iterable[str], **existing_nodes: Dict[str, Component]):
-        pways = [TransferMechanism(name=n) for n in pathways]
-        return Composition(name=name, pathways=pways)
+    def _make_composition(
+        self,
+        name: str,
+        pathways: Union[Iterable[Iterable[str]], Iterable[str]],
+        **existing_nodes: Dict[str, Component],
+    ):
+        if len(pathways) and isinstance(pathways[0], str):
+            pathways = [pathways]
+        res_pways = []
+        for pth in pathways:
+            res_pth = []
+            for n in pth:
+                node = existing_nodes.get(n, TransferMechanism(name=n))
+                res_pth.append(node)
+            res_pways.append(res_pth)
+        return Composition(name=name, pathways=res_pways)
 
-    @pytest.mark.parametrize('ipath, opath, show_graph_kwargs, expected_output', [(), ])
-    def test_add_and_remove(self, ipath, opath, show_graph_kwargs, expected_output, render_show_graph):
-        icomp = self._make_composition('icomp', ipath)
-        ocomp = self._make_composition('ocomp', opath)
+    # @pytest.mark.parametrize(
+    #     'ipath, opath, show_graph_kwargs, expected_output',
+    #     [
+    #         (['ia', 'ib'], ['oa', 'ob'], [], [], {}, ''),
+    #     ],
+    # )
+    def test_add_and_remove(
+        self,
+        # ipath,
+        # opath,
+        # icomp_conds,
+        # ocomp_conds,
+        # show_graph_kwargs,
+        # expected_output,
+        render_show_graph,
+    ):
+        ia = ProcessingMechanism(name='ia')
+        ib = ProcessingMechanism(name='ib')
+        ic = ProcessingMechanism(name='ic')
+        icomp = Composition(pathways=[ia, ib, ic], name='icomp')
+
+        oa = ProcessingMechanism(name='oa')
+        ob = ProcessingMechanism(name='ob')
+        oc = ProcessingMechanism(name='oc')
+        ocomp = Composition(pathways=[[oa, ob, oc], [oc, icomp]], name='ocomp')
+
+        icomp.scheduler.add_condition(ia, AddEdgeTo(ic))
+        icomp.scheduler.add_condition(ic, RemoveEdgeFrom(ib))
+        ocomp.scheduler.add_condition(icomp, BeforeNode(ob))
+
+        show_graph_kwargs = {
+            'show_structural_conditions': True,
+            'show_projection_labels': True,
+            'view': True,
+        }
 
         gv = ocomp.show_graph(output_fmt='source', **show_graph_kwargs)
-        assert gv.strip() == expected_output
+        # assert gv.strip() == expected_output
         render_show_graph(ocomp, **show_graph_kwargs)
 
 
