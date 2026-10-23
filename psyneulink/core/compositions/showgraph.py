@@ -218,6 +218,7 @@ Class Reference
 import pathlib
 import re
 import site
+from turtle import color
 import warnings
 from os import PathLike
 
@@ -494,11 +495,14 @@ class ShowGraph:
                  learning_color='orange',
                  composition_color='pink',
                  inactive_projection_color='red',
-                 scheduler_style: str = 'dashed',
+                 scheduler_color: str = 'gray50',
                  # Lines:
                  default_width = 1,
                  active_thicker_by = 2,
                  bold_width = 3,
+                 # Styles:
+                 scheduler_removed_projection_style: str = 'dotted',
+                 scheduler_added_edge_style: str = 'solid',
                  # Order:
                  input_rank = 'source',
                  control_rank = 'min',
@@ -536,12 +540,15 @@ class ShowGraph:
         self.learning_color =learning_color
         self.composition_color =composition_color
         self.inactive_projection_color =inactive_projection_color
+        self.scheduler_color = scheduler_color
         # Lines:
         self.default_projection_arrow = default_projection_arrow
         self.default_width = default_width
         self.active_thicker_by = active_thicker_by
         self.bold_width = bold_width
-        self.scheduler_style = scheduler_style
+        # Styles:
+        self.scheduler_removed_projection_style = scheduler_removed_projection_style
+        self.scheduler_added_edge_style = scheduler_added_edge_style
         # Order:
         self.input_rank = input_rank
         self.control_rank = control_rank
@@ -2417,7 +2424,9 @@ class ShowGraph:
                     rcvr_label,
                     label=edge_label,
                     arrowhead=self.scheduler_added_edge_arrow,
-                    style=self.scheduler_style,
+                    style=self.scheduler_added_edge_style,
+                    color=self.scheduler_color,
+                    fontcolor=self.scheduler_color,
                 )
 
     def _make_additional_assignments(self, *args):
