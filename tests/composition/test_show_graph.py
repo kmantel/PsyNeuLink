@@ -1308,6 +1308,7 @@ class TestStructuralConditions:
     #         (['ia', 'ib'], ['oa', 'ob'], [], [], {}, ''),
     #     ],
     # )
+    @pytest.mark.parametrize('temp_beforenode_args', [({'owner_receivers': 'merge'}), ({})])
     def test_add_and_remove(
         self,
         # ipath,
@@ -1316,6 +1317,7 @@ class TestStructuralConditions:
         # ocomp_conds,
         # show_graph_kwargs,
         # expected_output,
+        temp_beforenode_args,
         render_show_graph,
     ):
         ia = ProcessingMechanism(name='ia')
@@ -1330,7 +1332,7 @@ class TestStructuralConditions:
 
         icomp.scheduler.add_condition(ia, AddEdgeTo(ic))
         icomp.scheduler.add_condition(ic, RemoveEdgeFrom(ib))
-        ocomp.scheduler.add_condition(icomp, BeforeNode(ob, owner_receivers='merge'))
+        ocomp.scheduler.add_condition(icomp, BeforeNode(ob, **temp_beforenode_args))
 
         show_graph_kwargs = {
             'show_structural_conditions': True,
