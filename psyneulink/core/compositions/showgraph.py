@@ -2552,6 +2552,8 @@ class ShowGraph:
                     proj_style = self.scheduler_removed_projection_style
                     proj_arrowhead = self.scheduler_removed_projection_arrow
 
+                    # TODO: add the label of the responsible GSC to the edge label like (scheduler ignored: {proj name})
+
                 edge_label = self._get_graph_node_label(composition, proj, show_types, show_dimensions)
                 is_learning_component = (rcvr in composition.learning_components
                                          or sndr in composition.learning_components)
