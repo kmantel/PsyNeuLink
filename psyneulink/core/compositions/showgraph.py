@@ -218,9 +218,9 @@ Class Reference
 import pathlib
 import re
 import site
-from turtle import color
 import warnings
 from os import PathLike
+from graph_scheduler.condition import _get_condition_args_str
 
 import numpy as np
 from beartype import beartype
@@ -503,7 +503,7 @@ class ShowGraph:
                  bold_width = 3,
                  # Styles:
                  default_projection_style: str = 'solid',
-                 scheduler_removed_projection_style: str = 'dotted',
+                 scheduler_removed_projection_style: str = 'dashed',
                  scheduler_added_edge_style: str = 'solid',
                  # Order:
                  input_rank = 'source',
@@ -2424,7 +2424,13 @@ class ShowGraph:
                 rcvr_label = self._get_graph_node_label(
                     self.composition, receiver, show_types, show_dimensions
                 )
-                edge_label = str(cond) if show_projection_labels else ''
+
+                edge_label = ''
+                if show_projection_labels:
+                    # nodes generally use their name and not the full str value,
+                    # and shorter labels makes the edge curves less complicated.
+                    edge_label = cond._short_str()
+
                 self._implement_graph_edge(
                     g,
                     None,
@@ -2550,10 +2556,15 @@ class ShowGraph:
                 except AttributeError:
                     has_learning = None
 
+                # proj_color = self.default_projection_color
                 proj_fontcolor = self.default_projection_color
                 proj_style = self.default_projection_style
+
                 if show_structural_conditions and self._scheduler_removes_projection(proj):
-                    ...
+                    proj_color = self.scheduler_color
+                    proj_fontcolor = self.scheduler_color
+                    proj_style = self.scheduler_removed_projection_style
+                    proj_arrowhead = self.scheduler_removed_projection_arrow
 
                 edge_label = self._get_graph_node_label(composition, proj, show_types, show_dimensions)
                 is_learning_component = (rcvr in composition.learning_components

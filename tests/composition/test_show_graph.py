@@ -1330,7 +1330,7 @@ class TestStructuralConditions:
 
         icomp.scheduler.add_condition(ia, AddEdgeTo(ic))
         icomp.scheduler.add_condition(ic, RemoveEdgeFrom(ib))
-        ocomp.scheduler.add_condition(icomp, BeforeNode(ob))
+        ocomp.scheduler.add_condition(icomp, BeforeNode(ob, owner_receivers='merge'))
 
         show_graph_kwargs = {
             'show_structural_conditions': True,

@@ -18,6 +18,7 @@ import dill
 import graph_scheduler
 import numpy as np
 
+from psyneulink.core.globals import graph
 from psyneulink.core.globals.context import handle_external_context
 from psyneulink.core.globals.mdf import MDFSerializable
 from psyneulink.core.globals.keywords import MODEL_SPEC_ID_TYPE, comparison_operators
@@ -25,6 +26,7 @@ from psyneulink.core.globals.parameters import parse_context
 from psyneulink.core.globals.utilities import (
     _get_cached_function_signature,
     get_stacklevel_skip_file_prefixes,
+    is_iterable,
     parse_valid_identifier,
     toposort_key,
 )
@@ -407,3 +409,47 @@ if graph_structure_conditions_available:
             )
 
     pnl_conditions_module['_GSCReposition']._validate_graph = _pnl__GSCReposition__validate_graph
+
+
+def _short_str(self):
+    args = getattr(self, 'args', [])  # some GSCs don't have args
+    kwargs = getattr(self, 'kwargs', {})
+
+    sig = _get_cached_function_signature(self.__init__)
+    sig_params = sig.parameters
+
+    spec_kwargs = {}
+    for k, val in kwargs.items():
+        try:
+            sig_default = sig_params[k].default
+        except (AttributeError, KeyError):
+            # arg doesn't have a default, so include it
+            pass
+        else:
+            # ignore args that were probably not specified
+            if val == sig_default:
+                continue
+
+        val = getattr(val, 'name', val)  # for PNL Components
+
+        # at least _GSCWithNodes uses a tuple in kwargs
+        if is_iterable(val, True):
+            val = type(val)(getattr(v, 'name', v) for v in val)
+
+        # also, some conds use 'nodes' as a kwarg, but we want to treat it as a
+        # regular arg in short form because it's used a lot
+        if k == 'nodes':
+            args.append(val)
+        else:
+            spec_kwargs[k] = val
+
+    args = tuple(getattr(a, 'name', a) for a in args)
+    # don't show the extra tuple chars if not needed
+    if len(args) == 1:
+        args = args[0]
+
+    args_str = graph_scheduler.condition._get_condition_args_str(args, spec_kwargs)
+    return '{0}({1})'.format(type(self).__name__, args_str)
+
+
+pnl_condition_base_class._short_str = _short_str
