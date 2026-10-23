@@ -448,10 +448,14 @@ def _short_str(self):
     if len(args) == 1:
         args = args[0]
 
-    args_str = ', '.join(args)
-    kwargs_str = ', '.join(f'{k}={v}' for k, v in spec_kwargs.items())
-    if len(kwargs_str):
-        args_str = ', ' + kwargs_str
+    # can be a 'nodes' tuple
+    if is_iterable(args, True):
+        args_str = ', '.join(args)
+
+    if len(spec_kwargs):
+        kwargs_str = ', '.join(f'{k}={v}' for k, v in spec_kwargs.items())
+        args_str += ', ' + kwargs_str
+
     return '{0}({1})'.format(type(self).__name__, args_str)
 
 
