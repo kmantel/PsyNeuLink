@@ -1,11 +1,13 @@
 import os
 import pathlib
 import sys
+from typing import Dict, Iterable, Union
 import uuid
 
 import numpy as np
 import pytest
 
+from psyneulink.core.components.component import Component
 from psyneulink.core.components.functions.nonstateful.learningfunctions import BackPropagation
 from psyneulink.core.components.functions.nonstateful.transferfunctions import Linear, Logistic
 from psyneulink.core.components.functions.nonstateful.optimizationfunctions import GridSearch
@@ -1279,6 +1281,21 @@ class TestControl:
     #                                 assert gv == repr(expected_gv_correct)
     #                             except AssertionError:
     #                                 assert gv == repr(expected_gv_incorrect)
+
+
+class TestStructuralConditions:
+    def _make_composition(self, name: str, pathways: Iterable[str], **existing_nodes: Dict[str, Component]):
+        pways = [TransferMechanism(name=n) for n in pathways]
+        return Composition(name=name, pathways=pways)
+
+    @pytest.mark.parametrize('ipath, opath, show_graph_kwargs, expected_output', [(), ])
+    def test_add_and_remove(self, ipath, opath, show_graph_kwargs, expected_output, render_show_graph):
+        icomp = self._make_composition('icomp', ipath)
+        ocomp = self._make_composition('ocomp', opath)
+
+        gv = ocomp.show_graph(output_fmt='source', **show_graph_kwargs)
+        assert gv.strip() == expected_output
+        render_show_graph(ocomp, **show_graph_kwargs)
 
 
 def _mock_gv_missing_executable(monkeypatch_context):
