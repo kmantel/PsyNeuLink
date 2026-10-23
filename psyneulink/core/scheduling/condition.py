@@ -448,7 +448,10 @@ def _short_str(self):
     if len(args) == 1:
         args = args[0]
 
-    args_str = graph_scheduler.condition._get_condition_args_str(args, spec_kwargs)
+    args_str = ', '.join(args)
+    kwargs_str = ', '.join(f'{k}={v}' for k, v in spec_kwargs.items())
+    if len(kwargs_str):
+        args_str = ', ' + kwargs_str
     return '{0}({1})'.format(type(self).__name__, args_str)
 
 
