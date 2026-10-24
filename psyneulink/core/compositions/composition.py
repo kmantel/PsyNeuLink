@@ -14191,6 +14191,22 @@ class Composition(Composition_Base, metaclass=ComponentsMeta):
 
         return index, Always()
 
+    def _get_responsible_condition(self, sender: Hashable, receiver: Hashable, add: bool = True) -> Union['GraphStructureCondition', None]:
+        all_comps = [self]
+        # if sender or receiver is a CIM, the projection could belong to a nested or outer Composition's scheduler
+        try:
+            all_comps.append(sender.owner.composition)
+        except AttributeError:
+            pass
+
+        try:
+            all_comps.append(receiver.owner.composition)
+        except AttributeError:
+            pass
+
+        for comp in all_comps:
+            cond = comp.scheduler.get_responsible_condition()
+
     def _input_matches_variable(self, input_value, var):
         var_shape = convert_to_np_array(var).shape
         # input_value ports are uniform

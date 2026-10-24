@@ -2551,6 +2551,8 @@ class ShowGraph:
                 except AttributeError:
                     has_learning = None
 
+                edge_label = self._get_graph_node_label(composition, proj, show_types, show_dimensions)
+
                 # proj_color = self.default_projection_color
                 proj_fontcolor = self.default_projection_color
                 proj_style = self.default_projection_style
@@ -2558,10 +2560,40 @@ class ShowGraph:
                 if show_structural_conditions and self._scheduler_removes_projection(proj):
                     proj_style = self.scheduler_removed_projection_style
                     proj_arrowhead = self.scheduler_removed_projection_arrow
+                    # send2 = proj.sender.owner.port_map[proj.receiver][0].path_afferents[0].sender.owner
+                    # rec2 = proj.sender.owner.port_map[proj.receiver][0].path_afferents[0].receiver.owner.composition
+
+                    check_comps = {self.composition}
+
+                    # sender may be a CIM, real proj comes from outer comp
+                    try:
+                        cond_sender = proj.sender.owner._get_source_node_for_input_CIM(proj.sender)[1]
+                    except AttributeError:
+                        cond_sender = proj.sender.owner
+                    else:
+                        for c in cond_sender.compositions:
+                            check_comps.add(c)
+
+                    # receiver CIM, like above, to real proj in outer or nested
+                    try:
+                        cond_receiver = proj.receiver.owner._get_destination_info_from_input_CIM(proj.receiver)[1]
+                    except AttributeError:
+                        cond_receiver = proj.receiver.owner
+                    else:
+                        for c in cond_receiver.compositions:
+                            check_comps.add(c)
+
+                    for c in check_comps:
+                        cond = c.scheduler.get_responsible_condition(cond_sender, cond_receiver, add=False)
+                        if cond is not None:
+                            edge_label += f'\n(ignored in {c.name} scheduler by {cond._short_str()})'
+                            break
+                        else:
+                            # assert False
+                            ...
 
                     # TODO: add the label of the responsible GSC to the edge label like (scheduler ignored: {proj name})
 
-                edge_label = self._get_graph_node_label(composition, proj, show_types, show_dimensions)
                 is_learning_component = (rcvr in composition.learning_components
                                          or sndr in composition.learning_components)
                 if isinstance(sender, ControlMechanism):
