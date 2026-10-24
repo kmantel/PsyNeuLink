@@ -2556,8 +2556,6 @@ class ShowGraph:
                 proj_style = self.default_projection_style
 
                 if show_structural_conditions and self._scheduler_removes_projection(proj):
-                    proj_color = self.scheduler_color
-                    proj_fontcolor = self.scheduler_color
                     proj_style = self.scheduler_removed_projection_style
                     proj_arrowhead = self.scheduler_removed_projection_arrow
 
