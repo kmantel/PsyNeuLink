@@ -3200,6 +3200,7 @@ import weakref
 from copy import deepcopy, copy
 from inspect import isgenerator, isgeneratorfunction
 from os import PathLike
+from typing import TYPE_CHECKING
 
 import graph_scheduler
 import numpy as np
@@ -3302,6 +3303,8 @@ from psyneulink.library.components.mechanisms.processing.transfer.recurrenttrans
     RecurrentTransferMechanism
 from psyneulink.library.components.projections.pathway.autoassociativeprojection import AutoAssociativeProjection
 
+if TYPE_CHECKING:
+    from psyneulink.core.scheduling.condition import GraphStructureCondition
 
 __all__ = [
     'Composition', 'CompositionError', 'CompositionRegistry', 'get_compositions', 'NodeRole', 'LearningScale',

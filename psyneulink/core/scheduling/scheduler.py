@@ -9,6 +9,7 @@
 # ********************************************* Scheduler **************************************************************
 import copy
 import logging
+from typing import TYPE_CHECKING
 
 import graph_scheduler
 import pint
@@ -19,7 +20,10 @@ from psyneulink._typing import Hashable, Union
 from psyneulink.core.globals.context import Context, handle_external_context
 from psyneulink.core.globals.mdf import MDFSerializable
 from psyneulink.core.globals.utilities import parse_valid_identifier
-from psyneulink.core.scheduling.condition import GraphStructureCondition, _create_as_pnl_condition, graph_structure_conditions_available, gsc_unavailable_message
+from psyneulink.core.scheduling.condition import _create_as_pnl_condition, graph_structure_conditions_available, gsc_unavailable_message
+
+if TYPE_CHECKING:
+    from psyneulink.core.scheduling.condition import GraphStructureCondition
 
 __all__ = [
     'Scheduler', 'SchedulingMode'
@@ -194,7 +198,7 @@ class Scheduler(graph_scheduler.Scheduler, MDFSerializable):
         self.add_condition(receiver, cond)
         return cond
 
-    def get_responsible_condition(self, sender: Hashable, receiver: Hashable, add: bool = True) -> Union[GraphStructureCondition, None]:
+    def get_responsible_condition(self, sender: Hashable, receiver: Hashable, add: bool = True) -> Union['GraphStructureCondition', None]:
         res = None
 
         for cur in range(len(self._graphs) - 1, 0, -1):
