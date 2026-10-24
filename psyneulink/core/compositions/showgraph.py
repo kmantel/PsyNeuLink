@@ -2564,6 +2564,9 @@ class ShowGraph:
                     # rec2 = proj.sender.owner.port_map[proj.receiver][0].path_afferents[0].receiver.owner.composition
 
                     check_comps = {self.composition}
+                    sender_is_cim = False
+                    receiver_is_cim = False
+                    cond_receiver = None
 
                     # sender may be a CIM, real proj comes from outer comp
                     try:
@@ -2573,15 +2576,22 @@ class ShowGraph:
                     else:
                         for c in cond_sender.compositions:
                             check_comps.add(c)
+                        sender_is_cim = True
+                        cond_receiver = proj.sender.owner.composition
 
+                    # TODO: handle setting cond_sender in a similar way, where projection goes from inner comp to outer comp
                     # receiver CIM, like above, to real proj in outer or nested
-                    try:
-                        cond_receiver = proj.receiver.owner._get_destination_info_from_input_CIM(proj.receiver)[1]
-                    except AttributeError:
-                        cond_receiver = proj.receiver.owner
-                    else:
-                        for c in cond_receiver.compositions:
-                            check_comps.add(c)
+                    if cond_receiver is None:
+                        try:
+                            cond_receiver = proj.receiver.owner._get_destination_info_from_input_CIM(proj.receiver)[1]
+                        except AttributeError:
+                            cond_receiver = proj.receiver.owner
+                        else:
+                            for c in cond_receiver.compositions:
+                                check_comps.add(c)
+
+                    # no. check comp to comp
+                    # assert not sender_is_cim and receiver_is_cim
 
                     for c in check_comps:
                         cond = c.scheduler.get_responsible_condition(cond_sender, cond_receiver, add=False)
