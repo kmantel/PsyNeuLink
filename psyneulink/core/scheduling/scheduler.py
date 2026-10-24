@@ -213,8 +213,9 @@ class Scheduler(graph_scheduler.Scheduler, MDFSerializable):
                 cur_has_edge = False
 
             # _graphs has base graph + one per structural condition
-            if add and cur_has_edge and not prev_has_edge:
-                return self.conditions.structural_condition_order[cur - 1]
+            if add:
+                if cur_has_edge and not prev_has_edge:
+                    return self.conditions.structural_condition_order[cur - 1]
             elif not cur_has_edge and prev_has_edge:
                 return self.conditions.structural_condition_order[prev - 1]
 
