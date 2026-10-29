@@ -1323,12 +1323,14 @@ class TestStructuralConditions:
         ia = ProcessingMechanism(name='ia')
         ib = ProcessingMechanism(name='ib')
         ic = ProcessingMechanism(name='ic')
-        icomp = Composition(pathways=[ia, ib, ic], name='icomp')
+        icomp = Composition(pathways=[[ia, ic], [ib, ic]], name='icomp')
 
         oa = ProcessingMechanism(name='oa')
         ob = ProcessingMechanism(name='ob')
         oc = ProcessingMechanism(name='oc')
-        ocomp = Composition(pathways=[[oa, ob, oc], [oc, icomp]], name='ocomp')
+        od = ProcessingMechanism(name='od')
+        ocomp = Composition(pathways=[[oa, ob, oc], [oc, icomp, od]], name='ocomp')
+        # ocomp = Composition(pathways=[[oa, ob, oc], [oc, icomp]], name='ocomp')
 
         icomp.scheduler.add_condition(ia, AddEdgeTo(ic))
         icomp.scheduler.add_condition(ic, RemoveEdgeFrom(ib))

@@ -240,6 +240,7 @@ from psyneulink.core.components.ports.port import Port
 from psyneulink.core.components.projections.modulatory.controlprojection import ControlProjection
 from psyneulink.core.components.projections.pathway.mappingprojection import MappingProjection, PROXY_FOR
 from psyneulink.core.components.shellclasses import Mechanism, Projection
+from psyneulink.core.compositions.noderoles import NodeRole
 from psyneulink.core.globals.context import ContextFlags, handle_external_context
 from psyneulink.core.globals.keywords import \
     ALL, BOLD, COMPONENT, COMPOSITION, CONDITIONS, FUNCTIONS, INSET, LABELS, LEARNABLE, \
@@ -496,7 +497,7 @@ class ShowGraph:
                  learning_color='orange',
                  composition_color='pink',
                  inactive_projection_color='red',
-                 scheduler_color: str = 'gray50',
+                 scheduler_color: str = 'deeppink',
                  # Lines:
                  default_width = 1,
                  active_thicker_by = 2,
@@ -901,6 +902,7 @@ class ShowGraph:
                 # 'newrank': "True"
             },
         )
+        G.attr(compound='true')  # can't set in __init__
         self.G = G
 
         # get all Nodes
@@ -999,6 +1001,7 @@ class ShowGraph:
         if show_structural_conditions:
             self._assign_scheduler_components(
                 G,
+                show_nested,
                 show_types,
                 show_dimensions,
                 show_projection_labels,
@@ -2410,21 +2413,64 @@ class ShowGraph:
                                            penwidth=learning_proj_width)
         return True
 
-    def _assign_scheduler_components(self, g, show_types, show_dimensions, show_projection_labels, context):
+    def _assign_scheduler_components(self, g, show_nested, show_types, show_dimensions, show_projection_labels, context):
+        from psyneulink.core.compositions.composition import Composition
+
         scheduler_edges = self._get_edges_added_by_scheduler()
         for receiver in scheduler_edges:
             for sender in scheduler_edges[receiver]:
+                edge_kwargs = {}
+                edge_sender = sender
+                edge_receiver = receiver
+
+                print('sender', sender, 'to', 'receiver', receiver)
                 cond = self.composition.scheduler.get_responsible_condition(sender, receiver)
-                sndr_label = self._get_graph_node_label(self.composition, sender, show_types, show_dimensions)
-                rcvr_label = self._get_graph_node_label(
-                    self.composition, receiver, show_types, show_dimensions
+
+                if show_nested:
+                    try:
+                        edge_sender = sender.get_nodes_by_role(NodeRole.OUTPUT)[0]
+                    except (AttributeError, IndexError, TypeError):
+                        edge_sender = sender
+                    else:
+                        edge_kwargs['ltail'] = '{0}{1}'.format(
+                            self._NESTED_PREFIX,
+                            self._get_graph_node_label(
+                                self.composition, sender, show_types, show_dimensions
+                            ),
+                        )
+                        # edge_kwargs['len'] = '0.1'
+
+                    try:
+                        edge_receiver = receiver.get_nodes_by_role(NodeRole.INPUT)[0]
+                    except (AttributeError, IndexError, TypeError):
+                        edge_receiver = receiver
+                    else:
+                        edge_kwargs['lhead'] = '{0}{1}'.format(
+                            self._NESTED_PREFIX,
+                            self._get_graph_node_label(
+                                self.composition, receiver, show_types, show_dimensions
+                            ),
+                        )
+                        # edge_kwargs['len'] = '0.1'
+
+                sndr_label = self._get_graph_node_label(
+                    self.composition, edge_sender, show_types, show_dimensions
                 )
+                rcvr_label = self._get_graph_node_label(
+                    self.composition, edge_receiver, show_types, show_dimensions
+                )
+
+                # if show_nested:
+                #     if isinstance(sender, Composition):
+                #         sndr_label = f'{self._NESTED_PREFIX}{sndr_label}'
+                #     if isinstance(receiver, Composition):
+                #         rcvr_label = f'{self._NESTED_PREFIX}{rcvr_label}'
 
                 edge_label = ''
                 if show_projection_labels:
                     # nodes generally use their name and not the full str value,
                     # and shorter labels makes the edge curves less complicated.
-                    edge_label = cond._short_str()
+                    edge_label = f'{cond.owner.name}: {cond._short_str()}'
 
                 self._implement_graph_edge(
                     g,
@@ -2437,6 +2483,7 @@ class ShowGraph:
                     style=self.scheduler_added_edge_style,
                     color=self.scheduler_color,
                     fontcolor=self.scheduler_color,
+                    **edge_kwargs,
                 )
 
     def _make_additional_assignments(self, *args):
@@ -2571,7 +2618,7 @@ class ShowGraph:
                     # sender may be a CIM, real proj comes from outer comp
                     try:
                         cond_sender = proj.sender.owner._get_source_node_for_input_CIM(proj.sender)[1]
-                    except AttributeError:
+                    except (AssertionError, AttributeError):
                         cond_sender = proj.sender.owner
                     else:
                         for c in cond_sender.compositions:
@@ -2584,7 +2631,7 @@ class ShowGraph:
                     if cond_receiver is None:
                         try:
                             cond_receiver = proj.receiver.owner._get_destination_info_from_input_CIM(proj.receiver)[1]
-                        except AttributeError:
+                        except (AssertionError, AttributeError):
                             cond_receiver = proj.receiver.owner
                         else:
                             for c in cond_receiver.compositions:
