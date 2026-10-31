@@ -1325,16 +1325,21 @@ class TestStructuralConditions:
         ic = ProcessingMechanism(name='ic')
         icomp = Composition(pathways=[[ia, ic], [ib, ic]], name='icomp')
 
+        ia2 = ProcessingMechanism(name='ia2')
+        ib2 = ProcessingMechanism(name='ib2')
+        icomp2 = Composition(pathways=[ia2, ib2], name='icomp2')
+
         oa = ProcessingMechanism(name='oa')
         ob = ProcessingMechanism(name='ob')
         oc = ProcessingMechanism(name='oc')
         od = ProcessingMechanism(name='od')
-        ocomp = Composition(pathways=[[oa, ob, oc], [oc, icomp, od]], name='ocomp')
+        ocomp = Composition(pathways=[[oa, ob, oc], [oc, icomp, od], [icomp2]], name='ocomp')
         # ocomp = Composition(pathways=[[oa, ob, oc], [oc, icomp]], name='ocomp')
 
         icomp.scheduler.add_condition(ia, AddEdgeTo(ic))
         icomp.scheduler.add_condition(ic, RemoveEdgeFrom(ib))
         ocomp.scheduler.add_condition(icomp, BeforeNode(ob, **temp_beforenode_args))
+        ocomp.scheduler.add_condition(icomp, AddEdgeTo(icomp2))
 
         show_graph_kwargs = {
             'show_structural_conditions': True,
