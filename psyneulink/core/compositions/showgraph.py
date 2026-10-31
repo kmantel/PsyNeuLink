@@ -2604,9 +2604,10 @@ class ShowGraph:
                 proj_fontcolor = self.default_projection_color
                 proj_style = self.default_projection_style
 
-                if show_structural_conditions and self._scheduler_removes_projection(proj):
-                    proj_style = self.scheduler_removed_projection_style
-                    proj_arrowhead = self.scheduler_removed_projection_arrow
+                if (
+                    show_structural_conditions
+                    and proj.sender.owner not in self.composition.scheduler.dependency_dict[proj.receiver.owner]
+                ):
                     # send2 = proj.sender.owner.port_map[proj.receiver][0].path_afferents[0].sender.owner
                     # rec2 = proj.sender.owner.port_map[proj.receiver][0].path_afferents[0].receiver.owner.composition
 
@@ -2618,7 +2619,7 @@ class ShowGraph:
                     # sender may be a CIM, real proj comes from outer comp
                     try:
                         cond_sender = proj.sender.owner._get_source_node_for_input_CIM(proj.sender)[1]
-                    except (AssertionError, AttributeError):
+                    except (AssertionError, AttributeError, TypeError):
                         cond_sender = proj.sender.owner
                     else:
                         for c in cond_sender.compositions:
@@ -2631,7 +2632,7 @@ class ShowGraph:
                     if cond_receiver is None:
                         try:
                             cond_receiver = proj.receiver.owner._get_destination_info_from_input_CIM(proj.receiver)[1]
-                        except (AssertionError, AttributeError):
+                        except (AssertionError, AttributeError, TypeError):
                             cond_receiver = proj.receiver.owner
                         else:
                             for c in cond_receiver.compositions:
@@ -2640,16 +2641,15 @@ class ShowGraph:
                     # no. check comp to comp
                     # assert not sender_is_cim and receiver_is_cim
 
+                    # don't modify if can't identify the GSC that removed the projection
+                    # (ex: AutoAssociativeProjection would not be in scheduler graph but wasn't removed by it)
                     for c in check_comps:
                         cond = c.scheduler.get_responsible_condition(cond_sender, cond_receiver, add=False)
                         if cond is not None:
                             edge_label += f'\n(ignored in {c.name} scheduler by {cond._short_str()})'
+                            proj_style = self.scheduler_removed_projection_style
+                            proj_arrowhead = self.scheduler_removed_projection_arrow
                             break
-                        else:
-                            # assert False
-                            ...
-
-                    # TODO: add the label of the responsible GSC to the edge label like (scheduler ignored: {proj name})
 
                 is_learning_component = (rcvr in composition.learning_components
                                          or sndr in composition.learning_components)
@@ -3436,12 +3436,6 @@ class ShowGraph:
             composition._animation = [image]
         else:
             composition._animation.append(image)
-
-    def _scheduler_removes_projection(self, projection):
-        return (
-            projection.sender.owner
-            not in self.composition.scheduler.dependency_dict[projection.receiver.owner]
-        )
 
     def _get_edges_added_by_scheduler(self):
         all_keys = set(self.composition.processing_graph).union(self.composition.scheduler.dependency_dict)
