@@ -577,6 +577,7 @@ class ShowGraph:
                    show_projection_labels: bool = False,
                    show_projections_not_in_composition: bool = False,
                    show_scheduler: bool = False,
+                   show_condition_labels: bool = True,
                    active_items=None,
                    output_fmt: Optional[Literal['pdf', 'gv', 'jupyter', 'gif', 'source']] = 'pdf',
                    directory: Optional[Union[PathLike, str]] = None,
@@ -828,6 +829,8 @@ class ShowGraph:
                                 'output_fmt': 'struct',
                                 'context': context}
 
+        node_struct_args['show_conditions'] = node_struct_args['show_conditions'] or show_scheduler
+
         # Assign num_nesting_levels ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         #  (note:  this is assigned to self since it applies to all levels)
         # For outermost Composition:
@@ -938,6 +941,7 @@ class ShowGraph:
                                                show_projection_labels,
                                                show_projections_not_in_composition,
                                                show_scheduler,
+                                               show_condition_labels,
                                                nested_args,
                                                context)
 
@@ -1005,7 +1009,7 @@ class ShowGraph:
                 show_nested,
                 show_types,
                 show_dimensions,
-                show_projection_labels,
+                show_condition_labels,
                 context,
             )
 
@@ -1105,6 +1109,7 @@ class ShowGraph:
                                       show_projection_labels,
                                       show_projections_not_in_composition,
                                       show_scheduler,
+                                      show_condition_labels,
                                       nested_args,
                                       context):
         """Assign nodes to graph"""
@@ -1340,6 +1345,7 @@ class ShowGraph:
                                     show_projection_labels,
                                     show_projections_not_in_composition,
                                     show_scheduler,
+                                    show_condition_labels,
                                     enclosing_comp=enclosing_comp,
                                     comp_hierarchy=comp_hierarchy,
                                     nesting_level=nesting_level,
@@ -2418,7 +2424,7 @@ class ShowGraph:
                                            penwidth=learning_proj_width)
         return True
 
-    def _assign_scheduler_components(self, g, show_nested, show_types, show_dimensions, show_projection_labels, context):
+    def _assign_scheduler_components(self, g, show_nested, show_types, show_dimensions, show_condition_labels, context):
         from psyneulink.core.compositions.composition import Composition
 
         scheduler_edges = self._get_edges_added_by_scheduler()
@@ -2472,7 +2478,7 @@ class ShowGraph:
                 #         rcvr_label = f'{self._NESTED_PREFIX}{rcvr_label}'
 
                 edge_label = ''
-                if show_projection_labels:
+                if show_condition_labels:
                     # nodes generally use their name and not the full str value,
                     # and shorter labels makes the edge curves less complicated.
                     edge_label = f'{cond.owner.name}: {cond._short_str()}'
@@ -2511,6 +2517,7 @@ class ShowGraph:
                                show_projection_labels,
                                show_projections_not_in_composition,
                                show_scheduler,
+                               show_condition_labels,
                                proj_color=None,
                                proj_arrow=None,
                                enclosing_comp=None,
@@ -2653,7 +2660,9 @@ class ShowGraph:
                         if cond is None:
                             continue
 
-                        edge_label += f'\n(ignored in {c.name} scheduler by {cond._short_str()})'
+                        if show_condition_labels:
+                            edge_label += f'\n(ignored in {c.name} scheduler by {cond._short_str()})'
+
                         proj_style = self.scheduler_removed_projection_style
                         proj_arrowhead = self.scheduler_removed_projection_arrow
                         break
