@@ -2650,11 +2650,13 @@ class ShowGraph:
                     # (ex: AutoAssociativeProjection would not be in scheduler graph but wasn't removed by it)
                     for c in check_comps:
                         cond = c.scheduler.get_responsible_condition(cond_sender, cond_receiver, add=False)
-                        if cond is not None:
-                            edge_label += f'\n(ignored in {c.name} scheduler by {cond._short_str()})'
-                            proj_style = self.scheduler_removed_projection_style
-                            proj_arrowhead = self.scheduler_removed_projection_arrow
-                            break
+                        if cond is None:
+                            continue
+
+                        edge_label += f'\n(ignored in {c.name} scheduler by {cond._short_str()})'
+                        proj_style = self.scheduler_removed_projection_style
+                        proj_arrowhead = self.scheduler_removed_projection_arrow
+                        break
 
                 is_learning_component = (rcvr in composition.learning_components
                                          or sndr in composition.learning_components)
