@@ -1342,7 +1342,7 @@ class TestStructuralConditions:
         ocomp.scheduler.add_condition(icomp, AddEdgeTo(icomp2))
 
         show_graph_kwargs = {
-            'show_structural_conditions': True,
+            'show_scheduler': True,
             'show_projection_labels': True,
             'view': True,
         }

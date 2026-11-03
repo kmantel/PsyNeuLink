@@ -576,7 +576,7 @@ class ShowGraph:
                    show_dimensions: bool = False,
                    show_projection_labels: bool = False,
                    show_projections_not_in_composition: bool = False,
-                   show_structural_conditions: bool = False,
+                   show_scheduler: bool = False,
                    active_items=None,
                    output_fmt: Optional[Literal['pdf', 'gv', 'jupyter', 'gif', 'source']] = 'pdf',
                    directory: Optional[Union[PathLike, str]] = None,
@@ -797,7 +797,7 @@ class ShowGraph:
             show_learning=ALL
             show_headers=True
             show_projections_not_in_composition=True
-            show_structural_conditions = True
+            show_scheduler = True
 
         # Assign node_struct_arg based on show_node_structure ~~~~~~~~~~~~~~~~~~~~~~~~~
         # Argument values used to call Mechanism._show_structure()
@@ -937,7 +937,7 @@ class ShowGraph:
                                                show_dimensions,
                                                show_projection_labels,
                                                show_projections_not_in_composition,
-                                               show_structural_conditions,
+                                               show_scheduler,
                                                nested_args,
                                                context)
 
@@ -998,7 +998,7 @@ class ShowGraph:
                                              show_projections_not_in_composition,
                                              context)
 
-        if show_structural_conditions:
+        if show_scheduler:
             self._assign_scheduler_components(
                 G,
                 show_nested,
@@ -1103,7 +1103,7 @@ class ShowGraph:
                                       show_dimensions,
                                       show_projection_labels,
                                       show_projections_not_in_composition,
-                                      show_structural_conditions,
+                                      show_scheduler,
                                       nested_args,
                                       context):
         """Assign nodes to graph"""
@@ -1338,7 +1338,7 @@ class ShowGraph:
                                     show_node_structure,
                                     show_projection_labels,
                                     show_projections_not_in_composition,
-                                    show_structural_conditions,
+                                    show_scheduler,
                                     enclosing_comp=enclosing_comp,
                                     comp_hierarchy=comp_hierarchy,
                                     nesting_level=nesting_level,
@@ -2505,7 +2505,7 @@ class ShowGraph:
                                show_node_structure,
                                show_projection_labels,
                                show_projections_not_in_composition,
-                               show_structural_conditions,
+                               show_scheduler,
                                proj_color=None,
                                proj_arrow=None,
                                enclosing_comp=None,
@@ -2605,7 +2605,7 @@ class ShowGraph:
                 proj_style = self.default_projection_style
 
                 if (
-                    show_structural_conditions
+                    show_scheduler
                     and proj.sender.owner not in self.composition.scheduler.dependency_dict[proj.receiver.owner]
                 ):
                     # send2 = proj.sender.owner.port_map[proj.receiver][0].path_afferents[0].sender.owner
