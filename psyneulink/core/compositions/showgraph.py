@@ -2642,12 +2642,21 @@ class ShowGraph:
                                 # Skip:
                                 # - cims as sources (handled in _assign_cim_components)
                                 #    unless it is the input_CIM for the outermost Composition and show_cim is not true
+                                #    - NOTE: discussed during meeting on 2026-11-10 to remove this exception on
+                                #            the basis that CIMs really should just not appear if show_cim=False
                                 # - controller (handled in _assign_controller_components)
-                                if (isinstance(sndr, CompositionInterfaceMechanism) and
-                                        rcvr is not enclosing_comp.controller
-                                        and rcvr is not composition.controller
-                                        and not sndr.afferents and show_cim
-                                        or self._is_composition_controller(sndr, context, enclosing_comp)):
+                                if (
+                                    (
+                                        isinstance(sndr, CompositionInterfaceMechanism)
+                                        and not show_cim
+                                        # sndr.afferents > 0 means incoming proj is from another node,
+                                        # so CIM won't appear anyway if show_cim=False
+                                        and not sndr.afferents
+                                        # and rcvr is not enclosing_comp.controller
+                                        # and rcvr is not composition.controller
+                                    )
+                                    or self._is_composition_controller(sndr, context, enclosing_comp)
+                                ):
                                     continue
                                 if (isinstance(sndr, CompositionInterfaceMechanism)
                                         and sndr is sndr.composition.output_CIM):
