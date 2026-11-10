@@ -1087,7 +1087,7 @@ class ShowGraph:
     def _implement_graph_node(self, graph, rcvr, context, *args, condition=None, **kwargs):
         """Helper method that allows override by subclass to assign custom attributes to nodes"""
         if condition is not None:
-            kwargs['xlabel'] = f'<<i><font color="deeppink4">{rcvr.name}: {str(condition)}</font></i>>'
+            kwargs['xlabel'] = self._get_condition_label(condition, color='deeppink4', italic=True)
         graph.node(*args, **kwargs)
 
     def _implement_graph_edge(self, graph, proj, context, *args, **kwargs):
@@ -1164,6 +1164,18 @@ class ShowGraph:
                     nested_comp_attributes.update({"penwidth": str(self.default_width + self.active_thicker_by)})
                     composition.active_item_rendered = True
                 nested_comp_graph.attr(**nested_comp_attributes)
+
+                if show_condition_labels:
+                    # import ipdb
+                    # ipdb.set_trace()
+                    try:
+                        condition = composition.scheduler.conditions.conditions_basic[rcvr]
+                    except KeyError:
+                        pass
+                    else:
+                        cond_label = self._get_condition_label(condition, color='deeppink4', italic=True, raw=True)
+                        rcvr_label = f'<{rcvr_label}<br/>{cond_label}>'
+
                 nested_comp_graph.attr(label=rcvr_label)
                 g.subgraph(nested_comp_graph)
 
@@ -2066,8 +2078,8 @@ class ShowGraph:
 
             objmech_label = self._get_graph_node_label(composition, objmech, show_types, show_dimensions)
             if show_node_structure:
-                if objmech in composition.scheduler.conditions:
-                    condition = composition.scheduler.conditions[objmech]
+                if objmech in composition.scheduler.conditions_basic:
+                    condition = composition.scheduler.conditions_basic[objmech]
                 else:
                     condition = None
                 self._implement_graph_node(
@@ -2446,6 +2458,19 @@ class ShowGraph:
                                            penwidth=learning_proj_width)
         return True
 
+    def _get_condition_label(self, condition, color=None, italic=False, raw=False):
+        res = f'{condition.owner.name}: {condition._short_str()}'
+        html = False
+        if color:
+            res = f'<font color="deeppink4">{res}</font>'
+            html = True
+        if italic:
+            res = f'<i>{res}</i>'
+            html = True
+        if html and not raw:
+            res = f'<{res}>'
+        return res
+
     def _assign_scheduler_components(self, g, show_nested, show_types, show_dimensions, show_condition_labels, context):
         from psyneulink.core.compositions.composition import Composition
 
@@ -2503,7 +2528,7 @@ class ShowGraph:
                 if show_condition_labels:
                     # nodes generally use their name and not the full str value,
                     # and shorter labels makes the edge curves less complicated.
-                    edge_label = f'{cond.owner.name}: {cond._short_str()}'
+                    edge_label = self._get_condition_label(cond)
 
                 self._implement_graph_edge(
                     g,

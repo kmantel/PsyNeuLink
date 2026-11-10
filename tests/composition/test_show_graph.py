@@ -1308,7 +1308,7 @@ class TestStructuralConditions:
     #         (['ia', 'ib'], ['oa', 'ob'], [], [], {}, ''),
     #     ],
     # )
-    @pytest.mark.parametrize('show_graph_kwargs', [{}, {'show_node_structure': CONDITIONS}])
+    @pytest.mark.parametrize('show_graph_kwargs', [{}, {'show_condition_labels': False}])
     @pytest.mark.parametrize('temp_beforenode_args', [({'owner_receivers': 'merge'}), ({})])
     def test_add_and_remove(
         self,
@@ -1343,7 +1343,8 @@ class TestStructuralConditions:
         ocomp.scheduler.add_condition(icomp, BeforeNode(ob, **temp_beforenode_args))
         ocomp.scheduler.add_condition(icomp, AddEdgeTo(icomp2))
         # ocomp.scheduler.add_condition(icomp2, EveryNCalls(icomp, 2))  # NOTE: compositions currently no show node structure
-        ocomp.scheduler.add_condition(od, EveryNCalls(icomp, 2))
+        ocomp.scheduler.add_condition(icomp, EveryNCalls(oc, 2))
+        ocomp.scheduler.add_condition(od, EveryNCalls(icomp, 3))
 
         show_graph_kwargs = {
             'show_scheduler': True,

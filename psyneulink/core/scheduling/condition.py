@@ -450,7 +450,7 @@ def _short_str(self):
 
     # can be a 'nodes' tuple
     if is_iterable(args, True):
-        args_str = ', '.join(args)
+        args_str = ', '.join(str(a) for a in args)
 
     if len(spec_kwargs):
         kwargs_str = ', '.join(f'{k}={v}' for k, v in spec_kwargs.items())
