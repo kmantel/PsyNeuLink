@@ -1083,8 +1083,10 @@ class ShowGraph:
         """Helper method that allows override by subclass to filter NodeRoles used for graph"""
         return composition.get_nodes_by_role(role)
 
-    def _implement_graph_node(self, graph, rcvr, context, *args, **kwargs):
+    def _implement_graph_node(self, graph, rcvr, context, *args, condition=None, **kwargs):
         """Helper method that allows override by subclass to assign custom attributes to nodes"""
+        if condition is not None:
+            kwargs['xlabel'] = f'<<i><font color="deeppink4">{rcvr.name}: {str(condition)}</font></i>>'
         graph.node(*args, **kwargs)
 
     def _implement_graph_edge(self, graph, proj, context, *args, **kwargs):
@@ -1320,10 +1322,13 @@ class ShowGraph:
                           'rank': rcvr_rank}
         else:
             args = (rcvr_label,)
-            kwargs = {'shape': node_shape,
-                          'color':rcvr_color,
-                          'penwidth': rcvr_penwidth,
-                          'rank': rcvr_rank}
+            kwargs = {
+                'shape': node_shape,
+                'color': rcvr_color,
+                'penwidth': rcvr_penwidth,
+                'rank': rcvr_rank,
+                'condition': condition,
+            }
 
         self._implement_graph_node(g, rcvr, context,*args, **kwargs)
 
@@ -1896,19 +1901,27 @@ class ShowGraph:
         # Assign controller node
         node_shape = self.mechanism_shape
         ctlr_label = self._get_graph_node_label(composition, controller, show_types, show_dimensions)
+        condition = composition.controller_condition
         if show_node_structure:
-            g.node(ctlr_label,
-                   controller._show_structure(**node_struct_args, node_border=ctlr_width,
-                                              condition=composition.controller_condition),
-                   shape=self.struct_shape,
-                   color=ctlr_color,
-                   penwidth=ctlr_width,
-                   rank=self.control_rank
-                   )
+            self._implement_graph_node(
+                g,
+                ctlr_label,
+                controller._show_structure(**node_struct_args, node_border=ctlr_width, condition=condition),
+                shape=self.struct_shape,
+                color=ctlr_color,
+                penwidth=ctlr_width,
+                rank=self.control_rank,
+            )
         else:
-            g.node(ctlr_label,
-                   color=ctlr_color, penwidth=ctlr_width, shape=self.controller_shape,
-                   rank=self.control_rank)
+            self._implement_graph_node(
+                g,
+                ctlr_label,
+                color=ctlr_color,
+                penwidth=ctlr_width,
+                shape=self.controller_shape,
+                rank=self.control_rank,
+                condition=condition,
+            )
 
         # outgoing edges (from controller to ProcessingMechanisms)
         for control_signal in controller.control_signals:
@@ -2056,17 +2069,25 @@ class ShowGraph:
                     condition = composition.scheduler.conditions[objmech]
                 else:
                     condition = None
-                g.node(objmech_label,
-                       objmech._show_structure(**node_struct_args, node_border=ctlr_width, condition=condition),
-                       shape=self.struct_shape,
-                       color=objmech_color,
-                       penwidth=ctlr_width,
-                       rank=self.control_rank
-                       )
+                self._implement_graph_node(
+                    g,
+                    objmech_label,
+                    objmech._show_structure(**node_struct_args, node_border=ctlr_width, condition=condition),
+                    shape=self.struct_shape,
+                    color=objmech_color,
+                    penwidth=ctlr_width,
+                    rank=self.control_rank,
+                )
             else:
-                g.node(objmech_label,
-                        color=objmech_color, penwidth=objmech_width, shape=node_shape,
-                        rank=self.control_rank)
+                self._implement_graph_node(
+                    g,
+                    objmech_label,
+                    color=objmech_color,
+                    penwidth=objmech_width,
+                    shape=node_shape,
+                    rank=self.control_rank,
+                    condition=condition,
+                )
 
             # objmech to controller edge
             if show_projection_labels:
