@@ -976,6 +976,7 @@ class ShowGraph:
                                                show_projection_labels,
                                                show_projections_not_in_composition,
                                                show_structural_conditions,
+                                               show_condition_labels,
                                                comp_hierarchy,
                                                nesting_level,
                                                context)
@@ -1322,13 +1323,12 @@ class ShowGraph:
                           'rank': rcvr_rank}
         else:
             args = (rcvr_label,)
-            kwargs = {
-                'shape': node_shape,
-                'color': rcvr_color,
-                'penwidth': rcvr_penwidth,
-                'rank': rcvr_rank,
-                'condition': condition,
-            }
+            kwargs = {'shape': node_shape,
+                          'color':rcvr_color,
+                          'penwidth': rcvr_penwidth,
+                          'rank': rcvr_rank}
+            if show_condition_labels:
+                kwargs['condition'] = condition
 
         self._implement_graph_node(g, rcvr, context,*args, **kwargs)
 
@@ -1861,6 +1861,7 @@ class ShowGraph:
                                       show_projection_labels,
                                       show_projections_not_in_composition,
                                       show_structural_conditions,
+                                      show_condition_labels,
                                       comp_hierarchy,
                                       nesting_level,
                                       context):
@@ -1920,7 +1921,7 @@ class ShowGraph:
                 penwidth=ctlr_width,
                 shape=self.controller_shape,
                 rank=self.control_rank,
-                condition=condition,
+                condition=condition if show_condition_labels else None,
             )
 
         # outgoing edges (from controller to ProcessingMechanisms)
@@ -2086,7 +2087,7 @@ class ShowGraph:
                     penwidth=objmech_width,
                     shape=node_shape,
                     rank=self.control_rank,
-                    condition=condition,
+                    condition=condition if show_condition_labels else None,
                 )
 
             # objmech to controller edge
