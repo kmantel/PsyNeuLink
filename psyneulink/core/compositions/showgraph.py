@@ -1087,7 +1087,8 @@ class ShowGraph:
     def _implement_graph_node(self, graph, rcvr, context, *args, condition=None, **kwargs):
         """Helper method that allows override by subclass to assign custom attributes to nodes"""
         if condition is not None:
-            kwargs['xlabel'] = self._get_condition_label(condition, color='deeppink4', italic=True)
+            cond_color = kwargs.get('color', self.default_node_color)
+            kwargs['xlabel'] = self._get_condition_label(condition, color=cond_color, italic=True)
         graph.node(*args, **kwargs)
 
     def _implement_graph_edge(self, graph, proj, context, *args, **kwargs):
@@ -1150,19 +1151,23 @@ class ShowGraph:
                 input_nodes = composition.get_nodes_by_role(NodeRole.INPUT)
                 output_nodes = composition.get_nodes_by_role(NodeRole.OUTPUT)
                 probe_nodes = composition.get_nodes_by_role(NodeRole.PROBE)
+                nested_comp_color = None
                 if rcvr in input_nodes and rcvr in output_nodes:
-                    nested_comp_attributes.update({"color": self.input_and_output_color})
+                    nested_comp_color = self.input_and_output_color
                 elif rcvr in input_nodes:
-                    nested_comp_attributes.update({"color": self.input_color})
+                    nested_comp_color = self.input_color
                 elif rcvr in probe_nodes:
-                    nested_comp_attributes.update({"color": self.probe_color})
+                    nested_comp_color = self.probe_color
                 elif rcvr in output_nodes:
-                    nested_comp_attributes.update({"color": self.output_color})
+                    nested_comp_color = self.output_color
                 if rcvr in active_items:
                     if self.active_color != BOLD:
-                        nested_comp_attributes.update({"color": self.active_color})
+                        nested_comp_color = self.active_color
                     nested_comp_attributes.update({"penwidth": str(self.default_width + self.active_thicker_by)})
                     composition.active_item_rendered = True
+                # avoid specifying color if not explicitly set above to preserve old behavior
+                if nested_comp_color is not None:
+                    nested_comp_attributes.update({"color": nested_comp_color})
                 nested_comp_graph.attr(**nested_comp_attributes)
 
                 if show_condition_labels:
@@ -1173,7 +1178,9 @@ class ShowGraph:
                     except KeyError:
                         pass
                     else:
-                        cond_label = self._get_condition_label(condition, color='deeppink4', italic=True, raw=True)
+                        if nested_comp_color is None:
+                            nested_comp_color = self.default_node_color
+                        cond_label = self._get_condition_label(condition, color=nested_comp_color, italic=True, raw=True)
                         rcvr_label = f'<{rcvr_label}<br/>{cond_label}>'
 
                 nested_comp_graph.attr(label=rcvr_label)
@@ -2473,7 +2480,7 @@ class ShowGraph:
         res = f'{condition.owner.name}: {condition._short_str()}'
         html = False
         if color:
-            res = f'<font color="deeppink4">{res}</font>'
+            res = f'<font color="{color}">{res}</font>'
             html = True
         if italic:
             res = f'<i>{res}</i>'
