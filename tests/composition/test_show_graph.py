@@ -1,8 +1,8 @@
 import os
 import pathlib
 import sys
-from typing import Dict, Iterable, Union
 import uuid
+from collections.abc import Iterable
 
 import numpy as np
 import pytest
@@ -1288,8 +1288,8 @@ class TestStructuralConditions:
     def _make_composition(
         self,
         name: str,
-        pathways: Union[Iterable[Iterable[str]], Iterable[str]],
-        **existing_nodes: Dict[str, Component],
+        pathways: Iterable[Iterable[str]] | Iterable[str],
+        **existing_nodes: dict[str, Component],
     ):
         if len(pathways) and isinstance(pathways[0], str):
             pathways = [pathways]
