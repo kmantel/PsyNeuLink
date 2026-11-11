@@ -25,7 +25,7 @@ from psyneulink.core.compositions.composition import Composition
 from psyneulink.core.compositions.noderoles import NodeRole
 from psyneulink.core.compositions.showgraph import ShowGraphError, _gv_executable_not_found_error_msg
 from psyneulink.core.globals.keywords import ALL, CONDITIONS, GAIN, INSET, INTERCEPT, NESTED, NOISE, SLOPE, TARGET
-from psyneulink.core.scheduling.condition import AddEdgeTo, BeforeNode, EveryNCalls, RemoveEdgeFrom
+from psyneulink.core.scheduling.condition import AddEdgeTo, BeforeNode, EveryNCalls, EveryNPasses, RemoveEdgeFrom
 from psyneulink.library.components.mechanisms.modulatory.control.agt.lccontrolmechanism import LCControlMechanism
 from psyneulink.library.components.mechanisms.processing.integrator.ddm import DDM
 from psyneulink.library.components.mechanisms.processing.transfer.lcamechanism import LCAMechanism
@@ -1339,6 +1339,7 @@ class TestStructuralConditions:
 
         icomp.scheduler.add_condition(ia, AddEdgeTo(ic))
         icomp.scheduler.add_condition(ic, RemoveEdgeFrom(ib))
+        icomp.scheduler.add_condition(ib, EveryNPasses(2))
 
         ocomp.scheduler.add_condition(icomp, BeforeNode(ob, **temp_beforenode_args))
         ocomp.scheduler.add_condition(icomp, AddEdgeTo(icomp2))
