@@ -411,15 +411,36 @@ if graph_structure_conditions_available:
     pnl_conditions_module['_GSCReposition']._validate_graph = _pnl__GSCReposition__validate_graph
 
 
-def _short_str(self):
-    args = getattr(self, 'args', [])  # some GSCs don't have args
-    kwargs = getattr(self, 'kwargs', {})
+# some conds use the default unnamed_kwargs as kwargs, but we want to treat them
+# as positional args in short form because they're used a lot
+def _short_str(
+    self, unnamed_kwargs: collections.abc.Iterable = {'dependency', 'dependencies', 'n', 'nodes'}
+) -> str:
+    cond_args = getattr(self, 'args', [])  # some GSCs don't have args
+    cond_kwargs = getattr(self, 'kwargs', {})
+
+    # [kw]args to print
+    args = []
+    spec_kwargs = {}
 
     sig = _get_cached_function_signature(self.__init__)
     sig_params = sig.parameters
+    sig_params_items = list(sig_params.items())
+    assert len(cond_args) <= len(sig_params_items)
 
-    spec_kwargs = {}
-    for k, val in kwargs.items():
+    for i, aval in enumerate(cond_args):
+        k, pval = sig_params_items[i]
+        assert k not in cond_kwargs
+
+        try:
+            sig_default = pval.default
+        except (AttributeError, KeyError):
+            args.append(aval)
+        else:
+            if aval != sig_default:
+                cond_kwargs[k] = aval
+
+    for k, val in cond_kwargs.items():
         try:
             sig_default = sig_params[k].default
         except (AttributeError, KeyError):
@@ -436,9 +457,7 @@ def _short_str(self):
         if is_iterable(val, True):
             val = type(val)(getattr(v, 'name', v) for v in val)
 
-        # also, some conds use 'nodes' as a kwarg, but we want to treat it as a
-        # regular arg in short form because it's used a lot
-        if k == 'nodes':
+        if k in unnamed_kwargs:
             args.append(val)
         else:
             spec_kwargs[k] = val
@@ -451,6 +470,8 @@ def _short_str(self):
     # can be a 'nodes' tuple
     if is_iterable(args, True):
         args_str = ', '.join(str(a) for a in args)
+    else:
+        args_str = str(args)
 
     if len(spec_kwargs):
         kwargs_str = ', '.join(f'{k}={v}' for k, v in spec_kwargs.items())
