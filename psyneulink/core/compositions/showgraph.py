@@ -964,6 +964,7 @@ class ShowGraph:
                                                node_struct_args,
                                                show_projection_labels,
                                                show_projections_not_in_composition,
+                                               show_structural_conditions,
                                                comp_hierarchy,
                                                nesting_level,
                                                context)
@@ -1840,6 +1841,7 @@ class ShowGraph:
                                       node_struct_args,
                                       show_projection_labels,
                                       show_projections_not_in_composition,
+                                      show_structural_conditions,
                                       comp_hierarchy,
                                       nesting_level,
                                       context):
@@ -2221,6 +2223,7 @@ class ShowGraph:
                                     show_node_structure,
                                     show_projection_labels,
                                     show_projections_not_in_composition,
+                                    show_structural_conditions,
                                     proj_color=ctl_proj_color,
                                     comp_hierarchy=comp_hierarchy,
                                     nesting_level=nesting_level,
@@ -2242,6 +2245,7 @@ class ShowGraph:
                                     node_struct_args,
                                     show_projection_labels,
                                     show_projections_not_in_composition,
+                                    show_structural_conditions,
                                     context):
         """Assign learning nodes and edges to graph"""
 
@@ -2312,6 +2316,7 @@ class ShowGraph:
                                             show_node_structure,
                                             show_projection_labels,
                                             show_projections_not_in_composition,
+                                            show_structural_conditions,
                                             enclosing_comp=enclosing_comp,
                                             comp_hierarchy=comp_hierarchy,
                                             nesting_level=nesting_level,
