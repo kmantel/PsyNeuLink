@@ -553,7 +553,7 @@ class ShowGraph:
     def show_graph(self,
                    show_all: bool = False,
                    show_node_structure: Union[bool, Literal['values', 'labels', 'functions', 'MECHANISM_FUNCTION_PARAMS',
-                                                             'PORT_FUNCTION_PARAMS', 'roles', 'all']] = False,
+                                                             'PORT_FUNCTION_PARAMS', 'roles', 'all', 'conditions']] = False,
                    show_nested: Optional[Union[bool, int, dict, Literal['nested', 'inset']]] = 'nested',
                    show_nested_args: Optional[Union[bool, dict, Literal['all']]] = 'all',
                    show_cim: bool = False,
