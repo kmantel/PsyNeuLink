@@ -1918,6 +1918,8 @@ class ShowGraph:
         if show_node_structure:
             self._implement_graph_node(
                 g,
+                controller,
+                context,
                 ctlr_label,
                 controller._show_structure(**node_struct_args, node_border=ctlr_width, condition=condition),
                 shape=self.struct_shape,
@@ -1928,6 +1930,8 @@ class ShowGraph:
         else:
             self._implement_graph_node(
                 g,
+                controller,
+                context,
                 ctlr_label,
                 color=ctlr_color,
                 penwidth=ctlr_width,
@@ -2084,6 +2088,8 @@ class ShowGraph:
                     condition = None
                 self._implement_graph_node(
                     g,
+                    objmech,
+                    context,
                     objmech_label,
                     objmech._show_structure(**node_struct_args, node_border=ctlr_width, condition=condition),
                     shape=self.struct_shape,
@@ -2094,6 +2100,8 @@ class ShowGraph:
             else:
                 self._implement_graph_node(
                     g,
+                    objmech,
+                    context,
                     objmech_label,
                     color=objmech_color,
                     penwidth=objmech_width,
