@@ -481,6 +481,7 @@ class ShowGraph:
                  control_projection_arrow='box',
                  # Colors:
                  default_node_color = 'black',
+                 default_projection_color: str = 'black',
                  active_color=BOLD,
                  input_color='green',
                  probe_color='pink',
@@ -496,6 +497,8 @@ class ShowGraph:
                  default_width = 1,
                  active_thicker_by = 2,
                  bold_width = 3,
+                 # Styles:
+                 default_projection_style: str = 'solid',
                  # Order:
                  input_rank = 'source',
                  control_rank = 'min',
@@ -520,6 +523,7 @@ class ShowGraph:
         self.control_projection_arrow =control_projection_arrow
         # Colors:
         self.default_node_color = default_node_color
+        self.default_projection_color = default_projection_color
         self.active_color = active_color
         self.input_color = input_color
         self.probe_color=probe_color
@@ -536,6 +540,8 @@ class ShowGraph:
         self.default_width = default_width
         self.active_thicker_by = active_thicker_by
         self.bold_width = bold_width
+        # Styles:
+        self.default_projection_style = default_projection_style
         # Order:
         self.input_rank = input_rank
         self.control_rank = control_rank
@@ -2490,6 +2496,8 @@ class ShowGraph:
                 except AttributeError:
                     has_learning = None
 
+                proj_fontcolor = self.default_projection_color
+                proj_style = self.default_projection_style
                 edge_label = self._get_graph_node_label(composition, proj, show_types, show_dimensions)
                 is_learning_component = (rcvr in composition.learning_components
                                          or sndr in composition.learning_components)
@@ -2576,8 +2584,11 @@ class ShowGraph:
                                                proc_mech_rcvr_label,
                                                label=label,
                                                color=proj_color,
+                                               fontcolor=proj_fontcolor,
                                                penwidth=proj_width,
-                                               arrowhead=proj_arrowhead)
+                                               arrowhead=proj_arrowhead,
+                                               style=proj_style,
+                                               )
 
         # Sorted to insure consistency of ordering in g for testing
         for sender in sorted(senders):
