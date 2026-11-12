@@ -2272,6 +2272,7 @@ class ShowGraph:
                                     show_projection_labels,
                                     show_projections_not_in_composition,
                                     show_scheduler,
+                                    show_condition_labels,
                                     proj_color=ctl_proj_color,
                                     comp_hierarchy=comp_hierarchy,
                                     nesting_level=nesting_level,
@@ -2294,6 +2295,7 @@ class ShowGraph:
                                     show_projection_labels,
                                     show_projections_not_in_composition,
                                     show_scheduler,
+                                    show_condition_labels,
                                     context):
         """Assign learning nodes and edges to graph"""
 
@@ -2365,6 +2367,7 @@ class ShowGraph:
                                             show_projection_labels,
                                             show_projections_not_in_composition,
                                             show_scheduler,
+                                            show_condition_labels,
                                             enclosing_comp=enclosing_comp,
                                             comp_hierarchy=comp_hierarchy,
                                             nesting_level=nesting_level,
