@@ -9,6 +9,7 @@
 # ********************************************* Condition **************************************************************
 
 import collections
+import copy
 import inspect
 import numbers
 import re
@@ -417,7 +418,7 @@ def _short_str(
     self, unnamed_kwargs: collections.abc.Iterable = {'dependency', 'dependencies', 'n', 'nodes'}
 ) -> str:
     cond_args = getattr(self, 'args', [])  # some GSCs don't have args
-    cond_kwargs = getattr(self, 'kwargs', {})
+    cond_kwargs = copy.copy(getattr(self, 'kwargs', {}))
 
     # [kw]args to print
     args = []
